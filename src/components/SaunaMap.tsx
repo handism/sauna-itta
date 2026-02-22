@@ -200,7 +200,7 @@ export default function SaunaMap() {
           <div className="sidebar-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <h1 className="text-primary" style={{ color: "var(--primary)" }}>サウナイッタ</h1>
-              <p style={{ fontSize: "0.9rem", margin: 0, color: "var(--foreground)" }}>マイ・ととのいマップ</p>
+              <p style={{ fontSize: "0.9rem", margin: 0, color: "var(--foreground)" }}>マイととのいマップ</p>
             </div>
             <button 
               onClick={toggleTheme}
