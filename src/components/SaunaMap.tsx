@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -16,35 +16,6 @@ interface SaunaVisit {
   image?: string;
   date: string;
 }
-
-const loadInitialVisits = (): SaunaVisit[] => {
-  const baseVisits = [...(initialVisits as SaunaVisit[])];
-  if (typeof window === "undefined") return baseVisits;
-
-  const savedVisits = localStorage.getItem("sauna-itta_visits");
-  if (!savedVisits) return baseVisits;
-
-  try {
-    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-    const initialIds = new Set(baseVisits.map((v) => v.id));
-    const customVisits = parsedSaved.filter((v) => !initialIds.has(v.id));
-    return [...customVisits, ...baseVisits];
-  } catch (e) {
-    console.error("Failed to parse saved visits:", e);
-    return baseVisits;
-  }
-};
-
-const loadInitialTheme = (): "dark" | "light" => {
-  if (typeof window === "undefined") return "dark";
-  const savedTheme = localStorage.getItem("sauna-itta_theme");
-  return savedTheme === "light" ? "light" : "dark";
-};
-
-const getInitialIsMobile = (): boolean => {
-  if (typeof window === "undefined") return false;
-  return window.innerWidth < 768;
-};
 
 // Custom Marker Icon
 const saunaIcon = L.divIcon({
@@ -66,26 +37,42 @@ function LocationPicker({ onLocationSelect }: { onLocationSelect: (lat: number, 
 }
 
 export default function SaunaMap() {
-  const [visits, setVisits] = useState<SaunaVisit[]>(loadInitialVisits);
+  const [visits, setVisits] = useState<SaunaVisit[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [form, setForm] = useState({ name: "", comment: "", image: "", date: "" });
-  const [theme, setTheme] = useState<"dark" | "light">(loadInitialTheme);
-  const [isMobile] = useState<boolean>(getInitialIsMobile);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => !getInitialIsMobile());
-  const [isTapShieldActive, setIsTapShieldActive] = useState(false);
-  const touchGuardRef = useRef(false);
-  const skipNextEditRef = useRef(false);
-  const skipNextNewVisitRef = useRef(false);
-  const touchGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    return () => {
-      if (touchGuardTimerRef.current) {
-        clearTimeout(touchGuardTimerRef.current);
+    setIsClient(true);
+
+    const savedVisits = localStorage.getItem("sauna-itta_visits");
+    let combinedVisits = [...(initialVisits as SaunaVisit[])];
+
+    if (savedVisits) {
+      try {
+        const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
+        const initialIds = new Set(combinedVisits.map(v => v.id));
+        const customVisits = parsedSaved.filter(v => !initialIds.has(v.id));
+        combinedVisits = [...customVisits, ...combinedVisits];
+      } catch (e) {
+        console.error("Failed to parse saved visits:", e);
       }
-    };
+    }
+    setVisits(combinedVisits);
+
+    const savedTheme = localStorage.getItem("sauna-itta_theme") as "dark" | "light";
+    if (savedTheme) setTheme(savedTheme);
+
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    if (mobile) {
+      setIsSidebarExpanded(false);
+    }
   }, []);
 
   const saveVisits = (newVisits: SaunaVisit[]) => {
@@ -94,6 +81,7 @@ export default function SaunaMap() {
       localStorage.setItem("sauna-itta_visits", JSON.stringify(newVisits));
     } catch (error) {
       console.error("Failed to persist visits to localStorage:", error);
+      alert("画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。");
     }
   };
 
@@ -125,11 +113,6 @@ export default function SaunaMap() {
   };
 
   const startNewVisit = () => {
-    if (isMobile && skipNextNewVisitRef.current) {
-      skipNextNewVisitRef.current = false;
-      return;
-    }
-
     setIsAdding(true);
     setForm({
       name: "",
@@ -144,14 +127,6 @@ export default function SaunaMap() {
   };
 
   const startEditing = (visit: SaunaVisit) => {
-    if (isMobile && touchGuardRef.current) {
-      return;
-    }
-    if (skipNextEditRef.current) {
-      skipNextEditRef.current = false;
-      return;
-    }
-
     setEditingId(visit.id);
     setForm({
       name: visit.name,
@@ -165,49 +140,9 @@ export default function SaunaMap() {
     setIsSidebarExpanded(true);
   };
 
-  const handleEditPointerUp = (
-    e: React.PointerEvent<HTMLElement>,
-    visit: SaunaVisit
-  ) => {
-    if (e.pointerType === "mouse" && e.button !== 0) {
-      return;
-    }
-    e.preventDefault();
-    startEditing(visit);
-  };
-
-  const handleEditClick = (
-    e: React.MouseEvent<HTMLElement>,
-    visit: SaunaVisit
-  ) => {
-    // pointerup後の遅延click（特にiOS）を無視。キーボード操作(detail=0)のみ許可。
-    if (e.detail !== 0) {
-      return;
-    }
-    startEditing(visit);
-  };
-
   // completed=true: 保存・削除後 → 一覧を見せるためサイドバーを展開
   // completed=false: キャンセル → モバイルではサイドバーを閉じる
   const cancelEditing = (completed = false) => {
-    if (completed && isMobile) {
-      // iOS/Androidの遅延クリックで一覧が即再タップされるのを防ぐ
-      // 1回分の編集/新規起動を明示的に無視し、時間ガードは保険として残す
-      setIsTapShieldActive(true);
-      skipNextEditRef.current = true;
-      skipNextNewVisitRef.current = true;
-      touchGuardRef.current = true;
-      if (touchGuardTimerRef.current) {
-        clearTimeout(touchGuardTimerRef.current);
-      }
-      touchGuardTimerRef.current = setTimeout(() => {
-        setIsTapShieldActive(false);
-        touchGuardRef.current = false;
-        skipNextEditRef.current = false;
-        skipNextNewVisitRef.current = false;
-      }, 1200);
-    }
-
     setIsAdding(false);
     setEditingId(null);
     setSelectedLocation(null);
@@ -270,6 +205,8 @@ export default function SaunaMap() {
   // モバイルでの「場所待ち」状態: サイドバーを非表示にして地図を全面に
   const isMobilePickingLocation = isMobile && isAdding && !editingId && !selectedLocation;
 
+  if (!isClient) return <div className="map-container" style={{ background: "var(--background)" }} />;
+
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
       <div className="map-container" style={{ background: "var(--background)", color: "var(--foreground)" }}>
@@ -305,8 +242,7 @@ export default function SaunaMap() {
                     {visit.date}
                   </small>
                   <button
-                    onPointerUp={(e) => handleEditPointerUp(e, visit)}
-                    onClick={(e) => handleEditClick(e, visit)}
+                    onClick={() => startEditing(visit)}
                     style={{
                       marginTop: "1rem", width: "100%", padding: "0.5rem",
                       background: "var(--primary)", border: "none", borderRadius: "8px",
@@ -347,7 +283,6 @@ export default function SaunaMap() {
       {/* サイドバー: 場所選択中のモバイルでは非表示 */}
       {!isMobilePickingLocation && (
         <div className="ui-layer" style={{ color: "var(--foreground)" }}>
-          {isMobile && isTapShieldActive && <div className="tap-shield" aria-hidden="true" />}
           <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
             <button
               className="mobile-toggle"
@@ -455,12 +390,7 @@ export default function SaunaMap() {
                     </p>
                   ) : (
                     visits.map((visit) => (
-                      <div
-                        key={visit.id}
-                        className="sauna-card"
-                        onPointerUp={(e) => handleEditPointerUp(e, visit)}
-                        onClick={(e) => handleEditClick(e, visit)}
-                      >
+                      <div key={visit.id} className="sauna-card" onClick={() => startEditing(visit)}>
                         <h3 style={{ color: "var(--foreground)" }}>{visit.name}</h3>
                         <p style={{ color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{visit.comment}</p>
                         {visit.image && (
