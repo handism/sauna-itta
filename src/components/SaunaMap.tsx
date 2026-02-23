@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import initialVisits from "@/data/sauna-visits.json";
 
 // Interface for Sauna Visit
 interface SaunaVisit {
@@ -50,9 +51,20 @@ export default function SaunaMap() {
     setIsClient(true);
     
     const savedVisits = localStorage.getItem("sauna-itta_visits");
+    let combinedVisits = [...(initialVisits as SaunaVisit[])];
+
     if (savedVisits) {
-      try { setVisits(JSON.parse(savedVisits)); } catch (e) { console.error(e); }
+      try {
+        const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
+        // Merge saved visits, avoiding duplicates by ID
+        const initialIds = new Set(combinedVisits.map(v => v.id));
+        const customVisits = parsedSaved.filter(v => !initialIds.has(v.id));
+        combinedVisits = [...customVisits, ...combinedVisits];
+      } catch (e) {
+        console.error("Failed to parse saved visits:", e);
+      }
     }
+    setVisits(combinedVisits);
 
     const savedTheme = localStorage.getItem("sauna-itta_theme") as "dark" | "light";
     if (savedTheme) setTheme(savedTheme);
@@ -71,6 +83,18 @@ export default function SaunaMap() {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     localStorage.setItem("sauna-itta_theme", newTheme);
+  };
+
+  const exportData = () => {
+    const dataStr = JSON.stringify(visits, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'sauna-visits.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -315,9 +339,16 @@ export default function SaunaMap() {
           </div>
 
           {!isAdding && (
-            <div className="sidebar-footer">
+            <div className="sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
               <button className="btn btn-primary" onClick={() => setIsAdding(true)}>
                 新しいピンを立てる
+              </button>
+              <button 
+                className="btn btn-ghost" 
+                onClick={exportData}
+                style={{ fontSize: "0.8rem", padding: "0.5rem" }}
+              >
+                📥 データを出力する (GitHub保存用)
               </button>
             </div>
           )}
