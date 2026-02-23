@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -45,18 +45,17 @@ export default function SaunaMap() {
   const [isClient, setIsClient] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsClient(true);
-    
+
     const savedVisits = localStorage.getItem("sauna-itta_visits");
     let combinedVisits = [...(initialVisits as SaunaVisit[])];
 
     if (savedVisits) {
       try {
         const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-        // Merge saved visits, avoiding duplicates by ID
         const initialIds = new Set(combinedVisits.map(v => v.id));
         const customVisits = parsedSaved.filter(v => !initialIds.has(v.id));
         combinedVisits = [...customVisits, ...combinedVisits];
@@ -69,7 +68,9 @@ export default function SaunaMap() {
     const savedTheme = localStorage.getItem("sauna-itta_theme") as "dark" | "light";
     if (savedTheme) setTheme(savedTheme);
 
-    if (window.innerWidth < 768) {
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    if (mobile) {
       setIsSidebarExpanded(false);
     }
   }, []);
@@ -87,10 +88,8 @@ export default function SaunaMap() {
 
   const exportData = () => {
     const dataStr = JSON.stringify(visits, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = 'sauna-visits.json';
-    
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -110,24 +109,30 @@ export default function SaunaMap() {
 
   const startNewVisit = () => {
     setIsAdding(true);
-    setForm({ 
-      name: "", 
-      comment: "", 
-      image: "", 
-      date: new Date().toISOString().split('T')[0] 
+    setForm({
+      name: "",
+      comment: "",
+      image: "",
+      date: new Date().toISOString().split('T')[0]
     });
+    // モバイルではStep1（地図タップ待ち）のためサイドバーを縮小
+    if (isMobile) {
+      setIsSidebarExpanded(false);
+    }
   };
 
   const startEditing = (visit: SaunaVisit) => {
     setEditingId(visit.id);
-    setForm({ 
-      name: visit.name, 
-      comment: visit.comment, 
+    setForm({
+      name: visit.name,
+      comment: visit.comment,
       image: visit.image || "",
       date: visit.date
     });
     setSelectedLocation({ lat: visit.lat, lng: visit.lng });
     setIsAdding(true);
+    // 編集時はStep1不要なのでサイドバーを開く
+    setIsSidebarExpanded(true);
   };
 
   const cancelEditing = () => {
@@ -135,6 +140,9 @@ export default function SaunaMap() {
     setEditingId(null);
     setSelectedLocation(null);
     setForm({ name: "", comment: "", image: "", date: "" });
+    if (isMobile) {
+      setIsSidebarExpanded(false);
+    }
   };
 
   const handleDelete = () => {
@@ -146,12 +154,20 @@ export default function SaunaMap() {
     }
   };
 
+  // 地図タップで場所選択 → モバイルでは自動的にフォームを展開
+  const handleLocationSelect = useCallback((lat: number, lng: number) => {
+    setSelectedLocation({ lat, lng });
+    if (isMobile) {
+      setIsSidebarExpanded(true);
+    }
+  }, [isMobile]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLocation || !form.name) return;
 
     if (editingId) {
-      const updatedVisits = visits.map(v => 
+      const updatedVisits = visits.map(v =>
         v.id === editingId ? {
           ...v,
           name: form.name,
@@ -175,9 +191,12 @@ export default function SaunaMap() {
       };
       saveVisits([newVisit, ...visits]);
     }
-    
+
     cancelEditing();
   };
+
+  // モバイルでの「場所待ち」状態: サイドバーを非表示にして地図を全面に
+  const isMobilePickingLocation = isMobile && isAdding && !editingId && !selectedLocation;
 
   if (!isClient) return <div className="map-container" style={{ background: "var(--background)" }} />;
 
@@ -204,7 +223,7 @@ export default function SaunaMap() {
                 <div style={{ minWidth: "200px" }}>
                   <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--primary)" }}>{visit.name}</h3>
                   {visit.image && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={visit.image}
                       alt={visit.name}
@@ -215,12 +234,12 @@ export default function SaunaMap() {
                   <small style={{ display: "block", marginTop: "0.5rem", opacity: 0.5 }}>
                     {visit.date}
                   </small>
-                  <button 
+                  <button
                     onClick={() => startEditing(visit)}
-                    style={{ 
-                      marginTop: "1rem", width: "100%", padding: "0.5rem", 
-                      background: "var(--primary)", border: "none", borderRadius: "8px", 
-                      color: "white", cursor: "pointer" 
+                    style={{
+                      marginTop: "1rem", width: "100%", padding: "0.5rem",
+                      background: "var(--primary)", border: "none", borderRadius: "8px",
+                      color: "white", cursor: "pointer"
                     }}
                   >
                     編集する
@@ -230,7 +249,7 @@ export default function SaunaMap() {
             </Marker>
           ))}
 
-          {isAdding && !editingId && <LocationPicker onLocationSelect={(lat, lng) => setSelectedLocation({ lat, lng })} />}
+          {isAdding && !editingId && <LocationPicker onLocationSelect={handleLocationSelect} />}
 
           {selectedLocation && (
             <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={saunaIcon}>
@@ -240,150 +259,167 @@ export default function SaunaMap() {
         </MapContainer>
       </div>
 
-      <div className="ui-layer" style={{ color: "var(--foreground)" }}>
-        <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
-          <button 
-            className="mobile-toggle"
-            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-            aria-label="Toggle Sidebar"
-          >
-            {isSidebarExpanded ? "↓" : "↑"}
-          </button>
-          <div className="sidebar-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <h1 className="text-primary" style={{ color: "var(--primary)" }}>サウナイッタ</h1>
-              <p style={{ fontSize: "0.9rem", margin: 0, color: "var(--foreground)" }}>マイととのいマップ</p>
-            </div>
-            <button 
-              onClick={toggleTheme}
-              style={{
-                background: "var(--glass)", border: "1px solid var(--glass-border)",
-                color: "var(--foreground)", padding: "0.5rem 1rem", borderRadius: "20px",
-                cursor: "pointer", fontSize: "0.8rem", fontWeight: "bold"
-              }}
-            >
-              {theme === "dark" ? "☀️ ライト" : "🌙 ダーク"}
-            </button>
+      {/* モバイル: 場所選択中のフローティング案内バー */}
+      {isMobilePickingLocation && (
+        <div className="pin-hint">
+          <div className="pin-hint-icon">📍</div>
+          <div className="pin-hint-text">
+            <strong>地図をタップして場所を選択</strong>
+            <span>サウナの場所をタップしてね</span>
           </div>
+          <button className="pin-hint-cancel" onClick={cancelEditing}>
+            ✕
+          </button>
+        </div>
+      )}
 
-          <div className="sidebar-content">
-            {isAdding ? (
-              <form onSubmit={handleSubmit}>
-                <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>
-                  {editingId ? "サウナの編集" : "新規サウナ登録"}
-                </h2>
-                <p style={{ fontSize: "0.85rem", opacity: 0.6, marginBottom: "1.5rem" }}>
-                  {editingId ? "内容を更新します" : selectedLocation
-                    ? "場所が選択されました"
-                    : "地図上をクリックして場所を選択してください"}
-                </p>
+      {/* サイドバー: 場所選択中のモバイルでは非表示 */}
+      {!isMobilePickingLocation && (
+        <div className="ui-layer" style={{ color: "var(--foreground)" }}>
+          <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
+            <button
+              className="mobile-toggle"
+              onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+              aria-label="Toggle Sidebar"
+            >
+              {isSidebarExpanded ? "↓" : "↑"}
+            </button>
+            <div className="sidebar-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h1 className="text-primary" style={{ color: "var(--primary)" }}>サウナイッタ</h1>
+                <p style={{ fontSize: "0.9rem", margin: 0, color: "var(--foreground)" }}>マイととのいマップ</p>
+              </div>
+              <button
+                onClick={toggleTheme}
+                style={{
+                  background: "var(--glass)", border: "1px solid var(--glass-border)",
+                  color: "var(--foreground)", padding: "0.5rem 1rem", borderRadius: "20px",
+                  cursor: "pointer", fontSize: "0.8rem", fontWeight: "bold"
+                }}
+              >
+                {theme === "dark" ? "☀️ ライト" : "🌙 ダーク"}
+              </button>
+            </div>
 
-                <div className="form-group">
-                  <label>サウナ名</label>
-                  <input
-                    className="input"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="例: 上野 SHIZUKU"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>写真を追加</label>
-                  <input
-                    type="file"
-                    className="input"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    style={{ fontSize: "0.8rem", padding: "0.5rem" }}
-                  />
-                  {form.image && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={form.image} className="sauna-img-preview" alt="Preview" />
-                  )}
-                </div>
-
-                <div className="form-group">
-                  <label>行った日</label>
-                  <input
-                    type="date"
-                    className="input"
-                    value={form.date}
-                    onChange={(e) => setForm({ ...form, date: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>感想・メモ</label>
-                  <textarea
-                    className="input textarea"
-                    value={form.comment}
-                    onChange={(e) => setForm({ ...form, comment: e.target.value })}
-                    placeholder="水風呂の温度、外気浴の雰囲気など..."
-                  />
-                </div>
-
-                <div className="cta-group " style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-                  <button type="submit" className="btn btn-primary" disabled={!selectedLocation}>
-                    保存
-                  </button>
-                  {editingId && (
-                    <button type="button" className="btn" style={{ background: "var(--error)", color: "white" }} onClick={handleDelete}>
-                      削除
-                    </button>
-                  )}
-                  <button type="button" className="btn btn-ghost" onClick={cancelEditing}>
-                    キャンセル
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="sauna-list">
-                <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>訪れたサウナ ({visits.length})</h2>
-                {visits.length === 0 ? (
-                  <p style={{ opacity: 0.5, textAlign: "center", marginTop: "2rem" }}>
-                    まだ投稿がありません。<br />新しいピンを立ててみましょう！
+            <div className="sidebar-content">
+              {isAdding ? (
+                <form onSubmit={handleSubmit}>
+                  <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>
+                    {editingId ? "サウナの編集" : "新規サウナ登録"}
+                  </h2>
+                  <p style={{ fontSize: "0.85rem", opacity: 0.6, marginBottom: "1.5rem" }}>
+                    {editingId ? "内容を更新します" : selectedLocation
+                      ? "場所が選択されました ✅"
+                      : "地図上をクリックして場所を選択してください"}
                   </p>
-                ) : (
-                  visits.map((visit) => (
-                    <div key={visit.id} className="sauna-card" onClick={() => startEditing(visit)}>
-                      <h3 style={{ color: "var(--foreground)" }}>{visit.name}</h3>
-                      <p style={{ color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{visit.comment}</p>
-                      {visit.image && (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={visit.image} className="sauna-img-preview" alt="" />
-                      )}
-                      <div style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.5rem" }}>
-                        行った日: {visit.date}
+
+                  <div className="form-group">
+                    <label>サウナ名</label>
+                    <input
+                      className="input"
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      placeholder="例: 上野 SHIZUKU"
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>写真を追加</label>
+                    <input
+                      type="file"
+                      className="input"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      style={{ fontSize: "0.8rem", padding: "0.5rem" }}
+                    />
+                    {form.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={form.image} className="sauna-img-preview" alt="Preview" />
+                    )}
+                  </div>
+
+                  <div className="form-group">
+                    <label>行った日</label>
+                    <input
+                      type="date"
+                      className="input"
+                      value={form.date}
+                      onChange={(e) => setForm({ ...form, date: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>感想・メモ</label>
+                    <textarea
+                      className="input textarea"
+                      value={form.comment}
+                      onChange={(e) => setForm({ ...form, comment: e.target.value })}
+                      placeholder="水風呂の温度、外気浴の雰囲気など..."
+                    />
+                  </div>
+
+                  <div className="cta-group" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                    <button type="submit" className="btn btn-primary" disabled={!selectedLocation}>
+                      保存
+                    </button>
+                    {editingId && (
+                      <button type="button" className="btn" style={{ background: "var(--error)", color: "white" }} onClick={handleDelete}>
+                        削除
+                      </button>
+                    )}
+                    <button type="button" className="btn btn-ghost" onClick={cancelEditing}>
+                      キャンセル
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="sauna-list">
+                  <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>訪れたサウナ ({visits.length})</h2>
+                  {visits.length === 0 ? (
+                    <p style={{ opacity: 0.5, textAlign: "center", marginTop: "2rem" }}>
+                      まだ投稿がありません。<br />新しいピンを立ててみましょう！
+                    </p>
+                  ) : (
+                    visits.map((visit) => (
+                      <div key={visit.id} className="sauna-card" onClick={() => startEditing(visit)}>
+                        <h3 style={{ color: "var(--foreground)" }}>{visit.name}</h3>
+                        <p style={{ color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{visit.comment}</p>
+                        {visit.image && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={visit.image} className="sauna-img-preview" alt="" />
+                        )}
+                        <div style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.5rem" }}>
+                          行った日: {visit.date}
+                        </div>
+                        <div style={{ position: "absolute", top: "1rem", right: "1rem", fontSize: "0.8rem", color: "var(--primary)" }}>
+                          編集
+                        </div>
                       </div>
-                      <div style={{ position: "absolute", top: "1rem", right: "1rem", fontSize: "0.8rem", color: "var(--primary)" }}>
-                        編集
-                      </div>
-                    </div>
-                  ))
-                )}
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {!isAdding && (
+              <div className="sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                <button className="btn btn-primary" onClick={startNewVisit}>
+                  新しいピンを立てる
+                </button>
+                <button
+                  className="btn btn-ghost"
+                  onClick={exportData}
+                  style={{ fontSize: "0.8rem", padding: "0.5rem" }}
+                >
+                  📥 データを出力する (GitHub保存用)
+                </button>
               </div>
             )}
-          </div>
-
-          {!isAdding && (
-            <div className="sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-              <button className="btn btn-primary" onClick={startNewVisit}>
-                新しいピンを立てる
-              </button>
-              <button 
-                className="btn btn-ghost" 
-                onClick={exportData}
-                style={{ fontSize: "0.8rem", padding: "0.5rem" }}
-              >
-                📥 データを出力する (GitHub保存用)
-              </button>
-            </div>
-          )}
-        </aside>
-      </div>
+          </aside>
+        </div>
+      )}
     </div>
   );
 }

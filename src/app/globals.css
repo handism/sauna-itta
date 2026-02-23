@@ -363,3 +363,74 @@ h1, h2, h3, h4, h5, h6, p, span, div {
 .mobile-toggle {
   display: none;
 }
+
+/* Pin Hint: モバイルで場所選択中に表示するフローティング案内バー */
+.pin-hint {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--glass-heavy);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  padding: 0.9rem 1.2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  width: calc(100% - 2rem);
+  max-width: 420px;
+  pointer-events: auto;
+}
+
+.pin-hint-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.pin-hint-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.pin-hint-text strong {
+  font-size: 0.95rem;
+  color: var(--primary);
+}
+
+.pin-hint-text span {
+  font-size: 0.78rem;
+  opacity: 0.6;
+  color: var(--foreground);
+}
+
+.pin-hint-cancel {
+  flex-shrink: 0;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  color: var(--foreground);
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.pin-hint-cancel:hover {
+  background: var(--glass-border);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
