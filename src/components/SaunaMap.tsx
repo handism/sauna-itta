@@ -15,18 +15,32 @@ interface SaunaVisit {
   comment: string;
   image?: string;
   date: string;
-  pinType?: "default" | "sauna";
+  pinType?: "default" | "sauna" | "steam";
 }
 
 // Custom Marker Icon Generator
-const getSaunaIcon = (pinType: "default" | "sauna" = "default") => {
+const getSaunaIcon = (pinType: "default" | "sauna" | "steam" = "default") => {
   if (pinType === "sauna") {
     return L.divIcon({
       className: "custom-marker-hut",
-      html: `<div class="sauna-hut-marker"></div>`,
-      iconSize: [32, 40],
-      iconAnchor: [16, 40],
-      popupAnchor: [0, -40],
+      html: `
+        <div style="position: relative;">
+          <div class="sauna-hut-marker"></div>
+          <div class="sauna-hut-marker-pointer"></div>
+        </div>
+      `,
+      iconSize: [32, 42],
+      iconAnchor: [16, 42],
+      popupAnchor: [0, -42],
+    });
+  }
+  if (pinType === "steam") {
+    return L.divIcon({
+      className: "custom-marker-steam",
+      html: `<div class="steam-marker"></div>`,
+      iconSize: [32, 42],
+      iconAnchor: [16, 42],
+      popupAnchor: [0, -42],
     });
   }
   return L.divIcon({
@@ -54,7 +68,7 @@ export default function SaunaMap() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [form, setForm] = useState<{ name: string; comment: string; image: string; date: string; pinType: "default" | "sauna" }>({
+  const [form, setForm] = useState<{ name: string; comment: string; image: string; date: string; pinType: "default" | "sauna" | "steam" }>({
     name: "",
     comment: "",
     image: "",
@@ -400,6 +414,15 @@ export default function SaunaMap() {
                           <div className="sauna-hut-marker"></div>
                         </div>
                         <span style={{ fontSize: "0.75rem" }}>サウナ小屋</span>
+                      </div>
+                      <div
+                        className={`pin-option ${form.pinType === "steam" ? "selected" : ""}`}
+                        onClick={() => setForm({ ...form, pinType: "steam" })}
+                      >
+                        <div className="pin-preview">
+                          <div className="steam-marker"></div>
+                        </div>
+                        <span style={{ fontSize: "0.75rem" }}>湯気</span>
                       </div>
                     </div>
                   </div>
