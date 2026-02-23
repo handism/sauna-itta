@@ -135,13 +135,15 @@ export default function SaunaMap() {
     setIsSidebarExpanded(true);
   };
 
-  const cancelEditing = () => {
+  // completed=true: 保存・削除後 → 一覧を見せるためサイドバーを展開
+  // completed=false: キャンセル → モバイルではサイドバーを閉じる
+  const cancelEditing = (completed = false) => {
     setIsAdding(false);
     setEditingId(null);
     setSelectedLocation(null);
     setForm({ name: "", comment: "", image: "", date: "" });
     if (isMobile) {
-      setIsSidebarExpanded(false);
+      setIsSidebarExpanded(completed);
     }
   };
 
@@ -150,7 +152,7 @@ export default function SaunaMap() {
     if (confirm("このサウナの記録を削除しますか？")) {
       const updatedVisits = visits.filter(v => v.id !== editingId);
       saveVisits(updatedVisits);
-      cancelEditing();
+      cancelEditing(true); // 削除完了 → 一覧を展開して表示
     }
   };
 
@@ -192,7 +194,7 @@ export default function SaunaMap() {
       saveVisits([newVisit, ...visits]);
     }
 
-    cancelEditing();
+    cancelEditing(true); // 保存完了 → 一覧を展開して表示
   };
 
   // モバイルでの「場所待ち」状態: サイドバーを非表示にして地図を全面に
@@ -267,7 +269,7 @@ export default function SaunaMap() {
             <strong>地図をタップして場所を選択</strong>
             <span>サウナの場所をタップしてね</span>
           </div>
-          <button className="pin-hint-cancel" onClick={cancelEditing}>
+          <button className="pin-hint-cancel" onClick={() => cancelEditing()}>
             ✕
           </button>
         </div>
@@ -369,7 +371,7 @@ export default function SaunaMap() {
                         削除
                       </button>
                     )}
-                    <button type="button" className="btn btn-ghost" onClick={cancelEditing}>
+                    <button type="button" className="btn btn-ghost" onClick={() => cancelEditing()}>
                       キャンセル
                     </button>
                   </div>
