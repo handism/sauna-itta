@@ -46,6 +46,7 @@ export default function SaunaMap() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTapShieldActive, setIsTapShieldActive] = useState(false);
   const touchGuardRef = useRef(false);
   const skipNextEditRef = useRef(false);
   const touchGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -180,12 +181,14 @@ export default function SaunaMap() {
     if (completed && isMobile) {
       // iOS/Androidの遅延クリックで一覧が即再タップされるのを防ぐ
       // 1回分の編集起動を明示的に無視し、時間ガードは保険として残す
+      setIsTapShieldActive(true);
       skipNextEditRef.current = true;
       touchGuardRef.current = true;
       if (touchGuardTimerRef.current) {
         clearTimeout(touchGuardTimerRef.current);
       }
       touchGuardTimerRef.current = setTimeout(() => {
+        setIsTapShieldActive(false);
         touchGuardRef.current = false;
         skipNextEditRef.current = false;
       }, 1200);
@@ -332,6 +335,7 @@ export default function SaunaMap() {
       {/* サイドバー: 場所選択中のモバイルでは非表示 */}
       {!isMobilePickingLocation && (
         <div className="ui-layer" style={{ color: "var(--foreground)" }}>
+          {isMobile && isTapShieldActive && <div className="tap-shield" aria-hidden="true" />}
           <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
             <button
               className="mobile-toggle"
