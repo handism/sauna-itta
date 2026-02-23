@@ -15,60 +15,10 @@ interface SaunaVisit {
   comment: string;
   image?: string;
   date: string;
-  pinType?: "default" | "sauna" | "steam" | "stove";
 }
 
 // Custom Marker Icon Generator
-const getSaunaIcon = (pinType: "default" | "sauna" | "steam" | "stove" = "default") => {
-  if (pinType === "sauna") {
-    return L.divIcon({
-      className: "custom-marker-hut",
-      html: `
-        <div style="position: relative;">
-          <div class="sauna-hut-marker"></div>
-          <div class="sauna-hut-marker-pointer"></div>
-        </div>
-      `,
-      iconSize: [32, 42],
-      iconAnchor: [16, 42],
-      popupAnchor: [0, -42],
-    });
-  }
-  if (pinType === "steam") {
-    return L.divIcon({
-      className: "custom-marker-steam",
-      html: `<div class="steam-marker"></div>`,
-      iconSize: [32, 42],
-      iconAnchor: [16, 42],
-      popupAnchor: [0, -42],
-    });
-  }
-  if (pinType === "stove") {
-    return L.divIcon({
-      className: "custom-marker-stove",
-      html: `
-        <div style="position: relative;">
-          <div class="sauna-stove-marker">
-            <svg class="stove-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <rect x="6" y="10" width="20" height="18" rx="2" fill="white"/>
-              <rect x="8" y="14" width="16" height="12" rx="1" fill="#E67E22" fill-opacity="0.8"/>
-              <line x1="10" y1="18" x2="22" y2="18" stroke="#2C3E50" stroke-width="1.5" stroke-linecap="round"/>
-              <line x1="10" y1="22" x2="22" y2="22" stroke="#2C3E50" stroke-width="1.5" stroke-linecap="round"/>
-              <circle cx="10" cy="8" r="3" fill="white"/>
-              <circle cx="16" cy="6" r="3.5" fill="white"/>
-              <circle cx="22" cy="8" r="3" fill="white"/>
-              <circle cx="13" cy="9" r="2.5" fill="white" opacity="0.8"/>
-              <circle cx="19" cy="9" r="2.5" fill="white" opacity="0.8"/>
-            </svg>
-          </div>
-          <div class="sauna-stove-pointer"></div>
-        </div>
-      `,
-      iconSize: [32, 42],
-      iconAnchor: [16, 42],
-      popupAnchor: [0, -42],
-    });
-  }
+const getSaunaIcon = () => {
   return L.divIcon({
     className: "custom-marker",
     html: `<div class="sauna-marker"></div>`,
@@ -77,7 +27,7 @@ const getSaunaIcon = (pinType: "default" | "sauna" | "steam" | "stove" = "defaul
     popupAnchor: [0, -30],
   });
 };
-const defaultIcon = getSaunaIcon("default");
+const defaultIcon = getSaunaIcon();
 
 // Component to handle map clicks
 function LocationPicker({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
@@ -94,12 +44,11 @@ export default function SaunaMap() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [form, setForm] = useState<{ name: string; comment: string; image: string; date: string; pinType: "default" | "sauna" | "steam" | "stove" }>({
+  const [form, setForm] = useState<{ name: string; comment: string; image: string; date: string; }>({
     name: "",
     comment: "",
     image: "",
     date: "",
-    pinType: "default"
   });
   const [isClient, setIsClient] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -178,7 +127,6 @@ export default function SaunaMap() {
       comment: "",
       image: "",
       date: new Date().toISOString().split('T')[0],
-      pinType: "default"
     });
     // モバイルではStep1（地図タップ待ち）のためサイドバーを縮小
     if (isMobile) {
@@ -193,7 +141,6 @@ export default function SaunaMap() {
       comment: visit.comment,
       image: visit.image || "",
       date: visit.date,
-      pinType: visit.pinType || "default"
     });
     setSelectedLocation({ lat: visit.lat, lng: visit.lng });
     setIsAdding(true);
