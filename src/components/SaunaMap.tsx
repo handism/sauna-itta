@@ -41,7 +41,7 @@ export default function SaunaMap() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [form, setForm] = useState({ name: "", comment: "", image: "" });
+  const [form, setForm] = useState({ name: "", comment: "", image: "", date: "" });
   const [isClient, setIsClient] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -108,9 +108,24 @@ export default function SaunaMap() {
     }
   };
 
+  const startNewVisit = () => {
+    setIsAdding(true);
+    setForm({ 
+      name: "", 
+      comment: "", 
+      image: "", 
+      date: new Date().toISOString().split('T')[0] 
+    });
+  };
+
   const startEditing = (visit: SaunaVisit) => {
     setEditingId(visit.id);
-    setForm({ name: visit.name, comment: visit.comment, image: visit.image || "" });
+    setForm({ 
+      name: visit.name, 
+      comment: visit.comment, 
+      image: visit.image || "",
+      date: visit.date
+    });
     setSelectedLocation({ lat: visit.lat, lng: visit.lng });
     setIsAdding(true);
   };
@@ -119,7 +134,7 @@ export default function SaunaMap() {
     setIsAdding(false);
     setEditingId(null);
     setSelectedLocation(null);
-    setForm({ name: "", comment: "", image: "" });
+    setForm({ name: "", comment: "", image: "", date: "" });
   };
 
   const handleDelete = () => {
@@ -144,6 +159,7 @@ export default function SaunaMap() {
           lng: selectedLocation.lng,
           comment: form.comment,
           image: form.image,
+          date: form.date,
         } : v
       );
       saveVisits(updatedVisits);
@@ -155,7 +171,7 @@ export default function SaunaMap() {
         lng: selectedLocation.lng,
         comment: form.comment,
         image: form.image,
-        date: new Date().toLocaleDateString(),
+        date: form.date || new Date().toISOString().split('T')[0],
       };
       saveVisits([newVisit, ...visits]);
     }
@@ -289,6 +305,17 @@ export default function SaunaMap() {
                 </div>
 
                 <div className="form-group">
+                  <label>行った日</label>
+                  <input
+                    type="date"
+                    className="input"
+                    value={form.date}
+                    onChange={(e) => setForm({ ...form, date: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
                   <label>感想・メモ</label>
                   <textarea
                     className="input textarea"
@@ -328,6 +355,9 @@ export default function SaunaMap() {
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={visit.image} className="sauna-img-preview" alt="" />
                       )}
+                      <div style={{ fontSize: "0.75rem", opacity: 0.5, marginTop: "0.5rem" }}>
+                        行った日: {visit.date}
+                      </div>
                       <div style={{ position: "absolute", top: "1rem", right: "1rem", fontSize: "0.8rem", color: "var(--primary)" }}>
                         編集
                       </div>
@@ -340,7 +370,7 @@ export default function SaunaMap() {
 
           {!isAdding && (
             <div className="sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-              <button className="btn btn-primary" onClick={() => setIsAdding(true)}>
+              <button className="btn btn-primary" onClick={startNewVisit}>
                 新しいピンを立てる
               </button>
               <button 
