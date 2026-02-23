@@ -90,7 +90,11 @@ export default function SaunaMap() {
 
   const saveVisits = (newVisits: SaunaVisit[]) => {
     setVisits(newVisits);
-    localStorage.setItem("sauna-itta_visits", JSON.stringify(newVisits));
+    try {
+      localStorage.setItem("sauna-itta_visits", JSON.stringify(newVisits));
+    } catch (error) {
+      console.error("Failed to persist visits to localStorage:", error);
+    }
   };
 
   const toggleTheme = () => {
