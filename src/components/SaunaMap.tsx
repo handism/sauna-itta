@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -35,26 +35,12 @@ function LocationPicker({ onLocationSelect }: { onLocationSelect: (lat: number, 
   return null;
 }
 
-// Component to programmatically move map
-function MapUpdater({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(center, 13);
-  }, [center, map]);
-  return null;
-}
-
 export default function SaunaMap() {
   const [visits, setVisits] = useState<SaunaVisit[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [form, setForm] = useState({ name: "", comment: "", image: "" });
-  const [searchMethod, setSearchMethod] = useState<"map" | "address" | "coords">("map");
-  const [addressInput, setAddressInput] = useState("");
-  const [latInput, setLatInput] = useState("");
-  const [lngInput, setLngInput] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
@@ -105,65 +91,6 @@ export default function SaunaMap() {
     setEditingId(null);
     setSelectedLocation(null);
     setForm({ name: "", comment: "", image: "" });
-    setAddressInput("");
-    setLatInput("");
-    setLngInput("");
-    setSearchMethod("map");
-  };
-
-  const handleAddressSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!addressInput) return;
-    
-    setIsSearching(true);
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addressInput)}&limit=1`);
-      const data = await res.json();
-      if (data && data.length > 0) {
-        const { lat, lon } = data[0];
-        setSelectedLocation({ lat: parseFloat(lat), lng: parseFloat(lon) });
-      } else {
-        alert("場所が見つかりませんでした。別のキーワードを試してみてください。");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("検索中にエラーが発生しました。");
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const handleCoordSet = (e: React.FormEvent) => {
-    e.preventDefault();
-    const lat = parseFloat(latInput);
-    const lng = parseFloat(lngInput);
-    if (isNaN(lat) || isNaN(lng)) return;
-    setSelectedLocation({ lat, lng });
-  };
-
-  const switchMethod = async (method: "map" | "address" | "coords") => {
-    setSearchMethod(method);
-    if (!selectedLocation) return;
-
-    if (method === "coords") {
-      setLatInput(String(selectedLocation.lat));
-      setLngInput(String(selectedLocation.lng));
-    } else if (method === "address") {
-      setIsSearching(true);
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLocation.lat}&lon=${selectedLocation.lng}`
-        );
-        const data = await res.json();
-        if (data?.display_name) {
-          setAddressInput(data.display_name);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsSearching(false);
-      }
-    }
   };
 
   const handleDelete = () => {
@@ -258,15 +185,12 @@ export default function SaunaMap() {
             </Marker>
           ))}
 
-          {isAdding && !editingId && searchMethod === "map" && <LocationPicker onLocationSelect={(lat, lng) => setSelectedLocation({ lat, lng })} />}
+          {isAdding && !editingId && <LocationPicker onLocationSelect={(lat, lng) => setSelectedLocation({ lat, lng })} />}
 
           {selectedLocation && (
-            <>
-              <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={saunaIcon}>
-                <Popup>{editingId ? "ここへ移動" : "ここにピンを立てますか？"}</Popup>
-              </Marker>
-              <MapUpdater center={[selectedLocation.lat, selectedLocation.lng]} />
-            </>
+            <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={saunaIcon}>
+              <Popup>{editingId ? "ここへ移動" : "ここにピンを立てますか？"}</Popup>
+            </Marker>
           )}
         </MapContainer>
       </div>
@@ -296,101 +220,11 @@ export default function SaunaMap() {
                 <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>
                   {editingId ? "サウナの編集" : "新規サウナ登録"}
                 </h2>
-                <div className="search-method-tabs" style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-                  <button 
-                    type="button"
-                    onClick={() => switchMethod("map")}
-                    className={`btn-tab ${searchMethod === "map" ? "active" : ""}`}
-                    style={{
-                      flex: 1, padding: "0.4rem", fontSize: "0.75rem", borderRadius: "8px",
-                      background: searchMethod === "map" ? "var(--primary)" : "var(--glass)",
-                      color: searchMethod === "map" ? "white" : "var(--foreground)",
-                      border: "none", cursor: "pointer"
-                    }}
-                  >
-                    🗺️ 地図
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => switchMethod("address")}
-                    className={`btn-tab ${searchMethod === "address" ? "active" : ""}`}
-                    style={{
-                      flex: 1, padding: "0.4rem", fontSize: "0.75rem", borderRadius: "8px",
-                      background: searchMethod === "address" ? "var(--primary)" : "var(--glass)",
-                      color: searchMethod === "address" ? "white" : "var(--foreground)",
-                      border: "none", cursor: "pointer"
-                    }}
-                  >
-                    🔍 住所
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => switchMethod("coords")}
-                    className={`btn-tab ${searchMethod === "coords" ? "active" : ""}`}
-                    style={{
-                      flex: 1, padding: "0.4rem", fontSize: "0.75rem", borderRadius: "8px",
-                      background: searchMethod === "coords" ? "var(--primary)" : "var(--glass)",
-                      color: searchMethod === "coords" ? "white" : "var(--foreground)",
-                      border: "none", cursor: "pointer"
-                    }}
-                  >
-                    📍 座標
-                  </button>
-                </div>
-
-                <div style={{ marginBottom: "1.5rem" }}>
-                  {searchMethod === "map" && (
-                    <p style={{ fontSize: "0.8rem", opacity: 0.6 }}>
-                      {selectedLocation ? "場所が選択されました" : "地図上をクリックして場所を選択してください"}
-                    </p>
-                  )}
-                  {searchMethod === "address" && (
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <input 
-                        className="input" 
-                        placeholder="住所を入力..." 
-                        style={{ flex: 1, margin: 0 }}
-                        value={addressInput}
-                        onChange={(e) => setAddressInput(e.target.value)}
-                      />
-                      <button 
-                        type="button" 
-                        onClick={handleAddressSearch}
-                        className="btn btn-primary"
-                        style={{ padding: "0 1rem", fontSize: "0.8rem", width: "auto" }}
-                        disabled={isSearching}
-                      >
-                        {isSearching ? "..." : "検索"}
-                      </button>
-                    </div>
-                  )}
-                  {searchMethod === "coords" && (
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
-                      <input 
-                        className="input" 
-                        placeholder="緯度" 
-                        style={{ flex: 1, margin: 0 }}
-                        value={latInput}
-                        onChange={(e) => setLatInput(e.target.value)}
-                      />
-                      <input 
-                        className="input" 
-                        placeholder="経度" 
-                        style={{ flex: 1, margin: 0 }}
-                        value={lngInput}
-                        onChange={(e) => setLngInput(e.target.value)}
-                      />
-                      <button 
-                        type="button" 
-                        onClick={handleCoordSet}
-                        className="btn btn-primary"
-                        style={{ padding: "0 1rem", fontSize: "0.8rem", width: "auto" }}
-                      >
-                        セット
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <p style={{ fontSize: "0.85rem", opacity: 0.6, marginBottom: "1.5rem" }}>
+                  {editingId ? "内容を更新します" : selectedLocation
+                    ? "場所が選択されました"
+                    : "地図上をクリックして場所を選択してください"}
+                </p>
 
                 <div className="form-group">
                   <label>サウナ名</label>
