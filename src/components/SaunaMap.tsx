@@ -15,16 +15,29 @@ interface SaunaVisit {
   comment: string;
   image?: string;
   date: string;
+  pinType?: "default" | "sauna";
 }
 
-// Custom Marker Icon
-const saunaIcon = L.divIcon({
-  className: "custom-marker",
-  html: `<div class="sauna-marker"></div>`,
-  iconSize: [30, 30],
-  iconAnchor: [15, 30],
-  popupAnchor: [0, -30],
-});
+// Custom Marker Icon Generator
+const getSaunaIcon = (pinType: "default" | "sauna" = "default") => {
+  if (pinType === "sauna") {
+    return L.divIcon({
+      className: "custom-marker-hut",
+      html: `<div class="sauna-hut-marker"></div>`,
+      iconSize: [32, 40],
+      iconAnchor: [16, 40],
+      popupAnchor: [0, -40],
+    });
+  }
+  return L.divIcon({
+    className: "custom-marker",
+    html: `<div class="sauna-marker"></div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30],
+  });
+};
+const defaultIcon = getSaunaIcon("default");
 
 // Component to handle map clicks
 function LocationPicker({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
@@ -41,7 +54,13 @@ export default function SaunaMap() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [form, setForm] = useState({ name: "", comment: "", image: "", date: "" });
+  const [form, setForm] = useState<{ name: string; comment: string; image: string; date: string; pinType: "default" | "sauna" }>({
+    name: "",
+    comment: "",
+    image: "",
+    date: "",
+    pinType: "default"
+  });
   const [isClient, setIsClient] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
@@ -118,7 +137,8 @@ export default function SaunaMap() {
       name: "",
       comment: "",
       image: "",
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      pinType: "default"
     });
     // モバイルではStep1（地図タップ待ち）のためサイドバーを縮小
     if (isMobile) {
@@ -132,7 +152,8 @@ export default function SaunaMap() {
       name: visit.name,
       comment: visit.comment,
       image: visit.image || "",
-      date: visit.date
+      date: visit.date,
+      pinType: visit.pinType || "default"
     });
     setSelectedLocation({ lat: visit.lat, lng: visit.lng });
     setIsAdding(true);
@@ -146,7 +167,7 @@ export default function SaunaMap() {
     setIsAdding(false);
     setEditingId(null);
     setSelectedLocation(null);
-    setForm({ name: "", comment: "", image: "", date: "" });
+    setForm({ name: "", comment: "", image: "", date: "", pinType: "default" });
     if (isMobile) {
       setIsSidebarExpanded(completed);
     }
@@ -183,6 +204,7 @@ export default function SaunaMap() {
           comment: form.comment,
           image: form.image,
           date: form.date,
+          pinType: form.pinType,
         } : v
       );
       saveVisits(updatedVisits);
@@ -195,6 +217,7 @@ export default function SaunaMap() {
         comment: form.comment,
         image: form.image,
         date: form.date || new Date().toISOString().split('T')[0],
+        pinType: form.pinType,
       };
       saveVisits([newVisit, ...visits]);
     }
@@ -225,7 +248,7 @@ export default function SaunaMap() {
           />
 
           {visits.map((visit) => (
-            <Marker key={visit.id} position={[visit.lat, visit.lng]} icon={saunaIcon}>
+            <Marker key={visit.id} position={[visit.lat, visit.lng]} icon={getSaunaIcon(visit.pinType)}>
               <Popup>
                 <div style={{ minWidth: "200px" }}>
                   <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--primary)" }}>{visit.name}</h3>
@@ -259,7 +282,7 @@ export default function SaunaMap() {
           {isAdding && !editingId && <LocationPicker onLocationSelect={handleLocationSelect} />}
 
           {selectedLocation && (
-            <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={saunaIcon}>
+            <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={getSaunaIcon(form.pinType)}>
               <Popup>{editingId ? "ここへ移動" : "ここにピンを立てますか？"}</Popup>
             </Marker>
           )}
@@ -355,6 +378,30 @@ export default function SaunaMap() {
                       onChange={(e) => setForm({ ...form, date: e.target.value })}
                       required
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label>ピンの形</label>
+                    <div className="pin-selector">
+                      <div
+                        className={`pin-option ${form.pinType === "default" ? "selected" : ""}`}
+                        onClick={() => setForm({ ...form, pinType: "default" })}
+                      >
+                        <div className="pin-preview">
+                          <div className="sauna-marker"></div>
+                        </div>
+                        <span style={{ fontSize: "0.75rem" }}>標準</span>
+                      </div>
+                      <div
+                        className={`pin-option ${form.pinType === "sauna" ? "selected" : ""}`}
+                        onClick={() => setForm({ ...form, pinType: "sauna" })}
+                      >
+                        <div className="pin-preview">
+                          <div className="sauna-hut-marker"></div>
+                        </div>
+                        <span style={{ fontSize: "0.75rem" }}>サウナ小屋</span>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="form-group">
