@@ -147,6 +147,28 @@ export default function SaunaMap() {
     setIsSidebarExpanded(true);
   };
 
+  const handleEditPointerUp = (
+    e: React.PointerEvent<HTMLElement>,
+    visit: SaunaVisit
+  ) => {
+    if (e.pointerType === "mouse" && e.button !== 0) {
+      return;
+    }
+    e.preventDefault();
+    startEditing(visit);
+  };
+
+  const handleEditClick = (
+    e: React.MouseEvent<HTMLElement>,
+    visit: SaunaVisit
+  ) => {
+    // pointerup後の遅延click（特にiOS）を無視。キーボード操作(detail=0)のみ許可。
+    if (e.detail !== 0) {
+      return;
+    }
+    startEditing(visit);
+  };
+
   // completed=true: 保存・削除後 → 一覧を見せるためサイドバーを展開
   // completed=false: キャンセル → モバイルではサイドバーを閉じる
   const cancelEditing = (completed = false) => {
@@ -260,7 +282,8 @@ export default function SaunaMap() {
                     {visit.date}
                   </small>
                   <button
-                    onClick={() => startEditing(visit)}
+                    onPointerUp={(e) => handleEditPointerUp(e, visit)}
+                    onClick={(e) => handleEditClick(e, visit)}
                     style={{
                       marginTop: "1rem", width: "100%", padding: "0.5rem",
                       background: "var(--primary)", border: "none", borderRadius: "8px",
@@ -408,7 +431,12 @@ export default function SaunaMap() {
                     </p>
                   ) : (
                     visits.map((visit) => (
-                      <div key={visit.id} className="sauna-card" onClick={() => startEditing(visit)}>
+                      <div
+                        key={visit.id}
+                        className="sauna-card"
+                        onPointerUp={(e) => handleEditPointerUp(e, visit)}
+                        onClick={(e) => handleEditClick(e, visit)}
+                      >
                         <h3 style={{ color: "var(--foreground)" }}>{visit.name}</h3>
                         <p style={{ color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{visit.comment}</p>
                         {visit.image && (
