@@ -154,7 +154,7 @@ export default function SaunaMap() {
     setIsAdding(false);
     setEditingId(null);
     setSelectedLocation(null);
-    setForm({ name: "", comment: "", image: "", date: "", pinType: "default" });
+    setForm({ name: "", comment: "", image: "", date: "" });
     if (isMobile) {
       setIsSidebarExpanded(completed);
     }
@@ -191,7 +191,6 @@ export default function SaunaMap() {
           comment: form.comment,
           image: form.image,
           date: form.date,
-          pinType: form.pinType,
         } : v
       );
       saveVisits(updatedVisits);
@@ -204,7 +203,6 @@ export default function SaunaMap() {
         comment: form.comment,
         image: form.image,
         date: form.date || new Date().toISOString().split('T')[0],
-        pinType: form.pinType,
       };
       saveVisits([newVisit, ...visits]);
     }
@@ -235,7 +233,7 @@ export default function SaunaMap() {
           />
 
           {visits.map((visit) => (
-            <Marker key={visit.id} position={[visit.lat, visit.lng]} icon={getSaunaIcon(visit.pinType)}>
+            <Marker key={visit.id} position={[visit.lat, visit.lng]} icon={getSaunaIcon()}>
               <Popup>
                 <div style={{ minWidth: "200px" }}>
                   <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--primary)" }}>{visit.name}</h3>
@@ -269,7 +267,7 @@ export default function SaunaMap() {
           {isAdding && !editingId && <LocationPicker onLocationSelect={handleLocationSelect} />}
 
           {selectedLocation && (
-            <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={getSaunaIcon(form.pinType)}>
+            <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={getSaunaIcon()}>
               <Popup>{editingId ? "ここへ移動" : "ここにピンを立てますか？"}</Popup>
             </Marker>
           )}
@@ -365,56 +363,6 @@ export default function SaunaMap() {
                       onChange={(e) => setForm({ ...form, date: e.target.value })}
                       required
                     />
-                  </div>
-
-                  <div className="form-group">
-                    <label>ピンの形</label>
-                    <div className="pin-selector">
-                      <div
-                        className={`pin-option ${form.pinType === "default" ? "selected" : ""}`}
-                        onClick={() => setForm({ ...form, pinType: "default" })}
-                      >
-                        <div className="pin-preview">
-                          <div className="sauna-marker"></div>
-                        </div>
-                        <span style={{ fontSize: "0.75rem" }}>標準</span>
-                      </div>
-                      <div
-                        className={`pin-option ${form.pinType === "sauna" ? "selected" : ""}`}
-                        onClick={() => setForm({ ...form, pinType: "sauna" })}
-                      >
-                        <div className="pin-preview">
-                          <div className="sauna-hut-marker"></div>
-                        </div>
-                        <span style={{ fontSize: "0.75rem" }}>サウナ小屋</span>
-                      </div>
-                      <div
-                        className={`pin-option ${form.pinType === "steam" ? "selected" : ""}`}
-                        onClick={() => setForm({ ...form, pinType: "steam" })}
-                      >
-                        <div className="pin-preview">
-                          <div className="steam-marker"></div>
-                        </div>
-                        <span style={{ fontSize: "0.75rem" }}>湯気</span>
-                      </div>
-                      <div
-                        className={`pin-option ${form.pinType === "stove" ? "selected" : ""}`}
-                        onClick={() => setForm({ ...form, pinType: "stove" })}
-                      >
-                        <div className="pin-preview">
-                          <div className="sauna-stove-marker" style={{ marginBottom: 0, transform: "scale(0.7)" }}>
-                            <svg className="stove-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="6" y="10" width="20" height="18" rx="2" fill="white"/>
-                              <rect x="8" y="14" width="16" height="12" rx="1" fill="#E67E22" fillOpacity="0.8"/>
-                              <circle cx="10" cy="8" r="3" fill="white"/>
-                              <circle cx="16" cy="6" r="3.5" fill="white"/>
-                              <circle cx="22" cy="8" r="3" fill="white"/>
-                            </svg>
-                          </div>
-                        </div>
-                        <span style={{ fontSize: "0.75rem" }}>ストーブ</span>
-                      </div>
-                    </div>
                   </div>
 
                   <div className="form-group">
