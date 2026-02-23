@@ -85,13 +85,15 @@ h1, h2, h3, h4, h5, h6, p, span, div {
 .tap-shield {
   position: absolute;
   inset: 0;
-  z-index: 1105;
+  z-index: 1200;
   background: transparent;
   pointer-events: auto;
   touch-action: none;
 }
 
 .sidebar {
+  position: relative;
+  z-index: 1100;
   width: 400px;
   max-height: calc(100vh - 4rem);
   background: var(--glass-heavy);

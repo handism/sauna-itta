@@ -49,6 +49,7 @@ export default function SaunaMap() {
   const [isTapShieldActive, setIsTapShieldActive] = useState(false);
   const touchGuardRef = useRef(false);
   const skipNextEditRef = useRef(false);
+  const skipNextNewVisitRef = useRef(false);
   const touchGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -118,6 +119,11 @@ export default function SaunaMap() {
   };
 
   const startNewVisit = () => {
+    if (isMobile && skipNextNewVisitRef.current) {
+      skipNextNewVisitRef.current = false;
+      return;
+    }
+
     setIsAdding(true);
     setForm({
       name: "",
@@ -180,9 +186,10 @@ export default function SaunaMap() {
   const cancelEditing = (completed = false) => {
     if (completed && isMobile) {
       // iOS/Androidの遅延クリックで一覧が即再タップされるのを防ぐ
-      // 1回分の編集起動を明示的に無視し、時間ガードは保険として残す
+      // 1回分の編集/新規起動を明示的に無視し、時間ガードは保険として残す
       setIsTapShieldActive(true);
       skipNextEditRef.current = true;
+      skipNextNewVisitRef.current = true;
       touchGuardRef.current = true;
       if (touchGuardTimerRef.current) {
         clearTimeout(touchGuardTimerRef.current);
@@ -191,6 +198,7 @@ export default function SaunaMap() {
         setIsTapShieldActive(false);
         touchGuardRef.current = false;
         skipNextEditRef.current = false;
+        skipNextNewVisitRef.current = false;
       }, 1200);
     }
 
