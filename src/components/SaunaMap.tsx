@@ -171,7 +171,7 @@ export default function SaunaMap() {
                       style={{ width: "100%", borderRadius: "8px", marginBottom: "0.5rem" }}
                     />
                   )}
-                  <p style={{ fontSize: "0.9rem", opacity: 0.8 }}>{visit.comment}</p>
+                  <p style={{ fontSize: "0.9rem", opacity: 0.8, whiteSpace: "pre-wrap" }}>{visit.comment}</p>
                   <small style={{ display: "block", marginTop: "0.5rem", opacity: 0.5 }}>
                     {visit.date}
                   </small>
@@ -299,7 +299,7 @@ export default function SaunaMap() {
                   visits.map((visit) => (
                     <div key={visit.id} className="sauna-card" onClick={() => startEditing(visit)}>
                       <h3 style={{ color: "var(--foreground)" }}>{visit.name}</h3>
-                      <p style={{ color: "var(--foreground)" }}>{visit.comment}</p>
+                      <p style={{ color: "var(--foreground)", whiteSpace: "pre-wrap" }}>{visit.comment}</p>
                       {visit.image && (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img src={visit.image} className="sauna-img-preview" alt="" />
