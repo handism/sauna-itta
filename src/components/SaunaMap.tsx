@@ -15,11 +15,11 @@ interface SaunaVisit {
   comment: string;
   image?: string;
   date: string;
-  pinType?: "default" | "sauna" | "steam";
+  pinType?: "default" | "sauna" | "steam" | "stove";
 }
 
 // Custom Marker Icon Generator
-const getSaunaIcon = (pinType: "default" | "sauna" | "steam" = "default") => {
+const getSaunaIcon = (pinType: "default" | "sauna" | "steam" | "stove" = "default") => {
   if (pinType === "sauna") {
     return L.divIcon({
       className: "custom-marker-hut",
@@ -38,6 +38,32 @@ const getSaunaIcon = (pinType: "default" | "sauna" | "steam" = "default") => {
     return L.divIcon({
       className: "custom-marker-steam",
       html: `<div class="steam-marker"></div>`,
+      iconSize: [32, 42],
+      iconAnchor: [16, 42],
+      popupAnchor: [0, -42],
+    });
+  }
+  if (pinType === "stove") {
+    return L.divIcon({
+      className: "custom-marker-stove",
+      html: `
+        <div style="position: relative;">
+          <div class="sauna-stove-marker">
+            <svg class="stove-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="6" y="10" width="20" height="18" rx="2" fill="white"/>
+              <rect x="8" y="14" width="16" height="12" rx="1" fill="#E67E22" fill-opacity="0.8"/>
+              <line x1="10" y1="18" x2="22" y2="18" stroke="#2C3E50" stroke-width="1.5" stroke-linecap="round"/>
+              <line x1="10" y1="22" x2="22" y2="22" stroke="#2C3E50" stroke-width="1.5" stroke-linecap="round"/>
+              <circle cx="10" cy="8" r="3" fill="white"/>
+              <circle cx="16" cy="6" r="3.5" fill="white"/>
+              <circle cx="22" cy="8" r="3" fill="white"/>
+              <circle cx="13" cy="9" r="2.5" fill="white" opacity="0.8"/>
+              <circle cx="19" cy="9" r="2.5" fill="white" opacity="0.8"/>
+            </svg>
+          </div>
+          <div class="sauna-stove-pointer"></div>
+        </div>
+      `,
       iconSize: [32, 42],
       iconAnchor: [16, 42],
       popupAnchor: [0, -42],
@@ -68,7 +94,7 @@ export default function SaunaMap() {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [form, setForm] = useState<{ name: string; comment: string; image: string; date: string; pinType: "default" | "sauna" | "steam" }>({
+  const [form, setForm] = useState<{ name: string; comment: string; image: string; date: string; pinType: "default" | "sauna" | "steam" | "stove" }>({
     name: "",
     comment: "",
     image: "",
@@ -423,6 +449,23 @@ export default function SaunaMap() {
                           <div className="steam-marker"></div>
                         </div>
                         <span style={{ fontSize: "0.75rem" }}>湯気</span>
+                      </div>
+                      <div
+                        className={`pin-option ${form.pinType === "stove" ? "selected" : ""}`}
+                        onClick={() => setForm({ ...form, pinType: "stove" })}
+                      >
+                        <div className="pin-preview">
+                          <div className="sauna-stove-marker" style={{ marginBottom: 0, transform: "scale(0.7)" }}>
+                            <svg className="stove-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <rect x="6" y="10" width="20" height="18" rx="2" fill="white"/>
+                              <rect x="8" y="14" width="16" height="12" rx="1" fill="#E67E22" fillOpacity="0.8"/>
+                              <circle cx="10" cy="8" r="3" fill="white"/>
+                              <circle cx="16" cy="6" r="3.5" fill="white"/>
+                              <circle cx="22" cy="8" r="3" fill="white"/>
+                            </svg>
+                          </div>
+                        </div>
+                        <span style={{ fontSize: "0.75rem" }}>ストーブ</span>
                       </div>
                     </div>
                   </div>
