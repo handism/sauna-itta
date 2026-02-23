@@ -207,7 +207,7 @@ export default function SaunaMap() {
             onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
             aria-label="Toggle Sidebar"
           >
-            ↑
+            {isSidebarExpanded ? "↓" : "↑"}
           </button>
           <div className="sidebar-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
