@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -46,6 +46,8 @@ export default function SaunaMap() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const touchGuardRef = useRef(false);
+  const touchGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -73,6 +75,12 @@ export default function SaunaMap() {
     if (mobile) {
       setIsSidebarExpanded(false);
     }
+
+    return () => {
+      if (touchGuardTimerRef.current) {
+        clearTimeout(touchGuardTimerRef.current);
+      }
+    };
   }, []);
 
   const saveVisits = (newVisits: SaunaVisit[]) => {
@@ -122,6 +130,10 @@ export default function SaunaMap() {
   };
 
   const startEditing = (visit: SaunaVisit) => {
+    if (isMobile && touchGuardRef.current) {
+      return;
+    }
+
     setEditingId(visit.id);
     setForm({
       name: visit.name,
@@ -138,6 +150,17 @@ export default function SaunaMap() {
   // completed=true: 保存・削除後 → 一覧を見せるためサイドバーを展開
   // completed=false: キャンセル → モバイルではサイドバーを閉じる
   const cancelEditing = (completed = false) => {
+    if (completed && isMobile) {
+      // iOS/Androidの遅延クリックで一覧が即再タップされるのを防ぐ
+      touchGuardRef.current = true;
+      if (touchGuardTimerRef.current) {
+        clearTimeout(touchGuardTimerRef.current);
+      }
+      touchGuardTimerRef.current = setTimeout(() => {
+        touchGuardRef.current = false;
+      }, 450);
+    }
+
     setIsAdding(false);
     setEditingId(null);
     setSelectedLocation(null);
