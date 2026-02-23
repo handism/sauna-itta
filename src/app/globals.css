@@ -116,6 +116,7 @@ h1, h2, h3, h4, h5, h6, p, span, div {
 /* Forms */
 .form-group {
   margin-bottom: 1.5rem;
+  overflow: hidden;
 }
 
 .form-group label {
@@ -143,6 +144,15 @@ h1, h2, h3, h4, h5, h6, p, span, div {
   outline: none;
   border-color: var(--primary);
   background: var(--glass);
+}
+
+/* iOS Safari: date input がネイティブ最小幅を優先するのを防ぐ */
+input[type="date"].input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .textarea {
