@@ -141,6 +141,31 @@ export default function SaunaMap() {
     setSelectedLocation({ lat, lng });
   };
 
+  const switchMethod = async (method: "map" | "address" | "coords") => {
+    setSearchMethod(method);
+    if (!selectedLocation) return;
+
+    if (method === "coords") {
+      setLatInput(String(selectedLocation.lat));
+      setLngInput(String(selectedLocation.lng));
+    } else if (method === "address") {
+      setIsSearching(true);
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLocation.lat}&lon=${selectedLocation.lng}`
+        );
+        const data = await res.json();
+        if (data?.display_name) {
+          setAddressInput(data.display_name);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsSearching(false);
+      }
+    }
+  };
+
   const handleDelete = () => {
     if (!editingId) return;
     if (confirm("このサウナの記録を削除しますか？")) {
@@ -274,7 +299,7 @@ export default function SaunaMap() {
                 <div className="search-method-tabs" style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
                   <button 
                     type="button"
-                    onClick={() => setSearchMethod("map")}
+                    onClick={() => switchMethod("map")}
                     className={`btn-tab ${searchMethod === "map" ? "active" : ""}`}
                     style={{
                       flex: 1, padding: "0.4rem", fontSize: "0.75rem", borderRadius: "8px",
@@ -287,7 +312,7 @@ export default function SaunaMap() {
                   </button>
                   <button 
                     type="button"
-                    onClick={() => setSearchMethod("address")}
+                    onClick={() => switchMethod("address")}
                     className={`btn-tab ${searchMethod === "address" ? "active" : ""}`}
                     style={{
                       flex: 1, padding: "0.4rem", fontSize: "0.75rem", borderRadius: "8px",
@@ -300,7 +325,7 @@ export default function SaunaMap() {
                   </button>
                   <button 
                     type="button"
-                    onClick={() => setSearchMethod("coords")}
+                    onClick={() => switchMethod("coords")}
                     className={`btn-tab ${searchMethod === "coords" ? "active" : ""}`}
                     style={{
                       flex: 1, padding: "0.4rem", fontSize: "0.75rem", borderRadius: "8px",
