@@ -17,6 +17,35 @@ interface SaunaVisit {
   date: string;
 }
 
+const loadInitialVisits = (): SaunaVisit[] => {
+  const baseVisits = [...(initialVisits as SaunaVisit[])];
+  if (typeof window === "undefined") return baseVisits;
+
+  const savedVisits = localStorage.getItem("sauna-itta_visits");
+  if (!savedVisits) return baseVisits;
+
+  try {
+    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
+    const initialIds = new Set(baseVisits.map((v) => v.id));
+    const customVisits = parsedSaved.filter((v) => !initialIds.has(v.id));
+    return [...customVisits, ...baseVisits];
+  } catch (e) {
+    console.error("Failed to parse saved visits:", e);
+    return baseVisits;
+  }
+};
+
+const loadInitialTheme = (): "dark" | "light" => {
+  if (typeof window === "undefined") return "dark";
+  const savedTheme = localStorage.getItem("sauna-itta_theme");
+  return savedTheme === "light" ? "light" : "dark";
+};
+
+const getInitialIsMobile = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < 768;
+};
+
 // Custom Marker Icon
 const saunaIcon = L.divIcon({
   className: "custom-marker",
@@ -37,15 +66,14 @@ function LocationPicker({ onLocationSelect }: { onLocationSelect: (lat: number, 
 }
 
 export default function SaunaMap() {
-  const [visits, setVisits] = useState<SaunaVisit[]>([]);
+  const [visits, setVisits] = useState<SaunaVisit[]>(loadInitialVisits);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [form, setForm] = useState({ name: "", comment: "", image: "", date: "" });
-  const [isClient, setIsClient] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">(loadInitialTheme);
+  const [isMobile] = useState<boolean>(getInitialIsMobile);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState<boolean>(() => !getInitialIsMobile());
   const [isTapShieldActive, setIsTapShieldActive] = useState(false);
   const touchGuardRef = useRef(false);
   const skipNextEditRef = useRef(false);
@@ -53,32 +81,6 @@ export default function SaunaMap() {
   const touchGuardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setIsClient(true);
-
-    const savedVisits = localStorage.getItem("sauna-itta_visits");
-    let combinedVisits = [...(initialVisits as SaunaVisit[])];
-
-    if (savedVisits) {
-      try {
-        const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-        const initialIds = new Set(combinedVisits.map(v => v.id));
-        const customVisits = parsedSaved.filter(v => !initialIds.has(v.id));
-        combinedVisits = [...customVisits, ...combinedVisits];
-      } catch (e) {
-        console.error("Failed to parse saved visits:", e);
-      }
-    }
-    setVisits(combinedVisits);
-
-    const savedTheme = localStorage.getItem("sauna-itta_theme") as "dark" | "light";
-    if (savedTheme) setTheme(savedTheme);
-
-    const mobile = window.innerWidth < 768;
-    setIsMobile(mobile);
-    if (mobile) {
-      setIsSidebarExpanded(false);
-    }
-
     return () => {
       if (touchGuardTimerRef.current) {
         clearTimeout(touchGuardTimerRef.current);
@@ -263,8 +265,6 @@ export default function SaunaMap() {
 
   // モバイルでの「場所待ち」状態: サイドバーを非表示にして地図を全面に
   const isMobilePickingLocation = isMobile && isAdding && !editingId && !selectedLocation;
-
-  if (!isClient) return <div className="map-container" style={{ background: "var(--background)" }} />;
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
