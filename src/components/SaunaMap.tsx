@@ -43,6 +43,7 @@ export default function SaunaMap() {
   const [form, setForm] = useState({ name: "", comment: "", image: "" });
   const [isClient, setIsClient] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -55,6 +56,10 @@ export default function SaunaMap() {
 
     const savedTheme = localStorage.getItem("sauna-itta_theme") as "dark" | "light";
     if (savedTheme) setTheme(savedTheme);
+
+    if (window.innerWidth < 768) {
+      setIsSidebarExpanded(false);
+    }
   }, []);
 
   const saveVisits = (newVisits: SaunaVisit[]) => {
@@ -196,7 +201,14 @@ export default function SaunaMap() {
       </div>
 
       <div className="ui-layer" style={{ color: "var(--foreground)" }}>
-        <aside className="sidebar">
+        <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
+          <button 
+            className="mobile-toggle"
+            onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+            aria-label="Toggle Sidebar"
+          >
+            ↑
+          </button>
           <div className="sidebar-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <h1 className="text-primary" style={{ color: "var(--primary)" }}>サウナイッタ</h1>
