@@ -269,6 +269,10 @@ input[type="date"].input {
   box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
 
+.sauna-marker--selected {
+  background: #1e90ff; /* 反対色の青系 */
+}
+
 .sauna-marker::after {
   content: '';
   width: 10px;

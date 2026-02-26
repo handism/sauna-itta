@@ -18,10 +18,10 @@ interface SaunaVisit {
 }
 
 // Custom Marker Icon Generator
-const getSaunaIcon = () => {
+const getSaunaIcon = (isSelected: boolean = false) => {
   return L.divIcon({
     className: "custom-marker",
-    html: `<div class="sauna-marker"></div>`,
+    html: `<div class="sauna-marker ${isSelected ? 'sauna-marker--selected' : ''}"></div>`,
     iconSize: [30, 30],
     iconAnchor: [15, 30],
     popupAnchor: [0, -30],
@@ -253,7 +253,11 @@ export default function SaunaMap() {
           <MapController target={mapTarget} />
 
           {visits.map((visit) => (
-            <Marker key={visit.id} position={[visit.lat, visit.lng]} icon={getSaunaIcon()}>
+            <Marker
+              key={visit.id}
+              position={[visit.lat, visit.lng]}
+              icon={getSaunaIcon(visit.id === editingId)}
+            >
               <Popup>
                 <div style={{ minWidth: "200px" }}>
                   <h3 style={{ margin: "0 0 0.5rem 0", color: "var(--primary)" }}>{visit.name}</h3>
