@@ -290,9 +290,10 @@ export default function SaunaMap() {
 
           {isAdding && !editingId && <LocationPicker onLocationSelect={handleLocationSelect} />}
 
-          {selectedLocation && (
+          {/* 新規作成時のみプレビュー用のピンを表示（既存編集時は既存ピンをハイライト表示） */}
+          {selectedLocation && !editingId && (
             <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={getSaunaIcon()}>
-              <Popup>{editingId ? "ここへ移動" : "ここにピンを立てますか？"}</Popup>
+              <Popup>ここにピンを立てますか？</Popup>
             </Marker>
           )}
         </MapContainer>
