@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import initialVisits from "@/data/sauna-visits.json";
@@ -39,6 +39,22 @@ function LocationPicker({ onLocationSelect }: { onLocationSelect: (lat: number, 
   return null;
 }
 
+// Component to control map view when a sauna is focused from the list
+function MapController({ target }: { target: { lat: number; lng: number } | null }) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!target) return;
+
+    const currentZoom = map.getZoom();
+    const nextZoom = currentZoom < 8 ? 8 : currentZoom;
+
+    map.flyTo([target.lat, target.lng], nextZoom);
+  }, [target, map]);
+
+  return null;
+}
+
 export default function SaunaMap() {
   const [visits, setVisits] = useState<SaunaVisit[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -54,6 +70,7 @@ export default function SaunaMap() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [mapTarget, setMapTarget] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -143,6 +160,7 @@ export default function SaunaMap() {
       date: visit.date,
     });
     setSelectedLocation({ lat: visit.lat, lng: visit.lng });
+    setMapTarget({ lat: visit.lat, lng: visit.lng });
     setIsAdding(true);
     // 編集時はStep1不要なのでサイドバーを開く
     setIsSidebarExpanded(true);
@@ -231,6 +249,8 @@ export default function SaunaMap() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             className="dark-map-tiles"
           />
+
+          <MapController target={mapTarget} />
 
           {visits.map((visit) => (
             <Marker key={visit.id} position={[visit.lat, visit.lng]} icon={getSaunaIcon()}>
