@@ -292,7 +292,7 @@ export default function SaunaMap() {
 
           {/* 新規作成時のみプレビュー用のピンを表示（既存編集時は既存ピンをハイライト表示） */}
           {selectedLocation && !editingId && (
-            <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={getSaunaIcon()}>
+            <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={getSaunaIcon(true)}>
               <Popup>ここにピンを立てますか？</Popup>
             </Marker>
           )}
