@@ -273,6 +273,11 @@ input[type="date"].input {
   background: #1e90ff; /* 反対色の青系 */
 }
 
+.sauna-marker--wishlist {
+  background: #27ae60; /* 行きたいサウナ用のグリーン */
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.6), 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+
 .sauna-marker::after {
   content: '';
   width: 10px;
