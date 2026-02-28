@@ -19,6 +19,7 @@ interface SaunaVisit {
   tags?: string[];
   status?: "visited" | "wishlist";
   area?: string;
+  visitCount?: number;
 }
 
 // Custom Marker Icon Generator
@@ -48,6 +49,19 @@ const getSaunaIcon = (
 };
 const defaultIcon = getSaunaIcon();
 
+// エリア文字列から都道府県名を抽出（例: "東京都 台東区 上野" → "東京都"）
+function extractPrefecture(area: string | undefined): string | null {
+  const s = (area ?? "").trim();
+  if (!s) return null;
+  const first = s.split(/\s/)[0];
+  return /[都道府県]$/.test(first) ? first : null;
+}
+
+// サウナの緯度経度で Google Maps の「ここへ行く」URL を生成
+function getDirectionsUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+}
+
 // Component to handle map clicks
 function LocationPicker({ onLocationSelect }: { onLocationSelect: (lat: number, lng: number) => void }) {
   useMapEvents({
@@ -74,6 +88,59 @@ function MapController({ target }: { target: { lat: number; lng: number } | null
   return null;
 }
 
+// 現在地ボタン: クリックで現在地に地図を飛ばす
+function LocationControl() {
+  const map = useMap();
+  const [locating, setLocating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleLocate = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError("お使いのブラウザは位置情報に対応していません");
+      return;
+    }
+    setLocating(true);
+    setError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        map.flyTo([latitude, longitude], 14);
+        setLocating(false);
+      },
+      () => {
+        setError("位置情報を取得できませんでした");
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  }, [map]);
+
+  return (
+    <div className="location-control" style={{
+      position: "absolute",
+      bottom: "2rem",
+      left: "2rem",
+      zIndex: 1000,
+    }}>
+      {error && (
+        <div style={{ marginBottom: "0.25rem", fontSize: "0.7rem", color: "var(--error)", maxWidth: "140px" }}>
+          {error}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={handleLocate}
+        disabled={locating}
+        className="location-control-btn"
+        aria-label="現在地へ移動"
+        title="現在地へ移動"
+      >
+        {locating ? "…" : "📍"}
+      </button>
+    </div>
+  );
+}
+
 export default function SaunaMap() {
   const [visits, setVisits] = useState<SaunaVisit[]>([]);
   const [isAdding, setIsAdding] = useState(false);
@@ -88,6 +155,7 @@ export default function SaunaMap() {
     tagsText: string;
     status: "visited" | "wishlist";
     area: string;
+    visitCount: number;
   }>({
     name: "",
     comment: "",
@@ -97,6 +165,7 @@ export default function SaunaMap() {
     tagsText: "",
     status: "visited",
     area: "",
+    visitCount: 1,
   });
   const [isClient, setIsClient] = useState(false);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -133,6 +202,7 @@ export default function SaunaMap() {
             tags: v.tags ?? [],
             status: v.status ?? "visited",
             area: v.area ?? "",
+            visitCount: Math.max(1, v.visitCount ?? 1),
           }))
           .filter((v) => !initialIds.has(v.id));
         combinedVisits = [
@@ -143,6 +213,7 @@ export default function SaunaMap() {
             tags: v.tags ?? [],
             status: v.status ?? "visited",
             area: v.area ?? "",
+            visitCount: Math.max(1, v.visitCount ?? 1),
           })),
         ];
       } catch (e) {
@@ -209,6 +280,7 @@ export default function SaunaMap() {
       tagsText: "",
       status: "visited",
       area: "",
+      visitCount: 1,
     });
     // モバイルではStep1（地図タップ待ち）のためサイドバーを縮小
     if (isMobile) {
@@ -227,6 +299,7 @@ export default function SaunaMap() {
       tagsText: (visit.tags ?? []).join(", "),
       status: visit.status ?? "visited",
       area: visit.area ?? "",
+      visitCount: Math.max(1, visit.visitCount ?? 1),
     });
     setSelectedLocation({ lat: visit.lat, lng: visit.lng });
     setMapTarget({ lat: visit.lat, lng: visit.lng });
@@ -250,6 +323,7 @@ export default function SaunaMap() {
       tagsText: "",
       status: "visited",
       area: "",
+      visitCount: 1,
     });
     if (isMobile) {
       setIsSidebarExpanded(completed);
@@ -297,6 +371,7 @@ export default function SaunaMap() {
           tags: normalizedTags,
           status: form.status,
           area: form.area,
+          visitCount: Math.max(1, form.visitCount),
         } : v
       );
       saveVisits(updatedVisits);
@@ -313,6 +388,7 @@ export default function SaunaMap() {
         tags: normalizedTags,
         status: form.status,
         area: form.area,
+        visitCount: Math.max(1, form.visitCount),
       };
       saveVisits([newVisit, ...visits]);
     }
@@ -372,6 +448,8 @@ export default function SaunaMap() {
         lastDate: null as string | null,
         avgRating: 0,
         uniqueAreas: 0,
+        prefectures: [] as string[],
+        prefectureCount: 0,
       };
     }
 
@@ -394,6 +472,14 @@ export default function SaunaMap() {
         .map((v) => (v.area ?? "").trim())
         .filter((a) => a.length > 0)
     );
+    const prefectures = Array.from(
+      new Set(
+        visits
+          .filter((v) => (v.status ?? "visited") === "visited")
+          .map((v) => extractPrefecture(v.area))
+          .filter((p): p is string => p != null)
+      )
+    ).sort((a, b) => a.localeCompare(b, "ja"));
 
     return {
       total,
@@ -403,6 +489,8 @@ export default function SaunaMap() {
       lastDate,
       avgRating,
       uniqueAreas: areas.size,
+      prefectures,
+      prefectureCount: prefectures.length,
     };
   }, [visits]);
 
@@ -422,6 +510,7 @@ export default function SaunaMap() {
           style={{ height: "100%", width: "100%" }}
         >
           <ZoomControl position="bottomright" />
+          <LocationControl />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -469,11 +558,27 @@ export default function SaunaMap() {
                   <p style={{ fontSize: "0.9rem", opacity: 0.8, whiteSpace: "pre-wrap" }}>{visit.comment}</p>
                   <small style={{ display: "block", marginTop: "0.5rem", opacity: 0.5 }}>
                     {visit.date}
+                    {(visit.visitCount ?? 1) > 1 && (
+                      <span style={{ marginLeft: "0.5rem" }}>・{visit.visitCount}回目</span>
+                    )}
                   </small>
+                  <a
+                    href={getDirectionsUrl(visit.lat, visit.lng)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "block", marginTop: "0.75rem", padding: "0.5rem",
+                      background: "var(--glass)", border: "1px solid var(--glass-border)",
+                      borderRadius: "8px", color: "var(--primary)", textAlign: "center",
+                      fontSize: "0.85rem", textDecoration: "none"
+                    }}
+                  >
+                    🧭 ここへ行く
+                  </a>
                   <button
                     onClick={() => startEditing(visit)}
                     style={{
-                      marginTop: "1rem", width: "100%", padding: "0.5rem",
+                      marginTop: "0.5rem", width: "100%", padding: "0.5rem",
                       background: "var(--primary)", border: "none", borderRadius: "8px",
                       color: "white", cursor: "pointer"
                     }}
@@ -714,6 +819,18 @@ export default function SaunaMap() {
                   </div>
 
                   <div className="form-group">
+                    <label>訪問回数</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={999}
+                      className="input"
+                      value={form.visitCount}
+                      onChange={(e) => setForm({ ...form, visitCount: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                    />
+                  </div>
+
+                  <div className="form-group">
                     <label>感想・メモ</label>
                     <textarea
                       className="input textarea"
@@ -742,6 +859,30 @@ export default function SaunaMap() {
                   <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>
                     訪れたサウナ ({filteredVisits.length}/{visits.length})
                   </h2>
+                  {stats.prefectureCount > 0 && (
+                    <div className="prefecture-conquest" style={{ marginBottom: "1rem" }}>
+                      <div style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--foreground)" }}>
+                        🗾 都道府県制覇 {stats.prefectureCount}/47
+                      </div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
+                        {stats.prefectures.map((pref) => (
+                          <span
+                            key={pref}
+                            className="prefecture-badge"
+                            style={{
+                              padding: "0.2rem 0.5rem",
+                              borderRadius: "999px",
+                              background: "var(--primary)",
+                              color: "white",
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {pref}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <div
                     className="filters"
                     style={{
@@ -901,11 +1042,30 @@ export default function SaunaMap() {
                             display: "flex",
                             justifyContent: "space-between",
                             gap: "0.5rem",
+                            flexWrap: "wrap",
                           }}
                         >
                           <span>日付: {visit.date}</span>
+                          {(visit.visitCount ?? 1) > 1 && (
+                            <span>訪問 {visit.visitCount}回目</span>
+                          )}
                           <span>タップで編集</span>
                         </div>
+                        <a
+                          href={getDirectionsUrl(visit.lat, visit.lng)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: "inline-block",
+                            marginTop: "0.5rem",
+                            fontSize: "0.8rem",
+                            color: "var(--primary)",
+                            textDecoration: "none",
+                          }}
+                        >
+                          🧭 ここへ行く
+                        </a>
                       </div>
                     ))
                   )}
@@ -954,6 +1114,7 @@ export default function SaunaMap() {
                               tags: v.tags ?? [],
                               status: v.status ?? "visited",
                               area: v.area ?? "",
+                              visitCount: Math.max(1, v.visitCount ?? 1),
                             }))
                             .filter((v) => !existingIds.has(v.id));
                           if (normalizedImported.length === 0) {
