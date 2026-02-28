@@ -1,0 +1,28 @@
+.main {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1.25rem 3rem;
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.description {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.backLink {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
+}
