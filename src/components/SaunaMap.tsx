@@ -118,8 +118,8 @@ function LocationControl() {
   return (
     <div className="location-control" style={{
       position: "absolute",
-      bottom: "2rem",
-      left: "2rem",
+      top: "2rem",
+      right: "2rem",
       zIndex: 1000,
     }}>
       {error && (

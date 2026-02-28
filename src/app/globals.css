@@ -554,8 +554,8 @@ input[type="date"].input {
   }
 
   .location-control {
-    bottom: 1rem;
-    left: 1rem;
+    top: 1rem;
+    right: 1rem;
   }
 
   .mobile-toggle {
