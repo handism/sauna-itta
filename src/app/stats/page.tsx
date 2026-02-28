@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import styles from '../../app/page.module.css';
+import styles from './stats.module.css';
 import MonthlyVisitsChart from '@/components/charts/MonthlyVisitsChart';
 import RatingDistributionChart from '@/components/charts/RatingDistributionChart';
 import initialVisits from "@/data/sauna-visits.json";
@@ -79,7 +79,7 @@ export default function StatsPage() {
       <main className={styles.main}>
         <div className={styles.description}>
           <h1 style={{ marginRight: 'auto' }}>統計ダッシュボード</h1>
-          <Link href="/" style={{ marginLeft: 'auto' }}>
+          <Link href="/" className={styles.backLink} style={{ marginLeft: 'auto' }}>
             &larr; マップに戻る
           </Link>
         </div>
