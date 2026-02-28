@@ -628,24 +628,6 @@ export default function SaunaMap() {
               <div>
                 <h1 className="text-primary" style={{ color: "var(--primary)" }}>サウナイッタ</h1>
                 <p style={{ fontSize: "0.9rem", margin: 0, color: "var(--foreground)" }}>マイととのいマップ</p>
-                <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", opacity: 0.8 }}>
-                  <span style={{ marginRight: "0.75rem" }}>合計: {stats.total}</span>
-                  <span style={{ marginRight: "0.75rem" }}>行った: {stats.visitedCount}</span>
-                  <span>行きたい: {stats.wishlistCount}</span>
-                  {stats.uniqueAreas > 0 && (
-                    <span style={{ marginLeft: "0.75rem" }}>エリア数: {stats.uniqueAreas}</span>
-                  )}
-                  {stats.firstDate && stats.lastDate && (
-                    <div style={{ marginTop: "0.25rem" }}>
-                      <span>期間: {stats.firstDate} 〜 {stats.lastDate}</span>
-                    </div>
-                  )}
-                  {stats.avgRating > 0 && (
-                    <div style={{ marginTop: "0.25rem" }}>
-                      平均満足度: {stats.avgRating} / 5
-                    </div>
-                  )}
-                </div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
                 <button
@@ -866,30 +848,6 @@ export default function SaunaMap() {
                   <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>
                     訪れたサウナ ({filteredVisits.length}/{visits.length})
                   </h2>
-                  {stats.prefectureCount > 0 && (
-                    <div className="prefecture-conquest" style={{ marginBottom: "1rem" }}>
-                      <div style={{ fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "var(--foreground)" }}>
-                        🗾 都道府県制覇 {stats.prefectureCount}/47
-                      </div>
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem" }}>
-                        {stats.prefectures.map((pref) => (
-                          <span
-                            key={pref}
-                            className="prefecture-badge"
-                            style={{
-                              padding: "0.2rem 0.5rem",
-                              borderRadius: "999px",
-                              background: "var(--primary)",
-                              color: "white",
-                              fontSize: "0.75rem",
-                            }}
-                          >
-                            {pref}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                   <div
                     className="filters"
                     style={{

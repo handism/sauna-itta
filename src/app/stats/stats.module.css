@@ -26,3 +26,61 @@
 .backLink:hover {
   text-decoration: underline;
 }
+
+.summaryGrid {
+  width: 100%;
+  max-width: 1200px;
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.9rem;
+}
+
+.statCard {
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+}
+
+.statCard h3 {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.statCard p {
+  margin: 0.35rem 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.prefectureSection {
+  width: 100%;
+  max-width: 1200px;
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+}
+
+.prefectureSection h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.badgeList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.prefectureBadge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.75rem;
+}
