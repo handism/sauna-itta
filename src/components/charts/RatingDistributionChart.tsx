@@ -48,7 +48,25 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
 
   const textColor = theme === 'light' ? '#2c3e50' : '#f2f2f2';
 
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }: any) => {
+  type PieLabelProps = {
+    cx?: number;
+    cy?: number;
+    midAngle?: number;
+    innerRadius?: number;
+    outerRadius?: number;
+    percent?: number;
+    name?: string;
+  };
+
+  const renderCustomizedLabel = ({
+    cx = 0,
+    cy = 0,
+    midAngle = 0,
+    innerRadius = 0,
+    outerRadius = 0,
+    percent = 0,
+    name = '',
+  }: PieLabelProps) => {
     const RADIAN = Math.PI / 180;
     const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);

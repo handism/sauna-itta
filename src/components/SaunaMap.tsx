@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
-"leaflet/dist/leaflet.css";
+import "leaflet/dist/leaflet.css";
 import initialVisits from "@/data/sauna-visits.json";
 
 // Interface for Sauna Visit
@@ -48,8 +48,6 @@ const getSaunaIcon = (
     popupAnchor: [0, -30],
   });
 };
-const defaultIcon = getSaunaIcon();
-
 // エリア文字列から都道府県名を抽出（例: "東京都 台東区 上野" → "東京都"）
 function extractPrefecture(area: string | undefined): string | null {
   const s = (area ?? "").trim();
@@ -61,6 +59,52 @@ function extractPrefecture(area: string | undefined): string | null {
 // サウナの緯度経度で Google Maps の「ここへ行く」URL を生成
 function getDirectionsUrl(lat: number, lng: number): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+}
+
+function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
+  return visits.map((v) => ({
+    ...v,
+    rating: v.rating ?? 0,
+    tags: v.tags ?? [],
+    status: v.status ?? "visited",
+    area: v.area ?? "",
+    visitCount: Math.max(1, v.visitCount ?? 1),
+  }));
+}
+
+function getInitialVisits(): SaunaVisit[] {
+  const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
+  if (typeof window === "undefined") {
+    return baseVisits;
+  }
+
+  const savedVisits = localStorage.getItem("sauna-itta_visits");
+  if (!savedVisits) {
+    return baseVisits;
+  }
+
+  try {
+    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
+    const normalizedSaved = normalizeVisits(parsedSaved);
+    const initialIds = new Set(baseVisits.map((v) => v.id));
+    const customVisits = normalizedSaved.filter((v) => !initialIds.has(v.id));
+    return [...customVisits, ...baseVisits];
+  } catch (e) {
+    console.error("Failed to parse saved visits:", e);
+    return baseVisits;
+  }
+}
+
+function getInitialTheme(): "dark" | "light" {
+  if (typeof window === "undefined") {
+    return "dark";
+  }
+  const savedTheme = localStorage.getItem("sauna-itta_theme");
+  return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
+}
+
+function getInitialIsMobile(): boolean {
+  return typeof window !== "undefined" && window.innerWidth < 768;
 }
 
 // Component to handle map clicks
@@ -143,7 +187,7 @@ function LocationControl() {
 }
 
 export default function SaunaMap() {
-  const [visits, setVisits] = useState<SaunaVisit[]>([]);
+  const [visits, setVisits] = useState<SaunaVisit[]>(getInitialVisits);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -168,10 +212,9 @@ export default function SaunaMap() {
     area: "",
     visitCount: 1,
   });
-  const [isClient, setIsClient] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(!getInitialIsMobile());
+  const [isMobile] = useState(getInitialIsMobile);
   const [mapTarget, setMapTarget] = useState<{ lat: number; lng: number } | null>(null);
   const [filters, setFilters] = useState<{
     search: string;
@@ -185,53 +228,6 @@ export default function SaunaMap() {
     sort: "recent",
   });
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-
-    const savedVisits = localStorage.getItem("sauna-itta_visits");
-    let combinedVisits = [...(initialVisits as SaunaVisit[])];
-
-    if (savedVisits) {
-      try {
-        const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-        const initialIds = new Set(combinedVisits.map((v) => v.id));
-        const customVisits = parsedSaved
-          .map((v) => ({
-            ...v,
-            rating: v.rating ?? 0,
-            tags: v.tags ?? [],
-            status: v.status ?? "visited",
-            area: v.area ?? "",
-            visitCount: Math.max(1, v.visitCount ?? 1),
-          }))
-          .filter((v) => !initialIds.has(v.id));
-        combinedVisits = [
-          ...customVisits,
-          ...combinedVisits.map((v) => ({
-            ...v,
-            rating: v.rating ?? 0,
-            tags: v.tags ?? [],
-            status: v.status ?? "visited",
-            area: v.area ?? "",
-            visitCount: Math.max(1, v.visitCount ?? 1),
-          })),
-        ];
-      } catch (e) {
-        console.error("Failed to parse saved visits:", e);
-      }
-    }
-    setVisits(combinedVisits);
-
-    const savedTheme = localStorage.getItem("sauna-itta_theme") as "dark" | "light";
-    if (savedTheme) setTheme(savedTheme);
-
-    const mobile = window.innerWidth < 768;
-    setIsMobile(mobile);
-    if (mobile) {
-      setIsSidebarExpanded(false);
-    }
-  }, []);
 
   const saveVisits = (newVisits: SaunaVisit[]) => {
     setVisits(newVisits);
@@ -497,8 +493,6 @@ export default function SaunaMap() {
 
   // モバイルでの「場所待ち」状態: サイドバーを非表示にして地図を全面に
   const isMobilePickingLocation = isMobile && isAdding && !editingId && !selectedLocation;
-
-  if (!isClient) return <div className="map-container" style={{ background: "var(--background)" }} />;
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
