@@ -72,7 +72,10 @@ export default function StatsPage() {
   }, []);
 
   return (
-    <div className={theme === 'light' ? 'light-theme' : ''}>
+    <div
+      className={theme === 'light' ? 'light-theme' : ''}
+      style={{ background: 'var(--background)', color: 'var(--foreground)', minHeight: '100vh' }}
+    >
       <main className={styles.main}>
         <div className={styles.description}>
           <h1 style={{ marginRight: 'auto' }}>統計ダッシュボード</h1>
