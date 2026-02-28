@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import styles from './stats.module.css';
 import MonthlyVisitsChart from '@/components/charts/MonthlyVisitsChart';
@@ -77,6 +77,16 @@ function extractPrefecture(area: string | undefined): string | null {
 export default function StatsPage() {
   const [visits] = useState<SaunaVisit[]>(getInitialVisits);
   const [theme] = useState<'dark' | 'light'>(getInitialTheme);
+
+  useEffect(() => {
+    document.documentElement.classList.add("allow-page-scroll");
+    document.body.classList.add("allow-page-scroll");
+    return () => {
+      document.documentElement.classList.remove("allow-page-scroll");
+      document.body.classList.remove("allow-page-scroll");
+    };
+  }, []);
+
   const stats = useMemo(() => {
     const total = visits.length;
     if (total === 0) {
