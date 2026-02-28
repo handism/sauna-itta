@@ -491,6 +491,21 @@ export default function SaunaMap() {
     };
   }, [visits]);
 
+  const isFilterActive =
+    filters.search.trim().length > 0 ||
+    filters.status !== "all" ||
+    filters.minRating > 0 ||
+    filters.sort !== "recent";
+
+  const clearFilters = () => {
+    setFilters({
+      search: "",
+      status: "all",
+      minRating: 0,
+      sort: "recent",
+    });
+  };
+
   // モバイルでの「場所待ち」状態: サイドバーを非表示にして地図を全面に
   const isMobilePickingLocation = isMobile && isAdding && !editingId && !selectedLocation;
 
@@ -524,20 +539,20 @@ export default function SaunaMap() {
               })}
             >
               <Popup>
-                <div style={{ minWidth: "200px" }}>
-                  <h3 style={{ margin: "0 0 0.25rem 0", color: "var(--primary)" }}>
+                <div className="popup-card">
+                  <h3 className="popup-title">
                     {visit.name}
                     {(visit.status ?? "visited") === "wishlist" && (
-                      <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem" }}>🏷 行きたい</span>
+                      <span className="wishlist-chip">🏷 行きたい</span>
                     )}
                   </h3>
                   {visit.area && (
-                    <div style={{ fontSize: "0.8rem", opacity: 0.7, marginBottom: "0.25rem" }}>
+                    <div className="popup-area">
                       {visit.area}
                     </div>
                   )}
                   {(visit.rating ?? 0) > 0 && (
-                    <div style={{ fontSize: "0.8rem", marginBottom: "0.5rem" }}>
+                    <div className="popup-rating">
                       {"★".repeat(visit.rating ?? 0)}
                       {"☆".repeat(5 - (visit.rating ?? 0))}
                     </div>
@@ -547,36 +562,27 @@ export default function SaunaMap() {
                     <img
                       src={visit.image}
                       alt={visit.name}
-                      style={{ width: "100%", borderRadius: "8px", marginBottom: "0.5rem" }}
+                      className="popup-image"
                     />
                   )}
-                  <p style={{ fontSize: "0.9rem", opacity: 0.8, whiteSpace: "pre-wrap" }}>{visit.comment}</p>
-                  <small style={{ display: "block", marginTop: "0.5rem", opacity: 0.5 }}>
+                  <p className="popup-comment">{visit.comment}</p>
+                  <small className="popup-meta">
                     {visit.date}
                     {(visit.visitCount ?? 1) > 1 && (
-                      <span style={{ marginLeft: "0.5rem" }}>・{visit.visitCount}回目</span>
+                      <span>・{visit.visitCount}回目</span>
                     )}
                   </small>
                   <a
                     href={getDirectionsUrl(visit.lat, visit.lng)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: "block", marginTop: "0.75rem", padding: "0.5rem",
-                      background: "var(--glass)", border: "1px solid var(--glass-border)",
-                      borderRadius: "8px", color: "var(--primary)", textAlign: "center",
-                      fontSize: "0.85rem", textDecoration: "none"
-                    }}
+                    className="popup-link"
                   >
                     🧭 ここへ行く
                   </a>
                   <button
                     onClick={() => startEditing(visit)}
-                    style={{
-                      marginTop: "0.5rem", width: "100%", padding: "0.5rem",
-                      background: "var(--primary)", border: "none", borderRadius: "8px",
-                      color: "white", cursor: "pointer"
-                    }}
+                    className="popup-edit-btn"
                   >
                     編集する
                   </button>
@@ -615,7 +621,7 @@ export default function SaunaMap() {
 
       {/* サイドバー: 場所選択中のモバイルでは非表示 */}
       {!isMobilePickingLocation && (
-        <div className="ui-layer" style={{ color: "var(--foreground)" }}>
+        <div className="ui-layer">
           <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
             <button
               className="mobile-toggle"
@@ -624,44 +630,33 @@ export default function SaunaMap() {
             >
               {isSidebarExpanded ? "↓" : "↑"}
             </button>
-            <div className="sidebar-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <h1 className="text-primary" style={{ color: "var(--primary)" }}>サウナイッタ</h1>
-                <p style={{ fontSize: "0.9rem", margin: 0, color: "var(--foreground)" }}>マイととのいマップ</p>
+            <div className="sidebar-header">
+              <div className="sidebar-header-main">
+                <h1 className="text-primary">サウナイッタ</h1>
+                <p>マイととのいマップ</p>
+                <div className="sidebar-stats">
+                  <span>{stats.total}件</span>
+                  <span>行った {stats.visitedCount}</span>
+                  <span>行きたい {stats.wishlistCount}</span>
+                </div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
+              <div className="sidebar-actions">
                 <button
+                  type="button"
                   onClick={toggleTheme}
-                  style={{
-                    background: "var(--glass)", border: "1px solid var(--glass-border)",
-                    color: "var(--foreground)", padding: "0.5rem 1rem", borderRadius: "20px",
-                    cursor: "pointer", fontSize: "0.8rem", fontWeight: "bold"
-                  }}
+                  className="chip-btn"
                 >
                   {theme === "dark" ? "☀️ ライト" : "🌙 ダーク"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsShareViewOpen(true)}
-                  style={{
-                    background: "var(--glass)", border: "1px solid var(--glass-border)",
-                    color: "var(--foreground)", padding: "0.35rem 0.75rem", borderRadius: "20px",
-                    cursor: "pointer", fontSize: "0.7rem",
-                  }}
+                  className="chip-btn"
                 >
                   📸 シェア用ビュー
                 </button>
-                <Link href="/stats">
-                  <button
-                    type="button"
-                    style={{
-                      background: "var(--glass)", border: "1px solid var(--glass-border)",
-                      color: "var(--foreground)", padding: "0.35rem 0.75rem", borderRadius: "20px",
-                      cursor: "pointer", fontSize: "0.7rem", width: '100%'
-                    }}
-                  >
-                    📊 詳細スタッツ
-                  </button>
+                <Link href="/stats" className="chip-btn chip-link">
+                  📊 詳細スタッツ
                 </Link>
               </div>
             </div>
@@ -669,10 +664,10 @@ export default function SaunaMap() {
             <div className="sidebar-content">
               {isAdding ? (
                 <form onSubmit={handleSubmit}>
-                  <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>
+                  <h2 className="panel-title mb-2">
                     {editingId ? "サウナの編集" : "新規サウナ登録"}
                   </h2>
-                  <p style={{ fontSize: "0.85rem", opacity: 0.6, marginBottom: "1.5rem" }}>
+                  <p className="panel-subtitle">
                     {editingId ? "内容を更新します" : selectedLocation
                       ? "場所が選択されました ✅"
                       : "地図上をクリックして場所を選択してください"}
@@ -701,7 +696,7 @@ export default function SaunaMap() {
 
                   <div className="form-group">
                     <label>ステータス</label>
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <div className="segmented">
                       <button
                         type="button"
                         className="btn"
@@ -737,7 +732,7 @@ export default function SaunaMap() {
 
                   <div className="form-group">
                     <label>満足度（★1〜5）</label>
-                    <div style={{ display: "flex", gap: "0.25rem", fontSize: "1.2rem" }}>
+                    <div className="rating-row">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
@@ -757,14 +752,7 @@ export default function SaunaMap() {
                       <button
                         type="button"
                         onClick={() => setForm({ ...form, rating: 0 })}
-                        style={{
-                          marginLeft: "0.5rem",
-                          fontSize: "0.8rem",
-                          background: "transparent",
-                          border: "none",
-                          cursor: "pointer",
-                          opacity: 0.7,
-                        }}
+                        className="clear-rating"
                       >
                         クリア
                       </button>
@@ -788,7 +776,7 @@ export default function SaunaMap() {
                       className="input"
                       accept="image/*"
                       onChange={handleImageChange}
-                      style={{ fontSize: "0.8rem", padding: "0.5rem" }}
+                      style={{ fontSize: "0.84rem", padding: "0.55rem" }}
                     />
                     {form.image && (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -829,12 +817,12 @@ export default function SaunaMap() {
                     />
                   </div>
 
-                  <div className="cta-group" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                  <div className="cta-group">
                     <button type="submit" className="btn btn-primary" disabled={!selectedLocation}>
                       保存
                     </button>
                     {editingId && (
-                      <button type="button" className="btn" style={{ background: "var(--error)", color: "white" }} onClick={handleDelete}>
+                      <button type="button" className="btn btn-danger" onClick={handleDelete}>
                         削除
                       </button>
                     )}
@@ -845,18 +833,10 @@ export default function SaunaMap() {
                 </form>
               ) : (
                 <div className="sauna-list">
-                  <h2 className="mb-2" style={{ fontSize: "1.2rem", color: "var(--foreground)" }}>
+                  <h2 className="panel-title mb-2">
                     訪れたサウナ ({filteredVisits.length}/{visits.length})
                   </h2>
-                  <div
-                    className="filters"
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.5rem",
-                      marginBottom: "0.75rem",
-                    }}
-                  >
+                  <div className="filters">
                     <input
                       className="input"
                       placeholder="キーワード検索（名前・コメント・タグ・エリア）"
@@ -865,14 +845,7 @@ export default function SaunaMap() {
                         setFilters((prev) => ({ ...prev, search: e.target.value }))
                       }
                     />
-                    <div
-                      style={{
-                        display: "flex",
-                        flexWrap: "wrap",
-                        gap: "0.5rem",
-                        fontSize: "0.8rem",
-                      }}
-                    >
+                    <div className="filters-row">
                       <select
                         className="input"
                         style={{ flex: 1, minWidth: "120px" }}
@@ -905,8 +878,8 @@ export default function SaunaMap() {
                         <option value="ratingAsc">満足度が低い順</option>
                       </select>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <label style={{ fontSize: "0.8rem", opacity: 0.8 }}>最低満足度</label>
+                    <div className="filters-row filters-inline">
+                      <label className="filters-label">最低満足度</label>
                       <select
                         className="input"
                         style={{ maxWidth: "120px" }}
@@ -925,91 +898,63 @@ export default function SaunaMap() {
                         <option value={4}>★4以上</option>
                         <option value={5}>★5のみ</option>
                       </select>
+                      {isFilterActive && (
+                        <button
+                          type="button"
+                          className="btn btn-ghost filters-reset"
+                          onClick={clearFilters}
+                        >
+                          フィルター解除
+                        </button>
+                      )}
                     </div>
                   </div>
                   {visits.length === 0 ? (
-                    <p style={{ opacity: 0.5, textAlign: "center", marginTop: "2rem" }}>
+                    <p className="empty-state">
                       まだ投稿がありません。<br />新しいピンを立ててみましょう！
                     </p>
                   ) : filteredVisits.length === 0 ? (
-                    <p style={{ opacity: 0.5, textAlign: "center", marginTop: "2rem" }}>
+                    <p className="empty-state">
                       条件に合うサウナがありません。<br />
                       フィルタ条件を見直してみてください。
                     </p>
                   ) : (
                     filteredVisits.map((visit) => (
                       <div key={visit.id} className="sauna-card" onClick={() => startEditing(visit)}>
-                        <h3 style={{ color: "var(--foreground)", marginBottom: "0.25rem" }}>
+                        <h3 className="sauna-card-title">
                           {visit.name}
                           {(visit.status ?? "visited") === "wishlist" && (
                             <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem" }}>🏷 行きたい</span>
                           )}
                         </h3>
                         {visit.area && (
-                          <div
-                            style={{
-                              fontSize: "0.8rem",
-                              opacity: 0.75,
-                              marginBottom: "0.25rem",
-                            }}
-                          >
+                          <div className="sauna-card-area">
                             {visit.area}
                           </div>
                         )}
                         {(visit.rating ?? 0) > 0 && (
-                          <div
-                            style={{
-                              fontSize: "0.8rem",
-                              marginBottom: "0.25rem",
-                              color: "var(--primary)",
-                            }}
-                          >
+                          <div className="sauna-card-rating">
                             {"★".repeat(visit.rating ?? 0)}
                             {"☆".repeat(5 - (visit.rating ?? 0))}
                           </div>
                         )}
                         {visit.tags && visit.tags.length > 0 && (
-                          <div
-                            style={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: "0.25rem",
-                              marginBottom: "0.25rem",
-                              fontSize: "0.75rem",
-                            }}
-                          >
+                          <div className="sauna-tag-list">
                             {visit.tags.map((tag) => (
-                              <span
-                                key={tag}
-                                style={{
-                                  padding: "0.1rem 0.35rem",
-                                  borderRadius: "999px",
-                                  background: "var(--glass)",
-                                }}
-                              >
+                              <span key={tag} className="sauna-tag">
                                 {tag}
                               </span>
                             ))}
                           </div>
                         )}
-                        <p style={{ color: "var(--foreground)", whiteSpace: "pre-wrap" }}>
+                        <p className="sauna-card-comment">
                           {visit.comment}
                         </p>
                         {visit.image && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={visit.image} className="sauna-img-preview" alt="" />
                         )}
-                        <div
-                          style={{
-                            fontSize: "0.75rem",
-                            opacity: 0.5,
-                            marginTop: "0.5rem",
-                            display: "flex",
-                            justifyContent: "space-between",
-                            gap: "0.5rem",
-                            flexWrap: "wrap",
-                          }}
-                        >
+                        <div className="sauna-card-meta">
                           <span>日付: {visit.date}</span>
                           {(visit.visitCount ?? 1) > 1 && (
                             <span>訪問 {visit.visitCount}回目</span>
@@ -1021,13 +966,7 @@ export default function SaunaMap() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          style={{
-                            display: "inline-block",
-                            marginTop: "0.5rem",
-                            fontSize: "0.8rem",
-                            color: "var(--primary)",
-                            textDecoration: "none",
-                          }}
+                          className="route-link"
                         >
                           🧭 ここへ行く
                         </a>
@@ -1039,25 +978,20 @@ export default function SaunaMap() {
             </div>
 
             {!isAdding && (
-              <div className="sidebar-footer" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+              <div className="sidebar-footer">
                 <button className="btn btn-primary" onClick={startNewVisit}>
                   新しいピンを立てる
                 </button>
                 <button
                   className="btn btn-ghost"
                   onClick={exportData}
-                  style={{ fontSize: "0.8rem", padding: "0.5rem" }}
+                  style={{ fontSize: "0.84rem", padding: "0.56rem" }}
                 >
                   📥 データを出力する (GitHub保存用)
                 </button>
                 <label
                   className="btn btn-ghost"
-                  style={{
-                    fontSize: "0.8rem",
-                    padding: "0.5rem",
-                    textAlign: "center",
-                    cursor: "pointer",
-                  }}
+                  style={{ fontSize: "0.84rem", padding: "0.56rem", textAlign: "center", cursor: "pointer" }}
                 >
                   📤 データを読み込む (JSON)
                   <input
@@ -1104,58 +1038,28 @@ export default function SaunaMap() {
       )}
 
       {isShareViewOpen && (
-        <div
-          className="share-overlay"
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.7)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-          onClick={() => setIsShareViewOpen(false)}
-        >
-          <div
-            style={{
-              background: "var(--background)",
-              color: "var(--foreground)",
-              padding: "1.5rem",
-              borderRadius: "16px",
-              width: "min(640px, 90vw)",
-              maxHeight: "80vh",
-              overflow: "auto",
-              boxShadow: "0 10px 40px rgba(0,0,0,0.4)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+        <div className="share-overlay" onClick={() => setIsShareViewOpen(false)}>
+          <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="share-header">
               <div>
-                <h2 style={{ margin: 0, color: "var(--primary)" }}>サウナイッタ シェアビュー</h2>
-                <p style={{ fontSize: "0.8rem", opacity: 0.8, marginTop: "0.25rem" }}>
+                <h2>サウナイッタ シェアビュー</h2>
+                <p>
                   この画面をスクリーンショットしてSNSに投稿できます
                 </p>
               </div>
               <button
                 onClick={() => setIsShareViewOpen(false)}
-                style={{
-                  border: "none",
-                  background: "transparent",
-                  fontSize: "1.2rem",
-                  cursor: "pointer",
-                  color: "var(--foreground)",
-                }}
+                className="share-close"
               >
                 ✕
               </button>
             </div>
-            <div style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>
-              <div style={{ marginBottom: "0.25rem" }}>
+            <div className="share-summary">
+              <div>
                 合計サウナ数: <strong>{stats.total}</strong> （行った: {stats.visitedCount} / 行きたい: {stats.wishlistCount}）
               </div>
               {stats.firstDate && stats.lastDate && (
-                <div style={{ marginBottom: "0.25rem" }}>
+                <div>
                   記録期間: <strong>{stats.firstDate}</strong> 〜 <strong>{stats.lastDate}</strong>
                 </div>
               )}
@@ -1165,16 +1069,10 @@ export default function SaunaMap() {
                 </div>
               )}
             </div>
-            <div style={{ borderTop: "1px solid var(--glass-border)", paddingTop: "0.75rem", fontSize: "0.8rem" }}>
+            <div className="share-list">
               {filteredVisits.slice(0, 30).map((visit) => (
-                <div
-                  key={visit.id}
-                  style={{
-                    padding: "0.5rem 0",
-                    borderBottom: "1px solid rgba(255,255,255,0.05)",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem" }}>
+                <div key={visit.id} className="share-item">
+                  <div className="share-item-top">
                     <div>
                       <strong>{visit.name}</strong>
                       {(visit.status ?? "visited") === "wishlist" && (
@@ -1184,40 +1082,32 @@ export default function SaunaMap() {
                         <span style={{ marginLeft: "0.5rem", opacity: 0.8 }}>{visit.area}</span>
                       )}
                     </div>
-                    <span style={{ opacity: 0.7 }}>{visit.date}</span>
+                    <span>{visit.date}</span>
                   </div>
                   {(visit.rating ?? 0) > 0 && (
-                    <div style={{ marginTop: "0.1rem", color: "var(--primary)" }}>
+                    <div className="share-rating">
                       {"★".repeat(visit.rating ?? 0)}
                       {"☆".repeat(5 - (visit.rating ?? 0))}
                     </div>
                   )}
                   {visit.tags && visit.tags.length > 0 && (
-                    <div style={{ marginTop: "0.1rem" }}>
+                    <div className="share-tags">
                       {visit.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          style={{
-                            display: "inline-block",
-                            marginRight: "0.25rem",
-                            fontSize: "0.75rem",
-                            opacity: 0.85,
-                          }}
-                        >
+                        <span key={tag}>
                           #{tag}
                         </span>
                       ))}
                     </div>
                   )}
                   {visit.comment && (
-                    <div style={{ marginTop: "0.15rem", opacity: 0.9, whiteSpace: "pre-wrap" }}>
+                    <div className="share-comment">
                       {visit.comment}
                     </div>
                   )}
                 </div>
               ))}
               {filteredVisits.length > 30 && (
-                <div style={{ marginTop: "0.5rem", textAlign: "center", opacity: 0.7 }}>
+                <div className="share-more">
                   ほか {filteredVisits.length - 30} 件…
                 </div>
               )}

@@ -45,7 +45,8 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
     return chartData;
   }, [visits]);
 
-  const tickColor = theme === 'light' ? '#2c3e50' : '#f2f2f2';
+  const tickColor = theme === 'light' ? '#334155' : '#f1f5f9';
+  const gridColor = theme === 'light' ? 'rgba(15, 23, 42, 0.14)' : 'rgba(241, 245, 249, 0.18)';
 
   if (data.length === 0) {
     return <p>訪問記録がありません。</p>;
@@ -59,9 +60,9 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
           top: 5, right: 30, left: 20, bottom: 5,
         }}
       >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" tick={{ fill: tickColor }} />
-        <YAxis allowDecimals={false} tick={{ fill: tickColor }} />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+        <XAxis dataKey="month" tick={{ fill: tickColor, fontSize: 11 }} />
+        <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 11 }} />
         <Tooltip
           contentStyle={{
             backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(13, 13, 13, 0.8)',
@@ -69,8 +70,8 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
             color: tickColor,
           }}
         />
-        <Legend wrapperStyle={{ color: tickColor }} />
-        <Bar dataKey="visits" fill="#8884d8" name="訪問数" />
+        <Legend wrapperStyle={{ color: tickColor, fontSize: 12 }} />
+        <Bar dataKey="visits" fill={theme === 'light' ? '#e3702d' : '#f49b56'} name="訪問数" />
       </BarChart>
     </ResponsiveContainer>
   );
