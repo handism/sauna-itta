@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import Link from "next/link";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+"leaflet/dist/leaflet.css";
 import initialVisits from "@/data/sauna-visits.json";
 
 // Interface for Sauna Visit
@@ -674,6 +675,18 @@ export default function SaunaMap() {
                 >
                   📸 シェア用ビュー
                 </button>
+                <Link href="/stats">
+                  <button
+                    type="button"
+                    style={{
+                      background: "var(--glass)", border: "1px solid var(--glass-border)",
+                      color: "var(--foreground)", padding: "0.35rem 0.75rem", borderRadius: "20px",
+                      cursor: "pointer", fontSize: "0.7rem", width: '100%'
+                    }}
+                  >
+                    📊 詳細スタッツ
+                  </button>
+                </Link>
               </div>
             </div>
 
