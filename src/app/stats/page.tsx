@@ -133,17 +133,17 @@ export default function StatsPage() {
   }, [visits]);
 
   return (
-    <div
-      className={theme === 'light' ? 'light-theme' : ''}
-      style={{ background: 'var(--background)', color: 'var(--foreground)', minHeight: '100vh' }}
-    >
+    <div className={`${styles.page} ${theme === 'light' ? 'light-theme' : ''}`}>
       <main className={styles.main}>
-        <div className={styles.description}>
-          <h1 style={{ marginRight: 'auto' }}>統計ダッシュボード</h1>
-          <Link href="/" className={styles.backLink} style={{ marginLeft: 'auto' }}>
+        <header className={styles.description}>
+          <div>
+            <p className={styles.eyebrow}>Sauna Itta Analytics</p>
+            <h1>統計ダッシュボード</h1>
+          </div>
+          <Link href="/" className={styles.backLink}>
             &larr; マップに戻る
           </Link>
-        </div>
+        </header>
 
         <div className={styles.summaryGrid}>
           <article className={styles.statCard}>
@@ -174,7 +174,7 @@ export default function StatsPage() {
 
         {stats.prefectureCount > 0 && (
           <section className={styles.prefectureSection}>
-            <h2>🗾 都道府県制覇</h2>
+            <h2>都道府県制覇</h2>
             <div className={styles.badgeList}>
               {stats.prefectures.map((pref) => (
                 <span key={pref} className={styles.prefectureBadge}>
@@ -185,14 +185,14 @@ export default function StatsPage() {
           </section>
         )}
 
-        <div style={{ width: '100%', maxWidth: '1200px', marginTop: '2rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
-            <section style={{ marginBottom: '3rem' }}>
+        <div className={styles.chartsWrap}>
+          <div className={styles.chartGrid}>
+            <section className={styles.chartCard}>
               <h2>月別訪問数</h2>
               <MonthlyVisitsChart visits={visits} theme={theme} />
             </section>
 
-            <section style={{ marginBottom: '3rem' }}>
+            <section className={styles.chartCard}>
               <h2>満足度分布</h2>
               <RatingDistributionChart visits={visits} theme={theme} />
             </section>

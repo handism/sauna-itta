@@ -15,7 +15,7 @@ interface RatingDistributionChartProps {
   theme: 'dark' | 'light';
 }
 
-const COLORS = ['#FF8042', '#FFBB28', '#00C49F', '#0088FE', '#8884d8'];
+const COLORS = ['#f08d49', '#f8c04e', '#6fcf97', '#5b9dff', '#8f7cf7'];
 const RATING_LABELS: { [key: number]: string } = {
   1: '★1',
   2: '★2',
@@ -92,13 +92,13 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
           cx="50%"
           cy="50%"
           outerRadius={80}
-          fill="#8884d8"
+          fill={theme === 'light' ? '#e3702d' : '#f49b56'}
           dataKey="value"
           nameKey="name"
           labelLine={false}
           label={renderCustomizedLabel}
         >
-          {data.map((entry, index) => (
+          {data.map((_, index) => (
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
@@ -109,7 +109,7 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
             color: textColor
           }}
         />
-        <Legend wrapperStyle={{ color: textColor }}/>
+        <Legend wrapperStyle={{ color: textColor, fontSize: 12 }}/>
       </PieChart>
     </ResponsiveContainer>
   );
