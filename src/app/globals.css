@@ -469,6 +469,37 @@ input[type="date"].input {
   backdrop-filter: blur(10px);
 }
 
+/* 現在地ボタン */
+.location-control {
+  pointer-events: none;
+}
+.location-control-btn {
+  pointer-events: auto;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--glass-border);
+  background: var(--glass-heavy);
+  backdrop-filter: blur(10px);
+  color: var(--foreground);
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s, transform 0.2s;
+}
+.location-control-btn:hover:not(:disabled) {
+  background: var(--primary);
+  color: white;
+  transform: scale(1.05);
+}
+.location-control-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 /* Animations */
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(-40px); }
@@ -520,6 +551,11 @@ input[type="date"].input {
 
   .leaflet-control-zoom {
     margin: 1rem !important;
+  }
+
+  .location-control {
+    bottom: 1rem;
+    left: 1rem;
   }
 
   .mobile-toggle {
