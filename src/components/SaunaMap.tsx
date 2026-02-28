@@ -738,12 +738,7 @@ export default function SaunaMap() {
                           key={star}
                           type="button"
                           onClick={() => setForm({ ...form, rating: star })}
-                          style={{
-                            border: "none",
-                            background: "transparent",
-                            cursor: "pointer",
-                            padding: "0 0.1rem",
-                          }}
+                          className="rating-star-btn"
                           aria-label={`${star} star`}
                         >
                           {form.rating >= star ? "★" : "☆"}
