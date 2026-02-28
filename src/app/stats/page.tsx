@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import styles from './stats.module.css';
 import MonthlyVisitsChart from '@/components/charts/MonthlyVisitsChart';
@@ -67,9 +67,70 @@ function getInitialTheme(): 'dark' | 'light' {
   return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
 }
 
+function extractPrefecture(area: string | undefined): string | null {
+  const s = (area ?? "").trim();
+  if (!s) return null;
+  const first = s.split(/\s/)[0];
+  return /[都道府県]$/.test(first) ? first : null;
+}
+
 export default function StatsPage() {
   const [visits] = useState<SaunaVisit[]>(getInitialVisits);
   const [theme] = useState<'dark' | 'light'>(getInitialTheme);
+  const stats = useMemo(() => {
+    const total = visits.length;
+    if (total === 0) {
+      return {
+        total,
+        visitedCount: 0,
+        wishlistCount: 0,
+        firstDate: null as string | null,
+        lastDate: null as string | null,
+        avgRating: 0,
+        uniqueAreas: 0,
+        prefectures: [] as string[],
+        prefectureCount: 0,
+      };
+    }
+
+    const sortedByDate = [...visits].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    );
+    const firstDate = sortedByDate[0].date;
+    const lastDate = sortedByDate[sortedByDate.length - 1].date;
+    const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
+    const wishlistCount = visits.filter((v) => (v.status ?? "visited") === "wishlist").length;
+    const ratings = visits.map((v) => v.rating ?? 0).filter((r) => r > 0);
+    const avgRating =
+      ratings.length > 0
+        ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
+        : 0;
+    const areas = new Set(
+      visits
+        .map((v) => (v.area ?? "").trim())
+        .filter((a) => a.length > 0)
+    );
+    const prefectures = Array.from(
+      new Set(
+        visits
+          .filter((v) => (v.status ?? "visited") === "visited")
+          .map((v) => extractPrefecture(v.area))
+          .filter((p): p is string => p != null)
+      )
+    ).sort((a, b) => a.localeCompare(b, "ja"));
+
+    return {
+      total,
+      visitedCount,
+      wishlistCount,
+      firstDate,
+      lastDate,
+      avgRating,
+      uniqueAreas: areas.size,
+      prefectures,
+      prefectureCount: prefectures.length,
+    };
+  }, [visits]);
 
   return (
     <div
@@ -83,6 +144,46 @@ export default function StatsPage() {
             &larr; マップに戻る
           </Link>
         </div>
+
+        <div className={styles.summaryGrid}>
+          <article className={styles.statCard}>
+            <h3>合計サウナ数</h3>
+            <p>{stats.total}</p>
+          </article>
+          <article className={styles.statCard}>
+            <h3>行った / 行きたい</h3>
+            <p>{stats.visitedCount} / {stats.wishlistCount}</p>
+          </article>
+          <article className={styles.statCard}>
+            <h3>記録エリア数</h3>
+            <p>{stats.uniqueAreas}</p>
+          </article>
+          <article className={styles.statCard}>
+            <h3>平均満足度</h3>
+            <p>{stats.avgRating > 0 ? `${stats.avgRating} / 5` : '-'}</p>
+          </article>
+          <article className={styles.statCard}>
+            <h3>記録期間</h3>
+            <p>{stats.firstDate && stats.lastDate ? `${stats.firstDate} 〜 ${stats.lastDate}` : '-'}</p>
+          </article>
+          <article className={styles.statCard}>
+            <h3>都道府県制覇</h3>
+            <p>{stats.prefectureCount} / 47</p>
+          </article>
+        </div>
+
+        {stats.prefectureCount > 0 && (
+          <section className={styles.prefectureSection}>
+            <h2>🗾 都道府県制覇</h2>
+            <div className={styles.badgeList}>
+              {stats.prefectures.map((pref) => (
+                <span key={pref} className={styles.prefectureBadge}>
+                  {pref}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div style={{ width: '100%', maxWidth: '1200px', marginTop: '2rem' }}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '2rem' }}>
