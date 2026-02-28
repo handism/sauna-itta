@@ -20,9 +20,10 @@ interface SaunaVisit {
 
 interface MonthlyVisitsChartProps {
   visits: SaunaVisit[];
+  theme: 'dark' | 'light';
 }
 
-export default function MonthlyVisitsChart({ visits }: MonthlyVisitsChartProps) {
+export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChartProps) {
   const data = useMemo(() => {
     const monthlyCounts: { [key: string]: number } = {};
 
@@ -44,6 +45,8 @@ export default function MonthlyVisitsChart({ visits }: MonthlyVisitsChartProps) 
     return chartData;
   }, [visits]);
 
+  const tickColor = theme === 'light' ? '#2c3e50' : '#f2f2f2';
+
   if (data.length === 0) {
     return <p>訪問記録がありません。</p>;
   }
@@ -57,10 +60,16 @@ export default function MonthlyVisitsChart({ visits }: MonthlyVisitsChartProps) 
         }}
       >
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="month" />
-        <YAxis allowDecimals={false} />
-        <Tooltip />
-        <Legend />
+        <XAxis dataKey="month" tick={{ fill: tickColor }} />
+        <YAxis allowDecimals={false} tick={{ fill: tickColor }} />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(13, 13, 13, 0.8)',
+            borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)',
+            color: tickColor,
+          }}
+        />
+        <Legend wrapperStyle={{ color: tickColor }} />
         <Bar dataKey="visits" fill="#8884d8" name="訪問数" />
       </BarChart>
     </ResponsiveContainer>

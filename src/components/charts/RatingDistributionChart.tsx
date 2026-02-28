@@ -12,6 +12,7 @@ interface SaunaVisit {
 
 interface RatingDistributionChartProps {
   visits: SaunaVisit[];
+  theme: 'dark' | 'light';
 }
 
 const COLORS = ['#FF8042', '#FFBB28', '#00C49F', '#0088FE', '#8884d8'];
@@ -23,7 +24,7 @@ const RATING_LABELS: { [key: number]: string } = {
   5: '★5',
 };
 
-export default function RatingDistributionChart({ visits }: RatingDistributionChartProps) {
+export default function RatingDistributionChart({ visits, theme }: RatingDistributionChartProps) {
   const data = useMemo(() => {
     const ratingCounts: { [key: string]: number } = {};
 
@@ -44,6 +45,8 @@ export default function RatingDistributionChart({ visits }: RatingDistributionCh
 
     return chartData;
   }, [visits]);
+
+  const textColor = theme === 'light' ? '#2c3e50' : '#f2f2f2';
 
   if (data.length === 0) {
     return <p>評価付きの訪問記録がありません。</p>;
@@ -67,8 +70,14 @@ export default function RatingDistributionChart({ visits }: RatingDistributionCh
             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
           ))}
         </Pie>
-        <Tooltip />
-        <Legend />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(13, 13, 13, 0.8)',
+            borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)',
+            color: textColor
+          }}
+        />
+        <Legend wrapperStyle={{ color: textColor }}/>
       </PieChart>
     </ResponsiveContainer>
   );
