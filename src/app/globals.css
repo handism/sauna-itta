@@ -1031,9 +1031,9 @@ input[type="date"].input {
 
   .sidebar.collapsed {
     transform: translateY(
-      calc(100% - 96px - env(safe-area-inset-bottom, 16px))
+      calc(100% - 76px - env(safe-area-inset-bottom, 16px))
     );
-    max-height: 96px;
+    max-height: 76px;
   }
 
   /* モバイル時のサイドバー ヘッダー */
