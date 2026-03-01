@@ -1,52 +1,103 @@
-# サウナイッタ (sauna-itta) 🧖‍♂️🗺️
+# サウナイッタ (sauna-itta)
 
-「サウナイッタ」は、自分が訪れたサウナを地図上に記録し、振り返ることができる「マイととのいマップ」Webアプリケーションです。Next.js と React Leaflet を用いて構築されています。
+「サウナイッタ」は、訪れたサウナや行きたいサウナを地図上に記録し、あとから振り返るためのマイととのいマップです。  
+Next.js + React Leaflet で構築されており、データはブラウザの `localStorage` に保存されます。
 
-## ✨ 主な機能 (Features)
+## 主な機能
 
-- **サウナのピン留め**: 地図上をクリックして、新しく訪れたサウナのピンを立てることができます。
-- **詳細情報の記録**: サウナの名前だけでなく、**写真**、**感想・メモ**（水風呂の温度、外気浴の雰囲気など）、**行った日**を記録可能です。
-- **評価・タグ・エリア**: 各サウナごとに **満足度（★1〜5）**、**タグ（外気浴最高 / サウナシュラン など）**、**エリア名** を付けて、あとから振り返りやすく整理できます。
-- **行きたいサウナ (Wishlist)**: 「行った」サウナとは別に、「行きたい」サウナを緑色のピンとして登録できます。行ったら編集画面からステータスを切り替えるだけで OK です。
-- **検索・フィルタ・ソート**: サイドバー上部の検索ボックス／プルダウンから、**キーワード検索（名前・コメント・タグ・エリア）**、**ステータス（すべて / 行った / 行きたい）**、**最低満足度**、**並び順（新しい順 / 古い順 / 満足度順）** で絞り込み・並び替えができます。
-- **編集・削除機能**: 一度登録したサウナの記録は、後からいつでも編集や削除が可能です。
-- **シンプル統計 (Stats)**: ヘッダー部分に **合計サウナ数 / 行った・行きたいの件数 / 記録期間 / 平均満足度 / エリア数** が表示され、マイととのいライフの全体像を俯瞰できます。
-- **シェア用ビュー**: 「📸 シェア用ビュー」ボタンから、統計とサウナ一覧をまとめた専用レイアウトを開き、そのままスクリーンショットして SNS 等にシェアできます。
-- **データのエクスポート / インポート**: サイドバー下部のボタンから、現在の記録を JSON 形式で **エクスポート** / 手元の JSON ファイルから **インポート**（マージ）できます。GitHub リポジトリにコミットしておくことで、「マイととのいマップ」のバックアップとしても活用できます。
-- **テーマ切り替え (Dark / Light)**: ヘッダー右上から、目に優しいダークモードと明るいライトモードをワンタップで切り替えられます。
-- **プライバシー考慮**: 全ての記録データはブラウザの `localStorage`（ローカルストレージ）に保存されます。アカウント登録や外部サーバーへのデータ同期は一切不要です。（※ブラウザのキャッシュをクリアするとデータが消える点にご注意ください）
+- 地図をタップしてサウナを登録（訪問済み / 行きたい）
+- 名前・日付・感想・エリア・タグ・満足度（★1〜5）・訪問回数・写真を記録
+- キーワード検索、ステータス、最低満足度、並び順で絞り込み
+- 登録データの編集 / 削除
+- JSON エクスポート / インポート（既存ID重複は除外してマージ）
+- シェア用ビュー（一覧 + サマリ）
+- 統計ダッシュボード（`/stats`）
+  - 合計件数、行った/行きたい、記録期間、平均満足度、都道府県制覇
+  - 月別訪問数、満足度分布チャート
+- ダーク / ライトテーマ切り替え
+- 現在地移動ボタン
+- `alert/confirm` を使わない UI 通知
+  - Toast（info/success/error）
+  - ConfirmModal（削除確認）
 
-## 🚀 技術スタック (Tech Stack)
+## 技術スタック
 
-- **フレームワーク**: [Next.js](https://nextjs.org/) (App Router)
-- **UI / 状態管理**: React 19 / TypeScript
-- **マップ描画**: [React Leaflet](https://react-leaflet.js.org/) & [Leaflet](https://leafletjs.com/) (+ OpenStreetMap)
-- **スタイリング**: 標準 CSS (CSS Variables を用いたテーマ切り替え)
-- **CI / CD**: GitHub Actions 経由での GitHub Pages 自動デプロイ
+- Framework: Next.js 16 (App Router)
+- UI: React 19 + TypeScript
+- Map: React Leaflet / Leaflet / OpenStreetMap
+- Chart: Recharts
+- Styling: Global CSS（`base.css` + `map.css` + `sidebar.css` + `modal.css`）
+- Lint: ESLint 9
 
-## 🛠 開発環境のセットアップ (Getting Started)
+## ディレクトリ構成（主要部分）
 
-ローカル環境で開発を始める手順は以下の通りです。
-
-```bash
-# リポジトリのクローン
-git clone <repository_url>
-cd sauna-itta
-
-# パッケージのインストール
-npm install
-# または yarn install / pnpm install / bun install
-
-# 開発サーバーの起動
-npm run dev
-# または yarn dev / pnpm dev / bun dev
+```text
+src/
+  app/
+    page.tsx
+    stats/
+      page.tsx
+      stats.module.css
+    styles/
+      base.css
+      sauna-map.css   # map/sidebar/modal の集約
+      map.css
+      sidebar.css
+      modal.css
+  components/
+    SaunaMap.tsx      # 画面のオーケストレーション
+    sauna-map/
+      types.ts
+      utils.ts
+      hooks/
+        useEditorState.ts
+        useSaunaVisits.ts
+        useVisitFilters.ts
+      components/
+        VisitForm.tsx
+        VisitList.tsx
+        VisitMarkers.tsx
+        FilterModal.tsx
+        ShareModal.tsx
+        ConfirmModal.tsx
+        Toast.tsx
+        common.tsx
 ```
 
-ブラウザで [http://localhost:3000](http://localhost:3000) にアクセスすると、アプリケーションが立ち上がります。
+## セットアップ
 
-## 🌐 デプロイについて (Deployment)
+```bash
+git clone <repository_url>
+cd sauna-itta
+npm install
+npm run dev
+```
 
-このプロジェクトは GitHub Pages へのデプロイ設定が含まれています（`.github/workflows/deploy.yml`）。
-`main` ブランチに変更がプッシュされると、GitHub Actions がトリガーされて自動的にビルドおよびデプロイが行われます。
+- アプリ: `http://localhost:3000`
+- 統計: `http://localhost:3000/stats`
 
-**注意:** デプロイを正常に機能させるには、GitHub リポジトリの `Settings > Pages > Build and deployment > Source` の項目を **「GitHub Actions」** に変更してください。
+## スクリプト
+
+```bash
+npm run dev
+npm run build
+npm run start
+npm run lint
+```
+
+## データ保存について
+
+- 保存先: `localStorage`
+  - `sauna-itta_visits`
+  - `sauna-itta_theme`
+- サーバー同期は行いません。
+- ブラウザストレージ削除時にデータは消えるため、必要に応じて JSON エクスポートでバックアップしてください。
+
+## GitHub Pages デプロイ
+
+`.github/workflows/deploy.yml` により、`main` ブランチ push 時に GitHub Pages へデプロイします。
+
+必要設定:
+
+- GitHub リポジトリの `Settings > Pages > Build and deployment > Source` を `GitHub Actions` にする
+
