@@ -1288,7 +1288,7 @@ input[type="date"].input {
 
 /* ========== モバイル: メニュー・フィルターモーダル ========== */
 .mobile-menu-btn {
-  display: none;
+  display: flex;
   width: 44px;
   height: 44px;
   min-width: 44px;
@@ -1367,18 +1367,7 @@ input[type="date"].input {
 }
 
 @media (max-width: 768px) {
-  .mobile-menu-btn {
-    display: flex;
-  }
-
   .sidebar-actions-desktop {
-    display: none !important;
-  }
-}
-
-@media (min-width: 769px) {
-  .mobile-menu-btn,
-  .mobile-menu-wrap {
     display: none !important;
   }
 }

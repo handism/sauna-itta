@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
@@ -187,6 +187,7 @@ function LocationControl() {
 }
 
 export default function SaunaMap() {
+  const importInputRef = useRef<HTMLInputElement | null>(null);
   const [visits, setVisits] = useState<SaunaVisit[]>(getInitialVisits);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -255,6 +256,32 @@ export default function SaunaMap() {
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
+  };
+
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result as string) as SaunaVisit[];
+        const existingIds = new Set(visits.map((v) => v.id));
+        const normalizedImported = normalizeVisits(parsed).filter((v) => !existingIds.has(v.id));
+        if (normalizedImported.length === 0) {
+          alert("新しく追加されるデータはありませんでした。");
+          return;
+        }
+        saveVisits([...normalizedImported, ...visits]);
+        alert(`データを${normalizedImported.length}件取り込みました。`);
+      } catch (error) {
+        console.error(error);
+        alert("JSONの読み込みに失敗しました。ファイル形式を確認してください。");
+      } finally {
+        e.target.value = "";
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -707,6 +734,38 @@ export default function SaunaMap() {
                       >
                         📊 詳細スタッツ
                       </Link>
+                      {!isAdding && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            startNewVisit();
+                            setIsMobileMenuOpen(false);
+                          }}
+                        >
+                          ➕ 新しいピンを立てる
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          exportData();
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        📥 データを出力する (GitHub保存用)
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          importInputRef.current?.click();
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        📤 データを読み込む (JSON)
+                      </button>
                     </div>
                   </>
                 )}
@@ -1032,62 +1091,13 @@ export default function SaunaMap() {
               )}
             </div>
 
-            {!isAdding && (
-              <div className="sidebar-footer">
-                <button className="btn btn-primary" onClick={startNewVisit}>
-                  新しいピンを立てる
-                </button>
-                <button
-                  className="btn btn-ghost"
-                  onClick={exportData}
-                  style={{ fontSize: "0.84rem", padding: "0.56rem" }}
-                >
-                  📥 データを出力する (GitHub保存用)
-                </button>
-                <label
-                  className="btn btn-ghost"
-                  style={{ fontSize: "0.84rem", padding: "0.56rem", textAlign: "center", cursor: "pointer" }}
-                >
-                  📤 データを読み込む (JSON)
-                  <input
-                    type="file"
-                    accept="application/json"
-                    style={{ display: "none" }}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const reader = new FileReader();
-                      reader.onload = () => {
-                        try {
-                          const parsed = JSON.parse(reader.result as string) as SaunaVisit[];
-                          const existingIds = new Set(visits.map((v) => v.id));
-                          const normalizedImported = parsed
-                            .map((v) => ({
-                              ...v,
-                              rating: v.rating ?? 0,
-                              tags: v.tags ?? [],
-                              status: v.status ?? "visited",
-                              area: v.area ?? "",
-                              visitCount: Math.max(1, v.visitCount ?? 1),
-                            }))
-                            .filter((v) => !existingIds.has(v.id));
-                          if (normalizedImported.length === 0) {
-                            alert("新しく追加されるデータはありませんでした。");
-                            return;
-                          }
-                          saveVisits([...normalizedImported, ...visits]);
-                          alert(`データを${normalizedImported.length}件取り込みました。`);
-                        } catch (error) {
-                          console.error(error);
-                          alert("JSONの読み込みに失敗しました。ファイル形式を確認してください。");
-                        }
-                      };
-                      reader.readAsText(file);
-                    }}
-                  />
-                </label>
-              </div>
-            )}
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json"
+              style={{ display: "none" }}
+              onChange={handleImportData}
+            />
           </aside>
         </div>
       )}
