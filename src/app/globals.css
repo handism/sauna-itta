@@ -1037,7 +1037,7 @@ input[type="date"].input {
     min-height: 44px;
   }
 
-  .leaflet-control-zoom {
+  .leaflet-top.leaflet-right .leaflet-control-zoom {
     margin: max(1rem, env(safe-area-inset-top))
       calc(1rem + 48px + 0.5rem) 0 0 !important;
   }
