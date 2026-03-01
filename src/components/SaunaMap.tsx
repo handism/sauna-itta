@@ -727,6 +727,13 @@ export default function SaunaMap() {
       {/* サイドバー: 場所選択中のモバイルでは非表示 */}
       {!isMobilePickingLocation && (
         <div className="ui-layer">
+          {isMobileMenuOpen && (
+            <div
+              className="mobile-menu-backdrop"
+              onClick={() => setIsMobileMenuOpen(false)}
+              aria-hidden
+            />
+          )}
           <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
             <button
               className="mobile-toggle"
@@ -766,11 +773,6 @@ export default function SaunaMap() {
                 </button>
                 {isMobileMenuOpen && (
                   <>
-                    <div
-                      className="mobile-menu-backdrop"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      aria-hidden
-                    />
                     <div
                       className={`mobile-menu-dropdown ${
                         isSidebarExpanded ? "mobile-menu-dropdown--down" : ""
