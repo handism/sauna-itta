@@ -228,6 +228,8 @@ export default function SaunaMap() {
     sort: "recent",
   });
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
 
   const saveVisits = (newVisits: SaunaVisit[]) => {
     setVisits(newVisits);
@@ -626,11 +628,12 @@ export default function SaunaMap() {
             <button
               className="mobile-toggle"
               onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-              aria-label="Toggle Sidebar"
+              aria-label="パネルを開く・閉じる"
             >
               {isSidebarExpanded ? "↓" : "↑"}
             </button>
             <div className="sidebar-header">
+              <div className="sidebar-drag-handle" aria-hidden />
               <div className="sidebar-header-main">
                 <h1 className="text-primary">サウナイッタ</h1>
                 <p>マイととのいマップ</p>
@@ -640,7 +643,7 @@ export default function SaunaMap() {
                   <span>行きたい {stats.wishlistCount}</span>
                 </div>
               </div>
-              <div className="sidebar-actions">
+              <div className="sidebar-actions sidebar-actions-desktop">
                 <button
                   type="button"
                   onClick={toggleTheme}
@@ -658,6 +661,55 @@ export default function SaunaMap() {
                 <Link href="/stats" className="chip-btn chip-link">
                   📊 詳細スタッツ
                 </Link>
+              </div>
+              <div className="mobile-menu-wrap" style={{ position: "relative" }}>
+                <button
+                  type="button"
+                  className="mobile-menu-btn"
+                  onClick={() => setIsMobileMenuOpen((v) => !v)}
+                  aria-label="メニュー"
+                  aria-expanded={isMobileMenuOpen}
+                >
+                  ⋯
+                </button>
+                {isMobileMenuOpen && (
+                  <>
+                    <div
+                      className="mobile-menu-backdrop"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      aria-hidden
+                    />
+                    <div className="mobile-menu-dropdown" role="menu">
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          toggleTheme();
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        {theme === "dark" ? "☀️ ライトモード" : "🌙 ダークモード"}
+                      </button>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setIsShareViewOpen(true);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        📸 シェア用ビュー
+                      </button>
+                      <Link
+                        href="/stats"
+                        role="menuitem"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        📊 詳細スタッツ
+                      </Link>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -831,7 +883,15 @@ export default function SaunaMap() {
                   <h2 className="panel-title mb-2">
                     訪れたサウナ ({filteredVisits.length}/{visits.length})
                   </h2>
-                  <div className="filters">
+                  <button
+                    type="button"
+                    className="filters-open-btn"
+                    onClick={() => setIsFilterModalOpen(true)}
+                  >
+                    <span>フィルター</span>
+                    <span>{isFilterActive ? `${filteredVisits.length}件` : "すべて表示"}</span>
+                  </button>
+                  <div className="filters filters-inline-wrap">
                     <input
                       className="input"
                       placeholder="キーワード検索（名前・コメント・タグ・エリア）"
@@ -1029,6 +1089,120 @@ export default function SaunaMap() {
               </div>
             )}
           </aside>
+        </div>
+      )}
+
+      {isFilterModalOpen && (
+        <div
+          className="filters-modal-overlay"
+          onClick={() => setIsFilterModalOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="filters-modal-sheet"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-labelledby="filters-modal-title"
+          >
+            <div className="filters-modal-header">
+              <h3 id="filters-modal-title">フィルター</h3>
+              <button
+                type="button"
+                className="filters-modal-close"
+                onClick={() => setIsFilterModalOpen(false)}
+                aria-label="閉じる"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="filters">
+              <input
+                className="input"
+                placeholder="キーワード検索"
+                value={filters.search}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, search: e.target.value }))
+                }
+              />
+              <div className="form-group">
+                <label className="filters-label">ステータス</label>
+                <select
+                  className="input"
+                  style={{ width: "100%" }}
+                  value={filters.status}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      status: e.target.value as typeof filters.status,
+                    }))
+                  }
+                >
+                  <option value="all">すべて</option>
+                  <option value="visited">行った</option>
+                  <option value="wishlist">行きたい</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="filters-label">並び順</label>
+                <select
+                  className="input"
+                  style={{ width: "100%" }}
+                  value={filters.sort}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      sort: e.target.value as typeof filters.sort,
+                    }))
+                  }
+                >
+                  <option value="recent">新しい順</option>
+                  <option value="oldest">古い順</option>
+                  <option value="ratingDesc">満足度が高い順</option>
+                  <option value="ratingAsc">満足度が低い順</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label className="filters-label">最低満足度</label>
+                <select
+                  className="input"
+                  style={{ width: "100%" }}
+                  value={filters.minRating}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      minRating: Number(e.target.value),
+                    }))
+                  }
+                >
+                  <option value={0}>指定なし</option>
+                  <option value={1}>★1以上</option>
+                  <option value={2}>★2以上</option>
+                  <option value={3}>★3以上</option>
+                  <option value={4}>★4以上</option>
+                  <option value={5}>★5のみ</option>
+                </select>
+              </div>
+              {isFilterActive && (
+                <button
+                  type="button"
+                  className="btn btn-ghost filters-reset"
+                  onClick={() => {
+                    clearFilters();
+                    setIsFilterModalOpen(false);
+                  }}
+                >
+                  フィルター解除
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setIsFilterModalOpen(false)}
+              >
+                反映して閉じる
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
