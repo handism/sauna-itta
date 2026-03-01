@@ -803,6 +803,7 @@ export default function SaunaMap() {
                       </button>
                       <Link
                         href="/stats"
+                        prefetch={false}
                         role="menuitem"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
