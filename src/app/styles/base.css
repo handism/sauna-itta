@@ -1,0 +1,71 @@
+:root {
+  --background: #070b11;
+  --foreground: #eef3fb;
+  --primary: #ee8f43;
+  --primary-glow: rgba(238, 143, 67, 0.34);
+  --secondary: #2c3e50;
+  --accent: #d96a24;
+  --glass: rgba(246, 249, 255, 0.08);
+  --glass-heavy: rgba(8, 12, 19, 0.84);
+  --glass-border: rgba(184, 204, 232, 0.2);
+  --font-main: "Outfit", sans-serif;
+  --error: #e74c3c;
+  --map-filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  --input-bg: rgba(255, 255, 255, 0.05);
+}
+
+.light-theme {
+  --background: #f5f8fd;
+  --foreground: #122032;
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-heavy: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(9, 35, 67, 0.12);
+  --map-filter: none;
+  --input-bg: rgba(13, 37, 62, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      color-mix(in srgb, var(--primary) 22%, transparent),
+      transparent 36%
+    ),
+    radial-gradient(
+      circle at 100% 5%,
+      rgba(75, 179, 253, 0.22),
+      transparent 34%
+    ),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+html.allow-page-scroll,
+body.allow-page-scroll {
+  overflow-y: auto;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+div {
+  color: var(--foreground);
+}
