@@ -270,6 +270,88 @@
   font-size: 0.85rem;
 }
 
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.confirm-modal {
+  width: min(460px, 100%);
+  border-radius: 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-heavy);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.35);
+  padding: 1rem;
+}
+
+.confirm-title {
+  font-size: 1.05rem;
+  margin: 0 0 0.4rem;
+}
+
+.confirm-message {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin: 0 0 0.95rem;
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.app-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.2rem;
+  transform: translateX(-50%);
+  z-index: 1400;
+  width: min(92vw, 520px);
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-heavy);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+  padding: 0.72rem 0.8rem 0.72rem 0.9rem;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.app-toast--info {
+  border-color: color-mix(in srgb, var(--glass-border) 65%, var(--primary) 35%);
+}
+
+.app-toast--success {
+  border-color: color-mix(in srgb, #2ecc71 55%, var(--glass-border) 45%);
+}
+
+.app-toast--error {
+  border-color: color-mix(in srgb, var(--error) 62%, var(--glass-border) 38%);
+}
+
+.app-toast-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: color-mix(in srgb, var(--glass) 88%, transparent);
+  color: var(--foreground);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -326,5 +408,22 @@
     bottom: auto;
     margin-top: 0.35rem;
     margin-bottom: 0;
+  }
+
+  .confirm-modal {
+    border-radius: 16px;
+    padding: 0.9rem;
+  }
+
+  .confirm-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .app-toast {
+    width: calc(100% - 1rem);
+    left: 0.5rem;
+    right: 0.5rem;
+    transform: none;
+    bottom: max(0.8rem, env(safe-area-inset-bottom));
   }
 }
