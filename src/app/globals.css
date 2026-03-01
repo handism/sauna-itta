@@ -1264,6 +1264,13 @@ input[type="date"].input {
 }
 
 /* ========== モバイル: メニュー・フィルターモーダル ========== */
+.mobile-menu-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
 .mobile-menu-btn {
   display: flex;
   width: 44px;

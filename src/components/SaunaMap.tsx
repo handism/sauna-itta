@@ -715,10 +715,21 @@ export default function SaunaMap() {
                 <h1 className="text-primary">サウナイッタ</h1>
                 <p>マイととのいマップ</p>
               </div>
-              <div
-                className="mobile-menu-wrap"
-                style={{ position: "relative" }}
-              >
+              <div className="mobile-menu-wrap">
+                {!isAdding && (
+                  <button
+                    type="button"
+                    className="mobile-menu-btn"
+                    onClick={() => {
+                      startNewVisit();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    aria-label="新規ピンを立てる"
+                    title="新規ピンを立てる"
+                  >
+                    ➕
+                  </button>
+                )}
                 <button
                   type="button"
                   className="mobile-menu-btn"
@@ -770,18 +781,6 @@ export default function SaunaMap() {
                       >
                         📊 ダッシュボード
                       </Link>
-                      {!isAdding && (
-                        <button
-                          type="button"
-                          role="menuitem"
-                          onClick={() => {
-                            startNewVisit();
-                            setIsMobileMenuOpen(false);
-                          }}
-                        >
-                          ➕ 新規ピンを立てる
-                        </button>
-                      )}
                       <button
                         type="button"
                         role="menuitem"
