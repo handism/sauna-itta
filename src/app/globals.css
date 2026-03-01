@@ -1355,7 +1355,7 @@ input[type="date"].input {
 }
 
 .filters-open-btn {
-  display: none;
+  display: flex;
   width: 100%;
   min-height: 44px;
   padding: 0.65rem 1rem;
@@ -1374,20 +1374,4 @@ input[type="date"].input {
 .filters-open-btn span:last-child {
   opacity: 0.7;
   font-size: 0.85rem;
-}
-
-@media (max-width: 768px) {
-  .filters-open-btn {
-    display: flex;
-  }
-
-  .filters-inline-wrap {
-    display: none !important;
-  }
-}
-
-@media (min-width: 769px) {
-  .filters-open-btn {
-    display: none !important;
-  }
 }
