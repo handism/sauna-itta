@@ -17,6 +17,9 @@ import { ShareModal } from "./sauna-map/components/ShareModal";
 import { VisitForm } from "./sauna-map/components/VisitForm";
 import { VisitList } from "./sauna-map/components/VisitList";
 import { VisitMarkers } from "./sauna-map/components/VisitMarkers";
+import { ConfirmModal } from "./sauna-map/components/ConfirmModal";
+import { Toast } from "./sauna-map/components/Toast";
+import type { ToastState } from "./sauna-map/components/Toast";
 import { getSaunaIcon } from "./sauna-map/components/markerIcon";
 import { useSaunaVisits } from "./sauna-map/hooks/useSaunaVisits";
 import { useEditorState } from "./sauna-map/hooks/useEditorState";
@@ -137,6 +140,18 @@ export default function SaunaMap() {
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [toast, setToast] = useState<ToastState | null>(null);
+
+  const showToast = useCallback((message: string, tone: ToastState["tone"] = "info") => {
+    setToast({ id: Date.now(), message, tone });
+  }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), 3000);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
@@ -186,15 +201,22 @@ export default function SaunaMap() {
 
   const handleDelete = () => {
     if (!editingId) return;
-    if (!confirm("このサウナの記録を削除しますか？")) return;
+    setIsDeleteConfirmOpen(true);
+  };
 
+  const confirmDelete = () => {
+    if (!editingId) return;
     const updatedVisits = visits.filter((v) => v.id !== editingId);
     const persisted = saveVisits(updatedVisits);
     if (!persisted) {
-      alert(
+      showToast(
         "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+        "error",
       );
+    } else {
+      showToast("記録を削除しました。", "success");
     }
+    setIsDeleteConfirmOpen(false);
     cancelEditing(true);
   };
 
@@ -213,16 +235,18 @@ export default function SaunaMap() {
       const updatedVisits = updateVisit(editingId, selectedLocation, form);
       const persisted = saveVisits(updatedVisits);
       if (!persisted) {
-        alert(
+        showToast(
           "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+          "error",
         );
       }
     } else {
       const newVisit = createVisit(selectedLocation, form);
       const persisted = saveVisits([newVisit, ...visits]);
       if (!persisted) {
-        alert(
+        showToast(
           "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+          "error",
         );
       }
     }
@@ -241,31 +265,35 @@ export default function SaunaMap() {
     reader.readAsDataURL(file);
   };
 
-  const handleImportData = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImportData = useCallback(
+    async (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    try {
-      const { added, nextVisits } = await importVisitsFromFile(file);
-      if (added === 0) {
-        alert("新しく追加されるデータはありませんでした。");
-        return;
-      }
+      try {
+        const { added, nextVisits } = await importVisitsFromFile(file);
+        if (added === 0) {
+          showToast("新しく追加されるデータはありませんでした。", "info");
+          return;
+        }
 
-      const persisted = saveVisits(nextVisits);
-      if (!persisted) {
-        alert(
-          "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
-        );
+        const persisted = saveVisits(nextVisits);
+        if (!persisted) {
+          showToast(
+            "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+            "error",
+          );
+        }
+        showToast(`データを${added}件取り込みました。`, "success");
+      } catch (error) {
+        console.error(error);
+        showToast("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
+      } finally {
+        e.target.value = "";
       }
-      alert(`データを${added}件取り込みました。`);
-    } catch (error) {
-      console.error(error);
-      alert("JSONの読み込みに失敗しました。ファイル形式を確認してください。");
-    } finally {
-      e.target.value = "";
-    }
-  };
+    },
+    [importVisitsFromFile, saveVisits, showToast],
+  );
 
   const isAdding = mode !== "list";
   const isMobilePickingLocation = isMobile && mode === "creating:pick";
@@ -473,6 +501,19 @@ export default function SaunaMap() {
         filteredVisits={filteredVisits}
         onClose={() => setIsShareViewOpen(false)}
       />
+
+      <ConfirmModal
+        isOpen={isDeleteConfirmOpen}
+        title="記録を削除しますか？"
+        message="この操作は元に戻せません。"
+        confirmLabel="削除する"
+        cancelLabel="キャンセル"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
+
+      <Toast toast={toast} onClose={() => setToast(null)} />
     </div>
   );
 }
