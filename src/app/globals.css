@@ -507,6 +507,7 @@ input[type="date"].input {
   height: 48px !important;
   line-height: 48px !important;
   font-size: 1.25rem !important;
+  transition: background 0.2s, transform 0.12s !important;
 }
 
 /* 現在地ボタン */
@@ -520,7 +521,7 @@ input[type="date"].input {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 2px solid var(--glass-border);
+  border: 1px solid var(--glass-border);
   background: var(--glass-heavy);
   backdrop-filter: blur(10px);
   color: var(--foreground);
@@ -529,13 +530,17 @@ input[type="date"].input {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: background 0.2s, transform 0.2s;
+  transition: background 0.2s, transform 0.12s;
 }
+
+.leaflet-control-zoom a:hover,
 .location-control-btn:hover:not(:disabled) {
-  background: var(--primary);
-  color: white;
-  transform: scale(1.05);
+  background: color-mix(in srgb, var(--glass-heavy) 70%, var(--primary) 30%) !important;
+}
+
+.leaflet-control-zoom a:active,
+.location-control-btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 .location-control-btn:disabled {
   opacity: 0.7;
