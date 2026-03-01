@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import {
   MapContainer,
@@ -11,111 +11,25 @@ import {
   ZoomControl,
   useMap,
 } from "react-leaflet";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import initialVisits from "@/data/sauna-visits.json";
+import { FilterModal } from "./sauna-map/components/FilterModal";
+import { ShareModal } from "./sauna-map/components/ShareModal";
+import { VisitForm } from "./sauna-map/components/VisitForm";
+import { VisitList } from "./sauna-map/components/VisitList";
+import { VisitMarkers } from "./sauna-map/components/VisitMarkers";
+import { getSaunaIcon } from "./sauna-map/components/markerIcon";
+import { useSaunaVisits } from "./sauna-map/hooks/useSaunaVisits";
+import { useVisitFilters } from "./sauna-map/hooks/useVisitFilters";
+import {
+  getDefaultForm,
+  getInitialIsMobile,
+  getInitialTheme,
+  getTodayDate,
+  THEME_STORAGE_KEY,
+  toFormState,
+} from "./sauna-map/utils";
+import { LatLng, SaunaVisit, VisitFormState } from "./sauna-map/types";
 
-// Interface for Sauna Visit
-interface SaunaVisit {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  comment: string;
-  image?: string;
-  date: string;
-  rating?: number;
-  tags?: string[];
-  status?: "visited" | "wishlist";
-  area?: string;
-  visitCount?: number;
-}
-
-// Custom Marker Icon Generator
-const getSaunaIcon = (
-  options: {
-    selected?: boolean;
-    wishlist?: boolean;
-  } = {},
-) => {
-  const { selected = false, wishlist = false } = options;
-
-  const classes = [
-    "sauna-marker",
-    selected ? "sauna-marker--selected" : "",
-    wishlist ? "sauna-marker--wishlist" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return L.divIcon({
-    className: "custom-marker",
-    html: `<div class="${classes}"></div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 30],
-    popupAnchor: [0, -30],
-  });
-};
-// エリア文字列から都道府県名を抽出（例: "東京都 台東区 上野" → "東京都"）
-function extractPrefecture(area: string | undefined): string | null {
-  const s = (area ?? "").trim();
-  if (!s) return null;
-  const first = s.split(/\s/)[0];
-  return /[都道府県]$/.test(first) ? first : null;
-}
-
-// サウナの緯度経度で Google Maps の「ここへ行く」URL を生成
-function getDirectionsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-}
-
-function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
-  return visits.map((v) => ({
-    ...v,
-    rating: v.rating ?? 0,
-    tags: v.tags ?? [],
-    status: v.status ?? "visited",
-    area: v.area ?? "",
-    visitCount: Math.max(1, v.visitCount ?? 1),
-  }));
-}
-
-function getInitialVisits(): SaunaVisit[] {
-  const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
-  if (typeof window === "undefined") {
-    return baseVisits;
-  }
-
-  const savedVisits = localStorage.getItem("sauna-itta_visits");
-  if (!savedVisits) {
-    return baseVisits;
-  }
-
-  try {
-    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-    const normalizedSaved = normalizeVisits(parsedSaved);
-    const initialIds = new Set(baseVisits.map((v) => v.id));
-    const customVisits = normalizedSaved.filter((v) => !initialIds.has(v.id));
-    return [...customVisits, ...baseVisits];
-  } catch (e) {
-    console.error("Failed to parse saved visits:", e);
-    return baseVisits;
-  }
-}
-
-function getInitialTheme(): "dark" | "light" {
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-  const savedTheme = localStorage.getItem("sauna-itta_theme");
-  return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
-}
-
-function getInitialIsMobile(): boolean {
-  return typeof window !== "undefined" && window.innerWidth < 768;
-}
-
-// Component to handle map clicks
 function LocationPicker({
   onLocationSelect,
 }: {
@@ -129,12 +43,7 @@ function LocationPicker({
   return null;
 }
 
-// Component to control map view when a sauna is focused from the list
-function MapController({
-  target,
-}: {
-  target: { lat: number; lng: number } | null;
-}) {
+function MapController({ target }: { target: LatLng | null }) {
   const map = useMap();
 
   useEffect(() => {
@@ -142,14 +51,12 @@ function MapController({
 
     const currentZoom = map.getZoom();
     const nextZoom = currentZoom < 8 ? 8 : currentZoom;
-
     map.flyTo([target.lat, target.lng], nextZoom);
   }, [target, map]);
 
   return null;
 }
 
-// 現在地ボタン: クリックで現在地に地図を飛ばす
 function LocationControl() {
   const map = useMap();
   const [locating, setLocating] = useState(false);
@@ -157,9 +64,7 @@ function LocationControl() {
 
   useEffect(() => {
     if (!toastMessage) return;
-    const timer = window.setTimeout(() => {
-      setToastMessage(null);
-    }, 2600);
+    const timer = window.setTimeout(() => setToastMessage(null), 2600);
     return () => window.clearTimeout(timer);
   }, [toastMessage]);
 
@@ -168,8 +73,10 @@ function LocationControl() {
       setToastMessage("お使いのブラウザは位置情報に対応していません");
       return;
     }
+
     setLocating(true);
     setToastMessage(null);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -185,13 +92,7 @@ function LocationControl() {
   }, [map]);
 
   return (
-    <div
-      className="location-control"
-      style={{
-        position: "absolute",
-        zIndex: 1000,
-      }}
-    >
+    <div className="location-control" style={{ position: "absolute", zIndex: 1000 }}>
       <button
         type="button"
         onClick={handleLocate}
@@ -214,53 +115,20 @@ function LocationControl() {
 export default function SaunaMap() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
-  const [visits, setVisits] = useState<SaunaVisit[]>(getInitialVisits);
+
+  const { visits, saveVisits, createVisit, updateVisit, importVisitsFromFile, exportVisits } =
+    useSaunaVisits();
+  const { filters, setFilters, filteredVisits, stats, isFilterActive, clearFilters } =
+    useVisitFilters(visits);
+
+  const [form, setForm] = useState<VisitFormState>(getDefaultForm());
+  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-  const [form, setForm] = useState<{
-    name: string;
-    comment: string;
-    image: string;
-    date: string;
-    rating: number;
-    tagsText: string;
-    status: "visited" | "wishlist";
-    area: string;
-    visitCount: number;
-  }>({
-    name: "",
-    comment: "",
-    image: "",
-    date: "",
-    rating: 0,
-    tagsText: "",
-    status: "visited",
-    area: "",
-    visitCount: 1,
-  });
-  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
-  const [isSidebarExpanded, setIsSidebarExpanded] =
-    useState(!getInitialIsMobile());
+  const [selectedLocation, setSelectedLocation] = useState<LatLng | null>(null);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(!getInitialIsMobile());
   const [isMobile] = useState(getInitialIsMobile);
-  const [mapTarget, setMapTarget] = useState<{
-    lat: number;
-    lng: number;
-  } | null>(null);
-  const [filters, setFilters] = useState<{
-    search: string;
-    status: "all" | "visited" | "wishlist";
-    minRating: number;
-    sort: "recent" | "oldest" | "ratingDesc" | "ratingAsc";
-  }>({
-    search: "",
-    status: "all",
-    minRating: 0,
-    sort: "recent",
-  });
+  const [mapTarget, setMapTarget] = useState<LatLng | null>(null);
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -290,88 +158,18 @@ export default function SaunaMap() {
     };
   }, [isMobileMenuOpen]);
 
-  const saveVisits = (newVisits: SaunaVisit[]) => {
-    setVisits(newVisits);
-    try {
-      localStorage.setItem("sauna-itta_visits", JSON.stringify(newVisits));
-    } catch (error) {
-      console.error("Failed to persist visits to localStorage:", error);
-      alert(
-        "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
-      );
-    }
-  };
-
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
-    localStorage.setItem("sauna-itta_theme", newTheme);
-  };
-
-  const exportData = () => {
-    const dataStr = JSON.stringify(visits, null, 2);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
-    const exportFileDefaultName = "sauna-visits.json";
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
-  };
-
-  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(reader.result as string) as SaunaVisit[];
-        const existingIds = new Set(visits.map((v) => v.id));
-        const normalizedImported = normalizeVisits(parsed).filter(
-          (v) => !existingIds.has(v.id),
-        );
-        if (normalizedImported.length === 0) {
-          alert("新しく追加されるデータはありませんでした。");
-          return;
-        }
-        saveVisits([...normalizedImported, ...visits]);
-        alert(`データを${normalizedImported.length}件取り込みました。`);
-      } catch (error) {
-        console.error(error);
-        alert("JSONの読み込みに失敗しました。ファイル形式を確認してください。");
-      } finally {
-        e.target.value = "";
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm({ ...form, image: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
   };
 
   const startNewVisit = () => {
     setIsAdding(true);
-    setForm({
-      name: "",
-      comment: "",
-      image: "",
-      date: new Date().toISOString().split("T")[0],
-      rating: 0,
-      tagsText: "",
-      status: "visited",
-      area: "",
-      visitCount: 1,
-    });
-    // モバイルではStep1（地図タップ待ち）のためサイドバーを縮小
+    setEditingId(null);
+    setSelectedLocation(null);
+    setForm(getDefaultForm(getTodayDate()));
+
     if (isMobile) {
       setIsSidebarExpanded(false);
     }
@@ -379,41 +177,19 @@ export default function SaunaMap() {
 
   const startEditing = (visit: SaunaVisit) => {
     setEditingId(visit.id);
-    setForm({
-      name: visit.name,
-      comment: visit.comment,
-      image: visit.image || "",
-      date: visit.date,
-      rating: visit.rating ?? 0,
-      tagsText: (visit.tags ?? []).join(", "),
-      status: visit.status ?? "visited",
-      area: visit.area ?? "",
-      visitCount: Math.max(1, visit.visitCount ?? 1),
-    });
+    setForm(toFormState(visit));
     setSelectedLocation({ lat: visit.lat, lng: visit.lng });
     setMapTarget({ lat: visit.lat, lng: visit.lng });
     setIsAdding(true);
-    // 編集時はStep1不要なのでサイドバーを開く
     setIsSidebarExpanded(true);
   };
 
-  // completed=true: 保存・削除後 → 一覧を見せるためサイドバーを展開
-  // completed=false: キャンセル → モバイルではサイドバーを閉じる
   const cancelEditing = (completed = false) => {
     setIsAdding(false);
     setEditingId(null);
     setSelectedLocation(null);
-    setForm({
-      name: "",
-      comment: "",
-      image: "",
-      date: "",
-      rating: 0,
-      tagsText: "",
-      status: "visited",
-      area: "",
-      visitCount: 1,
-    });
+    setForm(getDefaultForm());
+
     if (isMobile) {
       setIsSidebarExpanded(completed);
     }
@@ -421,14 +197,18 @@ export default function SaunaMap() {
 
   const handleDelete = () => {
     if (!editingId) return;
-    if (confirm("このサウナの記録を削除しますか？")) {
-      const updatedVisits = visits.filter((v) => v.id !== editingId);
-      saveVisits(updatedVisits);
-      cancelEditing(true); // 削除完了 → 一覧を展開して表示
+    if (!confirm("このサウナの記録を削除しますか？")) return;
+
+    const updatedVisits = visits.filter((v) => v.id !== editingId);
+    const persisted = saveVisits(updatedVisits);
+    if (!persisted) {
+      alert(
+        "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+      );
     }
+    cancelEditing(true);
   };
 
-  // 地図タップで場所選択 → モバイルでは自動的にフォームを展開
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
       setSelectedLocation({ lat, lng });
@@ -439,190 +219,77 @@ export default function SaunaMap() {
     [isMobile],
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!selectedLocation || !form.name) return;
 
-    const normalizedTags =
-      form.tagsText
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean) ?? [];
-
     if (editingId) {
-      const updatedVisits = visits.map((v) =>
-        v.id === editingId
-          ? {
-              ...v,
-              name: form.name,
-              lat: selectedLocation.lat,
-              lng: selectedLocation.lng,
-              comment: form.comment,
-              image: form.image,
-              date: form.date,
-              rating: form.rating || 0,
-              tags: normalizedTags,
-              status: form.status,
-              area: form.area,
-              visitCount: Math.max(1, form.visitCount),
-            }
-          : v,
-      );
-      saveVisits(updatedVisits);
+      const updatedVisits = updateVisit(editingId, selectedLocation, form);
+      const persisted = saveVisits(updatedVisits);
+      if (!persisted) {
+        alert(
+          "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+        );
+      }
     } else {
-      const newVisit: SaunaVisit = {
-        id: Date.now().toString(),
-        name: form.name,
-        lat: selectedLocation.lat,
-        lng: selectedLocation.lng,
-        comment: form.comment,
-        image: form.image,
-        date: form.date || new Date().toISOString().split("T")[0],
-        rating: form.rating || 0,
-        tags: normalizedTags,
-        status: form.status,
-        area: form.area,
-        visitCount: Math.max(1, form.visitCount),
-      };
-      saveVisits([newVisit, ...visits]);
+      const newVisit = createVisit(selectedLocation, form);
+      const persisted = saveVisits([newVisit, ...visits]);
+      if (!persisted) {
+        alert(
+          "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+        );
+      }
     }
 
-    cancelEditing(true); // 保存完了 → 一覧を展開して表示
+    cancelEditing(true);
   };
 
-  const filteredVisits = useMemo(() => {
-    const keyword = filters.search.trim().toLowerCase();
+  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    let result = visits.filter((v) => {
-      if (
-        filters.status !== "all" &&
-        (v.status ?? "visited") !== filters.status
-      ) {
-        return false;
-      }
-      if ((v.rating ?? 0) < filters.minRating) {
-        return false;
-      }
-      if (keyword) {
-        const text = [v.name, v.comment, v.area ?? "", (v.tags ?? []).join(" ")]
-          .join(" ")
-          .toLowerCase();
-        if (!text.includes(keyword)) return false;
-      }
-      return true;
-    });
-
-    result = result.slice().sort((a, b) => {
-      switch (filters.sort) {
-        case "oldest":
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
-        case "ratingDesc":
-          return (
-            (b.rating ?? 0) - (a.rating ?? 0) ||
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
-        case "ratingAsc":
-          return (
-            (a.rating ?? 0) - (b.rating ?? 0) ||
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
-        case "recent":
-        default:
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-      }
-    });
-
-    return result;
-  }, [visits, filters]);
-
-  const stats = useMemo(() => {
-    const total = visits.length;
-    if (total === 0) {
-      return {
-        total,
-        visitedCount: 0,
-        wishlistCount: 0,
-        firstDate: null as string | null,
-        lastDate: null as string | null,
-        avgRating: 0,
-        uniqueAreas: 0,
-        prefectures: [] as string[],
-        prefectureCount: 0,
-      };
-    }
-
-    const sortedByDate = [...visits].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    );
-    const firstDate = sortedByDate[0].date;
-    const lastDate = sortedByDate[sortedByDate.length - 1].date;
-    const visitedCount = visits.filter(
-      (v) => (v.status ?? "visited") === "visited",
-    ).length;
-    const wishlistCount = visits.filter(
-      (v) => (v.status ?? "visited") === "wishlist",
-    ).length;
-    const ratings = visits.map((v) => v.rating ?? 0).filter((r) => r > 0);
-    const avgRating =
-      ratings.length > 0
-        ? Math.round(
-            (ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10,
-          ) / 10
-        : 0;
-    const areas = new Set(
-      visits.map((v) => (v.area ?? "").trim()).filter((a) => a.length > 0),
-    );
-    const prefectures = Array.from(
-      new Set(
-        visits
-          .filter((v) => (v.status ?? "visited") === "visited")
-          .map((v) => extractPrefecture(v.area))
-          .filter((p): p is string => p != null),
-      ),
-    ).sort((a, b) => a.localeCompare(b, "ja"));
-
-    return {
-      total,
-      visitedCount,
-      wishlistCount,
-      firstDate,
-      lastDate,
-      avgRating,
-      uniqueAreas: areas.size,
-      prefectures,
-      prefectureCount: prefectures.length,
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm((prev) => ({ ...prev, image: reader.result as string }));
     };
-  }, [visits]);
-
-  const isFilterActive =
-    filters.search.trim().length > 0 ||
-    filters.status !== "all" ||
-    filters.minRating > 0 ||
-    filters.sort !== "recent";
-
-  const clearFilters = () => {
-    setFilters({
-      search: "",
-      status: "all",
-      minRating: 0,
-      sort: "recent",
-    });
+    reader.readAsDataURL(file);
   };
 
-  // モバイルでの「場所待ち」状態: サイドバーを非表示にして地図を全面に
-  const isMobilePickingLocation =
-    isMobile && isAdding && !editingId && !selectedLocation;
+  const handleImportData = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const { added, nextVisits } = await importVisitsFromFile(file);
+      if (added === 0) {
+        alert("新しく追加されるデータはありませんでした。");
+        return;
+      }
+
+      const persisted = saveVisits(nextVisits);
+      if (!persisted) {
+        alert(
+          "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+        );
+      }
+      alert(`データを${added}件取り込みました。`);
+    } catch (error) {
+      console.error(error);
+      alert("JSONの読み込みに失敗しました。ファイル形式を確認してください。");
+    } finally {
+      e.target.value = "";
+    }
+  };
+
+  const isMobilePickingLocation = isMobile && isAdding && !editingId && !selectedLocation;
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
-      <div
-        className="map-container"
-        style={{ background: "var(--background)", color: "var(--foreground)" }}
-      >
+      <div className="map-container" style={{ background: "var(--background)", color: "var(--foreground)" }}>
         <MapContainer
           center={[36.0, 138.0]}
           zoom={6}
-          scrollWheelZoom={true}
+          scrollWheelZoom
           zoomControl={false}
           style={{ height: "100%", width: "100%" }}
         >
@@ -635,70 +302,10 @@ export default function SaunaMap() {
           />
 
           <MapController target={mapTarget} />
+          <VisitMarkers visits={filteredVisits} editingId={editingId} onEdit={startEditing} />
 
-          {filteredVisits.map((visit) => (
-            <Marker
-              key={visit.id}
-              position={[visit.lat, visit.lng]}
-              icon={getSaunaIcon({
-                selected: visit.id === editingId,
-                wishlist: (visit.status ?? "visited") === "wishlist",
-              })}
-            >
-              <Popup>
-                <div className="popup-card">
-                  <h3 className="popup-title">
-                    {visit.name}
-                    {(visit.status ?? "visited") === "wishlist" && (
-                      <span className="wishlist-chip">🏷 行きたい</span>
-                    )}
-                  </h3>
-                  {visit.area && <div className="popup-area">{visit.area}</div>}
-                  {(visit.rating ?? 0) > 0 && (
-                    <div className="popup-rating">
-                      {"★".repeat(visit.rating ?? 0)}
-                      {"☆".repeat(5 - (visit.rating ?? 0))}
-                    </div>
-                  )}
-                  {visit.image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={visit.image}
-                      alt={visit.name}
-                      className="popup-image"
-                    />
-                  )}
-                  <p className="popup-comment">{visit.comment}</p>
-                  <small className="popup-meta">
-                    {visit.date}
-                    {(visit.visitCount ?? 1) > 1 && (
-                      <span>・{visit.visitCount}回目</span>
-                    )}
-                  </small>
-                  <a
-                    href={getDirectionsUrl(visit.lat, visit.lng)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="popup-link"
-                  >
-                    🧭 ここへ行く
-                  </a>
-                  <button
-                    onClick={() => startEditing(visit)}
-                    className="popup-edit-btn"
-                  >
-                    編集する
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {isAdding && !editingId && <LocationPicker onLocationSelect={handleLocationSelect} />}
 
-          {isAdding && !editingId && (
-            <LocationPicker onLocationSelect={handleLocationSelect} />
-          )}
-
-          {/* 新規作成時のみプレビュー用のピンを表示（既存編集時は既存ピンをハイライト表示） */}
           {selectedLocation && !editingId && (
             <Marker
               position={[selectedLocation.lat, selectedLocation.lng]}
@@ -710,7 +317,6 @@ export default function SaunaMap() {
         </MapContainer>
       </div>
 
-      {/* モバイル: 場所選択中のフローティング案内バー */}
       {isMobilePickingLocation && (
         <div className="pin-hint">
           <div className="pin-hint-icon">📍</div>
@@ -724,7 +330,6 @@ export default function SaunaMap() {
         </div>
       )}
 
-      {/* サイドバー: 場所選択中のモバイルでは非表示 */}
       {!isMobilePickingLocation && (
         <div className="ui-layer">
           {isMobileMenuOpen && (
@@ -772,369 +377,85 @@ export default function SaunaMap() {
                   ⋯
                 </button>
                 {isMobileMenuOpen && (
-                  <>
-                    <div
-                      className={`mobile-menu-dropdown ${
-                        isSidebarExpanded ? "mobile-menu-dropdown--down" : ""
-                      }`}
-                      role="menu"
+                  <div
+                    className={`mobile-menu-dropdown ${
+                      isSidebarExpanded ? "mobile-menu-dropdown--down" : ""
+                    }`}
+                    role="menu"
+                  >
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        toggleTheme();
+                        setIsMobileMenuOpen(false);
+                      }}
                     >
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          toggleTheme();
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        {theme === "dark"
-                          ? "☀️ ライトモード"
-                          : "🌙 ダークモード"}
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          setIsShareViewOpen(true);
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        📸 シェア用ビュー
-                      </button>
-                      <Link
-                        href="/stats"
-                        prefetch={false}
-                        role="menuitem"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        📊 ダッシュボード
-                      </Link>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          exportData();
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        📥 エクスポート
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => {
-                          importInputRef.current?.click();
-                          setIsMobileMenuOpen(false);
-                        }}
-                      >
-                        📤 インポート
-                      </button>
-                    </div>
-                  </>
+                      {theme === "dark" ? "☀️ ライトモード" : "🌙 ダークモード"}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsShareViewOpen(true);
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      📸 シェア用ビュー
+                    </button>
+                    <Link
+                      href="/stats"
+                      prefetch={false}
+                      role="menuitem"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      📊 ダッシュボード
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        exportVisits(visits);
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      📥 エクスポート
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        importInputRef.current?.click();
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      📤 インポート
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
 
             <div className="sidebar-content">
               {isAdding ? (
-                <form onSubmit={handleSubmit}>
-                  <h2 className="panel-title mb-2">
-                    {editingId ? "サウナの編集" : "新規サウナ登録"}
-                  </h2>
-                  <p className="panel-subtitle">
-                    {editingId
-                      ? "内容を更新します"
-                      : selectedLocation
-                        ? "場所が選択されました ✅"
-                        : "地図上をクリックして場所を選択してください"}
-                  </p>
-
-                  <div className="form-group">
-                    <label>サウナ名</label>
-                    <input
-                      className="input"
-                      value={form.name}
-                      onChange={(e) =>
-                        setForm({ ...form, name: e.target.value })
-                      }
-                      placeholder="例: 上野 SHIZUKU"
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>エリア（任意）</label>
-                    <input
-                      className="input"
-                      value={form.area}
-                      onChange={(e) =>
-                        setForm({ ...form, area: e.target.value })
-                      }
-                      placeholder="例: 東京 / 北海道 / 関西 など"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>ステータス</label>
-                    <div className="segmented">
-                      <button
-                        type="button"
-                        className="btn"
-                        style={{
-                          flex: 1,
-                          background:
-                            form.status === "visited"
-                              ? "var(--primary)"
-                              : "var(--glass)",
-                          color:
-                            form.status === "visited"
-                              ? "white"
-                              : "var(--foreground)",
-                        }}
-                        onClick={() => setForm({ ...form, status: "visited" })}
-                      >
-                        行った
-                      </button>
-                      <button
-                        type="button"
-                        className="btn"
-                        style={{
-                          flex: 1,
-                          background:
-                            form.status === "wishlist"
-                              ? "var(--accent)"
-                              : "var(--glass)",
-                          color: "var(--foreground)",
-                        }}
-                        onClick={() => setForm({ ...form, status: "wishlist" })}
-                      >
-                        行きたい
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label>満足度（★1〜5）</label>
-                    <div className="rating-row">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="button"
-                          onClick={() => setForm({ ...form, rating: star })}
-                          className="rating-star-btn"
-                          aria-label={`${star} star`}
-                        >
-                          {form.rating >= star ? "★" : "☆"}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => setForm({ ...form, rating: 0 })}
-                        className="clear-rating"
-                      >
-                        クリア
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label>タグ（カンマ区切り）</label>
-                    <input
-                      className="input"
-                      value={form.tagsText}
-                      onChange={(e) =>
-                        setForm({ ...form, tagsText: e.target.value })
-                      }
-                      placeholder="例: 外気浴最高, 水風呂キンキン, ソロ向き"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>写真を追加</label>
-                    <input
-                      type="file"
-                      className="input"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      style={{ fontSize: "0.84rem", padding: "0.55rem" }}
-                    />
-                    {form.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={form.image}
-                        className="sauna-img-preview"
-                        alt="Preview"
-                      />
-                    )}
-                  </div>
-
-                  <div className="form-group">
-                    <label>行った日</label>
-                    <input
-                      type="date"
-                      className="input"
-                      value={form.date}
-                      onChange={(e) =>
-                        setForm({ ...form, date: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>訪問回数</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={999}
-                      className="input"
-                      value={form.visitCount}
-                      onChange={(e) =>
-                        setForm({
-                          ...form,
-                          visitCount: Math.max(
-                            1,
-                            parseInt(e.target.value, 10) || 1,
-                          ),
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>感想・メモ</label>
-                    <textarea
-                      className="input textarea"
-                      value={form.comment}
-                      onChange={(e) =>
-                        setForm({ ...form, comment: e.target.value })
-                      }
-                      placeholder="水風呂の温度、外気浴の雰囲気など..."
-                    />
-                  </div>
-
-                  <div className="cta-group">
-                    <button
-                      type="submit"
-                      className="btn btn-primary"
-                      disabled={!selectedLocation}
-                    >
-                      保存
-                    </button>
-                    {editingId && (
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        onClick={handleDelete}
-                      >
-                        削除
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      onClick={() => cancelEditing()}
-                    >
-                      キャンセル
-                    </button>
-                  </div>
-                </form>
+                <VisitForm
+                  form={form}
+                  setForm={setForm}
+                  selectedLocation={selectedLocation}
+                  editingId={editingId}
+                  onSubmit={handleSubmit}
+                  onImageChange={handleImageChange}
+                  onDelete={handleDelete}
+                  onCancel={() => cancelEditing()}
+                />
               ) : (
-                <div className="sauna-list">
-                  <h2 className="panel-title mb-2">
-                    訪れたサウナ ({filteredVisits.length}/{visits.length})
-                  </h2>
-                  <button
-                    type="button"
-                    className="filters-open-btn"
-                    onClick={() => setIsFilterModalOpen(true)}
-                  >
-                    <span>フィルター</span>
-                    <span>
-                      {isFilterActive
-                        ? `${filteredVisits.length}件`
-                        : "すべて表示"}
-                    </span>
-                  </button>
-                  {visits.length === 0 ? (
-                    <p className="empty-state">
-                      まだ投稿がありません。
-                      <br />
-                      新しいピンを立ててみましょう！
-                    </p>
-                  ) : filteredVisits.length === 0 ? (
-                    <p className="empty-state">
-                      条件に合うサウナがありません。
-                      <br />
-                      フィルタ条件を見直してみてください。
-                    </p>
-                  ) : (
-                    filteredVisits.map((visit) => (
-                      <div
-                        key={visit.id}
-                        className="sauna-card"
-                        onClick={() => startEditing(visit)}
-                      >
-                        <h3 className="sauna-card-title">
-                          {visit.name}
-                          {(visit.status ?? "visited") === "wishlist" && (
-                            <span
-                              style={{
-                                marginLeft: "0.5rem",
-                                fontSize: "0.75rem",
-                              }}
-                            >
-                              🏷 行きたい
-                            </span>
-                          )}
-                        </h3>
-                        {visit.area && (
-                          <div className="sauna-card-area">{visit.area}</div>
-                        )}
-                        {(visit.rating ?? 0) > 0 && (
-                          <div className="sauna-card-rating">
-                            {"★".repeat(visit.rating ?? 0)}
-                            {"☆".repeat(5 - (visit.rating ?? 0))}
-                          </div>
-                        )}
-                        {visit.tags && visit.tags.length > 0 && (
-                          <div className="sauna-tag-list">
-                            {visit.tags.map((tag) => (
-                              <span key={tag} className="sauna-tag">
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                        <p className="sauna-card-comment">{visit.comment}</p>
-                        {visit.image && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={visit.image}
-                            className="sauna-img-preview"
-                            alt=""
-                          />
-                        )}
-                        <div className="sauna-card-meta">
-                          <span>日付: {visit.date}</span>
-                          {(visit.visitCount ?? 1) > 1 && (
-                            <span>訪問 {visit.visitCount}回目</span>
-                          )}
-                          <span>タップで編集</span>
-                        </div>
-                        <a
-                          href={getDirectionsUrl(visit.lat, visit.lng)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="route-link"
-                        >
-                          🧭 ここへ行く
-                        </a>
-                      </div>
-                    ))
-                  )}
-                </div>
+                <VisitList
+                  visits={visits}
+                  filteredVisits={filteredVisits}
+                  isFilterActive={isFilterActive}
+                  onOpenFilters={() => setIsFilterModalOpen(true)}
+                  onEdit={startEditing}
+                />
               )}
             </div>
 
@@ -1149,197 +470,21 @@ export default function SaunaMap() {
         </div>
       )}
 
-      {isFilterModalOpen && (
-        <div
-          className="filters-modal-overlay"
-          onClick={() => setIsFilterModalOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="filters-modal-sheet"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-labelledby="filters-modal-title"
-          >
-            <div className="filters-modal-header">
-              <h3 id="filters-modal-title">フィルター</h3>
-              <button
-                type="button"
-                className="filters-modal-close"
-                onClick={() => setIsFilterModalOpen(false)}
-                aria-label="閉じる"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="filters">
-              <input
-                className="input"
-                placeholder="キーワード検索"
-                value={filters.search}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, search: e.target.value }))
-                }
-              />
-              <div className="form-group">
-                <label className="filters-label">ステータス</label>
-                <select
-                  className="input"
-                  style={{ width: "100%" }}
-                  value={filters.status}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      status: e.target.value as typeof filters.status,
-                    }))
-                  }
-                >
-                  <option value="all">すべて</option>
-                  <option value="visited">行った</option>
-                  <option value="wishlist">行きたい</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="filters-label">並び順</label>
-                <select
-                  className="input"
-                  style={{ width: "100%" }}
-                  value={filters.sort}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      sort: e.target.value as typeof filters.sort,
-                    }))
-                  }
-                >
-                  <option value="recent">新しい順</option>
-                  <option value="oldest">古い順</option>
-                  <option value="ratingDesc">満足度が高い順</option>
-                  <option value="ratingAsc">満足度が低い順</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label className="filters-label">最低満足度</label>
-                <select
-                  className="input"
-                  style={{ width: "100%" }}
-                  value={filters.minRating}
-                  onChange={(e) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      minRating: Number(e.target.value),
-                    }))
-                  }
-                >
-                  <option value={0}>指定なし</option>
-                  <option value={1}>★1以上</option>
-                  <option value={2}>★2以上</option>
-                  <option value={3}>★3以上</option>
-                  <option value={4}>★4以上</option>
-                  <option value={5}>★5のみ</option>
-                </select>
-              </div>
-              {isFilterActive && (
-                <button
-                  type="button"
-                  className="btn btn-ghost filters-reset"
-                  onClick={() => {
-                    clearFilters();
-                    setIsFilterModalOpen(false);
-                  }}
-                >
-                  フィルター解除
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => setIsFilterModalOpen(false)}
-              >
-                反映して閉じる
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        filters={filters}
+        setFilters={setFilters}
+        isFilterActive={isFilterActive}
+        onClearFilters={clearFilters}
+        onClose={() => setIsFilterModalOpen(false)}
+      />
 
-      {isShareViewOpen && (
-        <div
-          className="share-overlay"
-          onClick={() => setIsShareViewOpen(false)}
-        >
-          <div className="share-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="share-header">
-              <div>
-                <h2>サウナイッタ シェアビュー</h2>
-                <p>この画面をスクリーンショットしてSNSに投稿できます</p>
-              </div>
-              <button
-                onClick={() => setIsShareViewOpen(false)}
-                className="share-close"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="share-summary">
-              {stats.firstDate && stats.lastDate && (
-                <div>
-                  記録期間: <strong>{stats.firstDate}</strong> 〜{" "}
-                  <strong>{stats.lastDate}</strong>
-                </div>
-              )}
-              {stats.avgRating > 0 && (
-                <div>
-                  平均満足度: <strong>{stats.avgRating}</strong> / 5
-                </div>
-              )}
-            </div>
-            <div className="share-list">
-              {filteredVisits.slice(0, 30).map((visit) => (
-                <div key={visit.id} className="share-item">
-                  <div className="share-item-top">
-                    <div>
-                      <strong>{visit.name}</strong>
-                      {(visit.status ?? "visited") === "wishlist" && (
-                        <span style={{ marginLeft: "0.25rem" }}>
-                          🏷 行きたい
-                        </span>
-                      )}
-                      {visit.area && (
-                        <span style={{ marginLeft: "0.5rem", opacity: 0.8 }}>
-                          {visit.area}
-                        </span>
-                      )}
-                    </div>
-                    <span>{visit.date}</span>
-                  </div>
-                  {(visit.rating ?? 0) > 0 && (
-                    <div className="share-rating">
-                      {"★".repeat(visit.rating ?? 0)}
-                      {"☆".repeat(5 - (visit.rating ?? 0))}
-                    </div>
-                  )}
-                  {visit.tags && visit.tags.length > 0 && (
-                    <div className="share-tags">
-                      {visit.tags.map((tag) => (
-                        <span key={tag}>#{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                  {visit.comment && (
-                    <div className="share-comment">{visit.comment}</div>
-                  )}
-                </div>
-              ))}
-              {filteredVisits.length > 30 && (
-                <div className="share-more">
-                  ほか {filteredVisits.length - 30} 件…
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <ShareModal
+        isOpen={isShareViewOpen}
+        stats={stats}
+        filteredVisits={filteredVisits}
+        onClose={() => setIsShareViewOpen(false)}
+      />
     </div>
   );
 }
