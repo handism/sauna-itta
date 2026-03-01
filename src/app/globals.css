@@ -1031,14 +1031,14 @@ input[type="date"].input {
 
   .sidebar.collapsed {
     transform: translateY(
-      calc(100% - 96.84px - env(safe-area-inset-bottom, 16px))
+      calc(100% - 96px - env(safe-area-inset-bottom, 16px))
     );
-    max-height: 96.84px;
+    max-height: 96px;
   }
 
   /* モバイル時のサイドバー ヘッダー */
   .sidebar-header {
-    padding: 1.6rem 1rem 0.75rem;
+    padding: 1rem 1rem 0.75rem;
     flex-direction: row;
     align-items: flex-start;
     flex-wrap: wrap;
