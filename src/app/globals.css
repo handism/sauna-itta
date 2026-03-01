@@ -545,7 +545,7 @@ input[type="date"].input {
 .location-toast {
   position: fixed;
   left: 50%;
-  bottom: 1.25rem;
+  top: 1.25rem;
   transform: translateX(-50%);
   max-width: min(90vw, 360px);
   padding: 0.6rem 0.9rem;
@@ -1058,10 +1058,6 @@ input[type="date"].input {
     width: 48px;
     height: 48px;
     font-size: 1.25rem;
-  }
-
-  .location-toast {
-    bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
   .mobile-toggle {

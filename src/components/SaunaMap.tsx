@@ -763,7 +763,7 @@ export default function SaunaMap() {
                         role="menuitem"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        📊 統計ダッシュボード
+                        📊 ダッシュボード
                       </Link>
                       {!isAdding && (
                         <button
@@ -774,7 +774,7 @@ export default function SaunaMap() {
                             setIsMobileMenuOpen(false);
                           }}
                         >
-                          ➕ 新しいピンを立てる
+                          ➕ 新規ピンを立てる
                         </button>
                       )}
                       <button
@@ -785,7 +785,7 @@ export default function SaunaMap() {
                           setIsMobileMenuOpen(false);
                         }}
                       >
-                        📥 データエクスポート
+                        📥 エクスポート
                       </button>
                       <button
                         type="button"
@@ -795,7 +795,7 @@ export default function SaunaMap() {
                           setIsMobileMenuOpen(false);
                         }}
                       >
-                        📤 データインポート
+                        📤 インポート
                       </button>
                     </div>
                   </>
