@@ -710,7 +710,6 @@ export default function SaunaMap() {
               {isSidebarExpanded ? "↓" : "↑"}
             </button>
             <div className="sidebar-header">
-              <div className="sidebar-drag-handle" aria-hidden />
               <div className="sidebar-header-main">
                 <h1 className="text-primary">サウナイッタ</h1>
                 <p>マイととのいマップ</p>

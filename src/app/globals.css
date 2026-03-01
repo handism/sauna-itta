@@ -999,17 +999,6 @@ input[type="date"].input {
     padding-top: 0.5rem;
   }
 
-  .sidebar-drag-handle {
-    display: block;
-    flex-basis: 100%;
-    width: 36px;
-    height: 4px;
-    margin: 0 auto 0.25rem;
-    background: var(--glass-border);
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
-
   .sidebar-header-main {
     flex: 1;
     min-width: 0;
@@ -1096,7 +1085,7 @@ input[type="date"].input {
   }
 
   .sidebar.collapsed .mobile-toggle {
-    transform: translateX(-50%) rotate(180deg);
+    transform: translateX(-50%);
   }
 
   .share-modal {
@@ -1178,13 +1167,6 @@ input[type="date"].input {
     height: 44px;
     min-width: 44px;
     min-height: 44px;
-  }
-}
-
-/* デスクトップではドラッグハンドル非表示 */
-@media (min-width: 769px) {
-  .sidebar-drag-handle {
-    display: none !important;
   }
 }
 
