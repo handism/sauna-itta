@@ -959,10 +959,11 @@ export default function SaunaMap() {
                         setFilters((prev) => ({ ...prev, search: e.target.value }))
                       }
                     />
-                    <div className="filters-row">
+                    <div className="form-group">
+                      <label className="filters-label">ステータス</label>
                       <select
                         className="input"
-                        style={{ flex: 1, minWidth: "120px" }}
+                        style={{ width: "100%" }}
                         value={filters.status}
                         onChange={(e) =>
                           setFilters((prev) => ({
@@ -975,9 +976,12 @@ export default function SaunaMap() {
                         <option value="visited">行った</option>
                         <option value="wishlist">行きたい</option>
                       </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="filters-label">並び順</label>
                       <select
                         className="input"
-                        style={{ flex: 1, minWidth: "120px" }}
+                        style={{ width: "100%" }}
                         value={filters.sort}
                         onChange={(e) =>
                           setFilters((prev) => ({
@@ -992,11 +996,11 @@ export default function SaunaMap() {
                         <option value="ratingAsc">満足度が低い順</option>
                       </select>
                     </div>
-                    <div className="filters-row filters-inline">
+                    <div className="form-group">
                       <label className="filters-label">最低満足度</label>
                       <select
                         className="input"
-                        style={{ maxWidth: "120px" }}
+                        style={{ width: "100%" }}
                         value={filters.minRating}
                         onChange={(e) =>
                           setFilters((prev) => ({
