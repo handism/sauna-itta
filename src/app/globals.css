@@ -489,7 +489,9 @@ input[type="date"].input {
 }
 
 .leaflet-top.leaflet-right .leaflet-control-zoom {
-  margin: 5.5rem 2rem 0 0 !important;
+  margin: 2rem calc(2rem + 44px + 0.5rem) 0 0 !important;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .leaflet-control-zoom-in, .leaflet-control-zoom-out {
@@ -497,6 +499,7 @@ input[type="date"].input {
   color: var(--foreground) !important;
   border: 1px solid var(--glass-border) !important;
   backdrop-filter: blur(10px);
+  border-radius: 50% !important;
 }
 
 /* 現在地ボタン */
@@ -1010,13 +1013,14 @@ input[type="date"].input {
   }
 
   .leaflet-control-zoom {
-    margin: 5.75rem 1rem 0 0 !important;
+    margin: max(1rem, env(safe-area-inset-top))
+      calc(1rem + 48px + 0.5rem) 0 0 !important;
   }
 
   .leaflet-control-zoom a {
-    width: 44px !important;
-    height: 44px !important;
-    line-height: 44px !important;
+    width: 48px !important;
+    height: 48px !important;
+    line-height: 48px !important;
     font-size: 1.25rem !important;
   }
 
