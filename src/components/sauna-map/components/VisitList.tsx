@@ -1,5 +1,6 @@
 import { SaunaVisit } from "../types";
 import { getDirectionsUrl } from "../utils";
+import { RatingStars, WishlistChip } from "./common";
 
 interface VisitListProps {
   visits: SaunaVisit[];
@@ -43,17 +44,10 @@ export function VisitList({
           <div key={visit.id} className="sauna-card" onClick={() => onEdit(visit)}>
             <h3 className="sauna-card-title">
               {visit.name}
-              {(visit.status ?? "visited") === "wishlist" && (
-                <span style={{ marginLeft: "0.5rem", fontSize: "0.75rem" }}>🏷 行きたい</span>
-              )}
+              {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
             </h3>
             {visit.area && <div className="sauna-card-area">{visit.area}</div>}
-            {(visit.rating ?? 0) > 0 && (
-              <div className="sauna-card-rating">
-                {"★".repeat(visit.rating ?? 0)}
-                {"☆".repeat(5 - (visit.rating ?? 0))}
-              </div>
-            )}
+            <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" />
             {visit.tags && visit.tags.length > 0 && (
               <div className="sauna-tag-list">
                 {visit.tags.map((tag) => (

@@ -2,6 +2,7 @@ import { Marker, Popup } from "react-leaflet";
 import { SaunaVisit } from "../types";
 import { getDirectionsUrl } from "../utils";
 import { getSaunaIcon } from "./markerIcon";
+import { RatingStars, WishlistChip } from "./common";
 
 interface VisitMarkersProps {
   visits: SaunaVisit[];
@@ -25,17 +26,10 @@ export function VisitMarkers({ visits, editingId, onEdit }: VisitMarkersProps) {
             <div className="popup-card">
               <h3 className="popup-title">
                 {visit.name}
-                {(visit.status ?? "visited") === "wishlist" && (
-                  <span className="wishlist-chip">🏷 行きたい</span>
-                )}
+                {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
               </h3>
               {visit.area && <div className="popup-area">{visit.area}</div>}
-              {(visit.rating ?? 0) > 0 && (
-                <div className="popup-rating">
-                  {"★".repeat(visit.rating ?? 0)}
-                  {"☆".repeat(5 - (visit.rating ?? 0))}
-                </div>
-              )}
+              <RatingStars rating={visit.rating ?? 0} className="popup-rating" />
               {visit.image && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={visit.image} alt={visit.name} className="popup-image" />
