@@ -489,7 +489,7 @@ input[type="date"].input {
 }
 
 .leaflet-top.leaflet-right .leaflet-control-zoom {
-  margin: 2rem calc(2rem + 44px + 0.5rem) 0 0 !important;
+  margin: 2rem calc(2rem + 48px + 0.5rem) 0 0 !important;
   display: flex;
   gap: 0.5rem;
 }
@@ -502,6 +502,13 @@ input[type="date"].input {
   border-radius: 50% !important;
 }
 
+.leaflet-control-zoom a {
+  width: 48px !important;
+  height: 48px !important;
+  line-height: 48px !important;
+  font-size: 1.25rem !important;
+}
+
 /* 現在地ボタン */
 .location-control {
   top: 2rem;
@@ -510,8 +517,8 @@ input[type="date"].input {
 }
 .location-control-btn {
   pointer-events: auto;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: 2px solid var(--glass-border);
   background: var(--glass-heavy);
@@ -533,6 +540,24 @@ input[type="date"].input {
 .location-control-btn:disabled {
   opacity: 0.7;
   cursor: wait;
+}
+
+.location-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  transform: translateX(-50%);
+  max-width: min(90vw, 360px);
+  padding: 0.6rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--error) 50%, #fff 20%);
+  background: color-mix(in srgb, var(--error) 85%, #111 15%);
+  color: #fff;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 1200;
 }
 
 /* Animations */
@@ -1032,7 +1057,11 @@ input[type="date"].input {
   .location-control-btn {
     width: 48px;
     height: 48px;
-    font-size: 1.35rem;
+    font-size: 1.25rem;
+  }
+
+  .location-toast {
+    bottom: max(1rem, env(safe-area-inset-bottom));
   }
 
   .mobile-toggle {

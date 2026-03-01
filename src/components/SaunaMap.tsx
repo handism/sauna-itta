@@ -153,15 +153,23 @@ function MapController({
 function LocationControl() {
   const map = useMap();
   const [locating, setLocating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toastMessage) return;
+    const timer = window.setTimeout(() => {
+      setToastMessage(null);
+    }, 2600);
+    return () => window.clearTimeout(timer);
+  }, [toastMessage]);
 
   const handleLocate = useCallback(() => {
     if (!navigator.geolocation) {
-      setError("お使いのブラウザは位置情報に対応していません");
+      setToastMessage("お使いのブラウザは位置情報に対応していません");
       return;
     }
     setLocating(true);
-    setError(null);
+    setToastMessage(null);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
@@ -169,7 +177,7 @@ function LocationControl() {
         setLocating(false);
       },
       () => {
-        setError("位置情報を取得できませんでした");
+        setToastMessage("位置情報を取得できませんでした");
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
@@ -184,18 +192,6 @@ function LocationControl() {
         zIndex: 1000,
       }}
     >
-      {error && (
-        <div
-          style={{
-            marginBottom: "0.25rem",
-            fontSize: "0.7rem",
-            color: "var(--error)",
-            maxWidth: "140px",
-          }}
-        >
-          {error}
-        </div>
-      )}
       <button
         type="button"
         onClick={handleLocate}
@@ -206,6 +202,11 @@ function LocationControl() {
       >
         {locating ? "…" : "📍"}
       </button>
+      {toastMessage && (
+        <div className="location-toast" role="status" aria-live="polite">
+          {toastMessage}
+        </div>
+      )}
     </div>
   );
 }
