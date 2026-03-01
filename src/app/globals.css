@@ -565,52 +565,6 @@ input[type="date"].input {
   opacity: 0.76;
 }
 
-.sidebar-stats {
-  margin-top: 0.65rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.36rem;
-}
-
-.sidebar-stats span {
-  font-size: 0.7rem;
-  border: 1px solid var(--glass-border);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--glass) 70%, transparent);
-  padding: 0.2rem 0.45rem;
-}
-
-.sidebar-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  align-items: flex-end;
-}
-
-.chip-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  border: 1px solid var(--glass-border);
-  background: color-mix(in srgb, var(--glass) 85%, transparent);
-  color: var(--foreground);
-  padding: 0.4rem 0.8rem;
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: 0.2s ease;
-  text-decoration: none;
-}
-
-.chip-btn:hover {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--glass-border));
-  transform: translateY(-1px);
-}
-
-.chip-link {
-  width: 100%;
-}
-
 .segmented {
   display: flex;
   gap: 0.5rem;
@@ -945,8 +899,6 @@ input[type="date"].input {
   /* 全体的にタップ領域を 44px 以上に */
   .input,
   .btn,
-  button.chip-btn,
-  a.chip-link,
   .route-link,
   .popup-link,
   .popup-edit-btn,
@@ -1021,31 +973,6 @@ input[type="date"].input {
   }
 
   .sidebar-header-main p {
-    font-size: 0.8rem;
-  }
-
-  .sidebar-stats {
-    margin-top: 0.4rem;
-  }
-
-  .sidebar-stats span {
-    padding: 0.28rem 0.6rem;
-    font-size: 0.72rem;
-  }
-
-  .sidebar-actions {
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-
-  .sidebar-actions .chip-btn,
-  .sidebar-actions .chip-link {
-    flex: 1 1 auto;
-    min-width: 0;
-    min-height: 44px;
-    padding: 0.5rem 0.75rem;
     font-size: 0.8rem;
   }
 
@@ -1364,12 +1291,6 @@ input[type="date"].input {
 .mobile-menu-dropdown button:active,
 .mobile-menu-dropdown a:active {
   background: var(--primary-glow);
-}
-
-@media (max-width: 768px) {
-  .sidebar-actions-desktop {
-    display: none !important;
-  }
 }
 
 /* モバイル: フィルターボタンでモーダル表示 */

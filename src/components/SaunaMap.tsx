@@ -664,30 +664,6 @@ export default function SaunaMap() {
               <div className="sidebar-header-main">
                 <h1 className="text-primary">サウナイッタ</h1>
                 <p>マイととのいマップ</p>
-                <div className="sidebar-stats">
-                  <span>{stats.total}件</span>
-                  <span>行った {stats.visitedCount}</span>
-                  <span>行きたい {stats.wishlistCount}</span>
-                </div>
-              </div>
-              <div className="sidebar-actions sidebar-actions-desktop">
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="chip-btn"
-                >
-                  {theme === "dark" ? "☀️ ライト" : "🌙 ダーク"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsShareViewOpen(true)}
-                  className="chip-btn"
-                >
-                  📸 シェア用ビュー
-                </button>
-                <Link href="/stats" className="chip-btn chip-link">
-                  📊 詳細スタッツ
-                </Link>
               </div>
               <div className="mobile-menu-wrap" style={{ position: "relative" }}>
                 <button
@@ -1238,9 +1214,6 @@ export default function SaunaMap() {
               </button>
             </div>
             <div className="share-summary">
-              <div>
-                合計サウナ数: <strong>{stats.total}</strong> （行った: {stats.visitedCount} / 行きたい: {stats.wishlistCount}）
-              </div>
               {stats.firstDate && stats.lastDate && (
                 <div>
                   記録期間: <strong>{stats.firstDate}</strong> 〜 <strong>{stats.lastDate}</strong>
