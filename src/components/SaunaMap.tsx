@@ -735,7 +735,12 @@ export default function SaunaMap() {
                       onClick={() => setIsMobileMenuOpen(false)}
                       aria-hidden
                     />
-                    <div className="mobile-menu-dropdown" role="menu">
+                    <div
+                      className={`mobile-menu-dropdown ${
+                        isSidebarExpanded ? "mobile-menu-dropdown--down" : ""
+                      }`}
+                      role="menu"
+                    >
                       <button
                         type="button"
                         role="menuitem"
