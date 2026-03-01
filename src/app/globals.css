@@ -1301,6 +1301,13 @@ input[type="date"].input {
     margin-top: 0;
     margin-bottom: 0.35rem;
   }
+
+  .mobile-menu-dropdown.mobile-menu-dropdown--down {
+    top: 100%;
+    bottom: auto;
+    margin-top: 0.35rem;
+    margin-bottom: 0;
+  }
 }
 
 .mobile-menu-dropdown button,
