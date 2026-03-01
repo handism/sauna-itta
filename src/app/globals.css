@@ -988,15 +988,14 @@ input[type="date"].input {
     max-height: 72px;
   }
 
-  /* ドラッグハンドル: つまんで開閉できる視覚的ヒント */
+  /* モバイル時のサイドバー ヘッダー */
   .sidebar-header {
-    padding: 0.5rem 1rem 0.75rem;
+    padding: 1.6rem 1rem 0.75rem;
     flex-direction: row;
     align-items: flex-start;
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 0.5rem;
-    padding-top: 0.5rem;
   }
 
   .sidebar-header-main {
