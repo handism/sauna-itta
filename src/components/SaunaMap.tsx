@@ -213,6 +213,7 @@ function LocationControl() {
 
 export default function SaunaMap() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const [visits, setVisits] = useState<SaunaVisit[]>(getInitialVisits);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -263,6 +264,31 @@ export default function SaunaMap() {
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (mobileMenuRef.current?.contains(target)) return;
+      setIsMobileMenuOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileMenuOpen]);
 
   const saveVisits = (newVisits: SaunaVisit[]) => {
     setVisits(newVisits);
@@ -714,7 +740,7 @@ export default function SaunaMap() {
                 <h1 className="text-primary">サウナイッタ</h1>
                 <p>マイととのいマップ</p>
               </div>
-              <div className="mobile-menu-wrap">
+              <div className="mobile-menu-wrap" ref={mobileMenuRef}>
                 {!isAdding && (
                   <button
                     type="button"
