@@ -486,7 +486,10 @@ input[type="date"].input {
 
 .leaflet-control-zoom {
   border: none !important;
-  margin: 2rem !important;
+}
+
+.leaflet-top.leaflet-right .leaflet-control-zoom {
+  margin: 5.5rem 2rem 0 0 !important;
 }
 
 .leaflet-control-zoom-in, .leaflet-control-zoom-out {
@@ -498,6 +501,8 @@ input[type="date"].input {
 
 /* 現在地ボタン */
 .location-control {
+  top: 2rem;
+  right: 2rem;
   pointer-events: none;
 }
 .location-control-btn {
@@ -1005,7 +1010,7 @@ input[type="date"].input {
   }
 
   .leaflet-control-zoom {
-    margin: 1rem !important;
+    margin: 5.75rem 1rem 0 0 !important;
   }
 
   .leaflet-control-zoom a {
