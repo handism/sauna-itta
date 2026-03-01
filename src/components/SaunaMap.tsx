@@ -19,6 +19,7 @@ import { VisitList } from "./sauna-map/components/VisitList";
 import { VisitMarkers } from "./sauna-map/components/VisitMarkers";
 import { getSaunaIcon } from "./sauna-map/components/markerIcon";
 import { useSaunaVisits } from "./sauna-map/hooks/useSaunaVisits";
+import { useEditorState } from "./sauna-map/hooks/useEditorState";
 import { useVisitFilters } from "./sauna-map/hooks/useVisitFilters";
 import {
   getDefaultForm,
@@ -123,12 +124,16 @@ export default function SaunaMap() {
 
   const [form, setForm] = useState<VisitFormState>(getDefaultForm());
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
-  const [isAdding, setIsAdding] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [selectedLocation, setSelectedLocation] = useState<LatLng | null>(null);
-  const [isSidebarExpanded, setIsSidebarExpanded] = useState(!getInitialIsMobile());
   const [isMobile] = useState(getInitialIsMobile);
-  const [mapTarget, setMapTarget] = useState<LatLng | null>(null);
+  const {
+    state: editorState,
+    startCreate,
+    startEdit,
+    selectLocation,
+    cancelEdit,
+    toggleSidebar,
+  } = useEditorState(isMobile);
+  const { mode, editingId, selectedLocation, isSidebarExpanded, mapTarget } = editorState;
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -165,34 +170,18 @@ export default function SaunaMap() {
   };
 
   const startNewVisit = () => {
-    setIsAdding(true);
-    setEditingId(null);
-    setSelectedLocation(null);
+    startCreate();
     setForm(getDefaultForm(getTodayDate()));
-
-    if (isMobile) {
-      setIsSidebarExpanded(false);
-    }
   };
 
   const startEditing = (visit: SaunaVisit) => {
-    setEditingId(visit.id);
+    startEdit(visit);
     setForm(toFormState(visit));
-    setSelectedLocation({ lat: visit.lat, lng: visit.lng });
-    setMapTarget({ lat: visit.lat, lng: visit.lng });
-    setIsAdding(true);
-    setIsSidebarExpanded(true);
   };
 
   const cancelEditing = (completed = false) => {
-    setIsAdding(false);
-    setEditingId(null);
-    setSelectedLocation(null);
+    cancelEdit(completed);
     setForm(getDefaultForm());
-
-    if (isMobile) {
-      setIsSidebarExpanded(completed);
-    }
   };
 
   const handleDelete = () => {
@@ -211,12 +200,9 @@ export default function SaunaMap() {
 
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
-      setSelectedLocation({ lat, lng });
-      if (isMobile) {
-        setIsSidebarExpanded(true);
-      }
+      selectLocation({ lat, lng });
     },
-    [isMobile],
+    [selectLocation],
   );
 
   const handleSubmit = (e: FormEvent) => {
@@ -281,7 +267,9 @@ export default function SaunaMap() {
     }
   };
 
-  const isMobilePickingLocation = isMobile && isAdding && !editingId && !selectedLocation;
+  const isAdding = mode !== "list";
+  const isMobilePickingLocation = isMobile && mode === "creating:pick";
+  const isCreating = mode === "creating:pick" || mode === "creating:form";
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
@@ -304,7 +292,7 @@ export default function SaunaMap() {
           <MapController target={mapTarget} />
           <VisitMarkers visits={filteredVisits} editingId={editingId} onEdit={startEditing} />
 
-          {isAdding && !editingId && <LocationPicker onLocationSelect={handleLocationSelect} />}
+          {isCreating && <LocationPicker onLocationSelect={handleLocationSelect} />}
 
           {selectedLocation && !editingId && (
             <Marker
@@ -342,7 +330,7 @@ export default function SaunaMap() {
           <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
             <button
               className="mobile-toggle"
-              onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+              onClick={toggleSidebar}
               aria-label="パネルを開く・閉じる"
             >
               {isSidebarExpanded ? "↓" : "↑"}
