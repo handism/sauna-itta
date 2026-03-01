@@ -947,14 +947,17 @@ input[type="date"].input {
   /* ドラッグハンドル: つまんで開閉できる視覚的ヒント */
   .sidebar-header {
     padding: 0.5rem 1rem 0.75rem;
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: space-between;
     gap: 0.5rem;
     padding-top: 0.5rem;
   }
 
   .sidebar-drag-handle {
     display: block;
+    flex-basis: 100%;
     width: 36px;
     height: 4px;
     margin: 0 auto 0.25rem;
@@ -964,6 +967,8 @@ input[type="date"].input {
   }
 
   .sidebar-header-main {
+    flex: 1;
+    min-width: 0;
     min-height: 0;
   }
 
