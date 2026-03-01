@@ -51,8 +51,7 @@ export function FilterModal({
           <div className="form-group">
             <label className="filters-label">ステータス</label>
             <select
-              className="input"
-              style={{ width: "100%" }}
+              className="input select-input"
               value={filters.status}
               onChange={(e) =>
                 setFilters((prev) => ({
@@ -69,8 +68,7 @@ export function FilterModal({
           <div className="form-group">
             <label className="filters-label">並び順</label>
             <select
-              className="input"
-              style={{ width: "100%" }}
+              className="input select-input"
               value={filters.sort}
               onChange={(e) =>
                 setFilters((prev) => ({
@@ -88,8 +86,7 @@ export function FilterModal({
           <div className="form-group">
             <label className="filters-label">最低満足度</label>
             <select
-              className="input"
-              style={{ width: "100%" }}
+              className="input select-input"
               value={filters.minRating}
               onChange={(e) =>
                 setFilters((prev) => ({

@@ -1,4 +1,5 @@
 import { SaunaVisit, VisitStats } from "../types";
+import { RatingStars, WishlistChip } from "./common";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -42,19 +43,12 @@ export function ShareModal({ isOpen, stats, filteredVisits, onClose }: ShareModa
               <div className="share-item-top">
                 <div>
                   <strong>{visit.name}</strong>
-                  {(visit.status ?? "visited") === "wishlist" && (
-                    <span style={{ marginLeft: "0.25rem" }}>🏷 行きたい</span>
-                  )}
-                  {visit.area && <span style={{ marginLeft: "0.5rem", opacity: 0.8 }}>{visit.area}</span>}
+                  {(visit.status ?? "visited") === "wishlist" && <WishlistChip compact />}
+                  {visit.area && <span className="share-area">{visit.area}</span>}
                 </div>
                 <span>{visit.date}</span>
               </div>
-              {(visit.rating ?? 0) > 0 && (
-                <div className="share-rating">
-                  {"★".repeat(visit.rating ?? 0)}
-                  {"☆".repeat(5 - (visit.rating ?? 0))}
-                </div>
-              )}
+              <RatingStars rating={visit.rating ?? 0} className="share-rating" />
               {visit.tags && visit.tags.length > 0 && (
                 <div className="share-tags">
                   {visit.tags.map((tag) => (

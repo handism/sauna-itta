@@ -59,24 +59,18 @@ export function VisitForm({
         <div className="segmented">
           <button
             type="button"
-            className="btn"
-            style={{
-              flex: 1,
-              background: form.status === "visited" ? "var(--primary)" : "var(--glass)",
-              color: form.status === "visited" ? "white" : "var(--foreground)",
-            }}
+            className={`btn segmented-btn segmented-btn--visited ${
+              form.status === "visited" ? "is-active" : ""
+            }`}
             onClick={() => setForm({ ...form, status: "visited" })}
           >
             行った
           </button>
           <button
             type="button"
-            className="btn"
-            style={{
-              flex: 1,
-              background: form.status === "wishlist" ? "var(--accent)" : "var(--glass)",
-              color: "var(--foreground)",
-            }}
+            className={`btn segmented-btn segmented-btn--wishlist ${
+              form.status === "wishlist" ? "is-active" : ""
+            }`}
             onClick={() => setForm({ ...form, status: "wishlist" })}
           >
             行きたい
@@ -122,10 +116,9 @@ export function VisitForm({
         <label>写真を追加</label>
         <input
           type="file"
-          className="input"
+          className="input input-file"
           accept="image/*"
           onChange={onImageChange}
-          style={{ fontSize: "0.84rem", padding: "0.55rem" }}
         />
         {form.image && (
           // eslint-disable-next-line @next/next/no-img-element
