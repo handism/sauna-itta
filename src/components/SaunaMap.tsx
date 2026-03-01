@@ -181,8 +181,6 @@ function LocationControl() {
       className="location-control"
       style={{
         position: "absolute",
-        top: "2rem",
-        right: "2rem",
         zIndex: 1000,
       }}
     >
@@ -601,7 +599,7 @@ export default function SaunaMap() {
           zoomControl={false}
           style={{ height: "100%", width: "100%" }}
         >
-          <ZoomControl position="bottomright" />
+          <ZoomControl position="topright" />
           <LocationControl />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
