@@ -1264,9 +1264,12 @@ input[type="date"].input {
   background: color-mix(in srgb, var(--glass) 85%, transparent);
   color: var(--foreground);
   font-size: 1.25rem;
+  line-height: 1;
+  font-weight: 600;
   cursor: pointer;
   align-items: center;
   justify-content: center;
+  padding: 0;
   -webkit-tap-highlight-color: transparent;
 }
 

@@ -726,7 +726,7 @@ export default function SaunaMap() {
                     aria-label="新規ピンを立てる"
                     title="新規ピンを立てる"
                   >
-                    ➕
+                    +
                   </button>
                 )}
                 <button
