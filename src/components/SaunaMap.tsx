@@ -7,9 +7,7 @@ import {
   TileLayer,
   Marker,
   Popup,
-  useMapEvents,
   ZoomControl,
-  useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { FilterModal } from "./sauna-map/components/FilterModal";
@@ -18,12 +16,16 @@ import { VisitForm } from "./sauna-map/components/VisitForm";
 import { VisitList } from "./sauna-map/components/VisitList";
 import { VisitMarkers } from "./sauna-map/components/VisitMarkers";
 import { ConfirmModal } from "./sauna-map/components/ConfirmModal";
+import { LocationPicker } from "./sauna-map/components/LocationPicker";
+import { MapController } from "./sauna-map/components/MapController";
+import { LocationControl } from "./sauna-map/components/LocationControl";
 import { Toast } from "./sauna-map/components/Toast";
 import type { ToastState } from "./sauna-map/components/Toast";
 import { getSaunaIcon } from "./sauna-map/components/markerIcon";
 import { useSaunaVisits } from "./sauna-map/hooks/useSaunaVisits";
 import { useEditorState } from "./sauna-map/hooks/useEditorState";
 import { useVisitFilters } from "./sauna-map/hooks/useVisitFilters";
+import { useUIState } from "./sauna-map/hooks/useUIState";
 import {
   getDefaultForm,
   getInitialIsMobile,
@@ -32,93 +34,10 @@ import {
   THEME_STORAGE_KEY,
   toFormState,
 } from "./sauna-map/utils";
-import { LatLng, SaunaVisit, VisitFormState } from "./sauna-map/types";
-
-function LocationPicker({
-  onLocationSelect,
-}: {
-  onLocationSelect: (lat: number, lng: number) => void;
-}) {
-  useMapEvents({
-    click(e) {
-      onLocationSelect(e.latlng.lat, e.latlng.lng);
-    },
-  });
-  return null;
-}
-
-function MapController({ target }: { target: LatLng | null }) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (!target) return;
-
-    const currentZoom = map.getZoom();
-    const nextZoom = currentZoom < 8 ? 8 : currentZoom;
-    map.flyTo([target.lat, target.lng], nextZoom);
-  }, [target, map]);
-
-  return null;
-}
-
-function LocationControl() {
-  const map = useMap();
-  const [locating, setLocating] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = window.setTimeout(() => setToastMessage(null), 2600);
-    return () => window.clearTimeout(timer);
-  }, [toastMessage]);
-
-  const handleLocate = useCallback(() => {
-    if (!navigator.geolocation) {
-      setToastMessage("お使いのブラウザは位置情報に対応していません");
-      return;
-    }
-
-    setLocating(true);
-    setToastMessage(null);
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const { latitude, longitude } = pos.coords;
-        map.flyTo([latitude, longitude], 14);
-        setLocating(false);
-      },
-      () => {
-        setToastMessage("位置情報を取得できませんでした");
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
-    );
-  }, [map]);
-
-  return (
-    <div className="location-control" style={{ position: "absolute", zIndex: 1000 }}>
-      <button
-        type="button"
-        onClick={handleLocate}
-        disabled={locating}
-        className="location-control-btn"
-        aria-label="現在地へ移動"
-        title="現在地へ移動"
-      >
-        {locating ? "…" : "📍"}
-      </button>
-      {toastMessage && (
-        <div className="location-toast" role="status" aria-live="polite">
-          {toastMessage}
-        </div>
-      )}
-    </div>
-  );
-}
+import { SaunaVisit, VisitFormState } from "./sauna-map/types";
 
 export default function SaunaMap() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
-  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
   const { visits, saveVisits, createVisit, updateVisit, importVisitsFromFile, exportVisits } =
     useSaunaVisits();
@@ -137,10 +56,23 @@ export default function SaunaMap() {
     toggleSidebar,
   } = useEditorState(isMobile);
   const { mode, editingId, selectedLocation, isSidebarExpanded, mapTarget } = editorState;
-  const [isShareViewOpen, setIsShareViewOpen] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  
+  const {
+    isShareViewOpen,
+    isMobileMenuOpen,
+    isFilterModalOpen,
+    isDeleteConfirmOpen,
+    mobileMenuRef,
+    openShareView,
+    closeShareView,
+    toggleMobileMenu,
+    closeMobileMenu,
+    openFilterModal,
+    closeFilterModal,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+  } = useUIState(isSidebarExpanded);
+
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const showToast = useCallback((message: string, tone: ToastState["tone"] = "info") => {
@@ -152,31 +84,6 @@ export default function SaunaMap() {
     const timer = window.setTimeout(() => setToast(null), 3000);
     return () => window.clearTimeout(timer);
   }, [toast]);
-
-  useEffect(() => {
-    if (!isMobileMenuOpen) return;
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (mobileMenuRef.current?.contains(target)) return;
-      setIsMobileMenuOpen(false);
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsMobileMenuOpen(false);
-      }
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isMobileMenuOpen]);
 
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
@@ -201,7 +108,7 @@ export default function SaunaMap() {
 
   const handleDelete = () => {
     if (!editingId) return;
-    setIsDeleteConfirmOpen(true);
+    openDeleteConfirm();
   };
 
   const confirmDelete = () => {
@@ -216,7 +123,7 @@ export default function SaunaMap() {
     } else {
       showToast("記録を削除しました。", "success");
     }
-    setIsDeleteConfirmOpen(false);
+    closeDeleteConfirm();
     cancelEditing(true);
   };
 
@@ -351,7 +258,7 @@ export default function SaunaMap() {
           {isMobileMenuOpen && (
             <div
               className="mobile-menu-backdrop"
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
               aria-hidden
             />
           )}
@@ -375,7 +282,7 @@ export default function SaunaMap() {
                     className="mobile-menu-btn"
                     onClick={() => {
                       startNewVisit();
-                      setIsMobileMenuOpen(false);
+                      closeMobileMenu();
                     }}
                     aria-label="新規ピンを立てる"
                     title="新規ピンを立てる"
@@ -386,7 +293,7 @@ export default function SaunaMap() {
                 <button
                   type="button"
                   className="mobile-menu-btn"
-                  onClick={() => setIsMobileMenuOpen((v) => !v)}
+                  onClick={toggleMobileMenu}
                   aria-label="メニュー"
                   aria-expanded={isMobileMenuOpen}
                 >
@@ -404,7 +311,7 @@ export default function SaunaMap() {
                       role="menuitem"
                       onClick={() => {
                         toggleTheme();
-                        setIsMobileMenuOpen(false);
+                        closeMobileMenu();
                       }}
                     >
                       {theme === "dark" ? "☀️ ライトモード" : "🌙 ダークモード"}
@@ -413,8 +320,8 @@ export default function SaunaMap() {
                       type="button"
                       role="menuitem"
                       onClick={() => {
-                        setIsShareViewOpen(true);
-                        setIsMobileMenuOpen(false);
+                        openShareView();
+                        closeMobileMenu();
                       }}
                     >
                       📸 シェア用ビュー
@@ -423,7 +330,7 @@ export default function SaunaMap() {
                       href="/stats"
                       prefetch={false}
                       role="menuitem"
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      onClick={closeMobileMenu}
                     >
                       📊 ダッシュボード
                     </Link>
@@ -432,7 +339,7 @@ export default function SaunaMap() {
                       role="menuitem"
                       onClick={() => {
                         exportVisits(visits);
-                        setIsMobileMenuOpen(false);
+                        closeMobileMenu();
                       }}
                     >
                       📥 エクスポート
@@ -442,7 +349,7 @@ export default function SaunaMap() {
                       role="menuitem"
                       onClick={() => {
                         importInputRef.current?.click();
-                        setIsMobileMenuOpen(false);
+                        closeMobileMenu();
                       }}
                     >
                       📤 インポート
@@ -469,7 +376,7 @@ export default function SaunaMap() {
                   visits={visits}
                   filteredVisits={filteredVisits}
                   isFilterActive={isFilterActive}
-                  onOpenFilters={() => setIsFilterModalOpen(true)}
+                  onOpenFilters={openFilterModal}
                   onEdit={startEditing}
                 />
               )}
@@ -492,14 +399,14 @@ export default function SaunaMap() {
         setFilters={setFilters}
         isFilterActive={isFilterActive}
         onClearFilters={clearFilters}
-        onClose={() => setIsFilterModalOpen(false)}
+        onClose={closeFilterModal}
       />
 
       <ShareModal
         isOpen={isShareViewOpen}
         stats={stats}
         filteredVisits={filteredVisits}
-        onClose={() => setIsShareViewOpen(false)}
+        onClose={closeShareView}
       />
 
       <ConfirmModal
@@ -510,7 +417,7 @@ export default function SaunaMap() {
         cancelLabel="キャンセル"
         destructive
         onConfirm={confirmDelete}
-        onCancel={() => setIsDeleteConfirmOpen(false)}
+        onCancel={closeDeleteConfirm}
       />
 
       <Toast toast={toast} onClose={() => setToast(null)} />
