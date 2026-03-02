@@ -1,4 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap");
 @import url("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css");
-@import "./styles/base.css";
-@import "./styles/sauna-map.css";
+@import "../components/sauna-map/styles/base.css";
+@import "../components/sauna-map/styles/map.css";
+@import "../components/sauna-map/styles/sidebar.css";
+@import "../components/sauna-map/styles/modal.css";
