@@ -157,7 +157,7 @@ export function VisitForm({
                 .reverse()
                 .slice(0, 5)
                 .map((entry, index) => (
-                  <li key={index} className="history-item">
+                  <li key={`${entry.date}-${index}`} className="history-item">
                     <span>{entry.date}</span>
                     <span className="history-rating">
                       {entry.rating ? `★${entry.rating}` : "評価なし"}
