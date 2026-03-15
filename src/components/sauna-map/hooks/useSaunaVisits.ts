@@ -4,6 +4,7 @@ import {
   normalizeVisits,
   VISITS_STORAGE_KEY,
   getTodayDate,
+  getVisitHistoryEntries,
 } from "../utils";
 import { SaunaVisit, VisitFormState } from "../types";
 
@@ -55,22 +56,31 @@ export function useSaunaVisits() {
 
   const createVisit = useCallback(
     (selected: { lat: number; lng: number }, form: VisitFormState): SaunaVisit => {
+      const entryDate = form.date || getTodayDate();
+      const historyEntry = {
+        date: entryDate,
+        comment: form.comment,
+        rating: form.rating || 0,
+        image: form.image,
+      };
+
       return {
         id: Date.now().toString(),
         name: form.name,
         lat: selected.lat,
         lng: selected.lng,
-        comment: form.comment,
-        image: form.image,
-        date: form.date || getTodayDate(),
-        rating: form.rating || 0,
+        comment: historyEntry.comment,
+        image: historyEntry.image,
+        date: historyEntry.date,
+        rating: historyEntry.rating,
         tags: form.tagsText
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean),
         status: form.status,
         area: form.area,
-        visitCount: Math.max(1, form.visitCount),
+        visitCount: 1,
+        history: [historyEntry],
       };
     },
     [],
@@ -87,17 +97,34 @@ export function useSaunaVisits() {
         v.id === editingId
           ? {
               ...v,
+              ...(() => {
+                const entryDate = form.date || getTodayDate();
+                const nextEntry = {
+                  date: entryDate,
+                  comment: form.comment,
+                  rating: form.rating || 0,
+                  image: form.image,
+                };
+                const baseHistory = getVisitHistoryEntries(v);
+                const history = form.appendHistory
+                  ? [...baseHistory, nextEntry]
+                  : [...baseHistory.slice(0, -1), nextEntry];
+                const latest = history[history.length - 1];
+                return {
+                  history,
+                  comment: latest.comment,
+                  image: latest.image,
+                  date: latest.date,
+                  rating: latest.rating,
+                  visitCount: Math.max(1, v.visitCount ?? 1, history.length),
+                };
+              })(),
               name: form.name,
               lat: selected.lat,
               lng: selected.lng,
-              comment: form.comment,
-              image: form.image,
-              date: form.date,
-              rating: form.rating || 0,
               tags,
               status: form.status,
               area: form.area,
-              visitCount: Math.max(1, form.visitCount),
             }
           : v,
       );
