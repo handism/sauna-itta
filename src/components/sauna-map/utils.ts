@@ -51,8 +51,7 @@ export function getDefaultForm(date = ""): VisitFormState {
     tagsText: "",
     status: "visited",
     area: "",
-    visitCount: 1,
-    appendHistory: true,
+    appendHistory: false,
   };
 }
 
@@ -68,8 +67,7 @@ export function toFormState(visit: SaunaVisit): VisitFormState {
     tagsText: (visit.tags ?? []).join(", "),
     status: visit.status ?? "visited",
     area: visit.area ?? "",
-    visitCount: getVisitCount(visit),
-    appendHistory: true,
+    appendHistory: false,
   };
 }
 
@@ -114,6 +112,32 @@ export function flattenVisitHistory(
   });
 
   return entries;
+}
+
+export function buildHistoryUpdate(
+  v: SaunaVisit,
+  form: VisitFormState,
+): Pick<SaunaVisit, "history" | "comment" | "image" | "date" | "rating" | "visitCount"> {
+  const entryDate = form.date || getTodayDate();
+  const nextEntry = {
+    date: entryDate,
+    comment: form.comment,
+    rating: form.rating || 0,
+    image: form.image,
+  };
+  const baseHistory = getVisitHistoryEntries(v);
+  const history = form.appendHistory
+    ? [...baseHistory, nextEntry]
+    : [...baseHistory.slice(0, -1), nextEntry];
+  const latest = history[history.length - 1];
+  return {
+    history,
+    comment: latest.comment,
+    image: latest.image,
+    date: latest.date,
+    rating: latest.rating,
+    visitCount: Math.max(1, v.visitCount ?? 1, history.length),
+  };
 }
 
 function applyHistoryNormalization(visit: SaunaVisit): Pick<
