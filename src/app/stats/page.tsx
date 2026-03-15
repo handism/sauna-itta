@@ -195,9 +195,9 @@ export default function StatsPage() {
         </div>
 
         <div className={styles.chartsWrap}>
-           <section className={`${styles.chartCard} ${styles.calendarCard}`}>
+           <section className={styles.chartCard}>
               <h2>訪問カレンダー</h2>
-              <div className={styles.calendarContainer}>
+              <div className="calendarContainer">
                 <Calendar
                   onChange={setDate}
                   value={date}
