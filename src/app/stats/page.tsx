@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Calendar from 'react-calendar';
 import styles from './stats.module.css';
+import 'react-calendar/dist/Calendar.css';
+import './calendar.css';
 import MonthlyVisitsChart from '@/components/charts/MonthlyVisitsChart';
 import RatingDistributionChart from '@/components/charts/RatingDistributionChart';
 import initialVisits from "@/data/sauna-visits.json";
@@ -77,6 +80,7 @@ function extractPrefecture(area: string | undefined): string | null {
 export default function StatsPage() {
   const [visits] = useState<SaunaVisit[]>(getInitialVisits);
   const [theme] = useState<'dark' | 'light'>(getInitialTheme);
+  const [date, setDate] = useState<Date | Date[]>(new Date());
 
   useEffect(() => {
     document.documentElement.classList.add("allow-page-scroll");
@@ -140,6 +144,20 @@ export default function StatsPage() {
       prefectures,
       prefectureCount: prefectures.length,
     };
+  }, [visits]);
+
+  const visitDates = useMemo(() => {
+    const dates = new Map<string, SaunaVisit[]>();
+    visits.forEach(visit => {
+      if ((visit.status ?? "visited") === "visited") {
+        const dateStr = new Date(visit.date).toDateString();
+        if (!dates.has(dateStr)) {
+          dates.set(dateStr, []);
+        }
+        dates.get(dateStr)!.push(visit);
+      }
+    });
+    return dates;
   }, [visits]);
 
   return (
@@ -207,6 +225,38 @@ export default function StatsPage() {
               <RatingDistributionChart visits={visits} theme={theme} />
             </section>
           </div>
+        </div>
+
+        <div className={styles.chartsWrap}>
+           <section className={`${styles.chartCard} ${styles.calendarCard}`}>
+              <h2>訪問カレンダー</h2>
+              <div className={styles.calendarContainer}>
+                <Calendar
+                  onChange={setDate}
+                  value={date}
+                  calendarType="gregory"
+                  className={theme === 'light' ? 'light-theme' : 'dark-theme'}
+                  tileContent={({ date, view }) => {
+                    if (view === 'month') {
+                      const dateStr = date.toDateString();
+                      if (visitDates.has(dateStr)) {
+                        return <div className="calendar-dot"></div>;
+                      }
+                    }
+                    return null;
+                  }}
+                  tileClassName={({ date, view }) => {
+                    if (view === 'month') {
+                      const dateStr = date.toDateString();
+                      if (visitDates.has(dateStr)) {
+                        return "react-calendar__tile--has-visit";
+                      }
+                    }
+                    return null;
+                  }}
+                />
+              </div>
+            </section>
         </div>
       </main>
     </div>
