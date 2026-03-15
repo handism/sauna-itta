@@ -2,7 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Calendar from 'react-calendar';
 import styles from './stats.module.css';
+import 'react-calendar/dist/Calendar.css';
+import './calendar.css';
 import MonthlyVisitsChart from '@/components/charts/MonthlyVisitsChart';
 import RatingDistributionChart from '@/components/charts/RatingDistributionChart';
 import initialVisits from "@/data/sauna-visits.json";
@@ -42,6 +45,7 @@ function getInitialVisits(): SaunaVisit[] {
 export default function StatsPage() {
   const [visits] = useState<SaunaVisit[]>(getInitialVisits);
   const [theme] = useState<'dark' | 'light'>(getInitialTheme);
+  const [date, setDate] = useState<Date | Date[]>(new Date());
 
   useEffect(() => {
     document.documentElement.classList.add("allow-page-scroll");
@@ -111,6 +115,18 @@ export default function StatsPage() {
     };
   }, [visits]);
 
+  const visitDates = useMemo(() => {
+    const dates = new Map<string, number>();
+    const historyEntries = flattenVisitHistory(visits).filter(
+      (entry) => entry.status === "visited"
+    );
+    historyEntries.forEach((entry) => {
+      const dateStr = new Date(entry.date).toDateString();
+      dates.set(dateStr, (dates.get(dateStr) ?? 0) + 1);
+    });
+    return dates;
+  }, [visits]);
+
   return (
     <div className={`${styles.page} ${theme === 'light' ? 'light-theme' : ''}`}>
       <main className={styles.main}>
@@ -176,6 +192,38 @@ export default function StatsPage() {
               <RatingDistributionChart visits={visits} theme={theme} />
             </section>
           </div>
+        </div>
+
+        <div className={styles.chartsWrap}>
+           <section className={styles.chartCard}>
+              <h2>訪問カレンダー</h2>
+              <div className="calendarContainer">
+                <Calendar
+                  onChange={setDate}
+                  value={date}
+                  calendarType="gregory"
+                  className={theme === 'light' ? 'light-theme' : 'dark-theme'}
+                  tileContent={({ date, view }) => {
+                    if (view === 'month') {
+                      const dateStr = date.toDateString();
+                      if (visitDates.has(dateStr)) {
+                        return <div className="calendar-dot"></div>;
+                      }
+                    }
+                    return null;
+                  }}
+                  tileClassName={({ date, view }) => {
+                    if (view === 'month') {
+                      const dateStr = date.toDateString();
+                      if (visitDates.has(dateStr)) {
+                        return "react-calendar__tile--has-visit";
+                      }
+                    }
+                    return null;
+                  }}
+                />
+              </div>
+            </section>
         </div>
       </main>
     </div>

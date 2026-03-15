@@ -140,6 +140,7 @@ export function buildHistoryUpdate(
   };
 }
 
+
 function applyHistoryNormalization(visit: SaunaVisit): Pick<
   SaunaVisit,
   "history" | "date" | "comment" | "rating" | "image" | "visitCount"
