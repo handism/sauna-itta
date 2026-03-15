@@ -34,6 +34,7 @@ import {
   getInitialTheme,
   getTodayDate,
   THEME_STORAGE_KEY,
+  getVisitHistoryEntries,
   toFormState,
 } from "./sauna-map/utils";
 import { SaunaVisit, VisitFormState } from "./sauna-map/types";
@@ -217,6 +218,8 @@ export default function SaunaMap() {
   const isAdding = mode !== "list";
   const isMobilePickingLocation = isMobile && mode === "creating:pick";
   const isCreating = mode === "creating:pick" || mode === "creating:form";
+  const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
+  const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
@@ -378,6 +381,7 @@ export default function SaunaMap() {
                   setForm={setForm}
                   selectedLocation={selectedLocation}
                   editingId={editingId}
+                  historyEntries={historyEntries}
                   onSubmit={handleSubmit}
                   onImageChange={handleImageChange}
                   onDelete={handleDelete}

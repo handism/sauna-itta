@@ -1,11 +1,12 @@
 import { ChangeEvent, Dispatch, FormEvent, SetStateAction } from "react";
-import { VisitFormState } from "../types";
+import { VisitFormState, VisitHistoryEntry } from "../types";
 
 interface VisitFormProps {
   form: VisitFormState;
   setForm: Dispatch<SetStateAction<VisitFormState>>;
   selectedLocation: { lat: number; lng: number } | null;
   editingId: string | null;
+  historyEntries: VisitHistoryEntry[];
   onSubmit: (e: FormEvent) => void;
   onImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onDelete: () => void;
@@ -17,11 +18,14 @@ export function VisitForm({
   setForm,
   selectedLocation,
   editingId,
+  historyEntries,
   onSubmit,
   onImageChange,
   onDelete,
   onCancel,
 }: VisitFormProps) {
+  const historyCount = historyEntries.length;
+  const shouldAppend = Boolean(editingId && form.appendHistory);
   return (
     <form onSubmit={onSubmit}>
       <h2 className="panel-title mb-2">{editingId ? "サウナの編集" : "新規サウナ登録"}</h2>
@@ -137,22 +141,37 @@ export function VisitForm({
         />
       </div>
 
-      <div className="form-group">
-        <label>訪問回数</label>
-        <input
-          type="number"
-          min={1}
-          max={999}
-          className="input"
-          value={form.visitCount}
-          onChange={(e) =>
-            setForm({
-              ...form,
-              visitCount: Math.max(1, parseInt(e.target.value, 10) || 1),
-            })
-          }
-        />
-      </div>
+      {editingId && (
+        <div className="form-group">
+          <label>訪問履歴</label>
+          <div className="history-summary">
+            <span>現在の履歴: {historyCount}件</span>
+            {shouldAppend && <span className="history-badge">保存で+1</span>}
+          </div>
+          {historyCount > 0 && (
+            <ul className="history-list">
+              {historyEntries
+                .slice()
+                .reverse()
+                .slice(0, 5)
+                .map((entry, index) => (
+                  <li key={`${entry.date}-${index}`} className="history-item">
+                    <span>{entry.date}</span>
+                    <span className="history-rating">
+                      {entry.rating ? `★${entry.rating}` : "評価なし"}
+                    </span>
+                    <span className="history-comment">
+                      {entry.comment ? entry.comment : "コメントなし"}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          )}
+          {historyCount > 5 && (
+            <div className="history-more">最新5件のみ表示中</div>
+          )}
+        </div>
+      )}
 
       <div className="form-group">
         <label>感想・メモ</label>
@@ -163,6 +182,22 @@ export function VisitForm({
           placeholder="水風呂の温度、外気浴の雰囲気など..."
         />
       </div>
+
+      {editingId && (
+        <div className="form-group">
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={form.appendHistory}
+              onChange={(e) => setForm({ ...form, appendHistory: e.target.checked })}
+            />
+            この内容を訪問履歴に追加する
+          </label>
+          <p className="form-hint">
+            オフにすると直近の記録を上書きします。
+          </p>
+        </div>
+      )}
 
       <div className="cta-group">
         <button type="submit" className="btn btn-primary" disabled={!selectedLocation}>

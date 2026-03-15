@@ -1,5 +1,5 @@
 import { SaunaVisit } from "../types";
-import { getDirectionsUrl } from "../utils";
+import { getDirectionsUrl, getVisitCount } from "../utils";
 import { RatingStars, WishlistChip } from "./common";
 
 interface VisitListProps {
@@ -40,8 +40,10 @@ export function VisitList({
           フィルタ条件を見直してみてください。
         </p>
       ) : (
-        filteredVisits.map((visit) => (
-          <div key={visit.id} className="sauna-card" onClick={() => onEdit(visit)}>
+        filteredVisits.map((visit) => {
+          const visitCount = getVisitCount(visit);
+          return (
+            <div key={visit.id} className="sauna-card" onClick={() => onEdit(visit)}>
             <h3 className="sauna-card-title">
               {visit.name}
               {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
@@ -64,7 +66,7 @@ export function VisitList({
             )}
             <div className="sauna-card-meta">
               <span>日付: {visit.date}</span>
-              {(visit.visitCount ?? 1) > 1 && <span>訪問 {visit.visitCount}回目</span>}
+              {visitCount > 1 && <span>訪問 {visitCount}回目</span>}
               <span>タップで編集</span>
             </div>
             <a
@@ -77,7 +79,8 @@ export function VisitList({
               🧭 ここへ行く
             </a>
           </div>
-        ))
+          );
+        })
       )}
     </div>
   );
