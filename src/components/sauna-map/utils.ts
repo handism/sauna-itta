@@ -1,4 +1,4 @@
-import { SaunaVisit, VisitFormState } from "./types";
+import { SaunaVisit, VisitFormState, VisitHistoryEntry } from "./types";
 
 export const VISITS_STORAGE_KEY = "sauna-itta_visits";
 export const THEME_STORAGE_KEY = "sauna-itta_theme";
@@ -17,11 +17,10 @@ export function getDirectionsUrl(lat: number, lng: number): string {
 export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
   return visits.map((v) => ({
     ...v,
-    rating: v.rating ?? 0,
+    ...applyHistoryNormalization(v),
     tags: v.tags ?? [],
     status: v.status ?? "visited",
     area: v.area ?? "",
-    visitCount: Math.max(1, v.visitCount ?? 1),
   }));
 }
 
@@ -53,20 +52,24 @@ export function getDefaultForm(date = ""): VisitFormState {
     status: "visited",
     area: "",
     visitCount: 1,
+    appendHistory: true,
   };
 }
 
 export function toFormState(visit: SaunaVisit): VisitFormState {
+  const history = getVisitHistoryEntries(visit);
+  const latest = history[history.length - 1];
   return {
     name: visit.name,
-    comment: visit.comment,
-    image: visit.image || "",
-    date: visit.date,
-    rating: visit.rating ?? 0,
+    comment: latest?.comment ?? visit.comment ?? "",
+    image: latest?.image ?? visit.image ?? "",
+    date: latest?.date ?? visit.date,
+    rating: latest?.rating ?? visit.rating ?? 0,
     tagsText: (visit.tags ?? []).join(", "),
     status: visit.status ?? "visited",
     area: visit.area ?? "",
-    visitCount: Math.max(1, visit.visitCount ?? 1),
+    visitCount: getVisitCount(visit),
+    appendHistory: true,
   };
 }
 
@@ -75,4 +78,57 @@ export function toNormalizedTags(tagsText: string): string[] {
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean);
+}
+
+export function getVisitHistoryEntries(visit: SaunaVisit): VisitHistoryEntry[] {
+  if (Array.isArray(visit.history) && visit.history.length > 0) {
+    return visit.history;
+  }
+
+  return [
+    {
+      date: visit.date,
+      comment: visit.comment ?? "",
+      rating: visit.rating ?? 0,
+      image: visit.image,
+    },
+  ];
+}
+
+export function getVisitCount(visit: SaunaVisit): number {
+  const historyCount = Array.isArray(visit.history) ? visit.history.length : 0;
+  return Math.max(1, visit.visitCount ?? 1, historyCount);
+}
+
+export function flattenVisitHistory(
+  visits: SaunaVisit[],
+): Array<VisitHistoryEntry & { visitId: string; status: "visited" | "wishlist" }> {
+  const entries: Array<VisitHistoryEntry & { visitId: string; status: "visited" | "wishlist" }> =
+    [];
+
+  visits.forEach((visit) => {
+    const status = visit.status ?? "visited";
+    getVisitHistoryEntries(visit).forEach((entry) => {
+      entries.push({ ...entry, visitId: visit.id, status });
+    });
+  });
+
+  return entries;
+}
+
+function applyHistoryNormalization(visit: SaunaVisit): Pick<
+  SaunaVisit,
+  "history" | "date" | "comment" | "rating" | "image" | "visitCount"
+> {
+  const history = getVisitHistoryEntries(visit);
+  const latest = history[history.length - 1];
+
+  return {
+    history,
+    date: latest?.date ?? visit.date,
+    comment: latest?.comment ?? visit.comment ?? "",
+    rating: latest?.rating ?? visit.rating ?? 0,
+    image: latest?.image ?? visit.image,
+    visitCount: Math.max(1, visit.visitCount ?? 1, history.length),
+  };
 }
