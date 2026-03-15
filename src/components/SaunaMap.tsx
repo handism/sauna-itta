@@ -1,5 +1,7 @@
 "use client";
 
+import imageCompression from "browser-image-compression";
+
 import { useState, useEffect, useCallback, useRef, ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import {
@@ -161,15 +163,25 @@ export default function SaunaMap() {
     cancelEditing(true);
   };
 
-  const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setForm((prev) => ({ ...prev, image: reader.result as string }));
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+      });
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm((prev) => ({ ...prev, image: reader.result as string }));
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error(error);
+      showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
+    }
   };
 
   const handleImportData = useCallback(
