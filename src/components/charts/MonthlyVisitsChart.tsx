@@ -2,21 +2,8 @@
 
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-interface SaunaVisit {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  comment: string;
-  image?: string;
-  date: string;
-  rating?: number;
-  tags?: string[];
-  status?: "visited" | "wishlist";
-  area?: string;
-  visitCount?: number;
-}
+import { SaunaVisit } from '@/components/sauna-map/types';
+import { flattenVisitHistory } from '@/components/sauna-map/utils';
 
 interface MonthlyVisitsChartProps {
   visits: SaunaVisit[];
@@ -27,12 +14,12 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
   const data = useMemo(() => {
     const monthlyCounts: { [key: string]: number } = {};
 
-    visits.forEach(visit => {
-      if (visit.status === 'visited') {
-        const month = visit.date.substring(0, 7); // YYYY-MM
+    flattenVisitHistory(visits)
+      .filter((entry) => entry.status === "visited")
+      .forEach((entry) => {
+        const month = entry.date.substring(0, 7); // YYYY-MM
         monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
-      }
-    });
+      });
 
     const chartData = Object.keys(monthlyCounts).map(month => ({
       month,

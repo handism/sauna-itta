@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { extractPrefecture } from "../utils";
+import { extractPrefecture, flattenVisitHistory } from "../utils";
 import { SaunaVisit, VisitFilters, VisitStats } from "../types";
 
 const DEFAULT_FILTERS: VisitFilters = {
@@ -73,15 +73,19 @@ export function useVisitFilters(visits: SaunaVisit[]) {
       };
     }
 
-    const sortedByDate = [...visits].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    const historyEntries = flattenVisitHistory(visits).filter(
+      (entry) => entry.status === "visited",
     );
+    const sortedByDate = historyEntries
+      .slice()
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const firstDate = sortedByDate[0].date;
-    const lastDate = sortedByDate[sortedByDate.length - 1].date;
+    const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
+    const lastDate =
+      sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
     const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
     const wishlistCount = visits.filter((v) => (v.status ?? "visited") === "wishlist").length;
-    const ratings = visits.map((v) => v.rating ?? 0).filter((r) => r > 0);
+    const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
     const avgRating =
       ratings.length > 0
         ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10

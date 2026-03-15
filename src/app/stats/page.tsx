@@ -6,33 +6,14 @@ import styles from './stats.module.css';
 import MonthlyVisitsChart from '@/components/charts/MonthlyVisitsChart';
 import RatingDistributionChart from '@/components/charts/RatingDistributionChart';
 import initialVisits from "@/data/sauna-visits.json";
-
-// Interface for Sauna Visit (should be shared)
-interface SaunaVisit {
-  id: string;
-  name:string;
-  lat: number;
-  lng: number;
-  comment: string;
-  image?: string;
-  date: string;
-  rating?: number;
-  tags?: string[];
-  status?: "visited" | "wishlist";
-  area?: string;
-  visitCount?: number;
-}
-
-function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
-  return visits.map((v) => ({
-    ...v,
-    rating: v.rating ?? 0,
-    tags: v.tags ?? [],
-    status: v.status ?? "visited",
-    area: v.area ?? "",
-    visitCount: Math.max(1, v.visitCount ?? 1),
-  }));
-}
+import { SaunaVisit } from "@/components/sauna-map/types";
+import {
+  normalizeVisits,
+  VISITS_STORAGE_KEY,
+  getInitialTheme,
+  extractPrefecture,
+  flattenVisitHistory,
+} from "@/components/sauna-map/utils";
 
 function getInitialVisits(): SaunaVisit[] {
   const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
@@ -41,7 +22,7 @@ function getInitialVisits(): SaunaVisit[] {
     return baseVisits;
   }
 
-  const savedVisits = localStorage.getItem("sauna-itta_visits");
+  const savedVisits = localStorage.getItem(VISITS_STORAGE_KEY);
   if (!savedVisits) {
     return baseVisits;
   }
@@ -56,22 +37,6 @@ function getInitialVisits(): SaunaVisit[] {
     console.error("Failed to parse saved visits:", e);
     return baseVisits;
   }
-}
-
-function getInitialTheme(): 'dark' | 'light' {
-  if (typeof window === "undefined") {
-    return "dark";
-  }
-
-  const savedTheme = localStorage.getItem("sauna-itta_theme");
-  return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
-}
-
-function extractPrefecture(area: string | undefined): string | null {
-  const s = (area ?? "").trim();
-  if (!s) return null;
-  const first = s.split(/\s/)[0];
-  return /[都道府県]$/.test(first) ? first : null;
 }
 
 export default function StatsPage() {
@@ -103,14 +68,18 @@ export default function StatsPage() {
       };
     }
 
-    const sortedByDate = [...visits].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+    const historyEntries = flattenVisitHistory(visits).filter(
+      (entry) => entry.status === "visited"
     );
-    const firstDate = sortedByDate[0].date;
-    const lastDate = sortedByDate[sortedByDate.length - 1].date;
+    const sortedByDate = historyEntries
+      .slice()
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
+    const lastDate =
+      sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
     const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
     const wishlistCount = visits.filter((v) => (v.status ?? "visited") === "wishlist").length;
-    const ratings = visits.map((v) => v.rating ?? 0).filter((r) => r > 0);
+    const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
     const avgRating =
       ratings.length > 0
         ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
