@@ -2,13 +2,8 @@
 
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-
-interface SaunaVisit {
-  id: string;
-  date: string;
-  rating?: number;
-  status?: "visited" | "wishlist";
-}
+import { SaunaVisit } from '@/components/sauna-map/types';
+import { flattenVisitHistory } from '@/components/sauna-map/utils';
 
 interface RatingDistributionChartProps {
   visits: SaunaVisit[];
@@ -28,12 +23,14 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
   const data = useMemo(() => {
     const ratingCounts: { [key: string]: number } = {};
 
-    visits.forEach(visit => {
-      if (visit.status === 'visited' && visit.rating && visit.rating > 0) {
-        const rating = visit.rating;
-        ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
-      }
-    });
+    flattenVisitHistory(visits)
+      .filter((entry) => entry.status === "visited")
+      .forEach((entry) => {
+        if (entry.rating && entry.rating > 0) {
+          const rating = entry.rating;
+          ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
+        }
+      });
 
     const chartData = Object.keys(ratingCounts).map(rating => ({
       name: RATING_LABELS[parseInt(rating, 10)] || `評価${rating}`,

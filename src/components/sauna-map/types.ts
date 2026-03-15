@@ -11,6 +11,14 @@ export interface SaunaVisit {
   status?: "visited" | "wishlist";
   area?: string;
   visitCount?: number;
+  history?: VisitHistoryEntry[];
+}
+
+export interface VisitHistoryEntry {
+  date: string;
+  comment: string;
+  rating?: number;
+  image?: string;
 }
 
 export interface VisitFormState {
@@ -22,7 +30,7 @@ export interface VisitFormState {
   tagsText: string;
   status: "visited" | "wishlist";
   area: string;
-  visitCount: number;
+  appendHistory: boolean;
 }
 
 export interface VisitFilters {

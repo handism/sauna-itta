@@ -34,6 +34,7 @@ import {
   getInitialTheme,
   getTodayDate,
   THEME_STORAGE_KEY,
+  getVisitHistoryEntries,
   toFormState,
 } from "./sauna-map/utils";
 import { SaunaVisit, VisitFormState } from "./sauna-map/types";
@@ -41,7 +42,7 @@ import { SaunaVisit, VisitFormState } from "./sauna-map/types";
 export default function SaunaMap() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { visits, saveVisits, createVisit, updateVisit, importVisitsFromFile, exportVisits } =
+  const { visits, saveVisits, createVisit, updateVisit, removeLastHistoryEntry, importVisitsFromFile, exportVisits } =
     useSaunaVisits();
   const { filters, setFilters, filteredVisits, stats, isFilterActive, clearFilters } =
     useVisitFilters(visits);
@@ -217,6 +218,8 @@ export default function SaunaMap() {
   const isAdding = mode !== "list";
   const isMobilePickingLocation = isMobile && mode === "creating:pick";
   const isCreating = mode === "creating:pick" || mode === "creating:form";
+  const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
+  const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
@@ -378,10 +381,28 @@ export default function SaunaMap() {
                   setForm={setForm}
                   selectedLocation={selectedLocation}
                   editingId={editingId}
+                  historyEntries={historyEntries}
                   onSubmit={handleSubmit}
                   onImageChange={handleImageChange}
                   onDelete={handleDelete}
                   onCancel={() => cancelEditing()}
+                  onDeleteLastHistory={
+                    editingId
+                      ? () => {
+                          removeLastHistoryEntry(editingId);
+                          const newLatest = historyEntries[historyEntries.length - 2];
+                          if (newLatest) {
+                            setForm((prev) => ({
+                              ...prev,
+                              date: newLatest.date,
+                              comment: newLatest.comment,
+                              rating: newLatest.rating ?? 0,
+                              image: newLatest.image ?? "",
+                            }));
+                          }
+                        }
+                      : undefined
+                  }
                 />
               ) : (
                 <VisitList
