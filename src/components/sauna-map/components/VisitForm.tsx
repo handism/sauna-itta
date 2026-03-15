@@ -11,6 +11,7 @@ interface VisitFormProps {
   onImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onDelete: () => void;
   onCancel: () => void;
+  onDeleteLastHistory?: () => void;
 }
 
 export function VisitForm({
@@ -23,6 +24,7 @@ export function VisitForm({
   onImageChange,
   onDelete,
   onCancel,
+  onDeleteLastHistory,
 }: VisitFormProps) {
   const historyCount = historyEntries.length;
   const shouldAppend = Boolean(editingId && form.appendHistory);
@@ -155,7 +157,7 @@ export function VisitForm({
                 .reverse()
                 .slice(0, 5)
                 .map((entry, index) => (
-                  <li key={`${entry.date}-${index}`} className="history-item">
+                  <li key={index} className="history-item">
                     <span>{entry.date}</span>
                     <span className="history-rating">
                       {entry.rating ? `★${entry.rating}` : "評価なし"}
@@ -169,6 +171,15 @@ export function VisitForm({
           )}
           {historyCount > 5 && (
             <div className="history-more">最新5件のみ表示中</div>
+          )}
+          {historyCount > 1 && onDeleteLastHistory && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={onDeleteLastHistory}
+            >
+              最後の履歴を削除
+            </button>
           )}
         </div>
       )}
