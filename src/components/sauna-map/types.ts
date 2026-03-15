@@ -30,7 +30,6 @@ export interface VisitFormState {
   tagsText: string;
   status: "visited" | "wishlist";
   area: string;
-  visitCount: number;
   appendHistory: boolean;
 }
 

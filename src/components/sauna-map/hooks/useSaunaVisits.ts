@@ -4,6 +4,7 @@ import {
   normalizeVisits,
   VISITS_STORAGE_KEY,
   getTodayDate,
+  buildHistoryUpdate,
   getVisitHistoryEntries,
 } from "../utils";
 import { SaunaVisit, VisitFormState } from "../types";
@@ -97,28 +98,7 @@ export function useSaunaVisits() {
         v.id === editingId
           ? {
               ...v,
-              ...(() => {
-                const entryDate = form.date || getTodayDate();
-                const nextEntry = {
-                  date: entryDate,
-                  comment: form.comment,
-                  rating: form.rating || 0,
-                  image: form.image,
-                };
-                const baseHistory = getVisitHistoryEntries(v);
-                const history = form.appendHistory
-                  ? [...baseHistory, nextEntry]
-                  : [...baseHistory.slice(0, -1), nextEntry];
-                const latest = history[history.length - 1];
-                return {
-                  history,
-                  comment: latest.comment,
-                  image: latest.image,
-                  date: latest.date,
-                  rating: latest.rating,
-                  visitCount: Math.max(1, v.visitCount ?? 1, history.length),
-                };
-              })(),
+              ...buildHistoryUpdate(v, form),
               name: form.name,
               lat: selected.lat,
               lng: selected.lng,
@@ -151,6 +131,29 @@ export function useSaunaVisits() {
     [visits],
   );
 
+  const removeLastHistoryEntry = useCallback(
+    (id: string) => {
+      const nextVisits = visits.map((v) => {
+        if (v.id !== id) return v;
+        const history = getVisitHistoryEntries(v);
+        if (history.length <= 1) return v;
+        const trimmed = history.slice(0, -1);
+        const latest = trimmed[trimmed.length - 1];
+        return {
+          ...v,
+          history: trimmed,
+          date: latest.date,
+          comment: latest.comment,
+          rating: latest.rating,
+          image: latest.image,
+          visitCount: Math.max(1, trimmed.length),
+        };
+      });
+      saveVisits(nextVisits);
+    },
+    [visits, saveVisits],
+  );
+
   const exportVisits = useCallback((data: SaunaVisit[]) => {
     const dataStr = JSON.stringify(data, null, 2);
     const dataUri =
@@ -167,6 +170,7 @@ export function useSaunaVisits() {
     saveVisits,
     createVisit,
     updateVisit,
+    removeLastHistoryEntry,
     importVisitsFromFile,
     exportVisits,
   };
