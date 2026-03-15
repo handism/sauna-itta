@@ -45,7 +45,7 @@ function getInitialVisits(): SaunaVisit[] {
 export default function StatsPage() {
   const [visits] = useState<SaunaVisit[]>(getInitialVisits);
   const [theme] = useState<'dark' | 'light'>(getInitialTheme);
-  const [date, setDate] = useState<Date | Date[]>(new Date());
+  const [date, setDate] = useState<Date | null>(new Date());
 
   useEffect(() => {
     document.documentElement.classList.add("allow-page-scroll");
@@ -199,7 +199,7 @@ export default function StatsPage() {
               <h2>訪問カレンダー</h2>
               <div className="calendarContainer">
                 <Calendar
-                  onChange={setDate}
+                  onChange={(value) => setDate(value instanceof Date ? value : null)}
                   value={date}
                   calendarType="gregory"
                   className={theme === 'light' ? 'light-theme' : 'dark-theme'}
