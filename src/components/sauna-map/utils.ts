@@ -1,4 +1,5 @@
-import { SaunaVisit, VisitFormState, VisitHistoryEntry } from "./types";
+import initialVisits from "@/data/sauna-visits.json";
+import { SaunaVisit, VisitFormState, VisitHistoryEntry, VisitStats } from "./types";
 
 export const VISITS_STORAGE_KEY = "sauna-itta_visits";
 export const THEME_STORAGE_KEY = "sauna-itta_theme";
@@ -140,6 +141,81 @@ export function buildHistoryUpdate(
   };
 }
 
+
+export function getInitialVisits(): SaunaVisit[] {
+  const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
+  if (typeof window === "undefined") {
+    return baseVisits;
+  }
+
+  const savedVisits = localStorage.getItem(VISITS_STORAGE_KEY);
+  if (!savedVisits) {
+    return baseVisits;
+  }
+
+  try {
+    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
+    const normalizedSaved = normalizeVisits(parsedSaved);
+    const initialIds = new Set(baseVisits.map((v) => v.id));
+    const customVisits = normalizedSaved.filter((v) => !initialIds.has(v.id));
+    return [...customVisits, ...baseVisits];
+  } catch (e) {
+    console.error("Failed to parse saved visits:", e);
+    return baseVisits;
+  }
+}
+
+export function calculateStats(visits: SaunaVisit[]): VisitStats {
+  const total = visits.length;
+  if (total === 0) {
+    return {
+      total: 0,
+      visitedCount: 0,
+      wishlistCount: 0,
+      firstDate: null,
+      lastDate: null,
+      avgRating: 0,
+      uniqueAreas: 0,
+      prefectures: [],
+      prefectureCount: 0,
+    };
+  }
+
+  const historyEntries = flattenVisitHistory(visits).filter(
+    (entry) => entry.status === "visited",
+  );
+  const sortedByDate = historyEntries.slice().sort((a, b) => a.date.localeCompare(b.date));
+  const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
+  const lastDate = sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
+  const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
+  const wishlistCount = total - visitedCount;
+  const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
+  const avgRating =
+    ratings.length > 0
+      ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
+      : 0;
+  const areas = new Set(visits.map((v) => (v.area ?? "").trim()).filter((a) => a.length > 0));
+  const prefectures = Array.from(
+    new Set(
+      visits
+        .filter((v) => (v.status ?? "visited") === "visited")
+        .map((v) => extractPrefecture(v.area))
+        .filter((p): p is string => p != null),
+    ),
+  ).sort((a, b) => a.localeCompare(b, "ja"));
+
+  return {
+    total,
+    visitedCount,
+    wishlistCount,
+    firstDate,
+    lastDate,
+    avgRating,
+    uniqueAreas: areas.size,
+    prefectures,
+    prefectureCount: prefectures.length,
+  };
+}
 
 function applyHistoryNormalization(visit: SaunaVisit): Pick<
   SaunaVisit,

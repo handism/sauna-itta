@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
-export function useUIState(isSidebarExpandedInitial: boolean) {
+export function useUIState() {
   const [isShareViewOpen, setIsShareViewOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -25,12 +25,12 @@ export function useUIState(isSidebarExpandedInitial: boolean) {
       const target = event.target;
       if (!(target instanceof Node)) return;
       if (mobileMenuRef.current?.contains(target)) return;
-      closeMobileMenu();
+      setIsMobileMenuOpen(false);
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        closeMobileMenu();
+        setIsMobileMenuOpen(false);
       }
     };
 
@@ -41,7 +41,7 @@ export function useUIState(isSidebarExpandedInitial: boolean) {
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isMobileMenuOpen, closeMobileMenu]);
+  }, [isMobileMenuOpen]);
 
   return {
     isShareViewOpen,

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { extractPrefecture, flattenVisitHistory } from "../utils";
-import { SaunaVisit, VisitFilters, VisitStats } from "../types";
+import { calculateStats } from "../utils";
+import { SaunaVisit, VisitFilters } from "../types";
 
 const DEFAULT_FILTERS: VisitFilters = {
   search: "",
@@ -34,85 +34,24 @@ export function useVisitFilters(visits: SaunaVisit[]) {
       return true;
     });
 
-    result = result.slice().sort((a, b) => {
+    result.sort((a, b) => {
       switch (filters.sort) {
         case "oldest":
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
+          return a.date.localeCompare(b.date);
         case "ratingDesc":
-          return (
-            (b.rating ?? 0) - (a.rating ?? 0) ||
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
+          return (b.rating ?? 0) - (a.rating ?? 0) || b.date.localeCompare(a.date);
         case "ratingAsc":
-          return (
-            (a.rating ?? 0) - (b.rating ?? 0) ||
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-          );
+          return (a.rating ?? 0) - (b.rating ?? 0) || b.date.localeCompare(a.date);
         case "recent":
         default:
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          return b.date.localeCompare(a.date);
       }
     });
 
     return result;
   }, [visits, filters]);
 
-  const stats = useMemo<VisitStats>(() => {
-    const total = visits.length;
-    if (total === 0) {
-      return {
-        total,
-        visitedCount: 0,
-        wishlistCount: 0,
-        firstDate: null,
-        lastDate: null,
-        avgRating: 0,
-        uniqueAreas: 0,
-        prefectures: [],
-        prefectureCount: 0,
-      };
-    }
-
-    const historyEntries = flattenVisitHistory(visits).filter(
-      (entry) => entry.status === "visited",
-    );
-    const sortedByDate = historyEntries
-      .slice()
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
-    const lastDate =
-      sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
-    const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
-    const wishlistCount = visits.filter((v) => (v.status ?? "visited") === "wishlist").length;
-    const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
-    const avgRating =
-      ratings.length > 0
-        ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
-        : 0;
-
-    const areas = new Set(visits.map((v) => (v.area ?? "").trim()).filter((a) => a.length > 0));
-    const prefectures = Array.from(
-      new Set(
-        visits
-          .filter((v) => (v.status ?? "visited") === "visited")
-          .map((v) => extractPrefecture(v.area))
-          .filter((p): p is string => p != null),
-      ),
-    ).sort((a, b) => a.localeCompare(b, "ja"));
-
-    return {
-      total,
-      visitedCount,
-      wishlistCount,
-      firstDate,
-      lastDate,
-      avgRating,
-      uniqueAreas: areas.size,
-      prefectures,
-      prefectureCount: prefectures.length,
-    };
-  }, [visits]);
+  const stats = useMemo(() => calculateStats(visits), [visits]);
 
   const isFilterActive =
     filters.search.trim().length > 0 ||

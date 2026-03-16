@@ -39,6 +39,9 @@ import {
 } from "./sauna-map/utils";
 import { SaunaVisit, VisitFormState } from "./sauna-map/types";
 
+const STORAGE_ERROR_MSG =
+  "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
+
 export default function SaunaMap() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -74,7 +77,7 @@ export default function SaunaMap() {
     closeFilterModal,
     openDeleteConfirm,
     closeDeleteConfirm,
-  } = useUIState(isSidebarExpanded);
+  } = useUIState();
 
   const [toast, setToast] = useState<ToastState | null>(null);
 
@@ -120,7 +123,7 @@ export default function SaunaMap() {
     const persisted = saveVisits(updatedVisits);
     if (!persisted) {
       showToast(
-        "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+        STORAGE_ERROR_MSG,
         "error",
       );
     } else {
@@ -146,7 +149,7 @@ export default function SaunaMap() {
       const persisted = saveVisits(updatedVisits);
       if (!persisted) {
         showToast(
-          "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+          STORAGE_ERROR_MSG,
           "error",
         );
       }
@@ -155,7 +158,7 @@ export default function SaunaMap() {
       const persisted = saveVisits([newVisit, ...visits]);
       if (!persisted) {
         showToast(
-          "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+          STORAGE_ERROR_MSG,
           "error",
         );
       }
@@ -200,7 +203,7 @@ export default function SaunaMap() {
         const persisted = saveVisits(nextVisits);
         if (!persisted) {
           showToast(
-            "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+            STORAGE_ERROR_MSG,
             "error",
           );
         }
@@ -353,7 +356,7 @@ export default function SaunaMap() {
                       type="button"
                       role="menuitem"
                       onClick={() => {
-                        exportVisits(visits);
+                        exportVisits();
                         closeMobileMenu();
                       }}
                     >

@@ -1,36 +1,14 @@
 import { useCallback, useState } from "react";
-import initialVisits from "@/data/sauna-visits.json";
 import {
   normalizeVisits,
   VISITS_STORAGE_KEY,
   getTodayDate,
   buildHistoryUpdate,
   getVisitHistoryEntries,
+  getInitialVisits,
+  toNormalizedTags,
 } from "../utils";
 import { SaunaVisit, VisitFormState } from "../types";
-
-function getInitialVisits(): SaunaVisit[] {
-  const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
-  if (typeof window === "undefined") {
-    return baseVisits;
-  }
-
-  const savedVisits = localStorage.getItem(VISITS_STORAGE_KEY);
-  if (!savedVisits) {
-    return baseVisits;
-  }
-
-  try {
-    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-    const normalizedSaved = normalizeVisits(parsedSaved);
-    const initialIds = new Set(baseVisits.map((v) => v.id));
-    const customVisits = normalizedSaved.filter((v) => !initialIds.has(v.id));
-    return [...customVisits, ...baseVisits];
-  } catch (e) {
-    console.error("Failed to parse saved visits:", e);
-    return baseVisits;
-  }
-}
 
 function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -74,10 +52,7 @@ export function useSaunaVisits() {
         image: historyEntry.image,
         date: historyEntry.date,
         rating: historyEntry.rating,
-        tags: form.tagsText
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
+        tags: toNormalizedTags(form.tagsText),
         status: form.status,
         area: form.area,
         visitCount: 1,
@@ -89,10 +64,7 @@ export function useSaunaVisits() {
 
   const updateVisit = useCallback(
     (editingId: string, selected: { lat: number; lng: number }, form: VisitFormState) => {
-      const tags = form.tagsText
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
+      const tags = toNormalizedTags(form.tagsText);
 
       return visits.map((v) =>
         v.id === editingId
@@ -154,15 +126,17 @@ export function useSaunaVisits() {
     [visits, saveVisits],
   );
 
-  const exportVisits = useCallback((data: SaunaVisit[]) => {
-    const dataStr = JSON.stringify(data, null, 2);
+  const exportVisits = useCallback(() => {
+    const dataStr = JSON.stringify(visits, null, 2);
     const dataUri =
       "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
     const linkElement = document.createElement("a");
     linkElement.setAttribute("href", dataUri);
     linkElement.setAttribute("download", "sauna-visits.json");
+    document.body.appendChild(linkElement);
     linkElement.click();
-  }, []);
+    document.body.removeChild(linkElement);
+  }, [visits]);
 
   return {
     visits,
