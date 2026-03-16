@@ -184,7 +184,7 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
   const historyEntries = flattenVisitHistory(visits).filter(
     (entry) => entry.status === "visited",
   );
-  const sortedByDate = historyEntries.slice().sort((a, b) => a.date.localeCompare(b.date));
+  const sortedByDate = historyEntries.sort((a, b) => a.date.localeCompare(b.date));
   const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
   const lastDate = sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
   const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
