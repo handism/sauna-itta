@@ -18,13 +18,13 @@ npm run lint     # ESLint 実行
 
 ## アーキテクチャ
 
-**スタック:** Next.js 16 (App Router) + TypeScript + React Leaflet + Recharts
+**スタック:** Next.js 16 (App Router) + TypeScript + React Leaflet + Recharts + React Calendar
 **データ:** すべてのデータはブラウザの `localStorage` に保存されます。バックエンドや API ルートはありません。
 **デプロイ:** `next build` で静的エクスポート (`output: "export"`) を生成し、GitHub Pages の `/sauna-itta` ベースパス配下に公開します。
 
 ### ページ構成
 - `/` — 地図インターフェース＋サイドバー (`src/app/page.tsx`)
-- `/stats` — グラフ・統計ダッシュボード (`src/app/stats/page.tsx`)
+- `/stats` — グラフ・統計ダッシュボード＋訪問カレンダー (`src/app/stats/page.tsx`)
 
 ### 状態管理
 状態はすべてカスタムフックで管理されています（Context や Redux は使用していません）。
@@ -34,9 +34,11 @@ npm run lint     # ESLint 実行
 | `useSaunaVisits` | CRUD 操作 + `localStorage` への永続化 (`sauna-itta_visits`) |
 | `useEditorState` | エディターモードのステートマシン (`useReducer`) — 追加・編集・待機モード |
 | `useVisitFilters` | フィルタリングロジックと集計統計 (`useMemo`) |
-| `useUIState` | モーダル・メニューの開閉状態 |
+| `useUIState` | モーダル・メニュー・削除確認ダイアログの開閉状態 |
 
-`SaunaMap.tsx` はすべてのフックを束ねるオーケストレーションコンポーネントで、画像圧縮・JSON インポート/エクスポート・トースト通知も担当します。
+`SaunaMap.tsx` はすべてのフックを束ねるオーケストレーションコンポーネントで、画像圧縮・JSON インポート/エクスポート・テーマ切り替え・トースト通知も担当します。
+
+グラフコンポーネントは `src/components/charts/` に分離されています（`MonthlyVisitsChart.tsx`、`RatingDistributionChart.tsx`）。
 
 ### データモデル
 

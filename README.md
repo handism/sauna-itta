@@ -13,7 +13,7 @@ Next.js + React Leaflet で構築されており、データはブラウザの `
 - シェア用ビュー（一覧 + サマリ）
 - 統計ダッシュボード（`/stats`）
   - 合計件数、行った/行きたい、記録期間、平均満足度、都道府県制覇
-  - 月別訪問数、満足度分布チャート
+  - 月別訪問数、満足度分布チャート、訪問カレンダー
 - ダーク / ライトテーマ切り替え
 - 現在地移動ボタン
 - `alert/confirm` を使わない UI 通知
@@ -26,7 +26,8 @@ Next.js + React Leaflet で構築されており、データはブラウザの `
 - UI: React 19 + TypeScript
 - Map: React Leaflet / Leaflet / OpenStreetMap
 - Chart: Recharts
-- Styling: Global CSS（`base.css` + `map.css` + `sidebar.css` + `modal.css`）
+- Calendar: React Calendar
+- Styling: CSS Modules + Global CSS
 - Lint: ESLint 9
 
 ## ディレクトリ構成（主要部分）
@@ -34,18 +35,18 @@ Next.js + React Leaflet で構築されており、データはブラウザの `
 ```text
 src/
   app/
+    layout.tsx
     page.tsx
+    globals.css
     stats/
       page.tsx
       stats.module.css
-    styles/
-      base.css
-      sauna-map.css   # map/sidebar/modal の集約
-      map.css
-      sidebar.css
-      modal.css
+      calendar.css
   components/
     SaunaMap.tsx      # 画面のオーケストレーション
+    charts/
+      MonthlyVisitsChart.tsx
+      RatingDistributionChart.tsx
     sauna-map/
       types.ts
       utils.ts
@@ -53,6 +54,7 @@ src/
         useEditorState.ts
         useSaunaVisits.ts
         useVisitFilters.ts
+        useUIState.ts
       components/
         VisitForm.tsx
         VisitList.tsx
@@ -60,8 +62,16 @@ src/
         FilterModal.tsx
         ShareModal.tsx
         ConfirmModal.tsx
+        LocationControl.tsx
+        LocationPicker.tsx
+        MapController.tsx
         Toast.tsx
         common.tsx
+        markerIcon.ts
+      styles/
+        (各コンポーネント用 CSS)
+  data/
+    sauna-visits.json # シードデータ
 ```
 
 ## セットアップ
