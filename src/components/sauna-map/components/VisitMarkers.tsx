@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Marker, Popup } from "react-leaflet";
 import { SaunaVisit } from "../types";
 import { getDirectionsUrl, getVisitCount } from "../utils";
@@ -10,7 +11,7 @@ interface VisitMarkersProps {
   onEdit: (visit: SaunaVisit) => void;
 }
 
-export function VisitMarkers({ visits, editingId, onEdit }: VisitMarkersProps) {
+export const VisitMarkers = memo(function VisitMarkers({ visits, editingId, onEdit }: VisitMarkersProps) {
   return (
     <>
       {visits.map((visit) => {
@@ -59,4 +60,4 @@ export function VisitMarkers({ visits, editingId, onEdit }: VisitMarkersProps) {
       })}
     </>
   );
-}
+});

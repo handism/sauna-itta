@@ -1,4 +1,4 @@
-import { ChangeEvent, Dispatch, FormEvent, SetStateAction } from "react";
+import { ChangeEvent, Dispatch, FormEvent, SetStateAction, memo, useMemo } from "react";
 import { VisitFormState, VisitHistoryEntry } from "../types";
 
 interface VisitFormProps {
@@ -7,6 +7,7 @@ interface VisitFormProps {
   selectedLocation: { lat: number; lng: number } | null;
   editingId: string | null;
   historyEntries: VisitHistoryEntry[];
+  isCompressingImage?: boolean;
   onSubmit: (e: FormEvent) => void;
   onImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onDelete: () => void;
@@ -14,12 +15,13 @@ interface VisitFormProps {
   onDeleteLastHistory?: () => void;
 }
 
-export function VisitForm({
+export const VisitForm = memo(function VisitForm({
   form,
   setForm,
   selectedLocation,
   editingId,
   historyEntries,
+  isCompressingImage = false,
   onSubmit,
   onImageChange,
   onDelete,
@@ -28,6 +30,10 @@ export function VisitForm({
 }: VisitFormProps) {
   const historyCount = historyEntries.length;
   const shouldAppend = Boolean(editingId && form.appendHistory);
+  const recentHistory = useMemo(
+    () => [...historyEntries].reverse().slice(0, 5),
+    [historyEntries],
+  );
   return (
     <form onSubmit={onSubmit}>
       <h2 className="panel-title mb-2">{editingId ? "サウナの編集" : "新規サウナ登録"}</h2>
@@ -125,8 +131,10 @@ export function VisitForm({
           className="input input-file"
           accept="image/*"
           onChange={onImageChange}
+          disabled={isCompressingImage}
         />
-        {form.image && (
+        {isCompressingImage && <p className="form-hint">画像を圧縮中...</p>}
+        {form.image && !isCompressingImage && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={form.image} className="sauna-img-preview" alt="Preview" />
         )}
@@ -152,11 +160,7 @@ export function VisitForm({
           </div>
           {historyCount > 0 && (
             <ul className="history-list">
-              {historyEntries
-                .slice()
-                .reverse()
-                .slice(0, 5)
-                .map((entry, index) => (
+              {recentHistory.map((entry, index) => (
                   <li key={`${entry.date}-${index}`} className="history-item">
                     <span>{entry.date}</span>
                     <span className="history-rating">
@@ -225,4 +229,4 @@ export function VisitForm({
       </div>
     </form>
   );
-}
+});

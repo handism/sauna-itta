@@ -181,28 +181,44 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
     };
   }
 
+  // Single pass over visits for counts, areas, and prefectures
+  let visitedCount = 0;
+  const areaSet = new Set<string>();
+  const prefectureSet = new Set<string>();
+  for (const v of visits) {
+    const status = v.status ?? "visited";
+    const area = (v.area ?? "").trim();
+    if (area) areaSet.add(area);
+    if (status === "visited") {
+      visitedCount++;
+      const pref = extractPrefecture(v.area);
+      if (pref) prefectureSet.add(pref);
+    }
+  }
+  const wishlistCount = total - visitedCount;
+
+  // Single pass over flattened history entries for dates and ratings
   const historyEntries = flattenVisitHistory(visits).filter(
     (entry) => entry.status === "visited",
   );
-  const sortedByDate = historyEntries.sort((a, b) => a.date.localeCompare(b.date));
-  const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
-  const lastDate = sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
-  const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
-  const wishlistCount = total - visitedCount;
-  const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
+  let firstDate: string | null = null;
+  let lastDate: string | null = null;
+  let ratingSum = 0;
+  let ratingCount = 0;
+  for (const entry of historyEntries) {
+    const d = entry.date;
+    if (firstDate === null || d < firstDate) firstDate = d;
+    if (lastDate === null || d > lastDate) lastDate = d;
+    const r = entry.rating ?? 0;
+    if (r > 0) {
+      ratingSum += r;
+      ratingCount++;
+    }
+  }
   const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
-      : 0;
-  const areas = new Set(visits.map((v) => (v.area ?? "").trim()).filter((a) => a.length > 0));
-  const prefectures = Array.from(
-    new Set(
-      visits
-        .filter((v) => (v.status ?? "visited") === "visited")
-        .map((v) => extractPrefecture(v.area))
-        .filter((p): p is string => p != null),
-    ),
-  ).sort((a, b) => a.localeCompare(b, "ja"));
+    ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0;
+
+  const prefectures = Array.from(prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
 
   return {
     total,
@@ -211,7 +227,7 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
     firstDate,
     lastDate,
     avgRating,
-    uniqueAreas: areas.size,
+    uniqueAreas: areaSet.size,
     prefectures,
     prefectureCount: prefectures.length,
   };

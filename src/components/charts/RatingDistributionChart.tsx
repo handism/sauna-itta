@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { SaunaVisit } from '@/components/sauna-map/types';
 import { flattenVisitHistory } from '@/components/sauna-map/utils';
@@ -43,7 +43,7 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
     return chartData;
   }, [visits]);
 
-  const textColor = theme === 'light' ? '#2c3e50' : '#f2f2f2';
+  const textColor = useMemo(() => theme === 'light' ? '#2c3e50' : '#f2f2f2', [theme]);
 
   type PieLabelProps = {
     cx?: number;
@@ -55,7 +55,7 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
     name?: string;
   };
 
-  const renderCustomizedLabel = ({
+  const renderCustomizedLabel = useCallback(({
     cx = 0,
     cy = 0,
     midAngle = 0,
@@ -74,7 +74,7 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
         {`${name} ${(percent * 100).toFixed(0)}%`}
       </text>
     );
-  };
+  }, [textColor]);
 
 
   if (data.length === 0) {

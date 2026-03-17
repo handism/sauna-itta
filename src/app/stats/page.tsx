@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useCallback, useState } from 'react';
 import Link from 'next/link';
 import Calendar from 'react-calendar';
 import styles from './stats.module.css';
@@ -31,6 +31,26 @@ export default function StatsPage() {
   }, []);
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
+
+  const tileContent = useCallback(({ date, view }: { date: Date; view: string }) => {
+    if (view === 'month') {
+      const dateStr = date.toDateString();
+      if (visitDates.has(dateStr)) {
+        return <div className="calendar-dot"></div>;
+      }
+    }
+    return null;
+  }, [visitDates]);
+
+  const tileClassName = useCallback(({ date, view }: { date: Date; view: string }) => {
+    if (view === 'month') {
+      const dateStr = date.toDateString();
+      if (visitDates.has(dateStr)) {
+        return "react-calendar__tile--has-visit";
+      }
+    }
+    return null;
+  }, [visitDates]);
 
   const visitDates = useMemo(() => {
     const dates = new Map<string, number>();
@@ -119,24 +139,8 @@ export default function StatsPage() {
                   value={date}
                   calendarType="gregory"
                   className={theme === 'light' ? 'light-theme' : 'dark-theme'}
-                  tileContent={({ date, view }) => {
-                    if (view === 'month') {
-                      const dateStr = date.toDateString();
-                      if (visitDates.has(dateStr)) {
-                        return <div className="calendar-dot"></div>;
-                      }
-                    }
-                    return null;
-                  }}
-                  tileClassName={({ date, view }) => {
-                    if (view === 'month') {
-                      const dateStr = date.toDateString();
-                      if (visitDates.has(dateStr)) {
-                        return "react-calendar__tile--has-visit";
-                      }
-                    }
-                    return null;
-                  }}
+                  tileContent={tileContent}
+                  tileClassName={tileClassName}
                 />
               </div>
             </section>

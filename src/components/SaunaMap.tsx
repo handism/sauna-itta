@@ -2,7 +2,7 @@
 
 import imageCompression from "browser-image-compression";
 
-import { useState, useEffect, useCallback, useRef, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, useCallback, useRef, ChangeEvent, FormEvent, useMemo } from "react";
 import Link from "next/link";
 import {
   MapContainer,
@@ -80,6 +80,7 @@ export default function SaunaMap() {
   } = useUIState();
 
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [isCompressingImage, setIsCompressingImage] = useState(false);
 
   const showToast = useCallback((message: string, tone: ToastState["tone"] = "info") => {
     setToast({ id: Date.now(), message, tone });
@@ -91,33 +92,33 @@ export default function SaunaMap() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-  };
+  }, [theme]);
 
-  const startNewVisit = () => {
+  const startNewVisit = useCallback(() => {
     startCreate();
     setForm(getDefaultForm(getTodayDate()));
-  };
+  }, [startCreate]);
 
-  const startEditing = (visit: SaunaVisit) => {
+  const startEditing = useCallback((visit: SaunaVisit) => {
     startEdit(visit);
     setForm(toFormState(visit));
-  };
+  }, [startEdit]);
 
-  const cancelEditing = (completed = false) => {
+  const cancelEditing = useCallback((completed = false) => {
     cancelEdit(completed);
     setForm(getDefaultForm());
-  };
+  }, [cancelEdit]);
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (!editingId) return;
     openDeleteConfirm();
-  };
+  }, [editingId, openDeleteConfirm]);
 
-  const confirmDelete = () => {
+  const confirmDelete = useCallback(() => {
     if (!editingId) return;
     const updatedVisits = visits.filter((v) => v.id !== editingId);
     const persisted = saveVisits(updatedVisits);
@@ -131,7 +132,7 @@ export default function SaunaMap() {
     }
     closeDeleteConfirm();
     cancelEditing(true);
-  };
+  }, [editingId, visits, saveVisits, showToast, closeDeleteConfirm, cancelEditing]);
 
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
@@ -140,7 +141,7 @@ export default function SaunaMap() {
     [selectLocation],
   );
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = useCallback((e: FormEvent) => {
     e.preventDefault();
     if (!selectedLocation || !form.name) return;
 
@@ -165,12 +166,13 @@ export default function SaunaMap() {
     }
 
     cancelEditing(true);
-  };
+  }, [selectedLocation, form, editingId, updateVisit, saveVisits, showToast, createVisit, visits, cancelEditing]);
 
-  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setIsCompressingImage(true);
     try {
       const compressedFile = await imageCompression(file, {
         maxSizeMB: 1,
@@ -180,13 +182,15 @@ export default function SaunaMap() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setForm((prev) => ({ ...prev, image: reader.result as string }));
+        setIsCompressingImage(false);
       };
       reader.readAsDataURL(compressedFile);
     } catch (error) {
       console.error(error);
       showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
+      setIsCompressingImage(false);
     }
-  };
+  }, [showToast]);
 
   const handleImportData = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
@@ -221,8 +225,14 @@ export default function SaunaMap() {
   const isAdding = mode !== "list";
   const isMobilePickingLocation = isMobile && mode === "creating:pick";
   const isCreating = mode === "creating:pick" || mode === "creating:form";
-  const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
-  const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
+  const editingVisit = useMemo(
+    () => (editingId ? visits.find((v) => v.id === editingId) ?? null : null),
+    [editingId, visits],
+  );
+  const historyEntries = useMemo(
+    () => (editingVisit ? getVisitHistoryEntries(editingVisit) : []),
+    [editingVisit],
+  );
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
@@ -385,6 +395,7 @@ export default function SaunaMap() {
                   selectedLocation={selectedLocation}
                   editingId={editingId}
                   historyEntries={historyEntries}
+                  isCompressingImage={isCompressingImage}
                   onSubmit={handleSubmit}
                   onImageChange={handleImageChange}
                   onDelete={handleDelete}

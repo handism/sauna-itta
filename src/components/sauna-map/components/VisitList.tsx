@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { SaunaVisit } from "../types";
 import { getDirectionsUrl, getVisitCount } from "../utils";
 import { RatingStars, WishlistChip } from "./common";
@@ -10,7 +11,7 @@ interface VisitListProps {
   onEdit: (visit: SaunaVisit) => void;
 }
 
-export function VisitList({
+export const VisitList = memo(function VisitList({
   visits,
   filteredVisits,
   isFilterActive,
@@ -84,4 +85,4 @@ export function VisitList({
       )}
     </div>
   );
-}
+});

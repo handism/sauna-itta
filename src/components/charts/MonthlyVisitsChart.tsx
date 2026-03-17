@@ -32,8 +32,10 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
     return chartData;
   }, [visits]);
 
-  const tickColor = theme === 'light' ? '#334155' : '#f1f5f9';
-  const gridColor = theme === 'light' ? 'rgba(15, 23, 42, 0.14)' : 'rgba(241, 245, 249, 0.18)';
+  const { tickColor, gridColor } = useMemo(() => ({
+    tickColor: theme === 'light' ? '#334155' : '#f1f5f9',
+    gridColor: theme === 'light' ? 'rgba(15, 23, 42, 0.14)' : 'rgba(241, 245, 249, 0.18)',
+  }), [theme]);
 
   if (data.length === 0) {
     return <p>訪問記録がありません。</p>;
