@@ -15,7 +15,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
   const filteredVisits = useMemo(() => {
     const keyword = filters.search.trim().toLowerCase();
 
-    let result = visits.filter((v) => {
+    const result = visits.filter((v) => {
       if (filters.status !== "all" && (v.status ?? "visited") !== filters.status) {
         return false;
       }
