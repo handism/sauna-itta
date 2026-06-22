@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const SaunaMap = dynamic(() => import("@/components/SaunaMap"), {
+const SaunaMap = dynamic(() => import("@/components/sauna-map/SaunaMap"), {
   ssr: false,
   loading: () => <div className="map-container" style={{ background: "#0d0d0d" }} />,
 });

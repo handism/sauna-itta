@@ -12,22 +12,22 @@ import {
   ZoomControl,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { FilterModal } from "./sauna-map/components/FilterModal";
-import { ShareModal } from "./sauna-map/components/ShareModal";
-import { VisitForm } from "./sauna-map/components/VisitForm";
-import { VisitList } from "./sauna-map/components/VisitList";
-import { VisitMarkers } from "./sauna-map/components/VisitMarkers";
-import { ConfirmModal } from "./sauna-map/components/ConfirmModal";
-import { LocationPicker } from "./sauna-map/components/LocationPicker";
-import { MapController } from "./sauna-map/components/MapController";
-import { LocationControl } from "./sauna-map/components/LocationControl";
-import { Toast } from "./sauna-map/components/Toast";
-import type { ToastState } from "./sauna-map/components/Toast";
-import { getSaunaIcon } from "./sauna-map/components/markerIcon";
-import { useSaunaVisits } from "./sauna-map/hooks/useSaunaVisits";
-import { useEditorState } from "./sauna-map/hooks/useEditorState";
-import { useVisitFilters } from "./sauna-map/hooks/useVisitFilters";
-import { useUIState } from "./sauna-map/hooks/useUIState";
+import { FilterModal } from "./components/FilterModal";
+import { ShareModal } from "./components/ShareModal";
+import { VisitForm } from "./components/VisitForm";
+import { VisitList } from "./components/VisitList";
+import { VisitMarkers } from "./components/VisitMarkers";
+import { ConfirmModal } from "./components/ConfirmModal";
+import { LocationPicker } from "./components/LocationPicker";
+import { MapController } from "./components/MapController";
+import { LocationControl } from "./components/LocationControl";
+import { Toast } from "./components/Toast";
+import type { ToastState } from "./components/Toast";
+import { getSaunaIcon } from "./components/markerIcon";
+import { useSaunaVisits } from "./hooks/useSaunaVisits";
+import { useEditorState } from "./hooks/useEditorState";
+import { useVisitFilters } from "./hooks/useVisitFilters";
+import { useUIState } from "./hooks/useUIState";
 import {
   getDefaultForm,
   getInitialIsMobile,
@@ -36,8 +36,8 @@ import {
   THEME_STORAGE_KEY,
   getVisitHistoryEntries,
   toFormState,
-} from "./sauna-map/utils";
-import { SaunaVisit, VisitFormState } from "./sauna-map/types";
+} from "./utils";
+import { SaunaVisit, VisitFormState } from "./types";
 
 const STORAGE_ERROR_MSG =
   "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
