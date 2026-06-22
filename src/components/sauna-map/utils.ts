@@ -1,3 +1,4 @@
+import imageCompression from "browser-image-compression";
 import initialVisits from "@/data/sauna-visits.json";
 import { SaunaVisit, VisitFormState, VisitHistoryEntry, VisitStats } from "./types";
 
@@ -226,10 +227,28 @@ function applyHistoryNormalization(visit: SaunaVisit): Pick<
 
   return {
     history,
-    date: latest?.date ?? visit.date,
-    comment: latest?.comment ?? visit.comment ?? "",
-    rating: latest?.rating ?? visit.rating ?? 0,
-    image: latest?.image ?? visit.image,
+    date: latest.date,
+    comment: latest.comment,
+    rating: latest.rating,
+    image: latest.image,
     visitCount: Math.max(1, visit.visitCount ?? 1, history.length),
   };
+}
+
+export async function compressAndGetBase64(file: File): Promise<string> {
+  const compressedFile = await imageCompression(file, {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1024,
+  });
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = () => {
+      reject(reader.error ?? new Error("Failed to read file"));
+    };
+    reader.readAsDataURL(compressedFile);
+  });
 }
