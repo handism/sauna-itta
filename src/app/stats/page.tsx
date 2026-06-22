@@ -17,11 +17,17 @@ import {
 } from "@/components/sauna-map/utils";
 
 export default function StatsPage() {
-  const [visits] = useState<SaunaVisit[]>(getInitialVisits);
-  const [theme] = useState<'dark' | 'light'>(getInitialTheme);
-  const [date, setDate] = useState<Date | null>(new Date());
+  const [visits, setVisits] = useState<SaunaVisit[]>([]);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [date, setDate] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+    setVisits(getInitialVisits());
+    setTheme(getInitialTheme());
+    setDate(new Date());
+
     document.documentElement.classList.add("allow-page-scroll");
     document.body.classList.add("allow-page-scroll");
     return () => {
@@ -29,6 +35,19 @@ export default function StatsPage() {
       document.body.classList.remove("allow-page-scroll");
     };
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (theme === 'light') {
+      document.documentElement.classList.add("light-theme");
+    } else {
+      document.documentElement.classList.remove("light-theme");
+    }
+  }, [theme, mounted]);
+
+  if (!mounted) {
+    return <div className={styles.page} style={{ background: "var(--background)", minHeight: "100vh" }} />;
+  }
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
 

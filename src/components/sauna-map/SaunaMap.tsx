@@ -1,7 +1,5 @@
 "use client";
 
-import imageCompression from "browser-image-compression";
-
 import { useState, useEffect, useCallback, useRef, ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import {
@@ -36,6 +34,7 @@ import {
   THEME_STORAGE_KEY,
   getVisitHistoryEntries,
   toFormState,
+  compressAndGetBase64,
 } from "./utils";
 import { SaunaVisit, VisitFormState } from "./types";
 
@@ -45,7 +44,7 @@ const STORAGE_ERROR_MSG =
 export default function SaunaMap() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { visits, saveVisits, createVisit, updateVisit, removeLastHistoryEntry, importVisitsFromFile, exportVisits } =
+  const { visits, addVisit, editVisit, deleteVisit, removeLastHistoryEntry, importVisitsFromFile, exportVisits } =
     useSaunaVisits();
   const { filters, setFilters, filteredVisits, stats, isFilterActive, clearFilters } =
     useVisitFilters(visits);
@@ -53,6 +52,7 @@ export default function SaunaMap() {
   const [form, setForm] = useState<VisitFormState>(getDefaultForm());
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
   const [isMobile] = useState(getInitialIsMobile);
+  const [mounted, setMounted] = useState(false);
   const {
     state: editorState,
     startCreate,
@@ -91,6 +91,18 @@ export default function SaunaMap() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (theme === "light") {
+      document.documentElement.classList.add("light-theme");
+    } else {
+      document.documentElement.classList.remove("light-theme");
+    }
+  }, [theme]);
+
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
@@ -119,9 +131,8 @@ export default function SaunaMap() {
 
   const confirmDelete = () => {
     if (!editingId) return;
-    const updatedVisits = visits.filter((v) => v.id !== editingId);
-    const persisted = saveVisits(updatedVisits);
-    if (!persisted) {
+    const { success } = deleteVisit(editingId);
+    if (!success) {
       showToast(
         STORAGE_ERROR_MSG,
         "error",
@@ -144,24 +155,20 @@ export default function SaunaMap() {
     e.preventDefault();
     if (!selectedLocation || !form.name) return;
 
+    let success = false;
     if (editingId) {
-      const updatedVisits = updateVisit(editingId, selectedLocation, form);
-      const persisted = saveVisits(updatedVisits);
-      if (!persisted) {
-        showToast(
-          STORAGE_ERROR_MSG,
-          "error",
-        );
-      }
+      const result = editVisit(editingId, selectedLocation, form);
+      success = result.success;
     } else {
-      const newVisit = createVisit(selectedLocation, form);
-      const persisted = saveVisits([newVisit, ...visits]);
-      if (!persisted) {
-        showToast(
-          STORAGE_ERROR_MSG,
-          "error",
-        );
-      }
+      const result = addVisit(selectedLocation, form);
+      success = result.success;
+    }
+
+    if (!success) {
+      showToast(
+        STORAGE_ERROR_MSG,
+        "error",
+      );
     }
 
     cancelEditing(true);
@@ -172,16 +179,8 @@ export default function SaunaMap() {
     if (!file) return;
 
     try {
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1024,
-      });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm((prev) => ({ ...prev, image: reader.result as string }));
-      };
-      reader.readAsDataURL(compressedFile);
+      const base64 = await compressAndGetBase64(file);
+      setForm((prev) => ({ ...prev, image: base64 }));
     } catch (error) {
       console.error(error);
       showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
@@ -194,20 +193,20 @@ export default function SaunaMap() {
       if (!file) return;
 
       try {
-        const { added, nextVisits } = await importVisitsFromFile(file);
+        const { added, success } = await importVisitsFromFile(file);
         if (added === 0) {
           showToast("新しく追加されるデータはありませんでした。", "info");
           return;
         }
 
-        const persisted = saveVisits(nextVisits);
-        if (!persisted) {
+        if (!success) {
           showToast(
             STORAGE_ERROR_MSG,
             "error",
           );
+        } else {
+          showToast(`データを${added}件取り込みました。`, "success");
         }
-        showToast(`データを${added}件取り込みました。`, "success");
       } catch (error) {
         console.error(error);
         showToast("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
@@ -215,7 +214,7 @@ export default function SaunaMap() {
         e.target.value = "";
       }
     },
-    [importVisitsFromFile, saveVisits, showToast],
+    [importVisitsFromFile, showToast],
   );
 
   const isAdding = mode !== "list";
@@ -223,6 +222,10 @@ export default function SaunaMap() {
   const isCreating = mode === "creating:pick" || mode === "creating:form";
   const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
   const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
+
+  if (!mounted) {
+    return <div className="map-container" style={{ background: "var(--background)", height: "100%", width: "100%" }} />;
+  }
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>

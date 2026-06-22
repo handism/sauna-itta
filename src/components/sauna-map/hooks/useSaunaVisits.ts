@@ -84,6 +84,33 @@ export function useSaunaVisits() {
     [visits],
   );
 
+  const addVisit = useCallback(
+    (selected: { lat: number; lng: number }, form: VisitFormState) => {
+      const newVisit = createVisit(selected, form);
+      const success = saveVisits([newVisit, ...visits]);
+      return { success, newVisit };
+    },
+    [visits, createVisit, saveVisits],
+  );
+
+  const editVisit = useCallback(
+    (editingId: string, selected: { lat: number; lng: number }, form: VisitFormState) => {
+      const nextVisits = updateVisit(editingId, selected, form);
+      const success = saveVisits(nextVisits);
+      return { success, nextVisits };
+    },
+    [updateVisit, saveVisits],
+  );
+
+  const deleteVisit = useCallback(
+    (id: string) => {
+      const nextVisits = visits.filter((v) => v.id !== id);
+      const success = saveVisits(nextVisits);
+      return { success, nextVisits };
+    },
+    [visits, saveVisits],
+  );
+
   const importVisitsFromFile = useCallback(
     async (file: File) => {
       const text = await readFileAsText(file);
@@ -94,13 +121,14 @@ export function useSaunaVisits() {
       );
 
       if (normalizedImported.length === 0) {
-        return { added: 0, nextVisits: visits };
+        return { added: 0, success: true };
       }
 
       const nextVisits = [...normalizedImported, ...visits];
-      return { added: normalizedImported.length, nextVisits };
+      const success = saveVisits(nextVisits);
+      return { added: normalizedImported.length, success };
     },
-    [visits],
+    [visits, saveVisits],
   );
 
   const removeLastHistoryEntry = useCallback(
@@ -141,9 +169,9 @@ export function useSaunaVisits() {
   return {
     visits,
     setVisits,
-    saveVisits,
-    createVisit,
-    updateVisit,
+    addVisit,
+    editVisit,
+    deleteVisit,
     removeLastHistoryEntry,
     importVisitsFromFile,
     exportVisits,
