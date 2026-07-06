@@ -13,7 +13,6 @@ import { VisitCalendar } from './components/VisitCalendar';
 
 export default function StatsPage() {
   const { visits, theme, date, setDate, mounted, stats, visitDates } = useStatsData();
-
   if (!mounted) {
     return <div className={styles.page} style={{ background: "var(--background)", minHeight: "100vh" }} />;
   }
