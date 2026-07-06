@@ -1,5 +1,6 @@
 import { ChangeEvent, Dispatch, FormEvent, SetStateAction } from "react";
 import { VisitFormState, VisitHistoryEntry } from "../types";
+import { sanitizeImageUrl } from "../utils";
 
 interface VisitFormProps {
   form: VisitFormState;
@@ -126,9 +127,9 @@ export function VisitForm({
           accept="image/*"
           onChange={onImageChange}
         />
-        {form.image && (
+        {sanitizeImageUrl(form.image) && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={form.image} className="sauna-img-preview" alt="Preview" />
+          <img src={sanitizeImageUrl(form.image)} className="sauna-img-preview" alt="Preview" />
         )}
       </div>
 

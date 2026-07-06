@@ -1,5 +1,5 @@
 import { SaunaVisit } from "../types";
-import { getDirectionsUrl, getVisitCount } from "../utils";
+import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
 import { RatingStars, WishlistChip } from "./common";
 
 interface VisitListProps {
@@ -60,9 +60,9 @@ export function VisitList({
               </div>
             )}
             <p className="sauna-card-comment">{visit.comment}</p>
-            {visit.image && (
+            {sanitizeImageUrl(visit.image) && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={visit.image} className="sauna-img-preview" alt="" />
+              <img src={sanitizeImageUrl(visit.image)} className="sauna-img-preview" alt="" />
             )}
             <div className="sauna-card-meta">
               <span>日付: {visit.date}</span>

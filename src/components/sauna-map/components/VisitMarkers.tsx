@@ -1,6 +1,6 @@
 import { Marker, Popup } from "react-leaflet";
 import { SaunaVisit } from "../types";
-import { getDirectionsUrl, getVisitCount } from "../utils";
+import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
 import { getSaunaIcon } from "./markerIcon";
 import { RatingStars, WishlistChip } from "./common";
 
@@ -32,9 +32,9 @@ export function VisitMarkers({ visits, editingId, onEdit }: VisitMarkersProps) {
                 </h3>
                 {visit.area && <div className="popup-area">{visit.area}</div>}
                 <RatingStars rating={visit.rating ?? 0} className="popup-rating" />
-                {visit.image && (
+                {sanitizeImageUrl(visit.image) && (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={visit.image} alt={visit.name} className="popup-image" />
+                  <img src={sanitizeImageUrl(visit.image)} alt={visit.name} className="popup-image" />
                 )}
                 <p className="popup-comment">{visit.comment}</p>
                 <small className="popup-meta">
