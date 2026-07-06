@@ -13,7 +13,9 @@ export function extractPrefecture(area: string | undefined): string | null {
 }
 
 export function getDirectionsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const safeLat = encodeURIComponent(Number(lat).toString());
+  const safeLng = encodeURIComponent(Number(lng).toString());
+  return `https://www.google.com/maps/dir/?api=1&destination=${safeLat},${safeLng}`;
 }
 
 export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
@@ -106,12 +108,20 @@ export function flattenVisitHistory(
   const entries: Array<VisitHistoryEntry & { visitId: string; status: "visited" | "wishlist" }> =
     [];
 
-  visits.forEach((visit) => {
+  for (const visit of visits) {
     const status = visit.status ?? "visited";
-    getVisitHistoryEntries(visit).forEach((entry) => {
-      entries.push({ ...entry, visitId: visit.id, status });
-    });
-  });
+    const visitId = visit.id;
+    for (const entry of getVisitHistoryEntries(visit)) {
+      entries.push({
+        date: entry.date,
+        comment: entry.comment,
+        rating: entry.rating,
+        image: entry.image,
+        visitId,
+        status,
+      });
+    }
+  }
 
   return entries;
 }
@@ -143,6 +153,32 @@ export function buildHistoryUpdate(
 }
 
 
+function isValidVisit(v: unknown): v is SaunaVisit {
+  if (!v || typeof v !== "object") return false;
+  const visit = v as Record<string, unknown>;
+  if (typeof visit.id !== "string") return false;
+  if (typeof visit.name !== "string") return false;
+  if (typeof visit.lat !== "number") return false;
+  if (typeof visit.lng !== "number") return false;
+  if (typeof visit.comment !== "string") return false;
+  if (typeof visit.date !== "string") return false;
+
+  if (visit.history !== undefined) {
+    if (!Array.isArray(visit.history)) return false;
+    for (const h of visit.history) {
+      if (
+        !h ||
+        typeof h !== "object" ||
+        typeof (h as Record<string, unknown>).date !== "string" ||
+        typeof (h as Record<string, unknown>).comment !== "string"
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 export function getInitialVisits(): SaunaVisit[] {
   const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
   if (typeof window === "undefined") {
@@ -155,8 +191,12 @@ export function getInitialVisits(): SaunaVisit[] {
   }
 
   try {
-    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-    const normalizedSaved = normalizeVisits(parsedSaved);
+    const parsedSaved = JSON.parse(savedVisits);
+    if (!Array.isArray(parsedSaved)) {
+      return baseVisits;
+    }
+    const validSaved = parsedSaved.filter(isValidVisit) as SaunaVisit[];
+    const normalizedSaved = normalizeVisits(validSaved);
     const initialIds = new Set(baseVisits.map((v) => v.id));
     const customVisits = normalizedSaved.filter((v) => !initialIds.has(v.id));
     return [...customVisits, ...baseVisits];
@@ -182,37 +222,64 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
     };
   }
 
-  const historyEntries = flattenVisitHistory(visits).filter(
-    (entry) => entry.status === "visited",
+  const acc = visits.reduce(
+    (acc, visit) => {
+      const status = visit.status ?? "visited";
+
+      if (status === "visited") {
+        acc.visitedCount++;
+
+        const pref = extractPrefecture(visit.area);
+        if (pref != null) {
+          acc.prefectureSet.add(pref);
+        }
+
+        const history = getVisitHistoryEntries(visit);
+        for (let j = 0; j < history.length; j++) {
+          const entry = history[j];
+
+          if (acc.firstDate === null || entry.date.localeCompare(acc.firstDate) < 0) {
+            acc.firstDate = entry.date;
+          }
+          if (acc.lastDate === null || entry.date.localeCompare(acc.lastDate) > 0) {
+            acc.lastDate = entry.date;
+          }
+
+          const rating = entry.rating ?? 0;
+          if (rating > 0) {
+            acc.ratingSum += rating;
+            acc.ratingCount++;
+          }
+        }
+      }
+
+      const area = (visit.area ?? "").trim();
+      if (area.length > 0) {
+        acc.areas.add(area);
+      }
+
+      return acc;
+    },
+    {
+      visitedCount: 0,
+      firstDate: null as string | null,
+      lastDate: null as string | null,
+      ratingSum: 0,
+      ratingCount: 0,
+      areas: new Set<string>(),
+      prefectureSet: new Set<string>(),
+    }
   );
-  const sortedByDate = historyEntries.sort((a, b) => a.date.localeCompare(b.date));
-  const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
-  const lastDate = sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
-  const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
-  const wishlistCount = total - visitedCount;
-  const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
-  const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
-      : 0;
-  const areas = new Set(visits.map((v) => (v.area ?? "").trim()).filter((a) => a.length > 0));
-  const prefectures = Array.from(
-    new Set(
-      visits
-        .filter((v) => (v.status ?? "visited") === "visited")
-        .map((v) => extractPrefecture(v.area))
-        .filter((p): p is string => p != null),
-    ),
-  ).sort((a, b) => a.localeCompare(b, "ja"));
+  const prefectures = Array.from(acc.prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
 
   return {
     total,
-    visitedCount,
-    wishlistCount,
-    firstDate,
-    lastDate,
-    avgRating,
-    uniqueAreas: areas.size,
+    visitedCount: acc.visitedCount,
+    wishlistCount: total - acc.visitedCount,
+    firstDate: acc.firstDate,
+    lastDate: acc.lastDate,
+    avgRating: acc.ratingCount > 0 ? Math.round((acc.ratingSum / acc.ratingCount) * 10) / 10 : 0,
+    uniqueAreas: acc.areas.size,
     prefectures,
     prefectureCount: prefectures.length,
   };
