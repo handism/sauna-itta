@@ -21,7 +21,8 @@
     "react-calendar": "^6.0.0",
     "react-dom": "19.2.3",
     "react-leaflet": "^5.0.0",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20",
