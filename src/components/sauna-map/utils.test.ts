@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
 import { normalizeVisits, extractPrefecture, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats } from "./utils";
