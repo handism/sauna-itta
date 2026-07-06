@@ -1,25 +1,30 @@
-export interface SaunaVisit {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  comment: string;
-  image?: string;
-  date: string;
-  rating?: number;
-  tags?: string[];
-  status?: "visited" | "wishlist";
-  area?: string;
-  visitCount?: number;
-  history?: VisitHistoryEntry[];
-}
+import { z } from "zod";
 
-export interface VisitHistoryEntry {
-  date: string;
-  comment: string;
-  rating?: number;
-  image?: string;
-}
+export const VisitHistoryEntrySchema = z.object({
+  date: z.string(),
+  comment: z.string(),
+  rating: z.number().optional(),
+  image: z.string().optional(),
+});
+
+export const SaunaVisitSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+  comment: z.string(),
+  image: z.string().optional(),
+  date: z.string(),
+  rating: z.number().optional(),
+  tags: z.array(z.string()).optional(),
+  status: z.enum(["visited", "wishlist"]).optional(),
+  area: z.string().optional(),
+  visitCount: z.number().optional(),
+  history: z.array(VisitHistoryEntrySchema).optional(),
+});
+
+export type SaunaVisit = z.infer<typeof SaunaVisitSchema>;
+export type VisitHistoryEntry = z.infer<typeof VisitHistoryEntrySchema>;
 
 export interface VisitFormState {
   name: string;
