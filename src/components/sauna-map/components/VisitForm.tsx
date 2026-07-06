@@ -14,6 +14,130 @@ interface VisitFormProps {
   onDeleteLastHistory?: () => void;
 }
 
+function FormHeader({ editingId, selectedLocation }: { editingId: string | null; selectedLocation: { lat: number; lng: number } | null }) {
+  return (
+    <>
+      <h2 className="panel-title mb-2">{editingId ? "サウナの編集" : "新規サウナ登録"}</h2>
+      <p className="panel-subtitle">
+        {editingId
+          ? "内容を更新します"
+          : selectedLocation
+            ? "場所が選択されました ✅"
+            : "地図上をクリックして場所を選択してください"}
+      </p>
+    </>
+  );
+}
+
+function StatusField({ status, onChange }: { status: "visited" | "wishlist"; onChange: (status: "visited" | "wishlist") => void }) {
+  return (
+    <div className="form-group">
+      <label>ステータス</label>
+      <div className="segmented">
+        <button
+          type="button"
+          className={`btn segmented-btn segmented-btn--visited ${
+            status === "visited" ? "is-active" : ""
+          }`}
+          onClick={() => onChange("visited")}
+        >
+          行った
+        </button>
+        <button
+          type="button"
+          className={`btn segmented-btn segmented-btn--wishlist ${
+            status === "wishlist" ? "is-active" : ""
+          }`}
+          onClick={() => onChange("wishlist")}
+        >
+          行きたい
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function RatingField({ rating, onChange }: { rating: number; onChange: (rating: number) => void }) {
+  return (
+    <div className="form-group">
+      <label>満足度（★1〜5）</label>
+      <div className="rating-row">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className="rating-star-btn"
+            aria-label={`${star} star`}
+          >
+            {rating >= star ? "★" : "☆"}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => onChange(0)}
+          className="clear-rating"
+        >
+          クリア
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HistorySection({
+  historyCount,
+  shouldAppend,
+  historyEntries,
+  onDeleteLastHistory,
+}: {
+  historyCount: number;
+  shouldAppend: boolean;
+  historyEntries: VisitHistoryEntry[];
+  onDeleteLastHistory?: () => void;
+}) {
+  return (
+    <div className="form-group">
+      <label>訪問履歴</label>
+      <div className="history-summary">
+        <span>現在の履歴: {historyCount}件</span>
+        {shouldAppend && <span className="history-badge">保存で+1</span>}
+      </div>
+      {historyCount > 0 && (
+        <ul className="history-list">
+          {historyEntries
+            .slice()
+            .reverse()
+            .slice(0, 5)
+            .map((entry, index) => (
+              <li key={`${entry.date}-${index}`} className="history-item">
+                <span>{entry.date}</span>
+                <span className="history-rating">
+                  {entry.rating ? `★${entry.rating}` : "評価なし"}
+                </span>
+                <span className="history-comment">
+                  {entry.comment ? entry.comment : "コメントなし"}
+                </span>
+              </li>
+            ))}
+        </ul>
+      )}
+      {historyCount > 5 && (
+        <div className="history-more">最新5件のみ表示中</div>
+      )}
+      {historyCount > 1 && onDeleteLastHistory && (
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={onDeleteLastHistory}
+        >
+          最後の履歴を削除
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function VisitForm({
   form,
   setForm,
@@ -30,14 +154,7 @@ export function VisitForm({
   const shouldAppend = Boolean(editingId && form.appendHistory);
   return (
     <form onSubmit={onSubmit}>
-      <h2 className="panel-title mb-2">{editingId ? "サウナの編集" : "新規サウナ登録"}</h2>
-      <p className="panel-subtitle">
-        {editingId
-          ? "内容を更新します"
-          : selectedLocation
-            ? "場所が選択されました ✅"
-            : "地図上をクリックして場所を選択してください"}
-      </p>
+      <FormHeader editingId={editingId} selectedLocation={selectedLocation} />
 
       <div className="form-group">
         <label>サウナ名</label>
@@ -60,53 +177,15 @@ export function VisitForm({
         />
       </div>
 
-      <div className="form-group">
-        <label>ステータス</label>
-        <div className="segmented">
-          <button
-            type="button"
-            className={`btn segmented-btn segmented-btn--visited ${
-              form.status === "visited" ? "is-active" : ""
-            }`}
-            onClick={() => setForm({ ...form, status: "visited" })}
-          >
-            行った
-          </button>
-          <button
-            type="button"
-            className={`btn segmented-btn segmented-btn--wishlist ${
-              form.status === "wishlist" ? "is-active" : ""
-            }`}
-            onClick={() => setForm({ ...form, status: "wishlist" })}
-          >
-            行きたい
-          </button>
-        </div>
-      </div>
+      <StatusField
+        status={form.status}
+        onChange={(status) => setForm({ ...form, status })}
+      />
 
-      <div className="form-group">
-        <label>満足度（★1〜5）</label>
-        <div className="rating-row">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => setForm({ ...form, rating: star })}
-              className="rating-star-btn"
-              aria-label={`${star} star`}
-            >
-              {form.rating >= star ? "★" : "☆"}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, rating: 0 })}
-            className="clear-rating"
-          >
-            クリア
-          </button>
-        </div>
-      </div>
+      <RatingField
+        rating={form.rating}
+        onChange={(rating) => setForm({ ...form, rating })}
+      />
 
       <div className="form-group">
         <label>タグ（カンマ区切り）</label>
@@ -144,44 +223,12 @@ export function VisitForm({
       </div>
 
       {editingId && (
-        <div className="form-group">
-          <label>訪問履歴</label>
-          <div className="history-summary">
-            <span>現在の履歴: {historyCount}件</span>
-            {shouldAppend && <span className="history-badge">保存で+1</span>}
-          </div>
-          {historyCount > 0 && (
-            <ul className="history-list">
-              {historyEntries
-                .slice()
-                .reverse()
-                .slice(0, 5)
-                .map((entry, index) => (
-                  <li key={`${entry.date}-${index}`} className="history-item">
-                    <span>{entry.date}</span>
-                    <span className="history-rating">
-                      {entry.rating ? `★${entry.rating}` : "評価なし"}
-                    </span>
-                    <span className="history-comment">
-                      {entry.comment ? entry.comment : "コメントなし"}
-                    </span>
-                  </li>
-                ))}
-            </ul>
-          )}
-          {historyCount > 5 && (
-            <div className="history-more">最新5件のみ表示中</div>
-          )}
-          {historyCount > 1 && onDeleteLastHistory && (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={onDeleteLastHistory}
-            >
-              最後の履歴を削除
-            </button>
-          )}
-        </div>
+        <HistorySection
+          historyCount={historyCount}
+          shouldAppend={shouldAppend}
+          historyEntries={historyEntries}
+          onDeleteLastHistory={onDeleteLastHistory}
+        />
       )}
 
       <div className="form-group">
