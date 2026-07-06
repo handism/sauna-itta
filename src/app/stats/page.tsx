@@ -23,9 +23,13 @@ export default function StatsPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+
     setVisits(getInitialVisits());
+
     setTheme(getInitialTheme());
+
     setDate(new Date());
 
     document.documentElement.classList.add("allow-page-scroll");
@@ -45,22 +49,30 @@ export default function StatsPage() {
     }
   }, [theme, mounted]);
 
-  if (!mounted) {
-    return <div className={styles.page} style={{ background: "var(--background)", minHeight: "100vh" }} />;
-  }
-
   const stats = useMemo(() => calculateStats(visits), [visits]);
 
   const visitDates = useMemo(() => {
     const dates = new Map<string, number>();
+    const dateCache = new Map<string, string>();
+
     flattenVisitHistory(visits)
       .filter((entry) => entry.status === "visited")
       .forEach((entry) => {
-        const dateStr = new Date(entry.date).toDateString();
+        let dateStr = dateCache.get(entry.date);
+        if (!dateStr) {
+          // Replace hyphens with slashes to ensure consistent local timezone parsing across browsers
+          const dateToParse = typeof entry.date === 'string' ? entry.date.replace(/-/g, '/') : entry.date;
+          dateStr = new Date(dateToParse).toDateString();
+          dateCache.set(entry.date, dateStr);
+        }
         dates.set(dateStr, (dates.get(dateStr) ?? 0) + 1);
       });
     return dates;
   }, [visits]);
+
+  if (!mounted) {
+    return <div className={styles.page} style={{ background: "var(--background)", minHeight: "100vh" }} />;
+  }
 
   return (
     <div className={`${styles.page} ${theme === 'light' ? 'light-theme' : ''}`}>
