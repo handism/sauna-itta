@@ -1,6 +1,92 @@
 import { Dispatch, SetStateAction } from "react";
 import { VisitFilters } from "../types";
 
+interface FilterComponentProps {
+  filters: VisitFilters;
+  setFilters: Dispatch<SetStateAction<VisitFilters>>;
+}
+
+function SearchInput({ filters, setFilters }: FilterComponentProps) {
+  return (
+    <input
+      className="input"
+      placeholder="キーワード検索"
+      value={filters.search}
+      onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+    />
+  );
+}
+
+function StatusSelect({ filters, setFilters }: FilterComponentProps) {
+  return (
+    <div className="form-group">
+      <label className="filters-label">ステータス</label>
+      <select
+        className="input select-input"
+        value={filters.status}
+        onChange={(e) =>
+          setFilters((prev) => ({
+            ...prev,
+            status: e.target.value as VisitFilters["status"],
+          }))
+        }
+      >
+        <option value="all">すべて</option>
+        <option value="visited">行った</option>
+        <option value="wishlist">行きたい</option>
+      </select>
+    </div>
+  );
+}
+
+function SortSelect({ filters, setFilters }: FilterComponentProps) {
+  return (
+    <div className="form-group">
+      <label className="filters-label">並び順</label>
+      <select
+        className="input select-input"
+        value={filters.sort}
+        onChange={(e) =>
+          setFilters((prev) => ({
+            ...prev,
+            sort: e.target.value as VisitFilters["sort"],
+          }))
+        }
+      >
+        <option value="recent">新しい順</option>
+        <option value="oldest">古い順</option>
+        <option value="ratingDesc">満足度が高い順</option>
+        <option value="ratingAsc">満足度が低い順</option>
+      </select>
+    </div>
+  );
+}
+
+function MinRatingSelect({ filters, setFilters }: FilterComponentProps) {
+  return (
+    <div className="form-group">
+      <label className="filters-label">最低満足度</label>
+      <select
+        className="input select-input"
+        value={filters.minRating}
+        onChange={(e) =>
+          setFilters((prev) => ({
+            ...prev,
+            minRating: Number(e.target.value),
+          }))
+        }
+      >
+        <option value={0}>指定なし</option>
+        <option value={1}>★1以上</option>
+        <option value={2}>★2以上</option>
+        <option value={3}>★3以上</option>
+        <option value={4}>★4以上</option>
+        <option value={5}>★5のみ</option>
+      </select>
+    </div>
+  );
+}
+
 interface FilterModalProps {
   isOpen: boolean;
   filters: VisitFilters;
@@ -42,67 +128,10 @@ export function FilterModal({
           </button>
         </div>
         <div className="filters">
-          <input
-            className="input"
-            placeholder="キーワード検索"
-            value={filters.search}
-            onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-          />
-          <div className="form-group">
-            <label className="filters-label">ステータス</label>
-            <select
-              className="input select-input"
-              value={filters.status}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  status: e.target.value as VisitFilters["status"],
-                }))
-              }
-            >
-              <option value="all">すべて</option>
-              <option value="visited">行った</option>
-              <option value="wishlist">行きたい</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="filters-label">並び順</label>
-            <select
-              className="input select-input"
-              value={filters.sort}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  sort: e.target.value as VisitFilters["sort"],
-                }))
-              }
-            >
-              <option value="recent">新しい順</option>
-              <option value="oldest">古い順</option>
-              <option value="ratingDesc">満足度が高い順</option>
-              <option value="ratingAsc">満足度が低い順</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="filters-label">最低満足度</label>
-            <select
-              className="input select-input"
-              value={filters.minRating}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  minRating: Number(e.target.value),
-                }))
-              }
-            >
-              <option value={0}>指定なし</option>
-              <option value={1}>★1以上</option>
-              <option value={2}>★2以上</option>
-              <option value={3}>★3以上</option>
-              <option value={4}>★4以上</option>
-              <option value={5}>★5のみ</option>
-            </select>
-          </div>
+          <SearchInput filters={filters} setFilters={setFilters} />
+          <StatusSelect filters={filters} setFilters={setFilters} />
+          <SortSelect filters={filters} setFilters={setFilters} />
+          <MinRatingSelect filters={filters} setFilters={setFilters} />
           {isFilterActive && (
             <button
               type="button"
