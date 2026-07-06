@@ -188,22 +188,41 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
   const sortedByDate = historyEntries.sort((a, b) => a.date.localeCompare(b.date));
   const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
   const lastDate = sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
-  const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
+  let visitedCount = 0;
+  const areas = new Set<string>();
+  const prefectureSet = new Set<string>();
+
+  for (const v of visits) {
+    const area = (v.area ?? "").trim();
+    if (area.length > 0) {
+      areas.add(area);
+    }
+    if ((v.status ?? "visited") === "visited") {
+      visitedCount++;
+      const pref = extractPrefecture(v.area);
+      if (pref != null) {
+        prefectureSet.add(pref);
+      }
+    }
+  }
+
   const wishlistCount = total - visitedCount;
-  const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
+
+  let sumRatings = 0;
+  let numRatings = 0;
+  for (const v of historyEntries) {
+    const r = v.rating ?? 0;
+    if (r > 0) {
+      sumRatings += r;
+      numRatings++;
+    }
+  }
+
   const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
+    numRatings > 0
+      ? Math.round((sumRatings / numRatings) * 10) / 10
       : 0;
-  const areas = new Set(visits.map((v) => (v.area ?? "").trim()).filter((a) => a.length > 0));
-  const prefectures = Array.from(
-    new Set(
-      visits
-        .filter((v) => (v.status ?? "visited") === "visited")
-        .map((v) => extractPrefecture(v.area))
-        .filter((p): p is string => p != null),
-    ),
-  ).sort((a, b) => a.localeCompare(b, "ja"));
+  const prefectures = Array.from(prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
 
   return {
     total,
