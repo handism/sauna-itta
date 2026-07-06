@@ -45,12 +45,20 @@ export function useStatsData() {
 
   const visitDates = useMemo(() => {
     const dates = new Map<string, number>();
-    flattenVisitHistory(visits)
-      .filter((entry) => entry.status === "visited")
-      .forEach((entry) => {
-        const dateStr = new Date(entry.date).toDateString();
+    const dateCache = new Map<string, string>();
+
+    flattenVisitHistory(visits).forEach((entry) => {
+      if (entry.status === "visited") {
+        let dateStr = dateCache.get(entry.date);
+        if (!dateStr) {
+          // Replace hyphens with slashes to ensure consistent local timezone parsing across browsers
+          const dateToParse = typeof entry.date === 'string' ? entry.date.replace(/-/g, '/') : entry.date;
+          dateStr = new Date(dateToParse).toDateString();
+          dateCache.set(entry.date, dateStr);
+        }
         dates.set(dateStr, (dates.get(dateStr) ?? 0) + 1);
-      });
+      }
+    });
     return dates;
   }, [visits]);
 
