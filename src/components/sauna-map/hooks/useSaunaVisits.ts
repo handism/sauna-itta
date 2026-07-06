@@ -1,24 +1,8 @@
 import { useCallback, useState } from "react";
-import {
-  normalizeVisits,
-  VISITS_STORAGE_KEY,
-  getTodayDate,
-  buildHistoryUpdate,
-  getVisitHistoryEntries,
-  getInitialVisits,
-  toNormalizedTags,
-} from "../utils";
-import { z } from "zod";
-import { SaunaVisit, VisitFormState, SaunaVisitSchema } from "../types";
-
-function readFileAsText(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string) ?? "");
-    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
-    reader.readAsText(file);
-  });
-}
+import { VISITS_STORAGE_KEY, getInitialVisits } from "../utils";
+import { SaunaVisit } from "../types";
+import { useVisitCRUD } from "./useVisitCRUD";
+import { useVisitImportExport } from "./useVisitImportExport";
 
 export function useSaunaVisits() {
   const [visits, setVisits] = useState<SaunaVisit[]>(getInitialVisits);
@@ -34,160 +18,13 @@ export function useSaunaVisits() {
     }
   }, []);
 
-  const createVisit = useCallback(
-    (selected: { lat: number; lng: number }, form: VisitFormState): SaunaVisit => {
-      const entryDate = form.date || getTodayDate();
-      const historyEntry = {
-        date: entryDate,
-        comment: form.comment,
-        rating: form.rating || 0,
-        image: form.image,
-      };
-
-      return {
-        id: Date.now().toString(),
-        name: form.name,
-        lat: selected.lat,
-        lng: selected.lng,
-        comment: historyEntry.comment,
-        image: historyEntry.image,
-        date: historyEntry.date,
-        rating: historyEntry.rating,
-        tags: toNormalizedTags(form.tagsText),
-        status: form.status,
-        area: form.area,
-        visitCount: 1,
-        history: [historyEntry],
-      };
-    },
-    [],
-  );
-
-  const updateVisit = useCallback(
-    (editingId: string, selected: { lat: number; lng: number }, form: VisitFormState) => {
-      const tags = toNormalizedTags(form.tagsText);
-
-      return visits.map((v) =>
-        v.id === editingId
-          ? {
-              ...v,
-              ...buildHistoryUpdate(v, form),
-              name: form.name,
-              lat: selected.lat,
-              lng: selected.lng,
-              tags,
-              status: form.status,
-              area: form.area,
-            }
-          : v,
-      );
-    },
-    [visits],
-  );
-
-  const addVisit = useCallback(
-    (selected: { lat: number; lng: number }, form: VisitFormState) => {
-      const newVisit = createVisit(selected, form);
-      const success = saveVisits([newVisit, ...visits]);
-      return { success, newVisit };
-    },
-    [visits, createVisit, saveVisits],
-  );
-
-  const editVisit = useCallback(
-    (editingId: string, selected: { lat: number; lng: number }, form: VisitFormState) => {
-      const nextVisits = updateVisit(editingId, selected, form);
-      const success = saveVisits(nextVisits);
-      return { success, nextVisits };
-    },
-    [updateVisit, saveVisits],
-  );
-
-  const deleteVisit = useCallback(
-    (id: string) => {
-      const nextVisits = visits.filter((v) => v.id !== id);
-      const success = saveVisits(nextVisits);
-      return { success, nextVisits };
-    },
-    [visits, saveVisits],
-  );
-
-  const importVisitsFromFile = useCallback(
-    async (file: File) => {
-      const text = await readFileAsText(file);
-      let parsed;
-      try {
-        parsed = JSON.parse(text);
-      } catch (error) {
-        throw new Error("Invalid JSON file");
-      }
-
-      const validationResult = z.array(SaunaVisitSchema).safeParse(parsed);
-      if (!validationResult.success) {
-        throw new Error("Imported data is not in the correct format for sauna visits: " + validationResult.error.message);
-      }
-
-      const validVisits = validationResult.data;
-
-      const existingIds = new Set(visits.map((v) => v.id));
-      const normalizedImported = normalizeVisits(validVisits).filter(
-        (v) => !existingIds.has(v.id),
-      );
-
-      if (normalizedImported.length === 0) {
-        return { added: 0, success: true };
-      }
-
-      const nextVisits = [...normalizedImported, ...visits];
-      const success = saveVisits(nextVisits);
-      return { added: normalizedImported.length, success };
-    },
-    [visits, saveVisits],
-  );
-
-  const removeLastHistoryEntry = useCallback(
-    (id: string) => {
-      const nextVisits = visits.map((v) => {
-        if (v.id !== id) return v;
-        const history = getVisitHistoryEntries(v);
-        if (history.length <= 1) return v;
-        const trimmed = history.slice(0, -1);
-        const latest = trimmed[trimmed.length - 1];
-        return {
-          ...v,
-          history: trimmed,
-          date: latest.date,
-          comment: latest.comment,
-          rating: latest.rating,
-          image: latest.image,
-          visitCount: Math.max(1, trimmed.length),
-        };
-      });
-      saveVisits(nextVisits);
-    },
-    [visits, saveVisits],
-  );
-
-  const exportVisits = useCallback(() => {
-    const dataStr = JSON.stringify(visits, null, 2);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", "sauna-visits.json");
-    document.body.appendChild(linkElement);
-    linkElement.click();
-    document.body.removeChild(linkElement);
-  }, [visits]);
+  const crud = useVisitCRUD(visits, saveVisits);
+  const importExport = useVisitImportExport(visits, saveVisits);
 
   return {
     visits,
     setVisits,
-    addVisit,
-    editVisit,
-    deleteVisit,
-    removeLastHistoryEntry,
-    importVisitsFromFile,
-    exportVisits,
+    ...crud,
+    ...importExport,
   };
 }
