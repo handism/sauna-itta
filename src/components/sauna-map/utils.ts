@@ -13,7 +13,9 @@ export function extractPrefecture(area: string | undefined): string | null {
 }
 
 export function getDirectionsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const safeLat = encodeURIComponent(Number(lat).toString());
+  const safeLng = encodeURIComponent(Number(lng).toString());
+  return `https://www.google.com/maps/dir/?api=1&destination=${safeLat},${safeLng}`;
 }
 
 export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
