@@ -106,12 +106,20 @@ export function flattenVisitHistory(
   const entries: Array<VisitHistoryEntry & { visitId: string; status: "visited" | "wishlist" }> =
     [];
 
-  visits.forEach((visit) => {
+  for (const visit of visits) {
     const status = visit.status ?? "visited";
-    getVisitHistoryEntries(visit).forEach((entry) => {
-      entries.push({ ...entry, visitId: visit.id, status });
-    });
-  });
+    const visitId = visit.id;
+    for (const entry of getVisitHistoryEntries(visit)) {
+      entries.push({
+        date: entry.date,
+        comment: entry.comment,
+        rating: entry.rating,
+        image: entry.image,
+        visitId,
+        status,
+      });
+    }
+  }
 
   return entries;
 }
