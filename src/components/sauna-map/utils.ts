@@ -18,6 +18,22 @@ export function getDirectionsUrl(lat: number, lng: number): string {
   return `https://www.google.com/maps/dir/?api=1&destination=${safeLat},${safeLng}`;
 }
 
+export function sanitizeImageUrl(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const parsed = new URL(url, "http://localhost");
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return url;
+    }
+    if (parsed.protocol === "data:" && parsed.pathname.startsWith("image/")) {
+      return url;
+    }
+  } catch {
+    // URL parsing failed, return undefined
+  }
+  return undefined;
+}
+
 export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
   return visits.map((v) => ({
     ...v,
