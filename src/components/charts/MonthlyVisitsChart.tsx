@@ -14,12 +14,12 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
   const data = useMemo(() => {
     const monthlyCounts: { [key: string]: number } = {};
 
-    flattenVisitHistory(visits)
-      .filter((entry) => entry.status === "visited")
-      .forEach((entry) => {
+    flattenVisitHistory(visits).forEach((entry) => {
+      if (entry.status === "visited") {
         const month = entry.date.substring(0, 7); // YYYY-MM
         monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
-      });
+      }
+    });
 
     const chartData = Object.keys(monthlyCounts).map(month => ({
       month,
