@@ -8,7 +8,8 @@ import {
   getInitialVisits,
   toNormalizedTags,
 } from "../utils";
-import { SaunaVisit, VisitFormState } from "../types";
+import { z } from "zod";
+import { SaunaVisit, VisitFormState, SaunaVisitSchema } from "../types";
 
 function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -114,9 +115,22 @@ export function useSaunaVisits() {
   const importVisitsFromFile = useCallback(
     async (file: File) => {
       const text = await readFileAsText(file);
-      const parsed = JSON.parse(text) as SaunaVisit[];
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch (error) {
+        throw new Error("Invalid JSON file");
+      }
+
+      const validationResult = z.array(SaunaVisitSchema).safeParse(parsed);
+      if (!validationResult.success) {
+        throw new Error("Imported data is not in the correct format for sauna visits: " + validationResult.error.message);
+      }
+
+      const validVisits = validationResult.data;
+
       const existingIds = new Set(visits.map((v) => v.id));
-      const normalizedImported = normalizeVisits(parsed).filter(
+      const normalizedImported = normalizeVisits(validVisits).filter(
         (v) => !existingIds.has(v.id),
       );
 
