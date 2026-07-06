@@ -13,7 +13,9 @@ export function extractPrefecture(area: string | undefined): string | null {
 }
 
 export function getDirectionsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const safeLat = encodeURIComponent(Number(lat).toString());
+  const safeLng = encodeURIComponent(Number(lng).toString());
+  return `https://www.google.com/maps/dir/?api=1&destination=${safeLat},${safeLng}`;
 }
 
 export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
@@ -143,6 +145,32 @@ export function buildHistoryUpdate(
 }
 
 
+function isValidVisit(v: unknown): v is SaunaVisit {
+  if (!v || typeof v !== "object") return false;
+  const visit = v as Record<string, unknown>;
+  if (typeof visit.id !== "string") return false;
+  if (typeof visit.name !== "string") return false;
+  if (typeof visit.lat !== "number") return false;
+  if (typeof visit.lng !== "number") return false;
+  if (typeof visit.comment !== "string") return false;
+  if (typeof visit.date !== "string") return false;
+
+  if (visit.history !== undefined) {
+    if (!Array.isArray(visit.history)) return false;
+    for (const h of visit.history) {
+      if (
+        !h ||
+        typeof h !== "object" ||
+        typeof (h as Record<string, unknown>).date !== "string" ||
+        typeof (h as Record<string, unknown>).comment !== "string"
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 export function getInitialVisits(): SaunaVisit[] {
   const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
   if (typeof window === "undefined") {
@@ -155,8 +183,12 @@ export function getInitialVisits(): SaunaVisit[] {
   }
 
   try {
-    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-    const normalizedSaved = normalizeVisits(parsedSaved);
+    const parsedSaved = JSON.parse(savedVisits);
+    if (!Array.isArray(parsedSaved)) {
+      return baseVisits;
+    }
+    const validSaved = parsedSaved.filter(isValidVisit) as SaunaVisit[];
+    const normalizedSaved = normalizeVisits(validSaved);
     const initialIds = new Set(baseVisits.map((v) => v.id));
     const customVisits = normalizedSaved.filter((v) => !initialIds.has(v.id));
     return [...customVisits, ...baseVisits];
@@ -230,7 +262,6 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
       prefectureSet: new Set<string>(),
     }
   );
-
   const prefectures = Array.from(acc.prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
 
   return {
