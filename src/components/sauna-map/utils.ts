@@ -182,37 +182,65 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
     };
   }
 
-  const historyEntries = flattenVisitHistory(visits).filter(
-    (entry) => entry.status === "visited",
+  const acc = visits.reduce(
+    (acc, visit) => {
+      const status = visit.status ?? "visited";
+
+      if (status === "visited") {
+        acc.visitedCount++;
+
+        const pref = extractPrefecture(visit.area);
+        if (pref != null) {
+          acc.prefectureSet.add(pref);
+        }
+
+        const history = getVisitHistoryEntries(visit);
+        for (let j = 0; j < history.length; j++) {
+          const entry = history[j];
+
+          if (acc.firstDate === null || entry.date.localeCompare(acc.firstDate) < 0) {
+            acc.firstDate = entry.date;
+          }
+          if (acc.lastDate === null || entry.date.localeCompare(acc.lastDate) > 0) {
+            acc.lastDate = entry.date;
+          }
+
+          const rating = entry.rating ?? 0;
+          if (rating > 0) {
+            acc.ratingSum += rating;
+            acc.ratingCount++;
+          }
+        }
+      }
+
+      const area = (visit.area ?? "").trim();
+      if (area.length > 0) {
+        acc.areas.add(area);
+      }
+
+      return acc;
+    },
+    {
+      visitedCount: 0,
+      firstDate: null as string | null,
+      lastDate: null as string | null,
+      ratingSum: 0,
+      ratingCount: 0,
+      areas: new Set<string>(),
+      prefectureSet: new Set<string>(),
+    }
   );
-  const sortedByDate = historyEntries.sort((a, b) => a.date.localeCompare(b.date));
-  const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
-  const lastDate = sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
-  const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
-  const wishlistCount = total - visitedCount;
-  const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
-  const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
-      : 0;
-  const areas = new Set(visits.map((v) => (v.area ?? "").trim()).filter((a) => a.length > 0));
-  const prefectures = Array.from(
-    new Set(
-      visits
-        .filter((v) => (v.status ?? "visited") === "visited")
-        .map((v) => extractPrefecture(v.area))
-        .filter((p): p is string => p != null),
-    ),
-  ).sort((a, b) => a.localeCompare(b, "ja"));
+
+  const prefectures = Array.from(acc.prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
 
   return {
     total,
-    visitedCount,
-    wishlistCount,
-    firstDate,
-    lastDate,
-    avgRating,
-    uniqueAreas: areas.size,
+    visitedCount: acc.visitedCount,
+    wishlistCount: total - acc.visitedCount,
+    firstDate: acc.firstDate,
+    lastDate: acc.lastDate,
+    avgRating: acc.ratingCount > 0 ? Math.round((acc.ratingSum / acc.ratingCount) * 10) / 10 : 0,
+    uniqueAreas: acc.areas.size,
     prefectures,
     prefectureCount: prefectures.length,
   };
