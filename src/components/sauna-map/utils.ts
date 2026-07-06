@@ -13,7 +13,9 @@ export function extractPrefecture(area: string | undefined): string | null {
 }
 
 export function getDirectionsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  const safeLat = encodeURIComponent(Number(lat).toString());
+  const safeLng = encodeURIComponent(Number(lng).toString());
+  return `https://www.google.com/maps/dir/?api=1&destination=${safeLat},${safeLng}`;
 }
 
 export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
@@ -143,6 +145,32 @@ export function buildHistoryUpdate(
 }
 
 
+function isValidVisit(v: unknown): v is SaunaVisit {
+  if (!v || typeof v !== "object") return false;
+  const visit = v as Record<string, unknown>;
+  if (typeof visit.id !== "string") return false;
+  if (typeof visit.name !== "string") return false;
+  if (typeof visit.lat !== "number") return false;
+  if (typeof visit.lng !== "number") return false;
+  if (typeof visit.comment !== "string") return false;
+  if (typeof visit.date !== "string") return false;
+
+  if (visit.history !== undefined) {
+    if (!Array.isArray(visit.history)) return false;
+    for (const h of visit.history) {
+      if (
+        !h ||
+        typeof h !== "object" ||
+        typeof (h as Record<string, unknown>).date !== "string" ||
+        typeof (h as Record<string, unknown>).comment !== "string"
+      ) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 export function getInitialVisits(): SaunaVisit[] {
   const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
   if (typeof window === "undefined") {
@@ -155,8 +183,12 @@ export function getInitialVisits(): SaunaVisit[] {
   }
 
   try {
-    const parsedSaved = JSON.parse(savedVisits) as SaunaVisit[];
-    const normalizedSaved = normalizeVisits(parsedSaved);
+    const parsedSaved = JSON.parse(savedVisits);
+    if (!Array.isArray(parsedSaved)) {
+      return baseVisits;
+    }
+    const validSaved = parsedSaved.filter(isValidVisit) as SaunaVisit[];
+    const normalizedSaved = normalizeVisits(validSaved);
     const initialIds = new Set(baseVisits.map((v) => v.id));
     const customVisits = normalizedSaved.filter((v) => !initialIds.has(v.id));
     return [...customVisits, ...baseVisits];
@@ -188,22 +220,41 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
   const sortedByDate = historyEntries.sort((a, b) => a.date.localeCompare(b.date));
   const firstDate = sortedByDate.length > 0 ? sortedByDate[0].date : null;
   const lastDate = sortedByDate.length > 0 ? sortedByDate[sortedByDate.length - 1].date : null;
-  const visitedCount = visits.filter((v) => (v.status ?? "visited") === "visited").length;
+  let visitedCount = 0;
+  const areas = new Set<string>();
+  const prefectureSet = new Set<string>();
+
+  for (const v of visits) {
+    const area = (v.area ?? "").trim();
+    if (area.length > 0) {
+      areas.add(area);
+    }
+    if ((v.status ?? "visited") === "visited") {
+      visitedCount++;
+      const pref = extractPrefecture(v.area);
+      if (pref != null) {
+        prefectureSet.add(pref);
+      }
+    }
+  }
+
   const wishlistCount = total - visitedCount;
-  const ratings = historyEntries.map((v) => v.rating ?? 0).filter((r) => r > 0);
+
+  let sumRatings = 0;
+  let numRatings = 0;
+  for (const v of historyEntries) {
+    const r = v.rating ?? 0;
+    if (r > 0) {
+      sumRatings += r;
+      numRatings++;
+    }
+  }
+
   const avgRating =
-    ratings.length > 0
-      ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratings.length) * 10) / 10
+    numRatings > 0
+      ? Math.round((sumRatings / numRatings) * 10) / 10
       : 0;
-  const areas = new Set(visits.map((v) => (v.area ?? "").trim()).filter((a) => a.length > 0));
-  const prefectures = Array.from(
-    new Set(
-      visits
-        .filter((v) => (v.status ?? "visited") === "visited")
-        .map((v) => extractPrefecture(v.area))
-        .filter((p): p is string => p != null),
-    ),
-  ).sort((a, b) => a.localeCompare(b, "ja"));
+  const prefectures = Array.from(prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
 
   return {
     total,
