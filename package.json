@@ -13,6 +13,7 @@
     "@types/leaflet": "^1.9.21",
     "@types/react-calendar": "^3.9.0",
     "@types/recharts": "^1.8.29",
+    "babel-plugin-react-compiler": "^1.0.0",
     "browser-image-compression": "^2.0.2",
     "leaflet": "^1.9.4",
     "next": "16.1.6",
@@ -26,8 +27,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.9",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "jsdom": "^29.1.1",
+    "tsx": "^4.23.0",
     "typescript": "^5",
     "vitest": "^4.1.9"
   }
