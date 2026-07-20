@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
 import { normalizeVisits, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState } from "./utils";
@@ -215,7 +214,7 @@ describe("getVisitCount", () => {
   });
 
   it("should handle invalid history type", () => {
-    const visit = { history: "invalid" as any } as SaunaVisit;
+    const visit = { history: "invalid" } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 });
@@ -329,7 +328,7 @@ describe("compressAndGetBase64", () => {
       }
     }
     const originalFileReader = global.FileReader;
-    global.FileReader = MockFileReader as any;
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
 
     const result = await compressAndGetBase64(mockFile);
 
@@ -361,7 +360,7 @@ describe("compressAndGetBase64", () => {
       }
     }
     const originalFileReader = global.FileReader;
-    global.FileReader = MockFileReader as any;
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
 
     await expect(compressAndGetBase64(mockFile)).rejects.toThrow("Specific file read error");
 
@@ -384,7 +383,7 @@ describe("compressAndGetBase64", () => {
       }
     }
     const originalFileReader = global.FileReader;
-    global.FileReader = MockFileReader as any;
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
 
     await expect(compressAndGetBase64(mockFile)).rejects.toThrow("Failed to read file");
 
