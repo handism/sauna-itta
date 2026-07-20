@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState } from "./utils";
+import { normalizeVisits, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, VISITS_STORAGE_KEY } from "./utils";
 import { SaunaVisit } from "./types";
 
 vi.mock("browser-image-compression", () => ({
@@ -746,5 +746,70 @@ describe("toNormalizedTags", () => {
 
   it("should handle a single tag without commas", () => {
     expect(toNormalizedTags("sauna")).toEqual(["sauna"]);
+  });
+});
+
+describe("getInitialTheme", () => {
+  const store: Record<string, string> = {};
+  const mockLocalStorage = {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    clear: vi.fn(() => { for (const key in store) delete store[key]; }),
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", mockLocalStorage);
+    mockLocalStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("should return saved theme if valid ('light' or 'dark')", () => {
+    mockLocalStorage.setItem(THEME_STORAGE_KEY, "light");
+    expect(getInitialTheme()).toBe("light");
+
+    mockLocalStorage.setItem(THEME_STORAGE_KEY, "dark");
+    expect(getInitialTheme()).toBe("dark");
+  });
+
+  it("should return 'dark' if saved theme is invalid or empty", () => {
+    mockLocalStorage.setItem(THEME_STORAGE_KEY, "invalid_theme");
+    expect(getInitialTheme()).toBe("dark");
+  });
+
+  it("should catch localStorage errors and log warning, returning 'dark'", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(mockLocalStorage, "getItem").mockImplementation(() => {
+      throw new Error("SecurityError: Access denied");
+    });
+
+    expect(getInitialTheme()).toBe("dark");
+    expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to read theme from localStorage:", expect.any(Error));
+  });
+});
+
+describe("getInitialVisits", () => {
+  const store: Record<string, string> = {};
+  const mockLocalStorage = {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    clear: vi.fn(() => { for (const key in store) delete store[key]; }),
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", mockLocalStorage);
+    mockLocalStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("should catch localStorage errors when reading visits, log warning and return baseVisits", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(mockLocalStorage, "getItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
+
+    const visits = getInitialVisits();
+    expect(Array.isArray(visits)).toBe(true);
+    expect(visits.length).toBeGreaterThan(0);
+    expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to read visits from localStorage:", expect.any(Error));
   });
 });
