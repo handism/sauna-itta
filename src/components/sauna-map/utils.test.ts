@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, extractPrefecture, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats } from "./utils";
+import { normalizeVisits, extractPrefecture, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toNormalizedTags } from "./utils";
 import { SaunaVisit } from "./types";
 
 vi.mock("browser-image-compression", () => ({
@@ -606,5 +606,31 @@ describe("extractPrefecture", () => {
   it("should return null if the first part doesn't end with suffix", () => {
     expect(extractPrefecture("東京 新宿区")).toBeNull();
     expect(extractPrefecture("Osaka City")).toBeNull();
+  });
+});
+
+describe("toNormalizedTags", () => {
+  it("should parse a normal comma-separated string", () => {
+    expect(toNormalizedTags("tag1, tag2, tag3")).toEqual(["tag1", "tag2", "tag3"]);
+  });
+
+  it("should trim whitespace around tags", () => {
+    expect(toNormalizedTags("  tag1  ,   tag2,tag3  ")).toEqual(["tag1", "tag2", "tag3"]);
+  });
+
+  it("should return empty array for empty string", () => {
+    expect(toNormalizedTags("")).toEqual([]);
+  });
+
+  it("should return empty array for string with only whitespace", () => {
+    expect(toNormalizedTags("   ")).toEqual([]);
+  });
+
+  it("should filter out empty tags and consecutive commas", () => {
+    expect(toNormalizedTags("tag1,,tag2, ,tag3")).toEqual(["tag1", "tag2", "tag3"]);
+  });
+
+  it("should handle a single tag", () => {
+    expect(toNormalizedTags("tag1")).toEqual(["tag1"]);
   });
 });
