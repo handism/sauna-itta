@@ -254,10 +254,10 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
         for (let j = 0; j < history.length; j++) {
           const entry = history[j];
 
-          if (acc.firstDate === null || entry.date.localeCompare(acc.firstDate) < 0) {
+          if (acc.firstDate === null || entry.date < acc.firstDate) {
             acc.firstDate = entry.date;
           }
-          if (acc.lastDate === null || entry.date.localeCompare(acc.lastDate) > 0) {
+          if (acc.lastDate === null || entry.date > acc.lastDate) {
             acc.lastDate = entry.date;
           }
 
