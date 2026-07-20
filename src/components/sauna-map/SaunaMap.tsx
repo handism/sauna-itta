@@ -144,6 +144,27 @@ export default function SaunaMap() {
     cancelEditing(true);
   };
 
+
+  const handleDeleteLastHistory = () => {
+    if (!editingId) return;
+
+    removeLastHistoryEntry(editingId);
+
+    const visit = visits.find((v) => v.id === editingId);
+    const currentHistory = visit ? getVisitHistoryEntries(visit) : [];
+    const newLatest = currentHistory[currentHistory.length - 2];
+
+    if (newLatest) {
+      setForm((prev) => ({
+        ...prev,
+        date: newLatest.date,
+        comment: newLatest.comment,
+        rating: newLatest.rating ?? 0,
+        image: newLatest.image ?? "",
+      }));
+    }
+  };
+
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
       selectLocation({ lat, lng });
@@ -392,23 +413,7 @@ export default function SaunaMap() {
                   onImageChange={handleImageChange}
                   onDelete={handleDelete}
                   onCancel={() => cancelEditing()}
-                  onDeleteLastHistory={
-                    editingId
-                      ? () => {
-                          removeLastHistoryEntry(editingId);
-                          const newLatest = historyEntries[historyEntries.length - 2];
-                          if (newLatest) {
-                            setForm((prev) => ({
-                              ...prev,
-                              date: newLatest.date,
-                              comment: newLatest.comment,
-                              rating: newLatest.rating ?? 0,
-                              image: newLatest.image ?? "",
-                            }));
-                          }
-                        }
-                      : undefined
-                  }
+                  onDeleteLastHistory={editingId ? handleDeleteLastHistory : undefined}
                 />
               ) : (
                 <VisitList
