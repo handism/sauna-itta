@@ -1033,5 +1033,34 @@ describe("getInitialVisits", () => {
     const visits = getInitialVisits();
     expect(Array.isArray(visits)).toBe(true);
     expect(visits.length).toBeGreaterThan(0);
+    expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to read visits from localStorage:", expect.any(Error));
+  });
+});
+
+describe("sanitizeImageUrl", () => {
+  it("should allow safe http/https URLs", () => {
+    expect(sanitizeImageUrl("http://example.com/image.png")).toBe("http://example.com/image.png");
+    expect(sanitizeImageUrl("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
+  });
+
+  it("should allow safe data URIs", () => {
+    const safePng = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    expect(sanitizeImageUrl(safePng)).toBe(safePng);
+
+    const safeJpeg = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/";
+    expect(sanitizeImageUrl(safeJpeg)).toBe(safeJpeg);
+  });
+
+  it("should block dangerous data URIs", () => {
+    const dangerousSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxzY3JpcHQ+YWxlcnQoMSk8L3NjcmlwdD48L3N2Zz4=";
+    expect(sanitizeImageUrl(dangerousSvg)).toBeUndefined();
+
+    const dangerousHtml = "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==";
+    expect(sanitizeImageUrl(dangerousHtml)).toBeUndefined();
+  });
+
+  it("should block invalid URLs", () => {
+    expect(sanitizeImageUrl("javascript:alert(1)")).toBeUndefined();
+    expect(sanitizeImageUrl("ftp://example.com/image.png")).toBeUndefined();
   });
 });

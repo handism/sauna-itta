@@ -25,7 +25,7 @@ export function sanitizeImageUrl(url: string | undefined): string | undefined {
     if (parsed.protocol === "http:" || parsed.protocol === "https:") {
       return url;
     }
-    if (parsed.protocol === "data:" && parsed.pathname.startsWith("image/")) {
+    if (parsed.protocol === "data:" && /^image\/(jpeg|jpg|png|gif|webp|bmp)(;|,)/i.test(parsed.pathname)) {
       return url;
     }
   } catch {
