@@ -609,7 +609,6 @@ describe("extractPrefecture", () => {
   });
 });
 
-<<<<<<< HEAD
 describe("toFormState", () => {
   it("converts a basic SaunaVisit without history to VisitFormState", () => {
     const visit: SaunaVisit = {
