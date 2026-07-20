@@ -3,6 +3,7 @@ import { SaunaVisit } from "../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
 import { getSaunaIcon } from "./markerIcon";
 import { RatingStars, WishlistChip } from "./common";
+import Image from "next/image";
 
 interface VisitMarkersProps {
   visits: SaunaVisit[];
@@ -33,8 +34,14 @@ export function VisitMarkers({ visits, editingId, onEdit }: VisitMarkersProps) {
                 {visit.area && <div className="popup-area">{visit.area}</div>}
                 <RatingStars rating={visit.rating ?? 0} className="popup-rating" />
                 {sanitizeImageUrl(visit.image) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={sanitizeImageUrl(visit.image)} alt={visit.name} className="popup-image" />
+                  <Image
+                    src={sanitizeImageUrl(visit.image) as string}
+                    alt={visit.name}
+                    className="popup-image"
+                    width={400}
+                    height={300}
+                    style={{ width: "100%", height: "auto" }}
+                  />
                 )}
                 <p className="popup-comment">{visit.comment}</p>
                 <small className="popup-meta">
