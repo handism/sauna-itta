@@ -106,7 +106,11 @@ export default function SaunaMap() {
   const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
-    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    } catch (error) {
+      console.warn("Failed to save theme to localStorage:", error);
+    }
   };
 
   const startNewVisit = () => {

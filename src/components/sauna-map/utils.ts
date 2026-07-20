@@ -49,8 +49,13 @@ export function getInitialTheme(): "dark" | "light" {
     return "dark";
   }
 
-  const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-  return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
+  try {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
+  } catch (error) {
+    console.warn("Failed to read theme from localStorage:", error);
+    return "dark";
+  }
 }
 
 export function getInitialIsMobile(): boolean {
@@ -201,7 +206,14 @@ export function getInitialVisits(): SaunaVisit[] {
     return baseVisits;
   }
 
-  const savedVisits = localStorage.getItem(VISITS_STORAGE_KEY);
+  let savedVisits: string | null = null;
+  try {
+    savedVisits = localStorage.getItem(VISITS_STORAGE_KEY);
+  } catch (error) {
+    console.warn("Failed to read visits from localStorage:", error);
+    return baseVisits;
+  }
+
   if (!savedVisits) {
     return baseVisits;
   }
