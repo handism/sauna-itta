@@ -154,6 +154,37 @@ describe("calculateStats", () => {
     expect(stats.prefectures).toEqual([]);
     expect(stats.prefectureCount).toBe(0);
   });
+
+  it("should handle empty strings for date and area safely", () => {
+    const visits: SaunaVisit[] = [
+      {
+        id: "1",
+        name: "Test Sauna Empty Area",
+        lat: 0,
+        lng: 0,
+        comment: "",
+        date: "",
+        area: "   ",
+        status: "visited"
+      },
+      {
+        id: "2",
+        name: "Test Sauna Missing Date",
+        lat: 0,
+        lng: 0,
+        comment: "",
+        date: "2023-01-01",
+        // missing area
+        status: "visited"
+      }
+    ];
+    const stats = calculateStats(visits);
+    expect(stats.total).toBe(2);
+    expect(stats.visitedCount).toBe(2);
+    expect(stats.firstDate).toBe(""); // lexicographical comparison sets empty string as first
+    expect(stats.lastDate).toBe("2023-01-01");
+    expect(stats.uniqueAreas).toBe(0);
+  });
 });
 
 describe("getVisitCount", () => {
