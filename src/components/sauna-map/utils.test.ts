@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, extractPrefecture, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats } from "./utils";
+import { sanitizeImageUrl, normalizeVisits, extractPrefecture, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats } from "./utils";
 import { SaunaVisit } from "./types";
 
 vi.mock("browser-image-compression", () => ({
@@ -607,4 +607,33 @@ describe("extractPrefecture", () => {
     expect(extractPrefecture("東京 新宿区")).toBeNull();
     expect(extractPrefecture("Osaka City")).toBeNull();
   });
+});
+
+describe("sanitizeImageUrl", () => {
+  it("should return the original URL for valid http/https URLs", () => {
+    expect(sanitizeImageUrl("http://example.com/image.jpg")).toBe("http://example.com/image.jpg");
+    expect(sanitizeImageUrl("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
+  });
+
+  it("should return the original URL for valid data:image URLs", () => {
+    const dataUrl = "data:image/png;base64,iVBORw0KGgo";
+    expect(sanitizeImageUrl(dataUrl)).toBe(dataUrl);
+  });
+
+  it("should return undefined for falsy inputs", () => {
+    expect(sanitizeImageUrl(undefined)).toBeUndefined();
+    expect(sanitizeImageUrl("")).toBeUndefined();
+  });
+
+  it("should return undefined for unsupported protocols", () => {
+    expect(sanitizeImageUrl("ftp://example.com/image.jpg")).toBeUndefined();
+    expect(sanitizeImageUrl("javascript:alert(1)")).toBeUndefined();
+    expect(sanitizeImageUrl("data:text/plain,hello")).toBeUndefined();
+  });
+
+  it("should return undefined for malformed URLs that throw during parsing", () => {
+    expect(sanitizeImageUrl("http://[1:2:3:4:5:6:7:8:9]/")).toBeUndefined();
+    expect(sanitizeImageUrl("https://example.com:99999")).toBeUndefined();
+  });
+
 });
