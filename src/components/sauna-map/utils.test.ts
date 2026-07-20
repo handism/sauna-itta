@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, extractPrefecture, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats } from "./utils";
+import { normalizeVisits, extractPrefecture, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState } from "./utils";
 import { SaunaVisit } from "./types";
 
 vi.mock("browser-image-compression", () => ({
@@ -606,5 +606,119 @@ describe("extractPrefecture", () => {
   it("should return null if the first part doesn't end with suffix", () => {
     expect(extractPrefecture("東京 新宿区")).toBeNull();
     expect(extractPrefecture("Osaka City")).toBeNull();
+  });
+});
+
+describe("toFormState", () => {
+  it("converts a basic SaunaVisit without history to VisitFormState", () => {
+    const visit: SaunaVisit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 35.0,
+      lng: 135.0,
+      date: "2023-10-01",
+      comment: "Nice place",
+      rating: 4,
+      image: "test.jpg",
+      tags: ["relaxing", "hot"],
+      status: "wishlist",
+      area: "Tokyo",
+    };
+
+    const formState = toFormState(visit);
+
+    expect(formState).toEqual({
+      name: "Test Sauna",
+      comment: "Nice place",
+      image: "test.jpg",
+      date: "2023-10-01",
+      rating: 4,
+      tagsText: "relaxing, hot",
+      status: "wishlist",
+      area: "Tokyo",
+      appendHistory: false,
+    });
+  });
+
+  it("uses the latest history entry when a history array is present", () => {
+    const visit: SaunaVisit = {
+      id: "1",
+      name: "History Sauna",
+      lat: 35.0,
+      lng: 135.0,
+      date: "2022-01-01", // Old date
+      comment: "Old comment", // Old comment
+      history: [
+        {
+          date: "2023-01-01",
+          comment: "First visit",
+          rating: 3,
+          image: "old.jpg",
+        },
+        {
+          date: "2023-11-01",
+          comment: "Latest visit",
+          rating: 5,
+          image: "new.jpg",
+        },
+      ],
+      tags: ["sauna"],
+      status: "visited",
+      area: "Osaka",
+    };
+
+    const formState = toFormState(visit);
+
+    expect(formState).toEqual({
+      name: "History Sauna",
+      comment: "Latest visit",
+      image: "new.jpg",
+      date: "2023-11-01",
+      rating: 5,
+      tagsText: "sauna",
+      status: "visited",
+      area: "Osaka",
+      appendHistory: false,
+    });
+  });
+
+  it("handles missing optional fields by providing default values", () => {
+    const visit: SaunaVisit = {
+      id: "1",
+      name: "Minimal Sauna",
+      lat: 35.0,
+      lng: 135.0,
+      date: "2023-10-01",
+      comment: "",
+    };
+
+    const formState = toFormState(visit);
+
+    expect(formState).toEqual({
+      name: "Minimal Sauna",
+      comment: "",
+      image: "",
+      date: "2023-10-01",
+      rating: 0,
+      tagsText: "",
+      status: "visited",
+      area: "",
+      appendHistory: false,
+    });
+  });
+
+  it("transforms tags array into a comma-separated string", () => {
+    const visit: SaunaVisit = {
+      id: "1",
+      name: "Tags Sauna",
+      lat: 35.0,
+      lng: 135.0,
+      date: "2023-10-01",
+      comment: "",
+      tags: ["a", "b", "c"],
+    };
+
+    const formState = toFormState(visit);
+    expect(formState.tagsText).toBe("a, b, c");
   });
 });
