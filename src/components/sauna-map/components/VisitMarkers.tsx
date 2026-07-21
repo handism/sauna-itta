@@ -16,6 +16,7 @@ export function VisitMarkers({ visits, editingId, onEdit }: VisitMarkersProps) {
     <>
       {visits.map((visit) => {
         const visitCount = getVisitCount(visit);
+        const imageUrl = sanitizeImageUrl(visit.image);
         return (
           <Marker
             key={visit.id}
@@ -33,14 +34,14 @@ export function VisitMarkers({ visits, editingId, onEdit }: VisitMarkersProps) {
                 </h3>
                 {visit.area && <div className="popup-area">{visit.area}</div>}
                 <RatingStars rating={visit.rating ?? 0} className="popup-rating" />
-                {sanitizeImageUrl(visit.image) && (
+                {imageUrl && (
                   <Image
-                    src={sanitizeImageUrl(visit.image) as string}
+                    src={imageUrl}
                     alt={visit.name}
                     className="popup-image"
                     width={400}
                     height={300}
-                    style={{ width: "100%", height: "auto" }}
+                    unoptimized
                   />
                 )}
                 <p className="popup-comment">{visit.comment}</p>
