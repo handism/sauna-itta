@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, VISITS_STORAGE_KEY, buildHistoryUpdate, getTodayDate } from "./utils";
+import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate } from "./utils";
 import { SaunaVisit, VisitFormState } from "./types";
 
 vi.mock("browser-image-compression", () => ({
@@ -640,6 +640,28 @@ describe("extractPrefecture", () => {
   });
 });
 
+describe("getDirectionsUrl", () => {
+  it("should generate a URL for regular positive coordinates", () => {
+    const url = getDirectionsUrl(35.6812, 139.7671);
+    expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=35.6812,139.7671");
+  });
+
+  it("should generate a URL for negative coordinates", () => {
+    const url = getDirectionsUrl(-33.8688, -151.2093);
+    expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=-33.8688,-151.2093");
+  });
+
+  it("should generate a URL for zero coordinates", () => {
+    const url = getDirectionsUrl(0, 0);
+    expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=0,0");
+  });
+
+  it("should handle string inputs correctly by coercing to numbers", () => {
+    // @ts-expect-error - intentional invalid type to test runtime behaviour
+    const url = getDirectionsUrl("35.6812", "139.7671");
+    expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=35.6812,139.7671");
+  });
+});
 describe("buildHistoryUpdate", () => {
   it("should append a new history entry when appendHistory is true", () => {
     const visit = {
