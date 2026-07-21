@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { expect, test, vi, describe, beforeEach } from "vitest";
+import { expect, test, vi, describe, beforeEach, type MockedFunction } from "vitest";
 import { useVisitImportExport } from "./useVisitImportExport";
 import { SaunaVisit } from "../types";
 
@@ -7,10 +7,10 @@ describe("useVisitImportExport", () => {
   const mockVisits: SaunaVisit[] = [
     { id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2023-01-01" },
   ];
-  let saveVisitsMock: ReturnType<typeof vi.fn>;
+  let saveVisitsMock: MockedFunction<(visits: SaunaVisit[]) => boolean>;
 
   beforeEach(() => {
-    saveVisitsMock = vi.fn().mockReturnValue(true);
+    saveVisitsMock = vi.fn<(visits: SaunaVisit[]) => boolean>().mockReturnValue(true);
   });
 
   test("importVisitsFromFile handles invalid JSON", async () => {
