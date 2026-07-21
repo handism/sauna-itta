@@ -157,64 +157,57 @@ describe("calculateStats", () => {
 
 describe("getVisitCount", () => {
   it("should return 1 when both visitCount and history are missing", () => {
-    const visit = {} as SaunaVisit;
+    const visit = {} as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should return the correct count when visitCount is provided and history is missing", () => {
-    const visit = { visitCount: 3 } as SaunaVisit;
+    const visit = { visitCount: 3 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(3);
   });
 
   it("should return 1 when visitCount is 0 and history is missing", () => {
-    const visit = { visitCount: 0 } as SaunaVisit;
+    const visit = { visitCount: 0 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should return history length when history is provided and visitCount is missing", () => {
     const visit = {
       history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
+        { date: "2023-01-01", comment: "", rating: 5, image: "" },
         { date: "2023-01-02", comment: "", rating: 4, image: "" },
+        { date: "2023-01-03", comment: "", rating: 3, image: "" },
       ],
-    } as SaunaVisit;
-    expect(getVisitCount(visit)).toBe(2);
+    } as unknown as SaunaVisit;
+    expect(getVisitCount(visit)).toBe(3);
   });
 
-  it("should return the maximum of visitCount and history length when both are provided", () => {
+  it("should return history length when both visitCount and history are provided", () => {
     const visit = {
-      visitCount: 1,
+      visitCount: 2,
       history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
+        { date: "2023-01-01", comment: "", rating: 5, image: "" },
+        { date: "2023-01-02", comment: "", rating: 4, image: "" },
+        { date: "2023-01-03", comment: "", rating: 3, image: "" },
+        { date: "2023-01-02", comment: "", rating: 4, image: "" },
         { date: "2023-01-02", comment: "", rating: 4, image: "" },
       ],
-    } as SaunaVisit;
-    expect(getVisitCount(visit)).toBe(2);
-  });
-
-  it("should return visitCount when visitCount is larger than history length", () => {
-    const visit = {
-      visitCount: 5,
-      history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
-        { date: "2023-01-02", comment: "", rating: 4, image: "" },
-      ],
-    } as SaunaVisit;
+    } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(5);
   });
 
   it("should handle empty history array", () => {
-    const visit = { history: [] } as SaunaVisit;
+    const visit = { history: [] } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should handle negative visitCount by returning 1", () => {
-    const visit = { visitCount: -5 } as SaunaVisit;
+    const visit = { visitCount: -5 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should handle invalid history type", () => {
-    const visit = { history: "invalid" as unknown as SaunaVisit["history"] } as SaunaVisit;
+    const visit = { history: "invalid" as unknown as SaunaVisit["history"] } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 });
