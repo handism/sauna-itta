@@ -20,22 +20,12 @@ export function VisitCalendar({ theme, date, setDate, visitDates }: VisitCalenda
             calendarType="gregory"
             className={theme === 'light' ? 'light-theme' : 'dark-theme'}
             tileContent={({ date, view }) => {
-              if (view === 'month') {
-                const dateStr = date.toDateString();
-                if (visitDates.has(dateStr)) {
-                  return <div className="calendar-dot"></div>;
-                }
-              }
-              return null;
+              if (view !== 'month') return null;
+              return visitDates.has(date.toDateString()) ? <div className="calendar-dot"></div> : null;
             }}
             tileClassName={({ date, view }) => {
-              if (view === 'month') {
-                const dateStr = date.toDateString();
-                if (visitDates.has(dateStr)) {
-                  return "react-calendar__tile--has-visit";
-                }
-              }
-              return null;
+              if (view !== 'month') return null;
+              return visitDates.has(date.toDateString()) ? "react-calendar__tile--has-visit" : null;
             }}
           />
         </div>
