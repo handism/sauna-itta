@@ -139,6 +139,142 @@ function HistorySection({
   );
 }
 
+function NameField({ name, onChange }: { name: string; onChange: (name: string) => void }) {
+  return (
+    <div className="form-group">
+      <label>サウナ名</label>
+      <input
+        className="input"
+        value={name}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="例: 上野 SHIZUKU"
+        required
+      />
+    </div>
+  );
+}
+
+function AreaField({ area, onChange }: { area: string; onChange: (area: string) => void }) {
+  return (
+    <div className="form-group">
+      <label>エリア（任意）</label>
+      <input
+        className="input"
+        value={area}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="例: 東京 / 北海道 / 関西 など"
+      />
+    </div>
+  );
+}
+
+function TagsField({ tagsText, onChange }: { tagsText: string; onChange: (tagsText: string) => void }) {
+  return (
+    <div className="form-group">
+      <label>タグ（カンマ区切り）</label>
+      <input
+        className="input"
+        value={tagsText}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="例: 外気浴最高, 水風呂キンキン, ソロ向き"
+      />
+    </div>
+  );
+}
+
+function ImageField({ image, onChange }: { image: string; onChange: (e: ChangeEvent<HTMLInputElement>) => void }) {
+  return (
+    <div className="form-group">
+      <label>写真を追加</label>
+      <input
+        type="file"
+        className="input input-file"
+        accept="image/*"
+        onChange={onChange}
+      />
+      {sanitizeImageUrl(image) && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={sanitizeImageUrl(image)!} className="sauna-img-preview" alt="Preview" />
+      )}
+    </div>
+  );
+}
+
+function DateField({ date, onChange }: { date: string; onChange: (date: string) => void }) {
+  return (
+    <div className="form-group">
+      <label>行った日</label>
+      <input
+        type="date"
+        className="input"
+        value={date}
+        onChange={(e) => onChange(e.target.value)}
+        required
+      />
+    </div>
+  );
+}
+
+function CommentField({ comment, onChange }: { comment: string; onChange: (comment: string) => void }) {
+  return (
+    <div className="form-group">
+      <label>感想・メモ</label>
+      <textarea
+        className="input textarea"
+        value={comment}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="水風呂の温度、外気浴の雰囲気など..."
+      />
+    </div>
+  );
+}
+
+function AppendHistoryField({ appendHistory, onChange }: { appendHistory: boolean; onChange: (appendHistory: boolean) => void }) {
+  return (
+    <div className="form-group">
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={appendHistory}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        この内容を訪問履歴に追加する
+      </label>
+      <p className="form-hint">
+        オフにすると直近の記録を上書きします。
+      </p>
+    </div>
+  );
+}
+
+function FormActions({
+  hasLocation,
+  isEditing,
+  onDelete,
+  onCancel,
+}: {
+  hasLocation: boolean;
+  isEditing: boolean;
+  onDelete: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="cta-group">
+      <button type="submit" className="btn btn-primary" disabled={!hasLocation}>
+        保存
+      </button>
+      {isEditing && (
+        <button type="button" className="btn btn-danger" onClick={onDelete}>
+          削除
+        </button>
+      )}
+      <button type="button" className="btn btn-ghost" onClick={onCancel}>
+        キャンセル
+      </button>
+    </div>
+  );
+}
+
 export function VisitForm({
   form,
   setForm,
@@ -153,75 +289,18 @@ export function VisitForm({
 }: VisitFormProps) {
   const historyCount = historyEntries.length;
   const shouldAppend = Boolean(editingId && form.appendHistory);
+
   return (
     <form onSubmit={onSubmit}>
       <FormHeader editingId={editingId} selectedLocation={selectedLocation} />
 
-      <div className="form-group">
-        <label>サウナ名</label>
-        <input
-          className="input"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="例: 上野 SHIZUKU"
-          required
-        />
-      </div>
-
-      <div className="form-group">
-        <label>エリア（任意）</label>
-        <input
-          className="input"
-          value={form.area}
-          onChange={(e) => setForm({ ...form, area: e.target.value })}
-          placeholder="例: 東京 / 北海道 / 関西 など"
-        />
-      </div>
-
-      <StatusField
-        status={form.status}
-        onChange={(status) => setForm({ ...form, status })}
-      />
-
-      <RatingField
-        rating={form.rating}
-        onChange={(rating) => setForm({ ...form, rating })}
-      />
-
-      <div className="form-group">
-        <label>タグ（カンマ区切り）</label>
-        <input
-          className="input"
-          value={form.tagsText}
-          onChange={(e) => setForm({ ...form, tagsText: e.target.value })}
-          placeholder="例: 外気浴最高, 水風呂キンキン, ソロ向き"
-        />
-      </div>
-
-      <div className="form-group">
-        <label>写真を追加</label>
-        <input
-          type="file"
-          className="input input-file"
-          accept="image/*"
-          onChange={onImageChange}
-        />
-        {sanitizeImageUrl(form.image) && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={sanitizeImageUrl(form.image)} className="sauna-img-preview" alt="Preview" />
-        )}
-      </div>
-
-      <div className="form-group">
-        <label>行った日</label>
-        <input
-          type="date"
-          className="input"
-          value={form.date}
-          onChange={(e) => setForm({ ...form, date: e.target.value })}
-          required
-        />
-      </div>
+      <NameField name={form.name} onChange={(name) => setForm({ ...form, name })} />
+      <AreaField area={form.area} onChange={(area) => setForm({ ...form, area })} />
+      <StatusField status={form.status} onChange={(status) => setForm({ ...form, status })} />
+      <RatingField rating={form.rating} onChange={(rating) => setForm({ ...form, rating })} />
+      <TagsField tagsText={form.tagsText} onChange={(tagsText) => setForm({ ...form, tagsText })} />
+      <ImageField image={form.image} onChange={onImageChange} />
+      <DateField date={form.date} onChange={(date) => setForm({ ...form, date })} />
 
       {editingId && (
         <HistorySection
@@ -232,45 +311,21 @@ export function VisitForm({
         />
       )}
 
-      <div className="form-group">
-        <label>感想・メモ</label>
-        <textarea
-          className="input textarea"
-          value={form.comment}
-          onChange={(e) => setForm({ ...form, comment: e.target.value })}
-          placeholder="水風呂の温度、外気浴の雰囲気など..."
-        />
-      </div>
+      <CommentField comment={form.comment} onChange={(comment) => setForm({ ...form, comment })} />
 
       {editingId && (
-        <div className="form-group">
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={form.appendHistory}
-              onChange={(e) => setForm({ ...form, appendHistory: e.target.checked })}
-            />
-            この内容を訪問履歴に追加する
-          </label>
-          <p className="form-hint">
-            オフにすると直近の記録を上書きします。
-          </p>
-        </div>
+        <AppendHistoryField
+          appendHistory={form.appendHistory}
+          onChange={(appendHistory) => setForm({ ...form, appendHistory })}
+        />
       )}
 
-      <div className="cta-group">
-        <button type="submit" className="btn btn-primary" disabled={!selectedLocation}>
-          保存
-        </button>
-        {editingId && (
-          <button type="button" className="btn btn-danger" onClick={onDelete}>
-            削除
-          </button>
-        )}
-        <button type="button" className="btn btn-ghost" onClick={onCancel}>
-          キャンセル
-        </button>
-      </div>
+      <FormActions
+        hasLocation={Boolean(selectedLocation)}
+        isEditing={Boolean(editingId)}
+        onDelete={onDelete}
+        onCancel={onCancel}
+      />
     </form>
   );
 }
