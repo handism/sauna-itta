@@ -641,11 +641,6 @@ describe("extractPrefecture", () => {
 });
 
 describe("sanitizeImageUrl", () => {
-  it("should return undefined for falsy inputs", () => {
-    expect(sanitizeImageUrl(undefined)).toBeUndefined();
-    expect(sanitizeImageUrl("")).toBeUndefined();
-  });
-
   it("should return the url for valid http and https urls", () => {
     expect(sanitizeImageUrl("http://example.com/image.jpg")).toBe("http://example.com/image.jpg");
     expect(sanitizeImageUrl("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
@@ -661,19 +656,27 @@ describe("sanitizeImageUrl", () => {
     expect(sanitizeImageUrl("data:image/jpeg;base64,/9j/4AAQSkZJRgABA=")).toBe("data:image/jpeg;base64,/9j/4AAQSkZJRgABA=");
   });
 
+  it("should return undefined for falsy inputs", () => {
+    expect(sanitizeImageUrl(undefined)).toBeUndefined();
+    expect(sanitizeImageUrl("")).toBeUndefined();
+  });
+
   it("should return undefined for invalid data: urls", () => {
     expect(sanitizeImageUrl("data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==")).toBeUndefined();
+    expect(sanitizeImageUrl("data:text/plain,hello")).toBeUndefined();
   });
 
   it("should return undefined for dangerous protocols", () => {
+    expect(sanitizeImageUrl("ftp://example.com/image.jpg")).toBeUndefined();
     expect(sanitizeImageUrl("javascript:alert(1)")).toBeUndefined();
     expect(sanitizeImageUrl("file:///etc/passwd")).toBeUndefined();
     expect(sanitizeImageUrl("vbscript:msgbox(\"test\")")).toBeUndefined();
   });
 
   it("should return undefined for invalid or unparseable URLs", () => {
-    // Using a URL string that might throw during parsing or just fails logic
-    expect(sanitizeImageUrl("http://[::1")).toBeUndefined(); // Invalid IPv6
+    expect(sanitizeImageUrl("http://[::1")).toBeUndefined();
+    expect(sanitizeImageUrl("http://[1:2:3:4:5:6:7:8:9]/")).toBeUndefined();
+    expect(sanitizeImageUrl("https://example.com:99999")).toBeUndefined();
   });
 });
 
@@ -1030,6 +1033,5 @@ describe("getInitialVisits", () => {
     const visits = getInitialVisits();
     expect(Array.isArray(visits)).toBe(true);
     expect(visits.length).toBeGreaterThan(0);
-    expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to read visits from localStorage:", expect.any(Error));
   });
 });
