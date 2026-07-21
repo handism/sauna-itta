@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
 import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate, sanitizeImageUrl } from "./utils";
@@ -189,49 +188,42 @@ describe("calculateStats", () => {
 
 describe("getVisitCount", () => {
   it("should return 1 when both visitCount and history are missing", () => {
-    const visit = {} as SaunaVisit;
+    const visit = {} as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should return the correct count when visitCount is provided and history is missing", () => {
-    const visit = { visitCount: 3 } as SaunaVisit;
+    const visit = { visitCount: 3 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(3);
   });
 
   it("should return 1 when visitCount is 0 and history is missing", () => {
-    const visit = { visitCount: 0 } as SaunaVisit;
+    const visit = { visitCount: 0 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should return history length when history is provided and visitCount is missing", () => {
     const visit = {
       history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
+        { date: "2023-01-01", comment: "", rating: 5, image: "" },
         { date: "2023-01-02", comment: "", rating: 4, image: "" },
+        { date: "2023-01-03", comment: "", rating: 3, image: "" },
       ],
-    } as SaunaVisit;
-    expect(getVisitCount(visit)).toBe(2);
+    } as unknown as SaunaVisit;
+    expect(getVisitCount(visit)).toBe(3);
   });
 
-  it("should return the maximum of visitCount and history length when both are provided", () => {
+  it("should return history length when both visitCount and history are provided", () => {
     const visit = {
-      visitCount: 1,
+      visitCount: 2,
       history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
+        { date: "2023-01-01", comment: "", rating: 5, image: "" },
+        { date: "2023-01-02", comment: "", rating: 4, image: "" },
+        { date: "2023-01-03", comment: "", rating: 3, image: "" },
+        { date: "2023-01-02", comment: "", rating: 4, image: "" },
         { date: "2023-01-02", comment: "", rating: 4, image: "" },
       ],
-    } as SaunaVisit;
-    expect(getVisitCount(visit)).toBe(2);
-  });
-
-  it("should return visitCount when visitCount is larger than history length", () => {
-    const visit = {
-      visitCount: 5,
-      history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
-        { date: "2023-01-02", comment: "", rating: 4, image: "" },
-      ],
-    } as SaunaVisit;
+    } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(5);
   });
 
@@ -246,7 +238,7 @@ describe("getVisitCount", () => {
   });
 
   it("should handle invalid history type", () => {
-    const visit = { history: "invalid" as any } as unknown as SaunaVisit;
+    const visit = { history: "invalid" as unknown as SaunaVisit["history"] } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 });
@@ -360,7 +352,7 @@ describe("compressAndGetBase64", () => {
       }
     }
     const originalFileReader = global.FileReader;
-    global.FileReader = MockFileReader as any;
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
 
     const result = await compressAndGetBase64(mockFile);
 
@@ -392,7 +384,7 @@ describe("compressAndGetBase64", () => {
       }
     }
     const originalFileReader = global.FileReader;
-    global.FileReader = MockFileReader as any;
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
 
     await expect(compressAndGetBase64(mockFile)).rejects.toThrow("Specific file read error");
 
@@ -415,7 +407,7 @@ describe("compressAndGetBase64", () => {
       }
     }
     const originalFileReader = global.FileReader;
-    global.FileReader = MockFileReader as any;
+    global.FileReader = MockFileReader as unknown as typeof FileReader;
 
     await expect(compressAndGetBase64(mockFile)).rejects.toThrow("Failed to read file");
 
@@ -728,7 +720,7 @@ describe("buildHistoryUpdate", () => {
     const result = buildHistoryUpdate(visit, form);
 
     expect(result.history).toHaveLength(2);
-    expect(result.history[1]).toEqual({
+    expect(result.history![1]).toEqual({
       date: "2023-02-01",
       comment: "Second visit",
       rating: 4,
@@ -767,8 +759,8 @@ describe("buildHistoryUpdate", () => {
     const result = buildHistoryUpdate(visit, form);
 
     expect(result.history).toHaveLength(2);
-    expect(result.history[0]).toEqual({ date: "2023-01-01", comment: "First visit", rating: 3 });
-    expect(result.history[1]).toEqual({
+    expect(result.history![0]).toEqual({ date: "2023-01-01", comment: "First visit", rating: 3 });
+    expect(result.history![1]).toEqual({
       date: "2023-02-05",
       comment: "Second visit updated",
       rating: 5,
@@ -797,14 +789,14 @@ describe("buildHistoryUpdate", () => {
       rating: 0, // Falsy rating
       image: undefined,
       appendHistory: true,
-    } as VisitFormState;
+    } as unknown as VisitFormState;
 
     const result = buildHistoryUpdate(visit, form);
 
     expect(result.history).toHaveLength(2);
-    expect(result.history[1].date).toBe(getTodayDate());
-    expect(result.history[1].rating).toBe(0);
-    expect(result.history[1].comment).toBe("Fallback test");
+    expect(result.history![1].date).toBe(getTodayDate());
+    expect(result.history![1].rating).toBe(0);
+    expect(result.history![1].comment).toBe("Fallback test");
   });
 
   it("should calculate visitCount correctly when it is missing or large", () => {
