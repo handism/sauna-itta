@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate } from "./utils";
+import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate, sanitizeImageUrl } from "./utils";
 import { SaunaVisit, VisitFormState } from "./types";
 
 vi.mock("browser-image-compression", () => ({
@@ -637,6 +637,43 @@ describe("extractPrefecture", () => {
   it("should return null if the first part doesn't end with suffix", () => {
     expect(extractPrefecture("東京 新宿区")).toBeNull();
     expect(extractPrefecture("Osaka City")).toBeNull();
+  });
+});
+
+describe("sanitizeImageUrl", () => {
+  it("should return undefined for falsy inputs", () => {
+    expect(sanitizeImageUrl(undefined)).toBeUndefined();
+    expect(sanitizeImageUrl("")).toBeUndefined();
+  });
+
+  it("should return the url for valid http and https urls", () => {
+    expect(sanitizeImageUrl("http://example.com/image.jpg")).toBe("http://example.com/image.jpg");
+    expect(sanitizeImageUrl("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
+  });
+
+  it("should return the url for relative and absolute paths", () => {
+    expect(sanitizeImageUrl("/images/photo.jpg")).toBe("/images/photo.jpg");
+    expect(sanitizeImageUrl("images/photo.jpg")).toBe("images/photo.jpg");
+  });
+
+  it("should return the url for valid data:image/* urls", () => {
+    expect(sanitizeImageUrl("data:image/png;base64,iVBORw0KGgo=")).toBe("data:image/png;base64,iVBORw0KGgo=");
+    expect(sanitizeImageUrl("data:image/jpeg;base64,/9j/4AAQSkZJRgABA=")).toBe("data:image/jpeg;base64,/9j/4AAQSkZJRgABA=");
+  });
+
+  it("should return undefined for invalid data: urls", () => {
+    expect(sanitizeImageUrl("data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==")).toBeUndefined();
+  });
+
+  it("should return undefined for dangerous protocols", () => {
+    expect(sanitizeImageUrl("javascript:alert(1)")).toBeUndefined();
+    expect(sanitizeImageUrl("file:///etc/passwd")).toBeUndefined();
+    expect(sanitizeImageUrl("vbscript:msgbox(\"test\")")).toBeUndefined();
+  });
+
+  it("should return undefined for invalid or unparseable URLs", () => {
+    // Using a URL string that might throw during parsing or just fails logic
+    expect(sanitizeImageUrl("http://[::1")).toBeUndefined(); // Invalid IPv6
   });
 });
 
