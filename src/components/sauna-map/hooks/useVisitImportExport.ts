@@ -33,9 +33,7 @@ export function useVisitImportExport(
 
       const validVisits = validationResult.data;
       const existingIds = new Set(visits.map((v) => v.id));
-      const normalizedImported = normalizeVisits(validVisits).filter(
-        (v) => !existingIds.has(v.id),
-      );
+      const normalizedImported = normalizeVisits(validVisits.filter((v) => !existingIds.has(v.id)));
 
       if (normalizedImported.length === 0) {
         return { added: 0, success: true };
