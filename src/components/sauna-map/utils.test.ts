@@ -238,7 +238,7 @@ describe("getVisitCount", () => {
   });
 
   it("should handle invalid history type", () => {
-    const visit = { history: "invalid" as unknown as SaunaVisit["history"] } as unknown as SaunaVisit;
+    const visit = { history: "invalid" as unknown } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 });
