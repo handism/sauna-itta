@@ -202,9 +202,9 @@ export function getInitialVisits(): SaunaVisit[] {
       return baseVisits;
     }
     const validSaved = parsedSaved.filter(isValidVisit) as SaunaVisit[];
-    const normalizedSaved = normalizeVisits(validSaved);
     const initialIds = new Set(baseVisits.map((v) => v.id));
-    const customVisits = normalizedSaved.filter((v) => !initialIds.has(v.id));
+    const customSaved = validSaved.filter((v) => !initialIds.has(v.id));
+    const customVisits = normalizeVisits(customSaved);
     return [...customVisits, ...baseVisits];
   } catch (e) {
     console.error("Failed to parse saved visits:", e);
