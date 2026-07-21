@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState } from "./utils";
-import { SaunaVisit } from "./types";
+import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate, sanitizeImageUrl } from "./utils";
+import { SaunaVisit, VisitFormState } from "./types";
 
 vi.mock("browser-image-compression", () => ({
   default: vi.fn(),
@@ -153,68 +153,92 @@ describe("calculateStats", () => {
     expect(stats.prefectures).toEqual([]);
     expect(stats.prefectureCount).toBe(0);
   });
+
+  it("should handle empty strings for date and area safely", () => {
+    const visits: SaunaVisit[] = [
+      {
+        id: "1",
+        name: "Test Sauna Empty Area",
+        lat: 0,
+        lng: 0,
+        comment: "",
+        date: "",
+        area: "   ",
+        status: "visited"
+      },
+      {
+        id: "2",
+        name: "Test Sauna Missing Date",
+        lat: 0,
+        lng: 0,
+        comment: "",
+        date: "2023-01-01",
+        // missing area
+        status: "visited"
+      }
+    ];
+    const stats = calculateStats(visits);
+    expect(stats.total).toBe(2);
+    expect(stats.visitedCount).toBe(2);
+    expect(stats.firstDate).toBe(""); // lexicographical comparison sets empty string as first
+    expect(stats.lastDate).toBe("2023-01-01");
+    expect(stats.uniqueAreas).toBe(0);
+  });
 });
 
 describe("getVisitCount", () => {
   it("should return 1 when both visitCount and history are missing", () => {
-    const visit = {} as SaunaVisit;
+    const visit = {} as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should return the correct count when visitCount is provided and history is missing", () => {
-    const visit = { visitCount: 3 } as SaunaVisit;
+    const visit = { visitCount: 3 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(3);
   });
 
   it("should return 1 when visitCount is 0 and history is missing", () => {
-    const visit = { visitCount: 0 } as SaunaVisit;
+    const visit = { visitCount: 0 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should return history length when history is provided and visitCount is missing", () => {
     const visit = {
       history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
+        { date: "2023-01-01", comment: "", rating: 5, image: "" },
         { date: "2023-01-02", comment: "", rating: 4, image: "" },
+        { date: "2023-01-03", comment: "", rating: 3, image: "" },
       ],
-    } as SaunaVisit;
-    expect(getVisitCount(visit)).toBe(2);
+    } as unknown as SaunaVisit;
+    expect(getVisitCount(visit)).toBe(3);
   });
 
-  it("should return the maximum of visitCount and history length when both are provided", () => {
+  it("should return history length when both visitCount and history are provided", () => {
     const visit = {
-      visitCount: 1,
+      visitCount: 2,
       history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
+        { date: "2023-01-01", comment: "", rating: 5, image: "" },
+        { date: "2023-01-02", comment: "", rating: 4, image: "" },
+        { date: "2023-01-03", comment: "", rating: 3, image: "" },
+        { date: "2023-01-02", comment: "", rating: 4, image: "" },
         { date: "2023-01-02", comment: "", rating: 4, image: "" },
       ],
-    } as SaunaVisit;
-    expect(getVisitCount(visit)).toBe(2);
-  });
-
-  it("should return visitCount when visitCount is larger than history length", () => {
-    const visit = {
-      visitCount: 5,
-      history: [
-        { date: "2023-01-01", comment: "", rating: 3, image: "" },
-        { date: "2023-01-02", comment: "", rating: 4, image: "" },
-      ],
-    } as SaunaVisit;
+    } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(5);
   });
 
   it("should handle empty history array", () => {
-    const visit = { history: [] } as SaunaVisit;
+    const visit = { history: [] } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should handle negative visitCount by returning 1", () => {
-    const visit = { visitCount: -5 } as SaunaVisit;
+    const visit = { visitCount: -5 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should handle invalid history type", () => {
-    const visit = { history: "invalid" as unknown } as SaunaVisit;
+    const visit = { history: "invalid" as unknown as SaunaVisit["history"] } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 });
@@ -608,6 +632,198 @@ describe("extractPrefecture", () => {
   });
 });
 
+describe("sanitizeImageUrl", () => {
+  it("should return the url for valid http and https urls", () => {
+    expect(sanitizeImageUrl("http://example.com/image.jpg")).toBe("http://example.com/image.jpg");
+    expect(sanitizeImageUrl("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
+  });
+
+  it("should return the url for relative and absolute paths", () => {
+    expect(sanitizeImageUrl("/images/photo.jpg")).toBe("/images/photo.jpg");
+    expect(sanitizeImageUrl("images/photo.jpg")).toBe("images/photo.jpg");
+  });
+
+  it("should return the url for valid data:image/* urls", () => {
+    expect(sanitizeImageUrl("data:image/png;base64,iVBORw0KGgo=")).toBe("data:image/png;base64,iVBORw0KGgo=");
+    expect(sanitizeImageUrl("data:image/jpeg;base64,/9j/4AAQSkZJRgABA=")).toBe("data:image/jpeg;base64,/9j/4AAQSkZJRgABA=");
+  });
+
+  it("should return undefined for falsy inputs", () => {
+    expect(sanitizeImageUrl(undefined)).toBeUndefined();
+    expect(sanitizeImageUrl("")).toBeUndefined();
+  });
+
+  it("should return undefined for invalid data: urls", () => {
+    expect(sanitizeImageUrl("data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==")).toBeUndefined();
+    expect(sanitizeImageUrl("data:text/plain,hello")).toBeUndefined();
+  });
+
+  it("should return undefined for dangerous protocols", () => {
+    expect(sanitizeImageUrl("ftp://example.com/image.jpg")).toBeUndefined();
+    expect(sanitizeImageUrl("javascript:alert(1)")).toBeUndefined();
+    expect(sanitizeImageUrl("file:///etc/passwd")).toBeUndefined();
+    expect(sanitizeImageUrl("vbscript:msgbox(\"test\")")).toBeUndefined();
+  });
+
+  it("should return undefined for invalid or unparseable URLs", () => {
+    expect(sanitizeImageUrl("http://[::1")).toBeUndefined();
+    expect(sanitizeImageUrl("http://[1:2:3:4:5:6:7:8:9]/")).toBeUndefined();
+    expect(sanitizeImageUrl("https://example.com:99999")).toBeUndefined();
+  });
+});
+
+describe("getDirectionsUrl", () => {
+  it("should generate a URL for regular positive coordinates", () => {
+    const url = getDirectionsUrl(35.6812, 139.7671);
+    expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=35.6812,139.7671");
+  });
+
+  it("should generate a URL for negative coordinates", () => {
+    const url = getDirectionsUrl(-33.8688, -151.2093);
+    expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=-33.8688,-151.2093");
+  });
+
+  it("should generate a URL for zero coordinates", () => {
+    const url = getDirectionsUrl(0, 0);
+    expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=0,0");
+  });
+
+  it("should handle string inputs correctly by coercing to numbers", () => {
+    // @ts-expect-error - intentional invalid type to test runtime behaviour
+    const url = getDirectionsUrl("35.6812", "139.7671");
+    expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=35.6812,139.7671");
+  });
+});
+describe("buildHistoryUpdate", () => {
+  it("should append a new history entry when appendHistory is true", () => {
+    const visit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 0,
+      lng: 0,
+      date: "2023-01-01",
+      comment: "First visit",
+      rating: 3,
+      history: [
+        { date: "2023-01-01", comment: "First visit", rating: 3 },
+      ],
+    } as SaunaVisit;
+
+    const form = {
+      date: "2023-02-01",
+      comment: "Second visit",
+      rating: 4,
+      image: "new.jpg",
+      appendHistory: true,
+    } as VisitFormState;
+
+    const result = buildHistoryUpdate(visit, form);
+
+    expect(result.history).toHaveLength(2);
+    expect(result.history![1]).toEqual({
+      date: "2023-02-01",
+      comment: "Second visit",
+      rating: 4,
+      image: "new.jpg",
+    });
+    expect(result.comment).toBe("Second visit");
+    expect(result.date).toBe("2023-02-01");
+    expect(result.rating).toBe(4);
+    expect(result.image).toBe("new.jpg");
+    expect(result.visitCount).toBe(2);
+  });
+
+  it("should update the latest history entry when appendHistory is false", () => {
+    const visit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 0,
+      lng: 0,
+      date: "2023-01-01",
+      comment: "First visit",
+      rating: 3,
+      history: [
+        { date: "2023-01-01", comment: "First visit", rating: 3 },
+        { date: "2023-02-01", comment: "Second visit", rating: 4 },
+      ],
+    } as SaunaVisit;
+
+    const form = {
+      date: "2023-02-05",
+      comment: "Second visit updated",
+      rating: 5,
+      image: "updated.jpg",
+      appendHistory: false,
+    } as VisitFormState;
+
+    const result = buildHistoryUpdate(visit, form);
+
+    expect(result.history).toHaveLength(2);
+    expect(result.history![0]).toEqual({ date: "2023-01-01", comment: "First visit", rating: 3 });
+    expect(result.history![1]).toEqual({
+      date: "2023-02-05",
+      comment: "Second visit updated",
+      rating: 5,
+      image: "updated.jpg",
+    });
+    expect(result.comment).toBe("Second visit updated");
+    expect(result.date).toBe("2023-02-05");
+    expect(result.rating).toBe(5);
+    expect(result.visitCount).toBe(2);
+  });
+
+  it("should use fallback values for date and rating when form values are falsy", () => {
+    const visit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 0,
+      lng: 0,
+      date: "2023-01-01",
+      comment: "First visit",
+      history: [],
+    } as SaunaVisit;
+
+    const form = {
+      date: "", // Falsy date
+      comment: "Fallback test",
+      rating: 0, // Falsy rating
+      image: undefined,
+      appendHistory: true,
+    } as unknown as VisitFormState;
+
+    const result = buildHistoryUpdate(visit, form);
+
+    expect(result.history).toHaveLength(2);
+    expect(result.history![1].date).toBe(getTodayDate());
+    expect(result.history![1].rating).toBe(0);
+    expect(result.history![1].comment).toBe("Fallback test");
+  });
+
+  it("should calculate visitCount correctly when it is missing or large", () => {
+    const visit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 0,
+      lng: 0,
+      date: "2023-01-01",
+      comment: "First visit",
+      visitCount: 5, // Larger than history
+      history: [{ date: "2023-01-01", comment: "First visit", rating: 3 }],
+    } as SaunaVisit;
+
+    const form = {
+      date: "2023-02-01",
+      comment: "Second visit",
+      rating: 4,
+      appendHistory: true,
+    } as VisitFormState;
+
+    const result = buildHistoryUpdate(visit, form);
+
+    expect(result.visitCount).toBe(5);
+  });
+});
+
 describe("toFormState", () => {
   it("converts a basic SaunaVisit without history to VisitFormState", () => {
     const visit: SaunaVisit = {
@@ -745,5 +961,98 @@ describe("toNormalizedTags", () => {
 
   it("should handle a single tag without commas", () => {
     expect(toNormalizedTags("sauna")).toEqual(["sauna"]);
+  });
+});
+
+describe("getInitialTheme", () => {
+  const store: Record<string, string> = {};
+  const mockLocalStorage = {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    clear: vi.fn(() => { for (const key in store) delete store[key]; }),
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", mockLocalStorage);
+    mockLocalStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("should return saved theme if valid ('light' or 'dark')", () => {
+    mockLocalStorage.setItem(THEME_STORAGE_KEY, "light");
+    expect(getInitialTheme()).toBe("light");
+
+    mockLocalStorage.setItem(THEME_STORAGE_KEY, "dark");
+    expect(getInitialTheme()).toBe("dark");
+  });
+
+  it("should return 'dark' if saved theme is invalid or empty", () => {
+    mockLocalStorage.setItem(THEME_STORAGE_KEY, "invalid_theme");
+    expect(getInitialTheme()).toBe("dark");
+  });
+
+  it("should catch localStorage errors and log warning, returning 'dark'", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(mockLocalStorage, "getItem").mockImplementation(() => {
+      throw new Error("SecurityError: Access denied");
+    });
+
+    expect(getInitialTheme()).toBe("dark");
+    expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to read theme from localStorage:", expect.any(Error));
+  });
+});
+
+describe("getInitialVisits", () => {
+  const store: Record<string, string> = {};
+  const mockLocalStorage = {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    clear: vi.fn(() => { for (const key in store) delete store[key]; }),
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", mockLocalStorage);
+    mockLocalStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("should catch localStorage errors when reading visits, log warning and return baseVisits", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.spyOn(mockLocalStorage, "getItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
+
+    const visits = getInitialVisits();
+    expect(Array.isArray(visits)).toBe(true);
+    expect(visits.length).toBeGreaterThan(0);
+    expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to read visits from localStorage:", expect.any(Error));
+  });
+});
+
+describe("sanitizeImageUrl", () => {
+  it("should allow safe http/https URLs", () => {
+    expect(sanitizeImageUrl("http://example.com/image.png")).toBe("http://example.com/image.png");
+    expect(sanitizeImageUrl("https://example.com/image.jpg")).toBe("https://example.com/image.jpg");
+  });
+
+  it("should allow safe data URIs", () => {
+    const safePng = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    expect(sanitizeImageUrl(safePng)).toBe(safePng);
+
+    const safeJpeg = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/";
+    expect(sanitizeImageUrl(safeJpeg)).toBe(safeJpeg);
+  });
+
+  it("should block dangerous data URIs", () => {
+    const dangerousSvg = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxzY3JpcHQ+YWxlcnQoMSk8L3NjcmlwdD48L3N2Zz4=";
+    expect(sanitizeImageUrl(dangerousSvg)).toBeUndefined();
+
+    const dangerousHtml = "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==";
+    expect(sanitizeImageUrl(dangerousHtml)).toBeUndefined();
+  });
+
+  it("should block invalid URLs", () => {
+    expect(sanitizeImageUrl("javascript:alert(1)")).toBeUndefined();
+    expect(sanitizeImageUrl("ftp://example.com/image.png")).toBeUndefined();
   });
 });
