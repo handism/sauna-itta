@@ -1,6 +1,6 @@
 import imageCompression from "browser-image-compression";
 import initialVisits from "@/data/sauna-visits.json";
-import { SaunaVisit, VisitFormState, VisitHistoryEntry, VisitStats } from "./types";
+import { SaunaVisit, VisitFormState, VisitHistoryEntry, VisitStats, SaunaVisitSchema } from "./types";
 
 export const VISITS_STORAGE_KEY = "sauna-itta_visits";
 export const THEME_STORAGE_KEY = "sauna-itta_theme";
@@ -175,29 +175,7 @@ export function buildHistoryUpdate(
 
 
 function isValidVisit(v: unknown): v is SaunaVisit {
-  if (!v || typeof v !== "object") return false;
-  const visit = v as Record<string, unknown>;
-  if (typeof visit.id !== "string") return false;
-  if (typeof visit.name !== "string") return false;
-  if (typeof visit.lat !== "number") return false;
-  if (typeof visit.lng !== "number") return false;
-  if (typeof visit.comment !== "string") return false;
-  if (typeof visit.date !== "string") return false;
-
-  if (visit.history !== undefined) {
-    if (!Array.isArray(visit.history)) return false;
-    for (const h of visit.history) {
-      if (
-        !h ||
-        typeof h !== "object" ||
-        typeof (h as Record<string, unknown>).date !== "string" ||
-        typeof (h as Record<string, unknown>).comment !== "string"
-      ) {
-        return false;
-      }
-    }
-  }
-  return true;
+  return SaunaVisitSchema.safeParse(v).success;
 }
 
 export function getInitialVisits(): SaunaVisit[] {
