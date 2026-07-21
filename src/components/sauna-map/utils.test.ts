@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, VISITS_STORAGE_KEY } from "./utils";
-import { SaunaVisit } from "./types";
+import { normalizeVisits, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, VISITS_STORAGE_KEY, buildHistoryUpdate, getTodayDate } from "./utils";
+import { SaunaVisit, VisitFormState } from "./types";
 
 vi.mock("browser-image-compression", () => ({
   default: vi.fn(),
@@ -637,6 +637,136 @@ describe("extractPrefecture", () => {
   it("should return null if the first part doesn't end with suffix", () => {
     expect(extractPrefecture("東京 新宿区")).toBeNull();
     expect(extractPrefecture("Osaka City")).toBeNull();
+  });
+});
+
+describe("buildHistoryUpdate", () => {
+  it("should append a new history entry when appendHistory is true", () => {
+    const visit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 0,
+      lng: 0,
+      date: "2023-01-01",
+      comment: "First visit",
+      rating: 3,
+      history: [
+        { date: "2023-01-01", comment: "First visit", rating: 3 },
+      ],
+    } as SaunaVisit;
+
+    const form = {
+      date: "2023-02-01",
+      comment: "Second visit",
+      rating: 4,
+      image: "new.jpg",
+      appendHistory: true,
+    } as VisitFormState;
+
+    const result = buildHistoryUpdate(visit, form);
+
+    expect(result.history).toHaveLength(2);
+    expect(result.history[1]).toEqual({
+      date: "2023-02-01",
+      comment: "Second visit",
+      rating: 4,
+      image: "new.jpg",
+    });
+    expect(result.comment).toBe("Second visit");
+    expect(result.date).toBe("2023-02-01");
+    expect(result.rating).toBe(4);
+    expect(result.image).toBe("new.jpg");
+    expect(result.visitCount).toBe(2);
+  });
+
+  it("should update the latest history entry when appendHistory is false", () => {
+    const visit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 0,
+      lng: 0,
+      date: "2023-01-01",
+      comment: "First visit",
+      rating: 3,
+      history: [
+        { date: "2023-01-01", comment: "First visit", rating: 3 },
+        { date: "2023-02-01", comment: "Second visit", rating: 4 },
+      ],
+    } as SaunaVisit;
+
+    const form = {
+      date: "2023-02-05",
+      comment: "Second visit updated",
+      rating: 5,
+      image: "updated.jpg",
+      appendHistory: false,
+    } as VisitFormState;
+
+    const result = buildHistoryUpdate(visit, form);
+
+    expect(result.history).toHaveLength(2);
+    expect(result.history[0]).toEqual({ date: "2023-01-01", comment: "First visit", rating: 3 });
+    expect(result.history[1]).toEqual({
+      date: "2023-02-05",
+      comment: "Second visit updated",
+      rating: 5,
+      image: "updated.jpg",
+    });
+    expect(result.comment).toBe("Second visit updated");
+    expect(result.date).toBe("2023-02-05");
+    expect(result.rating).toBe(5);
+    expect(result.visitCount).toBe(2);
+  });
+
+  it("should use fallback values for date and rating when form values are falsy", () => {
+    const visit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 0,
+      lng: 0,
+      date: "2023-01-01",
+      comment: "First visit",
+      history: [],
+    } as SaunaVisit;
+
+    const form = {
+      date: "", // Falsy date
+      comment: "Fallback test",
+      rating: 0, // Falsy rating
+      image: undefined,
+      appendHistory: true,
+    } as VisitFormState;
+
+    const result = buildHistoryUpdate(visit, form);
+
+    expect(result.history).toHaveLength(2);
+    expect(result.history[1].date).toBe(getTodayDate());
+    expect(result.history[1].rating).toBe(0);
+    expect(result.history[1].comment).toBe("Fallback test");
+  });
+
+  it("should calculate visitCount correctly when it is missing or large", () => {
+    const visit = {
+      id: "1",
+      name: "Test Sauna",
+      lat: 0,
+      lng: 0,
+      date: "2023-01-01",
+      comment: "First visit",
+      visitCount: 5, // Larger than history
+      history: [{ date: "2023-01-01", comment: "First visit", rating: 3 }],
+    } as SaunaVisit;
+
+    const form = {
+      date: "2023-02-01",
+      comment: "Second visit",
+      rating: 4,
+      appendHistory: true,
+    } as VisitFormState;
+
+    const result = buildHistoryUpdate(visit, form);
+
+    expect(result.visitCount).toBe(5);
   });
 });
 
