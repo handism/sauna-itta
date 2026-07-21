@@ -25,9 +25,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
       }
 
       if (keyword) {
-        const text = [v.name, v.comment, v.area ?? "", (v.tags ?? []).join(" ")]
-          .join(" ")
-          .toLowerCase();
+        const text = `${v.name} ${v.comment ?? ""} ${v.area ?? ""} ${(v.tags ?? []).join(" ")}`.toLowerCase();
         if (!text.includes(keyword)) return false;
       }
 

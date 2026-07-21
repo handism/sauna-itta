@@ -24,9 +24,8 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
     const ratingCounts: { [key: string]: number } = {};
 
     flattenVisitHistory(visits)
-      .filter((entry) => entry.status === "visited")
       .forEach((entry) => {
-        if (entry.rating && entry.rating > 0) {
+        if (entry.status === "visited" && entry.rating && entry.rating > 0) {
           const rating = entry.rating;
           ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
         }
