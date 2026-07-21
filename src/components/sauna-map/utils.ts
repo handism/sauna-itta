@@ -243,10 +243,10 @@ function getDateAndRatingStats(visitedVisits: SaunaVisit[]) {
   for (const visit of visitedVisits) {
     const history = getVisitHistoryEntries(visit);
     for (const entry of history) {
-      if (firstDate === null || entry.date.localeCompare(firstDate) < 0) {
+      if (firstDate === null || entry.date < firstDate) {
         firstDate = entry.date;
       }
-      if (lastDate === null || entry.date.localeCompare(lastDate) > 0) {
+      if (lastDate === null || entry.date > lastDate) {
         lastDate = entry.date;
       }
 
