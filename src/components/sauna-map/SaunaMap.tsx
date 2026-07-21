@@ -148,6 +148,7 @@ export default function SaunaMap() {
     cancelEditing(true);
   };
 
+
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
       selectLocation({ lat, lng });
@@ -226,6 +227,24 @@ export default function SaunaMap() {
   const isCreating = mode === "creating:pick" || mode === "creating:form";
   const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
   const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
+
+  const handleDeleteLastHistory = () => {
+    if (!editingId) return;
+
+    removeLastHistoryEntry(editingId);
+
+    const newLatest = historyEntries[historyEntries.length - 2];
+
+    if (newLatest) {
+      setForm((prev) => ({
+        ...prev,
+        date: newLatest.date,
+        comment: newLatest.comment,
+        rating: newLatest.rating ?? 0,
+        image: newLatest.image ?? "",
+      }));
+    }
+  };
 
   if (!mounted) {
     return <div className="map-container" style={{ background: "var(--background)", height: "100%", width: "100%" }} />;
@@ -396,23 +415,7 @@ export default function SaunaMap() {
                   onImageChange={handleImageChange}
                   onDelete={handleDelete}
                   onCancel={() => cancelEditing()}
-                  onDeleteLastHistory={
-                    editingId
-                      ? () => {
-                          removeLastHistoryEntry(editingId);
-                          const newLatest = historyEntries[historyEntries.length - 2];
-                          if (newLatest) {
-                            setForm((prev) => ({
-                              ...prev,
-                              date: newLatest.date,
-                              comment: newLatest.comment,
-                              rating: newLatest.rating ?? 0,
-                              image: newLatest.image ?? "",
-                            }));
-                          }
-                        }
-                      : undefined
-                  }
+                  onDeleteLastHistory={editingId ? handleDeleteLastHistory : undefined}
                 />
               ) : (
                 <VisitList
