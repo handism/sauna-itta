@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
 import { normalizeVisits, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState } from "./utils";
@@ -205,17 +204,17 @@ describe("getVisitCount", () => {
   });
 
   it("should handle empty history array", () => {
-    const visit = { history: [] } as SaunaVisit;
+    const visit = { history: [] } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should handle negative visitCount by returning 1", () => {
-    const visit = { visitCount: -5 } as SaunaVisit;
+    const visit = { visitCount: -5 } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 
   it("should handle invalid history type", () => {
-    const visit = { history: "invalid" as any } as SaunaVisit;
+    const visit = { history: "invalid" as unknown as SaunaVisit["history"] } as unknown as SaunaVisit;
     expect(getVisitCount(visit)).toBe(1);
   });
 });
