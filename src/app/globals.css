@@ -2,4 +2,5 @@
 @import "../components/sauna-map/styles/base.css";
 @import "../components/sauna-map/styles/map.css";
 @import "../components/sauna-map/styles/sidebar.css";
+@import "../components/sauna-map/styles/bottom-sheet.css";
 @import "../components/sauna-map/styles/modal.css";
