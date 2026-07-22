@@ -100,6 +100,12 @@ export default function SaunaMap() {
     }
   }, [isMobile]);
 
+  const handleDeselectVisit = useCallback(() => {
+    setSelectedId(null);
+    setHoveredId(null);
+    setMapTargetOverride(null);
+  }, []);
+
   const handleSelectMobileTab = useCallback((tab: MobileTab) => {
     setActiveMobileTab(tab);
     if (tab === "map") {
@@ -490,6 +496,7 @@ export default function SaunaMap() {
                   onEdit={startEditing}
                   selectedId={selectedId}
                   onSelectVisit={handleSelectVisit}
+                  onDeselectVisit={handleDeselectVisit}
                   hoveredId={hoveredId}
                   onHoverVisit={setHoveredId}
                 />
@@ -537,6 +544,7 @@ export default function SaunaMap() {
               }}
               selectedId={selectedId}
               onSelectVisit={handleSelectVisit}
+              onDeselectVisit={handleDeselectVisit}
               hoveredId={hoveredId}
               onHoverVisit={setHoveredId}
             />

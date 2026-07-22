@@ -14,6 +14,7 @@ interface VisitListProps {
   onEdit: (visit: SaunaVisit) => void;
   selectedId?: string | null;
   onSelectVisit?: (visit: SaunaVisit) => void;
+  onDeselectVisit?: () => void;
   hoveredId?: string | null;
   onHoverVisit?: (id: string | null) => void;
 }
@@ -28,6 +29,7 @@ export function VisitList({
   onEdit,
   selectedId,
   onSelectVisit,
+  onDeselectVisit,
   hoveredId,
   onHoverVisit,
 }: VisitListProps) {
@@ -41,7 +43,7 @@ export function VisitList({
       `[data-visit-id="${activeId}"]`
     );
     if (targetEl) {
-      targetEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [activeId]);
 
@@ -177,17 +179,33 @@ export function VisitList({
                   {visit.name}
                   {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
                 </h3>
-                <button
-                  type="button"
-                  className="sauna-card-edit-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(visit);
-                  }}
-                  title="記録を編集"
-                >
-                  ✏️ 編集
-                </button>
+                <div className="sauna-card-actions">
+                  {isSelected && onDeselectVisit && (
+                    <button
+                      type="button"
+                      className="sauna-card-deselect-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeselectVisit();
+                      }}
+                      title="選択を解除"
+                      aria-label="選択を解除"
+                    >
+                      ✕ 解除
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="sauna-card-edit-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEdit(visit);
+                    }}
+                    title="記録を編集"
+                  >
+                    ✏️ 編集
+                  </button>
+                </div>
               </div>
               {visit.area && <div className="sauna-card-area">{visit.area}</div>}
               <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" />
