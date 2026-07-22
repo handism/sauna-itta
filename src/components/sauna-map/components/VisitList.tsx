@@ -12,6 +12,8 @@ interface VisitListProps {
   isFilterActive: boolean;
   onOpenFilters: () => void;
   onEdit: (visit: SaunaVisit) => void;
+  selectedId?: string | null;
+  onSelectVisit?: (visit: SaunaVisit) => void;
   hoveredId?: string | null;
   onHoverVisit?: (id: string | null) => void;
 }
@@ -24,20 +26,24 @@ export function VisitList({
   isFilterActive,
   onOpenFilters,
   onEdit,
+  selectedId,
+  onSelectVisit,
   hoveredId,
   onHoverVisit,
 }: VisitListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  const activeId = selectedId || hoveredId;
+
   useEffect(() => {
-    if (!hoveredId || !containerRef.current) return;
+    if (!activeId || !containerRef.current) return;
     const targetEl = containerRef.current.querySelector<HTMLElement>(
-      `[data-visit-id="${hoveredId}"]`
+      `[data-visit-id="${activeId}"]`
     );
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-  }, [hoveredId]);
+  }, [activeId]);
 
   return (
     <div className="sauna-list" ref={containerRef}>
@@ -156,19 +162,33 @@ export function VisitList({
         filteredVisits.map((visit) => {
           const visitCount = getVisitCount(visit);
           const isHovered = visit.id === hoveredId;
+          const isSelected = visit.id === selectedId;
           return (
             <div
               key={visit.id}
               data-visit-id={visit.id}
-              className={`sauna-card ${isHovered ? "is-hovered" : ""}`}
-              onClick={() => onEdit(visit)}
+              className={`sauna-card ${isHovered ? "is-hovered" : ""} ${isSelected ? "is-selected" : ""}`}
+              onClick={() => onSelectVisit?.(visit)}
               onMouseEnter={() => onHoverVisit?.(visit.id)}
               onMouseLeave={() => onHoverVisit?.(null)}
             >
-              <h3 className="sauna-card-title">
-                {visit.name}
-                {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
-              </h3>
+              <div className="sauna-card-header">
+                <h3 className="sauna-card-title">
+                  {visit.name}
+                  {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
+                </h3>
+                <button
+                  type="button"
+                  className="sauna-card-edit-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(visit);
+                  }}
+                  title="記録を編集"
+                >
+                  ✏️ 編集
+                </button>
+              </div>
               {visit.area && <div className="sauna-card-area">{visit.area}</div>}
               <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" />
               {visit.tags && visit.tags.length > 0 && (
@@ -188,7 +208,6 @@ export function VisitList({
               <div className="sauna-card-meta">
                 <span>日付: {visit.date}</span>
                 {visitCount > 1 && <span>訪問 {visitCount}回目</span>}
-                <span>タップで編集</span>
               </div>
               <a
                 href={getDirectionsUrl(visit.lat, visit.lng)}

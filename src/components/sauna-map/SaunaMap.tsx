@@ -38,7 +38,7 @@ import {
   toFormState,
   compressAndGetBase64,
 } from "./utils";
-import { SaunaVisit, VisitFormState } from "./types";
+import { SaunaVisit, VisitFormState, LatLng } from "./types";
 
 const STORAGE_ERROR_MSG =
   "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
@@ -83,11 +83,17 @@ export default function SaunaMap() {
 
   const [toast, setToast] = useState<ToastState | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [mapTargetOverride, setMapTargetOverride] = useState<LatLng | null>(null);
   const [snapPosition, setSnapPosition] = useState<SheetSnapPosition>("min");
   const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>("map");
 
-  const handleSelectVisitFromMarker = useCallback((visit: SaunaVisit) => {
+  const activeMapTarget = mapTargetOverride || mapTarget;
+
+  const handleSelectVisit = useCallback((visit: SaunaVisit) => {
+    setSelectedId(visit.id);
     setHoveredId(visit.id);
+    setMapTargetOverride({ lat: visit.lat, lng: visit.lng });
     if (isMobile) {
       setSnapPosition("half");
       setActiveMobileTab("list");
@@ -144,6 +150,7 @@ export default function SaunaMap() {
   };
 
   const startEditing = (visit: SaunaVisit) => {
+    setSelectedId(visit.id);
     startEdit(visit);
     setForm(toFormState(visit));
   };
@@ -293,13 +300,14 @@ export default function SaunaMap() {
             className="dark-map-tiles"
           />
 
-          <MapController target={mapTarget} />
+          <MapController target={activeMapTarget} isMobile={isMobile} />
           <VisitMarkers
             visits={filteredVisits}
             editingId={editingId}
+            selectedId={selectedId}
             hoveredId={hoveredId}
             onEdit={startEditing}
-            onSelectVisit={handleSelectVisitFromMarker}
+            onSelectVisit={handleSelectVisit}
           />
 
           {isCreating && <LocationPicker onLocationSelect={handleLocationSelect} />}
@@ -480,6 +488,8 @@ export default function SaunaMap() {
                   isFilterActive={isFilterActive}
                   onOpenFilters={openFilterModal}
                   onEdit={startEditing}
+                  selectedId={selectedId}
+                  onSelectVisit={handleSelectVisit}
                   hoveredId={hoveredId}
                   onHoverVisit={setHoveredId}
                 />
@@ -525,6 +535,8 @@ export default function SaunaMap() {
                 startEditing(visit);
                 setSnapPosition("full");
               }}
+              selectedId={selectedId}
+              onSelectVisit={handleSelectVisit}
               hoveredId={hoveredId}
               onHoverVisit={setHoveredId}
             />

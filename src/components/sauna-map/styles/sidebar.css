@@ -450,16 +450,52 @@ input[type="date"].input {
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4), 0 0 20px var(--primary-glow);
 }
 
+.sauna-card.is-selected {
+  background: var(--glass-heavy);
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 2px var(--primary), 0 10px 30px rgba(255, 120, 0, 0.25);
+}
+
 .sauna-card:hover::before,
-.sauna-card.is-hovered::before {
+.sauna-card.is-hovered::before,
+.sauna-card.is-selected::before {
   opacity: 1;
   transform: scaleY(1);
+}
+
+.sauna-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.sauna-card-edit-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--foreground);
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sauna-card-edit-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 0 12px var(--primary-glow);
 }
 
 .sauna-card h3 {
   font-size: 1.1rem;
   margin-bottom: 0.3rem;
-  padding-right: 2rem;
+  padding-right: 0.5rem;
 }
 
 .sauna-card p {

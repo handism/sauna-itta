@@ -8,6 +8,7 @@ import Image from "next/image";
 interface VisitMarkersProps {
   visits: SaunaVisit[];
   editingId: string | null;
+  selectedId?: string | null;
   hoveredId?: string | null;
   onEdit: (visit: SaunaVisit) => void;
   onSelectVisit?: (visit: SaunaVisit) => void;
@@ -16,6 +17,7 @@ interface VisitMarkersProps {
 export function VisitMarkers({
   visits,
   editingId,
+  selectedId,
   hoveredId,
   onEdit,
   onSelectVisit,
@@ -26,13 +28,14 @@ export function VisitMarkers({
         const visitCount = getVisitCount(visit);
         const imageUrl = sanitizeImageUrl(visit.image);
         const isHovered = visit.id === hoveredId;
+        const isSelected = visit.id === selectedId;
         return (
           <Marker
             key={visit.id}
             position={[visit.lat, visit.lng]}
-            zIndexOffset={isHovered ? 1000 : undefined}
+            zIndexOffset={isSelected ? 1000 : isHovered ? 500 : undefined}
             icon={getSaunaIcon({
-              selected: visit.id === editingId,
+              selected: visit.id === editingId || isSelected,
               wishlist: (visit.status ?? "visited") === "wishlist",
               hovered: isHovered,
             })}
