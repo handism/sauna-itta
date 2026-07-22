@@ -578,7 +578,10 @@ export default function SaunaMap() {
                 setSnapPosition("full");
               }}
               selectedId={selectedId}
-              onSelectVisit={handleSelectVisit}
+              onSelectVisit={(visit) => {
+                handleSelectVisit(visit);
+                setSnapPosition("half");
+              }}
               onDeselectVisit={handleDeselectVisit}
               hoveredId={hoveredId}
               onHoverVisit={setHoveredId}
