@@ -141,8 +141,12 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.85rem;
-  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.sauna-list-header .status-tabs {
+  flex: 1;
+  min-width: 0;
 }
 
 .sauna-header-actions {
@@ -325,6 +329,30 @@
   flex-direction: column;
   gap: 0.65rem;
   margin-bottom: 1.2rem;
+}
+
+.sauna-search-tools-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.sauna-search-tools-row .search-input-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.sauna-search-tools-row .bounds-toggle-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.sauna-search-tools-row .quick-sort-select {
+  flex-shrink: 0;
+  max-width: 125px;
+  padding-left: 0.45rem;
+  padding-right: 0.45rem;
 }
 
 .search-input-wrapper {
