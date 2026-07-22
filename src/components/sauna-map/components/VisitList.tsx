@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
 import { RatingStars, WishlistChip } from "./common";
@@ -66,12 +66,76 @@ export function VisitList({
     }
   }, [selectedId]);
 
+  const statusCounts = useMemo(() => {
+    const keyword = filters.search.trim().toLowerCase();
+    const baseFiltered = visits.filter((v) => {
+      if ((v.rating ?? 0) < filters.minRating) return false;
+      if (filters.selectedTag && (!v.tags || !v.tags.includes(filters.selectedTag))) return false;
+      if (filters.selectedArea && (!v.area || !v.area.includes(filters.selectedArea))) return false;
+      if (filters.filterByBounds && filters.mapBounds) {
+        const { northEast, southWest } = filters.mapBounds;
+        const inLat =
+          v.lat >= Math.min(southWest.lat, northEast.lat) &&
+          v.lat <= Math.max(southWest.lat, northEast.lat);
+        const minLng = Math.min(southWest.lng, northEast.lng);
+        const maxLng = Math.max(southWest.lng, northEast.lng);
+        if (!inLat || !(v.lng >= minLng && v.lng <= maxLng)) return false;
+      }
+      if (keyword) {
+        const text = `${v.name} ${v.comment ?? ""} ${v.area ?? ""} ${(v.tags ?? []).join(" ")}`.toLowerCase();
+        if (!text.includes(keyword)) return false;
+      }
+      return true;
+    });
+
+    return {
+      all: baseFiltered.length,
+      visited: baseFiltered.filter((v) => (v.status ?? "visited") === "visited").length,
+      wishlist: baseFiltered.filter((v) => v.status === "wishlist").length,
+    };
+  }, [
+    visits,
+    filters.search,
+    filters.minRating,
+    filters.selectedTag,
+    filters.selectedArea,
+    filters.filterByBounds,
+    filters.mapBounds,
+  ]);
+
   return (
     <div className="sauna-list" ref={containerRef}>
       <div className="sauna-list-header">
-        <h2 className="panel-title">
-          訪れたサウナ ({filteredVisits.length}/{visits.length})
-        </h2>
+        <div className="status-tabs" role="tablist" aria-label="ステータスフィルター">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filters.status === "all"}
+            className={`status-tab ${filters.status === "all" ? "is-active" : ""}`}
+            onClick={() => setFilters((prev) => ({ ...prev, status: "all" }))}
+          >
+            すべて ({statusCounts.all})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filters.status === "visited"}
+            className={`status-tab ${filters.status === "visited" ? "is-active" : ""}`}
+            onClick={() => setFilters((prev) => ({ ...prev, status: "visited" }))}
+          >
+            行った ({statusCounts.visited})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={filters.status === "wishlist"}
+            className={`status-tab ${filters.status === "wishlist" ? "is-active" : ""}`}
+            onClick={() => setFilters((prev) => ({ ...prev, status: "wishlist" }))}
+          >
+            イキタイ ({statusCounts.wishlist})
+          </button>
+        </div>
+
         <div className="sauna-header-actions">
           <div className="view-mode-toggle" role="group" aria-label="表示形式切り替え">
             <button
@@ -105,27 +169,62 @@ export function VisitList({
       </div>
 
       <div className="sauna-search-box">
-        <div className="search-input-wrapper">
-          <span className="search-icon">🔍</span>
-          <input
-            type="text"
-            className="input search-input"
-            placeholder="サウナ名・エリア・タグで即検索..."
-            value={filters.search}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, search: e.target.value }))
+        <div className="sauna-search-tools-row">
+          <div className="search-input-wrapper">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              className="input search-input"
+              placeholder="サウナ名・エリア・タグで即検索..."
+              value={filters.search}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, search: e.target.value }))
+              }
+            />
+            {filters.search && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
+                aria-label="検索のクリア"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className={`bounds-toggle-btn ${filters.filterByBounds ? "is-active" : ""}`}
+            onClick={() =>
+              setFilters((prev) => ({
+                ...prev,
+                filterByBounds: !prev.filterByBounds,
+              }))
             }
-          />
-          {filters.search && (
-            <button
-              type="button"
-              className="search-clear-btn"
-              onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
-              aria-label="検索のクリア"
-            >
-              ✕
-            </button>
-          )}
+            title="地図の表示エリア内にあるサウナのみを表示"
+          >
+            🗺️ マップ範囲内
+          </button>
+
+          <select
+            className="quick-sort-select"
+            value={filters.sort}
+            onChange={(e) =>
+              setFilters((prev) => ({
+                ...prev,
+                sort: e.target.value as VisitFilters["sort"],
+              }))
+            }
+            aria-label="並び順"
+          >
+            <option value="recent">📅 新しい順</option>
+            <option value="oldest">📅 古い順</option>
+            <option value="ratingDesc">⭐ 評価が高い順</option>
+            <option value="ratingAsc">⭐ 評価が低い順</option>
+            <option value="visitCountDesc">🔥 訪問回数が多い順</option>
+            <option value="nameAsc">🔤 名前順 (あ〜ん)</option>
+          </select>
         </div>
 
         <QuickFilterChips
@@ -135,79 +234,6 @@ export function VisitList({
           activeFilterCount={activeFilterCount}
           onClearFilters={onClearFilters}
         />
-
-        <div className="sauna-quick-controls">
-          <div className="controls-row primary-controls">
-            <div className="status-tabs" role="tablist" aria-label="ステータスフィルター">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={filters.status === "all"}
-                className={`status-tab ${filters.status === "all" ? "is-active" : ""}`}
-                onClick={() => setFilters((prev) => ({ ...prev, status: "all" }))}
-              >
-                すべて
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={filters.status === "visited"}
-                className={`status-tab ${filters.status === "visited" ? "is-active" : ""}`}
-                onClick={() => setFilters((prev) => ({ ...prev, status: "visited" }))}
-              >
-                行った
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={filters.status === "wishlist"}
-                className={`status-tab ${filters.status === "wishlist" ? "is-active" : ""}`}
-                onClick={() => setFilters((prev) => ({ ...prev, status: "wishlist" }))}
-              >
-                イキタイ
-              </button>
-            </div>
-
-            <button
-              type="button"
-              className={`bounds-toggle-btn ${filters.filterByBounds ? "is-active" : ""}`}
-              onClick={() =>
-                setFilters((prev) => ({
-                  ...prev,
-                  filterByBounds: !prev.filterByBounds,
-                }))
-              }
-              title="地図の表示エリア内にあるサウナのみを表示"
-            >
-              🗺️ マップ範囲内
-            </button>
-          </div>
-
-          <div className="controls-row secondary-controls">
-            <select
-              className="quick-sort-select"
-              value={filters.sort}
-              onChange={(e) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  sort: e.target.value as VisitFilters["sort"],
-                }))
-              }
-              aria-label="並び順"
-            >
-              <option value="recent">📅 新しい順</option>
-              <option value="oldest">📅 古い順</option>
-              <option value="ratingDesc">⭐ 評価が高い順</option>
-              <option value="ratingAsc">⭐ 評価が低い順</option>
-              <option value="visitCountDesc">🔥 訪問回数が多い順</option>
-              <option value="nameAsc">🔤 名前順 (あ〜ん)</option>
-            </select>
-
-            <span className="result-count-badge">
-              <strong>{filteredVisits.length}</strong> 件
-            </span>
-          </div>
-        </div>
       </div>
 
       {visits.length === 0 ? (
