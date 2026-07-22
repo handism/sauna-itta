@@ -56,17 +56,15 @@ export function VisitList({
     }
   };
 
-  const activeId = selectedId || hoveredId;
-
   useEffect(() => {
-    if (!activeId || !containerRef.current) return;
+    if (!selectedId || !containerRef.current) return;
     const targetEl = containerRef.current.querySelector<HTMLElement>(
-      `[data-visit-id="${activeId}"]`
+      `[data-visit-id="${selectedId}"]`
     );
     if (targetEl) {
       targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
     }
-  }, [activeId]);
+  }, [selectedId]);
 
   return (
     <div className="sauna-list" ref={containerRef}>
