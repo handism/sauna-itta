@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate, sanitizeImageUrl } from "./utils";
+import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate, sanitizeImageUrl, getPopularTags, getPopularAreas } from "./utils";
 import { SaunaVisit, VisitFormState } from "./types";
 
 vi.mock("browser-image-compression", () => ({
@@ -1054,5 +1054,23 @@ describe("sanitizeImageUrl", () => {
   it("should block invalid URLs", () => {
     expect(sanitizeImageUrl("javascript:alert(1)")).toBeUndefined();
     expect(sanitizeImageUrl("ftp://example.com/image.png")).toBeUndefined();
+  });
+});
+
+describe("getPopularTags & getPopularAreas", () => {
+  const dummyVisits: SaunaVisit[] = [
+    { id: "1", name: "S1", lat: 0, lng: 0, date: "2023-01-01", comment: "", tags: ["ロウリュ", "水風呂"], area: "東京都渋谷区" },
+    { id: "2", name: "S2", lat: 0, lng: 0, date: "2023-01-02", comment: "", tags: ["ロウリュ", "外気浴"], area: "東京都新宿区" },
+    { id: "3", name: "S3", lat: 0, lng: 0, date: "2023-01-03", comment: "", tags: ["水風呂"], area: "神奈川県横浜市" },
+  ];
+
+  it("should extract popular tags sorted by frequency", () => {
+    const tags = getPopularTags(dummyVisits, 2);
+    expect(tags).toEqual(["ロウリュ", "水風呂"]);
+  });
+
+  it("should extract popular areas (prefectures) sorted by frequency", () => {
+    const areas = getPopularAreas(dummyVisits, 2);
+    expect(areas).toEqual(["東京都", "神奈川県"]);
   });
 });

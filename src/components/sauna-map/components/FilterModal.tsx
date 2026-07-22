@@ -8,12 +8,24 @@ interface FilterComponentProps {
 
 function SearchInput({ filters, setFilters }: FilterComponentProps) {
   return (
-    <input
-      className="input"
-      placeholder="キーワード検索"
-      value={filters.search}
-      onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-    />
+    <div className="search-input-wrapper">
+      <input
+        className="input search-input"
+        placeholder="キーワード検索 (サウナ名、エリア、タグなど)"
+        value={filters.search}
+        onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
+      />
+      {filters.search && (
+        <button
+          type="button"
+          className="search-clear-btn"
+          onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
+          aria-label="検索キーワードをクリア"
+        >
+          ✕
+        </button>
+      )}
+    </div>
   );
 }
 

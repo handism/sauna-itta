@@ -10,6 +10,8 @@ interface VisitListProps {
   filters: VisitFilters;
   setFilters: Dispatch<SetStateAction<VisitFilters>>;
   isFilterActive: boolean;
+  activeFilterCount?: number;
+  onClearFilters?: () => void;
   onOpenFilters: () => void;
   onEdit: (visit: SaunaVisit) => void;
   selectedId?: string | null;
@@ -25,6 +27,8 @@ export function VisitList({
   filters,
   setFilters,
   isFilterActive,
+  activeFilterCount,
+  onClearFilters,
   onOpenFilters,
   onEdit,
   selectedId,
@@ -59,7 +63,7 @@ export function VisitList({
           onClick={onOpenFilters}
           title="詳細フィルター"
         >
-          ⚙️ フィルター {isFilterActive && "●"}
+          ⚙️ フィルター {isFilterActive && <span className="filters-badge" />}
         </button>
       </div>
 
@@ -87,7 +91,14 @@ export function VisitList({
           )}
         </div>
 
-        <QuickFilterChips filters={filters} setFilters={setFilters} />
+        <QuickFilterChips
+          filters={filters}
+          setFilters={setFilters}
+          visits={visits}
+          activeFilterCount={activeFilterCount}
+          onClearFilters={onClearFilters}
+          resultCount={filteredVisits.length}
+        />
 
         <div className="sauna-quick-controls">
           <div className="status-tabs" role="tablist" aria-label="ステータスフィルター">

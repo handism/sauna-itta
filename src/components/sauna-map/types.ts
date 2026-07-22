@@ -43,6 +43,8 @@ export interface VisitFilters {
   status: "all" | "visited" | "wishlist";
   minRating: number;
   sort: "recent" | "oldest" | "ratingDesc" | "ratingAsc";
+  selectedTag?: string;
+  selectedArea?: string;
 }
 
 export interface VisitStats {
