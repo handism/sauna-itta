@@ -144,9 +144,11 @@
   margin-bottom: 0.75rem;
 }
 
-.sauna-list-header .status-tabs {
-  flex: 1;
-  min-width: 0;
+.sauna-list-header .panel-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .sauna-header-actions {
@@ -331,28 +333,31 @@
   margin-bottom: 1.2rem;
 }
 
-.sauna-search-tools-row {
+.sauna-quick-controls-row {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
   width: 100%;
 }
 
-.sauna-search-tools-row .search-input-wrapper {
-  flex: 1;
+.sauna-quick-controls-row .status-tabs {
+  flex: 1 1 auto;
   min-width: 0;
 }
 
-.sauna-search-tools-row .bounds-toggle-btn {
-  flex-shrink: 0;
+.sauna-quick-controls-row .bounds-toggle-btn {
+  flex: 0 0 auto;
   white-space: nowrap;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.76rem;
 }
 
-.sauna-search-tools-row .quick-sort-select {
-  flex-shrink: 0;
-  max-width: 125px;
-  padding-left: 0.45rem;
-  padding-right: 0.45rem;
+.sauna-quick-controls-row .quick-sort-select {
+  flex: 0 0 auto;
+  max-width: 118px;
+  font-size: 0.76rem;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
 }
 
 .search-input-wrapper {
