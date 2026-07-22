@@ -19,16 +19,17 @@
   max-height: calc(100vh - 4rem);
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--glass-heavy) 88%, transparent),
-    color-mix(in srgb, var(--glass) 76%, transparent)
+    color-mix(in srgb, var(--glass-heavy) 90%, transparent),
+    color-mix(in srgb, var(--secondary) 50%, transparent)
   );
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid var(--glass-border);
   border-radius: 24px;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.42);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5), 0 0 32px rgba(255, 140, 56, 0.08);
   animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
 }
@@ -57,6 +58,7 @@
     color-mix(in srgb, var(--glass) 82%, transparent)
   );
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   color: var(--foreground);
@@ -72,7 +74,7 @@
   background: var(--glass-heavy);
   border-color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.48), 0 0 16px var(--primary-glow);
 }
 
 .desktop-sidebar-open-btn .open-btn-icon {
@@ -107,6 +109,7 @@
 .desktop-sidebar-close-btn:hover {
   background: var(--glass-border);
   color: var(--primary);
+  transform: scale(1.05);
 }
 
 @media (max-width: 768px) {
@@ -160,6 +163,7 @@
   border-color: var(--primary);
   color: var(--primary);
   background: var(--glass-heavy);
+  box-shadow: 0 0 12px var(--primary-glow);
 }
 
 .sauna-search-box {
@@ -218,7 +222,7 @@
   display: flex;
   background: var(--input-bg);
   padding: 3px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid var(--glass-border);
   gap: 2px;
 }
@@ -228,31 +232,32 @@
   background: transparent;
   color: var(--foreground);
   opacity: 0.75;
-  padding: 0.35rem 0.75rem;
+  padding: 0.4rem 0.85rem;
   font-size: 0.78rem;
-  border-radius: 7px;
+  border-radius: 9px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-weight: 500;
 }
 
 .status-tab:hover {
   opacity: 1;
+  background: var(--glass-hover);
 }
 
 .status-tab.is-active {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
   color: white;
   opacity: 1;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .quick-sort-select {
   background: var(--input-bg);
   border: 1px solid var(--glass-border);
   color: var(--foreground);
-  padding: 0.35rem 0.65rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 10px;
   font-size: 0.78rem;
   cursor: pointer;
@@ -262,6 +267,7 @@
 
 .quick-sort-select:focus {
   border-color: var(--primary);
+  box-shadow: 0 0 10px var(--primary-glow);
 }
 
 .reset-filter-btn {
@@ -281,7 +287,8 @@
   margin-bottom: 0.5rem;
   font-size: 0.9rem;
   color: var(--foreground);
-  opacity: 0.8;
+  opacity: 0.85;
+  font-weight: 500;
 }
 
 .checkbox-row {
@@ -315,13 +322,14 @@
   color: var(--foreground);
   font-family: inherit;
   font-size: 1rem;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
 }
 
 .input:focus {
   outline: none;
   border-color: var(--primary);
   background: var(--glass);
+  box-shadow: 0 0 16px var(--primary-glow);
 }
 
 .input-file {
@@ -352,10 +360,10 @@ input[type="date"].input {
   width: 100%;
   padding: 1rem;
   border: none;
-  border-radius: 12px;
+  border-radius: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   font-family: inherit;
   font-size: 1rem;
   display: flex;
@@ -365,13 +373,19 @@ input[type="date"].input {
 }
 
 .btn-primary {
-  background: var(--primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
   color: white;
+  box-shadow: 0 6px 20px var(--primary-glow);
 }
 
 .btn-primary:hover {
-  background: var(--accent);
   transform: translateY(-2px);
+  box-shadow: 0 10px 28px var(--primary-glow);
+  filter: brightness(1.06);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
 }
 
 .btn-ghost {
@@ -382,16 +396,19 @@ input[type="date"].input {
 
 .btn-ghost:hover {
   background: var(--primary-glow);
+  box-shadow: 0 0 14px var(--primary-glow);
 }
 
 .btn-danger {
   background: var(--error);
   color: #fff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
 }
 
 .btn-danger:hover {
-  filter: brightness(1.04);
+  filter: brightness(1.06);
   transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
 /* Sauna Cards */
@@ -402,11 +419,11 @@ input[type="date"].input {
 }
 
 .sauna-card {
-  background: color-mix(in srgb, var(--glass) 90%, transparent);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
   border: 1px solid var(--glass-border);
-  border-radius: 16px;
-  padding: 1rem 1rem 1rem 1.15rem;
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  border-radius: 18px;
+  padding: 1.1rem 1.1rem 1.1rem 1.25rem;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -419,7 +436,7 @@ input[type="date"].input {
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(180deg, #ff5e36, #ff9233);
+  background: linear-gradient(180deg, var(--primary), var(--accent-water));
   opacity: 0;
   transform: scaleY(0.4);
   transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -428,9 +445,9 @@ input[type="date"].input {
 .sauna-card:hover,
 .sauna-card.is-hovered {
   background: var(--glass-heavy);
-  border-color: color-mix(in srgb, var(--primary) 60%, transparent);
+  border-color: var(--primary-glow);
   transform: translateY(-3px);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4), 0 0 20px var(--primary-glow);
 }
 
 .sauna-card:hover::before,

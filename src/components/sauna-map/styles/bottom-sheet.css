@@ -8,10 +8,13 @@
     right: 0;
     bottom: 56px; /* モバイルナビバーの高さ */
     z-index: 1000;
-    background: var(--bg-sidebar, #1e293b);
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
+    background: var(--glass-heavy);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--glass-border);
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45), 0 0 24px var(--primary-glow);
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
@@ -40,23 +43,29 @@
   /* ハンドル領域 */
   .bottom-sheet-handle-wrapper {
     width: 100%;
-    padding: 10px 0 6px;
+    padding: 12px 0 8px;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: grab;
     user-select: none;
     background: inherit;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
   }
 
   .bottom-sheet-handle {
-    width: 36px;
-    height: 4px;
-    background-color: var(--border-color, #475569);
-    border-radius: 2px;
-    opacity: 0.8;
+    width: 40px;
+    height: 5px;
+    background-color: var(--glass-border);
+    border-radius: 999px;
+    opacity: 0.85;
+    transition: background-color 0.2s, opacity 0.2s;
+  }
+
+  .bottom-sheet-handle-wrapper:active .bottom-sheet-handle {
+    background-color: var(--primary);
+    opacity: 1;
   }
 
   /* ボトムシートコンテンツエリア */
@@ -75,13 +84,14 @@
     right: 0;
     height: 56px;
     z-index: 1001;
-    background: var(--bg-sidebar, #0f172a);
-    border-top: 1px solid var(--border-color, #334155);
+    background: var(--glass-heavy);
+    border-top: 1px solid var(--glass-border);
     display: flex;
     justify-content: space-around;
     align-items: center;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .mobile-nav-item {
@@ -92,18 +102,20 @@
     justify-content: center;
     background: transparent;
     border: none;
-    color: var(--text-muted, #94a3b8);
+    color: var(--foreground);
+    opacity: 0.65;
     font-size: 0.7rem;
     padding: 4px 0;
     cursor: pointer;
     text-decoration: none;
-    transition: color 0.15s ease;
+    transition: all 0.2s ease;
     position: relative;
   }
 
   .mobile-nav-item:hover,
   .mobile-nav-item.is-active {
-    color: var(--color-primary, #38bdf8);
+    color: var(--primary);
+    opacity: 1;
     font-weight: 600;
   }
 
@@ -115,18 +127,23 @@
 
   /* 追加ボタンの特記スタイル */
   .mobile-nav-item--add .mobile-nav-icon-add {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, #38bdf8, #0284c7);
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
     color: #ffffff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: bold;
-    box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+    box-shadow: 0 4px 14px var(--primary-glow);
     margin-bottom: 2px;
+    transition: transform 0.2s;
+  }
+
+  .mobile-nav-item--add:active .mobile-nav-icon-add {
+    transform: scale(0.92);
   }
 
   /* フィルターバッジ */
@@ -135,9 +152,10 @@
     position: absolute;
     top: 6px;
     right: 28%;
-    width: 6px;
-    height: 6px;
-    background-color: #f43f5e;
+    width: 7px;
+    height: 7px;
+    background-color: var(--primary);
+    box-shadow: 0 0 8px var(--primary-glow);
     border-radius: 50%;
   }
 }

@@ -1,24 +1,27 @@
 .share-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(6, 10, 18, 0.74);
+  background: rgba(6, 10, 18, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1200;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .share-modal {
-  background: var(--background);
+  background: var(--glass-heavy);
   color: var(--foreground);
-  padding: 1.4rem;
-  border-radius: 18px;
+  padding: 1.6rem;
+  border-radius: 22px;
   width: min(680px, 92vw);
   max-height: 82vh;
   overflow: auto;
   border: 1px solid var(--glass-border);
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 32px var(--primary-glow);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
 }
 
 .share-header {
@@ -284,23 +287,25 @@
 
 .confirm-modal {
   width: min(460px, 100%);
-  border-radius: 18px;
+  border-radius: 20px;
   border: 1px solid var(--glass-border);
   background: var(--glass-heavy);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.35);
-  padding: 1rem;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45), 0 0 24px var(--primary-glow);
+  padding: 1.2rem;
 }
 
 .confirm-title {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   margin: 0 0 0.4rem;
+  color: var(--primary);
 }
 
 .confirm-message {
   font-size: 0.9rem;
   opacity: 0.85;
-  margin: 0 0 0.95rem;
+  margin: 0 0 1rem;
 }
 
 .confirm-actions {
@@ -316,12 +321,13 @@
   transform: translateX(-50%);
   z-index: 1400;
   width: min(92vw, 520px);
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid var(--glass-border);
   background: var(--glass-heavy);
-  backdrop-filter: blur(18px);
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
-  padding: 0.72rem 0.8rem 0.72rem 0.9rem;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 20px var(--primary-glow);
+  padding: 0.8rem 0.9rem 0.8rem 1rem;
   font-size: 0.9rem;
   display: flex;
   align-items: center;
