@@ -80,6 +80,7 @@ export default function SaunaMap() {
   } = useUIState();
 
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
   const showToast = useCallback((message: string, tone: ToastState["tone"] = "info") => {
     setToast({ id: Date.now(), message, tone });
@@ -269,7 +270,12 @@ export default function SaunaMap() {
           />
 
           <MapController target={mapTarget} />
-          <VisitMarkers visits={filteredVisits} editingId={editingId} onEdit={startEditing} />
+          <VisitMarkers
+            visits={filteredVisits}
+            editingId={editingId}
+            hoveredId={hoveredId}
+            onEdit={startEditing}
+          />
 
           {isCreating && <LocationPicker onLocationSelect={handleLocationSelect} />}
 
@@ -449,6 +455,8 @@ export default function SaunaMap() {
                   isFilterActive={isFilterActive}
                   onOpenFilters={openFilterModal}
                   onEdit={startEditing}
+                  hoveredId={hoveredId}
+                  onHoverVisit={setHoveredId}
                 />
               )}
             </div>

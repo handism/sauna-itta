@@ -11,6 +11,8 @@ interface VisitListProps {
   isFilterActive: boolean;
   onOpenFilters: () => void;
   onEdit: (visit: SaunaVisit) => void;
+  hoveredId?: string | null;
+  onHoverVisit?: (id: string | null) => void;
 }
 
 export function VisitList({
@@ -21,6 +23,8 @@ export function VisitList({
   isFilterActive,
   onOpenFilters,
   onEdit,
+  hoveredId,
+  onHoverVisit,
 }: VisitListProps) {
   return (
     <div className="sauna-list">
@@ -136,8 +140,15 @@ export function VisitList({
       ) : (
         filteredVisits.map((visit) => {
           const visitCount = getVisitCount(visit);
+          const isHovered = visit.id === hoveredId;
           return (
-            <div key={visit.id} className="sauna-card" onClick={() => onEdit(visit)}>
+            <div
+              key={visit.id}
+              className={`sauna-card ${isHovered ? "is-hovered" : ""}`}
+              onClick={() => onEdit(visit)}
+              onMouseEnter={() => onHoverVisit?.(visit.id)}
+              onMouseLeave={() => onHoverVisit?.(null)}
+            >
               <h3 className="sauna-card-title">
                 {visit.name}
                 {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}

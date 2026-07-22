@@ -405,15 +405,38 @@ input[type="date"].input {
   background: color-mix(in srgb, var(--glass) 90%, transparent);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  padding: 1rem;
-  transition: all 0.2s;
+  padding: 1rem 1rem 1rem 1.15rem;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
   position: relative;
+  overflow: hidden;
 }
 
-.sauna-card:hover {
+.sauna-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #ff5e36, #ff9233);
+  opacity: 0;
+  transform: scaleY(0.4);
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sauna-card:hover,
+.sauna-card.is-hovered {
   background: var(--glass-heavy);
-  border-color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 60%, transparent);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+}
+
+.sauna-card:hover::before,
+.sauna-card.is-hovered::before {
+  opacity: 1;
+  transform: scaleY(1);
 }
 
 .sauna-card h3 {
