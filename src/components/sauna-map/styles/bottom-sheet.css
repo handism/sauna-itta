@@ -28,15 +28,15 @@
 
   /* スナップポジション高さ指定 */
   .bottom-sheet--min {
-    transform: translateY(calc(100% - 44px));
+    transform: translateY(calc(100% - 44px + var(--drag-offset-y, 0px)));
   }
 
   .bottom-sheet--half {
-    transform: translateY(calc(100% - 45vh));
+    transform: translateY(calc(100% - 45vh + var(--drag-offset-y, 0px)));
   }
 
   .bottom-sheet--full {
-    transform: translateY(0);
+    transform: translateY(calc(var(--drag-offset-y, 0px)));
     height: calc(100vh - 60px);
   }
 
