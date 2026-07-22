@@ -516,11 +516,23 @@ input[type="date"].input {
   box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4), 0 0 20px var(--primary-glow);
 }
 
+@keyframes selectedPulse {
+  0% {
+    box-shadow: 0 0 0 2px var(--primary), 0 10px 30px rgba(255, 120, 0, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 3px var(--primary-glow), 0 14px 38px rgba(255, 120, 0, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 2px var(--primary), 0 10px 30px rgba(255, 120, 0, 0.25);
+  }
+}
+
 .sauna-card.is-selected {
-  background: var(--glass-heavy);
+  background: linear-gradient(135deg, rgba(255, 120, 0, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
   border-color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: 0 0 0 2px var(--primary), 0 10px 30px rgba(255, 120, 0, 0.25);
+  animation: selectedPulse 2.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
 }
 
 .sauna-card:hover::before,
@@ -535,6 +547,33 @@ input[type="date"].input {
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.5rem;
+}
+
+.sauna-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.sauna-card-deselect-btn {
+  background: rgba(255, 80, 80, 0.18);
+  border: 1px solid rgba(255, 100, 100, 0.4);
+  border-radius: 8px;
+  color: #ff8888;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.sauna-card-deselect-btn:hover {
+  background: rgba(255, 60, 60, 0.8);
+  color: #fff;
+  border-color: rgba(255, 60, 60, 1);
+  box-shadow: 0 0 10px rgba(255, 60, 60, 0.5);
 }
 
 .sauna-card-edit-btn {
