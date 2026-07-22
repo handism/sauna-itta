@@ -7,6 +7,8 @@ const DEFAULT_FILTERS: VisitFilters = {
   status: "all",
   minRating: 0,
   sort: "recent",
+  selectedTag: "",
+  selectedArea: "",
 };
 
 export function useVisitFilters(visits: SaunaVisit[]) {
@@ -21,6 +23,14 @@ export function useVisitFilters(visits: SaunaVisit[]) {
       }
 
       if ((v.rating ?? 0) < filters.minRating) {
+        return false;
+      }
+
+      if (filters.selectedTag && (!v.tags || !v.tags.includes(filters.selectedTag))) {
+        return false;
+      }
+
+      if (filters.selectedArea && (!v.area || !v.area.includes(filters.selectedArea))) {
         return false;
       }
 
@@ -51,11 +61,18 @@ export function useVisitFilters(visits: SaunaVisit[]) {
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
 
-  const isFilterActive =
-    filters.search.trim().length > 0 ||
-    filters.status !== "all" ||
-    filters.minRating > 0 ||
-    filters.sort !== "recent";
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.search.trim().length > 0) count++;
+    if (filters.status !== "all") count++;
+    if (filters.minRating > 0) count++;
+    if (filters.sort !== "recent") count++;
+    if (filters.selectedTag) count++;
+    if (filters.selectedArea) count++;
+    return count;
+  }, [filters]);
+
+  const isFilterActive = activeFilterCount > 0;
 
   const clearFilters = () => setFilters(DEFAULT_FILTERS);
 
@@ -65,6 +82,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
     filteredVisits,
     stats,
     isFilterActive,
+    activeFilterCount,
     clearFilters,
   };
 }

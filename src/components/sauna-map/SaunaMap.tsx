@@ -48,7 +48,7 @@ export default function SaunaMap() {
 
   const { visits, addVisit, editVisit, deleteVisit, removeLastHistoryEntry, importVisitsFromFile, exportVisits } =
     useSaunaVisits();
-  const { filters, setFilters, filteredVisits, stats, isFilterActive, clearFilters } =
+  const { filters, setFilters, filteredVisits, stats, isFilterActive, activeFilterCount, clearFilters } =
     useVisitFilters(visits);
 
   const [form, setForm] = useState<VisitFormState>(getDefaultForm());
@@ -492,6 +492,8 @@ export default function SaunaMap() {
                   filters={filters}
                   setFilters={setFilters}
                   isFilterActive={isFilterActive}
+                  activeFilterCount={activeFilterCount}
+                  onClearFilters={clearFilters}
                   onOpenFilters={openFilterModal}
                   onEdit={startEditing}
                   selectedId={selectedId}
@@ -537,6 +539,8 @@ export default function SaunaMap() {
               filters={filters}
               setFilters={setFilters}
               isFilterActive={isFilterActive}
+              activeFilterCount={activeFilterCount}
+              onClearFilters={clearFilters}
               onOpenFilters={openFilterModal}
               onEdit={(visit) => {
                 startEditing(visit);

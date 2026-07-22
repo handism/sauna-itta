@@ -1073,3 +1073,75 @@ input[type="date"].input {
   box-shadow: 0 2px 8px rgba(238, 143, 67, 0.2);
 }
 
+.quick-filter-container {
+  margin-bottom: 0.75rem;
+}
+
+.chip-reset-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.chip-reset-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+.chip-badge {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.05rem 0.35rem;
+  line-height: 1;
+}
+
+.filter-result-count {
+  font-size: 0.75rem;
+  color: var(--text-muted, #94a3b8);
+  padding: 0.1rem 0.25rem;
+  text-align: right;
+}
+
+.search-input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #94a3b8);
+  cursor: pointer;
+  padding: 0.2rem;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.search-clear-btn:hover {
+  color: var(--foreground, #ffffff);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.filters-badge {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--primary, #ee8f43);
+  margin-left: 0.25rem;
+}
+

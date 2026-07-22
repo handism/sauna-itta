@@ -8,6 +8,8 @@ export const THEME_STORAGE_KEY = "sauna-itta_theme";
 export function extractPrefecture(area: string | undefined): string | null {
   const s = (area ?? "").trim();
   if (!s) return null;
+  const match = s.match(/^(東京都|北海道|(?:京都|大阪)府|.+?県)/);
+  if (match) return match[1];
   const first = s.split(/\s/)[0];
   return /[都道府県]$/.test(first) ? first : null;
 }
@@ -331,4 +333,38 @@ export async function compressAndGetBase64(file: File): Promise<string> {
     };
     reader.readAsDataURL(compressedFile);
   });
+}
+
+export function getPopularTags(visits: SaunaVisit[], limit = 5): string[] {
+  const tagCounts = new Map<string, number>();
+  for (const visit of visits) {
+    if (Array.isArray(visit.tags)) {
+      for (const tag of visit.tags) {
+        const trimmed = tag.trim();
+        if (trimmed) {
+          tagCounts.set(trimmed, (tagCounts.get(trimmed) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  return Array.from(tagCounts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"))
+    .slice(0, limit)
+    .map(([tag]) => tag);
+}
+
+export function getPopularAreas(visits: SaunaVisit[], limit = 4): string[] {
+  const areaCounts = new Map<string, number>();
+  for (const visit of visits) {
+    const pref = extractPrefecture(visit.area);
+    if (pref) {
+      areaCounts.set(pref, (areaCounts.get(pref) ?? 0) + 1);
+    }
+  }
+
+  return Array.from(areaCounts.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"))
+    .slice(0, limit)
+    .map(([area]) => area);
 }
