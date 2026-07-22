@@ -1,7 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef } from "react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
 import { RatingStars, WishlistChip } from "./common";
+import { QuickFilterChips } from "./QuickFilterChips";
 
 interface VisitListProps {
   visits: SaunaVisit[];
@@ -26,8 +27,20 @@ export function VisitList({
   hoveredId,
   onHoverVisit,
 }: VisitListProps) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!hoveredId || !containerRef.current) return;
+    const targetEl = containerRef.current.querySelector<HTMLElement>(
+      `[data-visit-id="${hoveredId}"]`
+    );
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [hoveredId]);
+
   return (
-    <div className="sauna-list">
+    <div className="sauna-list" ref={containerRef}>
       <div className="sauna-list-header">
         <h2 className="panel-title">
           訪れたサウナ ({filteredVisits.length}/{visits.length})
@@ -65,6 +78,8 @@ export function VisitList({
             </button>
           )}
         </div>
+
+        <QuickFilterChips filters={filters} setFilters={setFilters} />
 
         <div className="sauna-quick-controls">
           <div className="status-tabs" role="tablist" aria-label="ステータスフィルター">
@@ -144,6 +159,7 @@ export function VisitList({
           return (
             <div
               key={visit.id}
+              data-visit-id={visit.id}
               className={`sauna-card ${isHovered ? "is-hovered" : ""}`}
               onClick={() => onEdit(visit)}
               onMouseEnter={() => onHoverVisit?.(visit.id)}

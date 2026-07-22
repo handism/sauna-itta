@@ -21,6 +21,8 @@ import { MapController } from "./components/MapController";
 import { LocationControl } from "./components/LocationControl";
 import { Toast } from "./components/Toast";
 import type { ToastState } from "./components/Toast";
+import { BottomSheet, SheetSnapPosition } from "./components/BottomSheet";
+import { MobileNavBar, MobileTab } from "./components/MobileNavBar";
 import { getSaunaIcon } from "./components/markerIcon";
 import { useSaunaVisits } from "./hooks/useSaunaVisits";
 import { useEditorState } from "./hooks/useEditorState";
@@ -81,6 +83,28 @@ export default function SaunaMap() {
 
   const [toast, setToast] = useState<ToastState | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [snapPosition, setSnapPosition] = useState<SheetSnapPosition>("min");
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>("map");
+
+  const handleSelectVisitFromMarker = useCallback((visit: SaunaVisit) => {
+    setHoveredId(visit.id);
+    if (isMobile) {
+      setSnapPosition("half");
+      setActiveMobileTab("list");
+    }
+  }, [isMobile]);
+
+  const handleSelectMobileTab = useCallback((tab: MobileTab) => {
+    setActiveMobileTab(tab);
+    if (tab === "map") {
+      setSnapPosition("min");
+    } else if (tab === "list") {
+      setSnapPosition("half");
+    } else if (tab === "add") {
+      startCreate();
+      setSnapPosition("full");
+    }
+  }, [startCreate]);
 
   const showToast = useCallback((message: string, tone: ToastState["tone"] = "info") => {
     setToast({ id: Date.now(), message, tone });
@@ -275,6 +299,7 @@ export default function SaunaMap() {
             editingId={editingId}
             hoveredId={hoveredId}
             onEdit={startEditing}
+            onSelectVisit={handleSelectVisitFromMarker}
           />
 
           {isCreating && <LocationPicker onLocationSelect={handleLocationSelect} />}
@@ -470,6 +495,52 @@ export default function SaunaMap() {
             />
           </aside>
         </div>
+      )}
+
+      {/* モバイル専用 ボトムシート UI */}
+      {!isMobilePickingLocation && (
+        <BottomSheet snapPosition={snapPosition} onSnapChange={setSnapPosition}>
+          {isAdding ? (
+            <VisitForm
+              form={form}
+              setForm={setForm}
+              selectedLocation={selectedLocation}
+              editingId={editingId}
+              historyEntries={historyEntries}
+              onSubmit={handleSubmit}
+              onImageChange={handleImageChange}
+              onDelete={handleDelete}
+              onCancel={() => cancelEditing()}
+              onDeleteLastHistory={editingId ? handleDeleteLastHistory : undefined}
+            />
+          ) : (
+            <VisitList
+              visits={visits}
+              filteredVisits={filteredVisits}
+              filters={filters}
+              setFilters={setFilters}
+              isFilterActive={isFilterActive}
+              onOpenFilters={openFilterModal}
+              onEdit={(visit) => {
+                startEditing(visit);
+                setSnapPosition("full");
+              }}
+              hoveredId={hoveredId}
+              onHoverVisit={setHoveredId}
+            />
+          )}
+        </BottomSheet>
+      )}
+
+      {/* モバイル専用 下部ナビゲーションバー */}
+      {!isMobilePickingLocation && (
+        <MobileNavBar
+          activeTab={activeMobileTab}
+          onSelectTab={handleSelectMobileTab}
+          snapPosition={snapPosition}
+          onOpenFilter={openFilterModal}
+          isFilterActive={isFilterActive}
+        />
       )}
 
       <FilterModal

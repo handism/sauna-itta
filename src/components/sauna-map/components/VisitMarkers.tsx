@@ -10,9 +10,16 @@ interface VisitMarkersProps {
   editingId: string | null;
   hoveredId?: string | null;
   onEdit: (visit: SaunaVisit) => void;
+  onSelectVisit?: (visit: SaunaVisit) => void;
 }
 
-export function VisitMarkers({ visits, editingId, hoveredId, onEdit }: VisitMarkersProps) {
+export function VisitMarkers({
+  visits,
+  editingId,
+  hoveredId,
+  onEdit,
+  onSelectVisit,
+}: VisitMarkersProps) {
   return (
     <>
       {visits.map((visit) => {
@@ -29,6 +36,9 @@ export function VisitMarkers({ visits, editingId, hoveredId, onEdit }: VisitMark
               wishlist: (visit.status ?? "visited") === "wishlist",
               hovered: isHovered,
             })}
+            eventHandlers={{
+              click: () => onSelectVisit?.(visit),
+            }}
           >
             <Popup>
               <div className="popup-card">
