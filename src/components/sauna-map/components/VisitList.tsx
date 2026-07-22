@@ -1,8 +1,11 @@
-import { Dispatch, SetStateAction, useEffect, useRef } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
 import { RatingStars, WishlistChip } from "./common";
 import { QuickFilterChips } from "./QuickFilterChips";
+
+type ViewMode = "card" | "compact";
+const STORAGE_KEY = "sauna_itta_view_mode";
 
 interface VisitListProps {
   visits: SaunaVisit[];
@@ -38,6 +41,20 @@ export function VisitList({
   onHoverVisit,
 }: VisitListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved === "compact" || saved === "card") return saved;
+    }
+    return "compact";
+  });
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, mode);
+    }
+  };
 
   const activeId = selectedId || hoveredId;
 
@@ -57,14 +74,36 @@ export function VisitList({
         <h2 className="panel-title">
           訪れたサウナ ({filteredVisits.length}/{visits.length})
         </h2>
-        <button
-          type="button"
-          className={`filters-open-btn ${isFilterActive ? "is-active" : ""}`}
-          onClick={onOpenFilters}
-          title="詳細フィルター"
-        >
-          ⚙️ フィルター {isFilterActive && <span className="filters-badge" />}
-        </button>
+        <div className="sauna-header-actions">
+          <div className="view-mode-toggle" role="group" aria-label="表示形式切り替え">
+            <button
+              type="button"
+              className={`view-mode-btn ${viewMode === "compact" ? "is-active" : ""}`}
+              onClick={() => handleViewModeChange("compact")}
+              title="リスト（コンパクト）表示"
+              aria-label="リスト表示"
+            >
+              ☰ リスト
+            </button>
+            <button
+              type="button"
+              className={`view-mode-btn ${viewMode === "card" ? "is-active" : ""}`}
+              onClick={() => handleViewModeChange("card")}
+              title="カード表示"
+              aria-label="カード表示"
+            >
+              㗊 カード
+            </button>
+          </div>
+          <button
+            type="button"
+            className={`filters-open-btn ${isFilterActive ? "is-active" : ""}`}
+            onClick={onOpenFilters}
+            title="詳細フィルター"
+          >
+            ⚙️ {isFilterActive && <span className="filters-badge" />}
+          </button>
+        </div>
       </div>
 
       <div className="sauna-search-box">
@@ -176,6 +215,110 @@ export function VisitList({
           const visitCount = getVisitCount(visit);
           const isHovered = visit.id === hoveredId;
           const isSelected = visit.id === selectedId;
+
+          if (viewMode === "compact") {
+            return (
+              <div
+                key={visit.id}
+                data-visit-id={visit.id}
+                className={`sauna-compact-item ${isHovered ? "is-hovered" : ""} ${isSelected ? "is-selected" : ""}`}
+                onMouseEnter={() => onHoverVisit?.(visit.id)}
+                onMouseLeave={() => onHoverVisit?.(null)}
+              >
+                <div
+                  className="sauna-compact-header"
+                  onClick={() => {
+                    if (isSelected) {
+                      onDeselectVisit?.();
+                    } else {
+                      onSelectVisit?.(visit);
+                    }
+                  }}
+                >
+                  <div className="sauna-compact-main-info">
+                    <span className={`sauna-compact-chevron ${isSelected ? "is-expanded" : ""}`}>
+                      ▶
+                    </span>
+                    <h3 className="sauna-compact-title">
+                      {visit.name}
+                      {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
+                    </h3>
+                    {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
+                  </div>
+                  <div className="sauna-compact-side-info">
+                    <RatingStars rating={visit.rating ?? 0} className="sauna-compact-rating" />
+                    <button
+                      type="button"
+                      className="sauna-card-edit-btn compact-edit-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(visit);
+                      }}
+                      title="記録を編集"
+                    >
+                      ✏️
+                    </button>
+                  </div>
+                </div>
+
+                {isSelected && (
+                  <div className="sauna-compact-body">
+                    {visit.tags && visit.tags.length > 0 && (
+                      <div className="sauna-tag-list">
+                        {visit.tags.map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            className="sauna-tag sauna-tag-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFilters((prev) => ({ ...prev, search: tag }));
+                            }}
+                            title={`タグ「${tag}」で絞り込み`}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {visit.comment && <p className="sauna-card-comment">{visit.comment}</p>}
+                    {sanitizeImageUrl(visit.image) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={sanitizeImageUrl(visit.image)} className="sauna-img-preview" alt="" />
+                    )}
+                    <div className="sauna-card-meta">
+                      <span>日付: {visit.date}</span>
+                      {visitCount > 1 && <span>訪問 {visitCount}回目</span>}
+                    </div>
+                    <div className="sauna-compact-footer-actions">
+                      <a
+                        href={getDirectionsUrl(visit.lat, visit.lng)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="route-link"
+                      >
+                        🧭 ここへ行く
+                      </a>
+                      {onDeselectVisit && (
+                        <button
+                          type="button"
+                          className="sauna-card-deselect-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeselectVisit();
+                          }}
+                        >
+                          ✕ 解除
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
           return (
             <div
               key={visit.id}
