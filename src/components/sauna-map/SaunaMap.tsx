@@ -34,6 +34,7 @@ import { ConfirmModal } from "./components/ConfirmModal";
 import { LocationPicker } from "./components/LocationPicker";
 import { MapController } from "./components/MapController";
 import { LocationControl } from "./components/LocationControl";
+import { MapClusterControl } from "./components/MapClusterControl";
 import { Toast } from "./components/Toast";
 import type { ToastState } from "./components/Toast";
 import { BottomSheet, SheetSnapPosition } from "./components/BottomSheet";
@@ -103,6 +104,7 @@ export default function SaunaMap() {
   const [snapPosition, setSnapPosition] = useState<SheetSnapPosition>("min");
   const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>("map");
   const [zoomLevel, setZoomLevel] = useState<number>(6);
+  const [enableClustering, setEnableClustering] = useState<boolean>(true);
 
   const handleZoomChange = useCallback((zoom: number) => {
     setZoomLevel(zoom);
@@ -322,6 +324,10 @@ export default function SaunaMap() {
         >
           <ZoomControl position="topright" />
           <LocationControl />
+          <MapClusterControl
+            enableClustering={enableClustering}
+            onToggleClustering={() => setEnableClustering((prev) => !prev)}
+          />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -336,6 +342,7 @@ export default function SaunaMap() {
             selectedId={selectedId}
             hoveredId={hoveredId}
             showBadges={showBadges}
+            enableClustering={enableClustering}
             onEdit={startEditing}
             onSelectVisit={handleSelectVisit}
           />

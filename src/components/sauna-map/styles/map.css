@@ -465,4 +465,120 @@
     min-width: 44px;
     min-height: 44px;
   }
+
+  .map-cluster-control {
+    top: max(1rem, env(safe-area-inset-top));
+    right: calc(1rem + 48px + 0.5rem);
+  }
+
+  .map-cluster-control-btn {
+    height: 48px;
+    padding: 0 0.8rem;
+    font-size: 0.82rem;
+  }
 }
+
+/* Cluster Marker Styling */
+.custom-cluster-marker {
+  background: transparent;
+  border: none;
+}
+
+.sauna-cluster {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: linear-gradient(135deg, var(--accent-sauna, #ff8c38) 0%, var(--primary, #ff5722) 100%);
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 16px var(--primary-glow, rgba(255, 87, 34, 0.4));
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+
+.sauna-cluster:hover {
+  transform: scale(1.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px var(--primary-glow, rgba(255, 87, 34, 0.6));
+}
+
+.sauna-cluster--medium {
+  background: linear-gradient(135deg, #ff7a00 0%, #e64a19 100%);
+  width: 46px;
+  height: 46px;
+  font-size: 0.9rem;
+}
+
+.sauna-cluster--large {
+  background: linear-gradient(135deg, #ff5252 0%, #d50000 100%);
+  width: 50px;
+  height: 50px;
+  font-size: 0.95rem;
+}
+
+.sauna-cluster-icon {
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.sauna-cluster-count {
+  font-family: inherit;
+  line-height: 1;
+}
+
+/* Cluster Control Button */
+.map-cluster-control {
+  top: 2rem;
+  right: calc(2rem + 48px + 0.5rem);
+  pointer-events: none;
+}
+
+.map-cluster-control-btn {
+  pointer-events: auto;
+  height: 48px;
+  padding: 0 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-heavy);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--foreground);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition:
+    background 0.25s,
+    border-color 0.25s,
+    transform 0.15s,
+    box-shadow 0.25s;
+}
+
+.map-cluster-control-btn:hover {
+  background: color-mix(
+    in srgb,
+    var(--glass-heavy) 60%,
+    var(--primary) 40%
+  ) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 16px var(--primary-glow) !important;
+}
+
+.map-cluster-control-btn--active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--glass-heavy) 80%, var(--primary) 20%);
+}
+
+.map-cluster-control-btn:active {
+  transform: scale(0.96);
+}
+
