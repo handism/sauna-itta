@@ -168,7 +168,28 @@ function AreaField({ area, onChange }: { area: string; onChange: (area: string) 
   );
 }
 
+const PRESET_TAGS = [
+  "外気浴最高",
+  "水風呂キンキン",
+  "セルフロウリュ",
+  "アウフグース",
+  "サウナ飯",
+  "ソロ向き",
+];
+
 function TagsField({ tagsText, onChange }: { tagsText: string; onChange: (tagsText: string) => void }) {
+  const currentTags = tagsText
+    ? tagsText.split(",").map((t) => t.trim()).filter(Boolean)
+    : [];
+
+  const toggleTag = (preset: string) => {
+    const exists = currentTags.includes(preset);
+    const updated = exists
+      ? currentTags.filter((t) => t !== preset)
+      : [...currentTags, preset];
+    onChange(updated.join(", "));
+  };
+
   return (
     <div className="form-group">
       <label>タグ（カンマ区切り）</label>
@@ -178,6 +199,21 @@ function TagsField({ tagsText, onChange }: { tagsText: string; onChange: (tagsTe
         onChange={(e) => onChange(e.target.value)}
         placeholder="例: 外気浴最高, 水風呂キンキン, ソロ向き"
       />
+      <div className="preset-tags">
+        {PRESET_TAGS.map((tag) => {
+          const isSelected = currentTags.includes(tag);
+          return (
+            <button
+              key={tag}
+              type="button"
+              className={`preset-tag-chip ${isSelected ? "is-selected" : ""}`}
+              onClick={() => toggleTag(tag)}
+            >
+              {isSelected ? `✓ ${tag}` : `+ ${tag}`}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -201,9 +237,36 @@ function ImageField({ image, onChange }: { image: string; onChange: (e: ChangeEv
 }
 
 function DateField({ date, onChange }: { date: string; onChange: (date: string) => void }) {
+  const setQuickDate = (offsetDays: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() - offsetDays);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    onChange(`${year}-${month}-${day}`);
+  };
+
   return (
     <div className="form-group">
-      <label>行った日</label>
+      <div className="label-row-with-actions">
+        <label>行った日</label>
+        <div className="quick-date-actions">
+          <button
+            type="button"
+            className="btn-quick-date"
+            onClick={() => setQuickDate(0)}
+          >
+            今日
+          </button>
+          <button
+            type="button"
+            className="btn-quick-date"
+            onClick={() => setQuickDate(1)}
+          >
+            昨日
+          </button>
+        </div>
+      </div>
       <input
         type="date"
         className="input"

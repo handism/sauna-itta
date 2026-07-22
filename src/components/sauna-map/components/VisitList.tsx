@@ -194,9 +194,18 @@ export function VisitList({
               {visit.tags && visit.tags.length > 0 && (
                 <div className="sauna-tag-list">
                   {visit.tags.map((tag) => (
-                    <span key={tag} className="sauna-tag">
+                    <button
+                      key={tag}
+                      type="button"
+                      className="sauna-tag sauna-tag-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFilters((prev) => ({ ...prev, search: tag }));
+                      }}
+                      title={`タグ「${tag}」で絞り込み`}
+                    >
                       {tag}
-                    </span>
+                    </button>
                   ))}
                 </div>
               )}
