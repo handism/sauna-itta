@@ -366,10 +366,17 @@
 
 .sauna-quick-controls {
   display: flex;
+  flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
+}
+
+.controls-row {
+  display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
 }
 
 .status-tabs {
@@ -379,19 +386,24 @@
   border-radius: 12px;
   border: 1px solid var(--glass-border);
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .status-tab {
+  flex: 1;
   border: none;
   background: transparent;
   color: var(--foreground);
   opacity: 0.75;
-  padding: 0.4rem 0.85rem;
+  padding: 0.4rem 0.5rem;
   font-size: 0.78rem;
   border-radius: 9px;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .status-tab:hover {
@@ -407,6 +419,35 @@
   box-shadow: 0 4px 14px var(--primary-glow);
 }
 
+.bounds-toggle-btn {
+  border: 1px solid var(--glass-border);
+  background: var(--input-bg);
+  color: var(--foreground);
+  opacity: 0.85;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.78rem;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+  font-weight: 500;
+}
+
+.bounds-toggle-btn:hover {
+  opacity: 1;
+  background: var(--glass-hover);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.bounds-toggle-btn.is-active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.35));
+  color: #60a5fa;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  opacity: 1;
+  font-weight: 600;
+}
+
 .quick-sort-select {
   background: var(--input-bg);
   border: 1px solid var(--glass-border);
@@ -417,11 +458,27 @@
   cursor: pointer;
   outline: none;
   transition: all 0.2s;
+  flex: 0 0 auto;
 }
 
 .quick-sort-select:focus {
   border-color: var(--primary);
   box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.result-count-badge {
+  font-size: 0.78rem;
+  color: var(--text-muted, #94a3b8);
+  background: var(--input-bg, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.08));
+  padding: 0.3rem 0.65rem;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.result-count-badge strong {
+  color: var(--primary, #ee8f43);
+  font-weight: 700;
 }
 
 .reset-filter-btn {

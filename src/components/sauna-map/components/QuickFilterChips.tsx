@@ -17,14 +17,9 @@ export function QuickFilterChips({
   visits = [],
   activeFilterCount = 0,
   onClearFilters,
-  resultCount,
 }: QuickFilterChipsProps) {
   const popularAreas = useMemo(() => getPopularAreas(visits, 4), [visits]);
   const popularTags = useMemo(() => getPopularTags(visits, 5), [visits]);
-
-  const handleStatusChange = (status: "all" | "visited" | "wishlist") => {
-    setFilters((prev) => ({ ...prev, status }));
-  };
 
   const handleRatingToggle = (minRating: number) => {
     setFilters((prev) => ({
@@ -47,18 +42,12 @@ export function QuickFilterChips({
     }));
   };
 
-  const handleBoundsToggle = () => {
-    setFilters((prev) => ({
-      ...prev,
-      filterByBounds: !prev.filterByBounds,
-    }));
-  };
-
   const isFilterActive = activeFilterCount > 0;
 
+  // もしサブフィルター（★4以上、エリア、タグ、またはアクティブフィルター）が存在しない場合は非表示にすることも視野に入れるが、スクロールチップバーとしてシンプルに提供
   return (
     <div className="quick-filter-container">
-      <div className="quick-filter-chips" aria-label="クイックフィルター">
+      <div className="quick-filter-chips" aria-label="サブフィルター">
         {/* リセット / アクティブバッジ */}
         {isFilterActive && onClearFilters && (
           <button
@@ -71,38 +60,6 @@ export function QuickFilterChips({
           </button>
         )}
 
-        {/* マップ表示範囲絞り込み */}
-        <button
-          type="button"
-          className={`chip-btn chip-bounds-btn ${filters.filterByBounds ? "is-active" : ""}`}
-          onClick={handleBoundsToggle}
-          title="地図の表示エリア内にあるサウナのみを表示"
-        >
-          🗺️ マップ範囲内
-        </button>
-
-        {/* ステータス */}
-        <button
-          type="button"
-          className={`chip-btn ${filters.status === "all" ? "is-active" : ""}`}
-          onClick={() => handleStatusChange("all")}
-        >
-          すべて
-        </button>
-        <button
-          type="button"
-          className={`chip-btn ${filters.status === "visited" ? "is-active" : ""}`}
-          onClick={() => handleStatusChange("visited")}
-        >
-          ♨️ 訪問済
-        </button>
-        <button
-          type="button"
-          className={`chip-btn ${filters.status === "wishlist" ? "is-active" : ""}`}
-          onClick={() => handleStatusChange("wishlist")}
-        >
-          ✨ イキタイ
-        </button>
         <button
           type="button"
           className={`chip-btn ${filters.minRating === 4 ? "is-active" : ""}`}
@@ -135,12 +92,7 @@ export function QuickFilterChips({
           </button>
         ))}
       </div>
-
-      {resultCount !== undefined && (
-        <div className="filter-result-count">
-          {resultCount} 件表示
-        </div>
-      )}
     </div>
   );
 }
+
