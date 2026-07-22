@@ -183,8 +183,10 @@ export function VisitList({
           >
             <option value="recent">📅 新しい順</option>
             <option value="oldest">📅 古い順</option>
-            <option value="ratingDesc">⭐ 満足度が高い順</option>
-            <option value="ratingAsc">⭐ 満足度が低い順</option>
+            <option value="ratingDesc">⭐ 評価が高い順</option>
+            <option value="ratingAsc">⭐ 評価が低い順</option>
+            <option value="visitCountDesc">🔥 訪問回数が多い順</option>
+            <option value="nameAsc">🔤 名前順 (あ〜ん)</option>
           </select>
         </div>
       </div>
@@ -197,14 +199,16 @@ export function VisitList({
         </p>
       ) : filteredVisits.length === 0 ? (
         <div className="empty-state">
-          <p>条件に合うサウナが見つかりませんでした。</p>
+          <p>
+            {filters.filterByBounds
+              ? "現在の地図エリア内に該当するサウナが見つかりませんでした。地図をスクロールするかフィルターを解除してください。"
+              : "条件に合うサウナが見つかりませんでした。"}
+          </p>
           {isFilterActive && (
             <button
               type="button"
               className="btn btn-ghost reset-filter-btn"
-              onClick={() =>
-                setFilters({ search: "", status: "all", minRating: 0, sort: "recent" })
-              }
+              onClick={onClearFilters ?? (() => setFilters({ search: "", status: "all", minRating: 0, sort: "recent", filterByBounds: false, mapBounds: null }))}
             >
               フィルターをクリア
             </button>

@@ -35,6 +35,7 @@ import { LocationPicker } from "./components/LocationPicker";
 import { MapController } from "./components/MapController";
 import { LocationControl } from "./components/LocationControl";
 import { MapClusterControl } from "./components/MapClusterControl";
+import { MapBoundsObserver } from "./components/MapBoundsObserver";
 import { Toast } from "./components/Toast";
 import type { ToastState } from "./components/Toast";
 import { BottomSheet, SheetSnapPosition } from "./components/BottomSheet";
@@ -218,6 +219,16 @@ export default function SaunaMap() {
     [selectLocation],
   );
 
+  const handleBoundsChange = useCallback(
+    (bounds: { northEast: LatLng; southWest: LatLng }) => {
+      setFilters((prev) => ({
+        ...prev,
+        mapBounds: bounds,
+      }));
+    },
+    [setFilters]
+  );
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!selectedLocation || !form.name) return;
@@ -336,6 +347,7 @@ export default function SaunaMap() {
 
           <MapController target={activeMapTarget} isMobile={isMobile} />
           <ZoomObserver onZoomChange={handleZoomChange} />
+          <MapBoundsObserver onBoundsChange={handleBoundsChange} />
           <VisitMarkers
             visits={filteredVisits}
             editingId={editingId}

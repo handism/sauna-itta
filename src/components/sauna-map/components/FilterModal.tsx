@@ -69,6 +69,8 @@ function SortSelect({ filters, setFilters }: FilterComponentProps) {
         <option value="oldest">古い順</option>
         <option value="ratingDesc">満足度が高い順</option>
         <option value="ratingAsc">満足度が低い順</option>
+        <option value="visitCountDesc">訪問回数が多い順</option>
+        <option value="nameAsc">名前順 (あ〜ん)</option>
       </select>
     </div>
   );

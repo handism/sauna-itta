@@ -47,6 +47,13 @@ export function QuickFilterChips({
     }));
   };
 
+  const handleBoundsToggle = () => {
+    setFilters((prev) => ({
+      ...prev,
+      filterByBounds: !prev.filterByBounds,
+    }));
+  };
+
   const isFilterActive = activeFilterCount > 0;
 
   return (
@@ -63,6 +70,16 @@ export function QuickFilterChips({
             ✕ クリア {activeFilterCount > 0 && <span className="chip-badge">{activeFilterCount}</span>}
           </button>
         )}
+
+        {/* マップ表示範囲絞り込み */}
+        <button
+          type="button"
+          className={`chip-btn chip-bounds-btn ${filters.filterByBounds ? "is-active" : ""}`}
+          onClick={handleBoundsToggle}
+          title="地図の表示エリア内にあるサウナのみを表示"
+        >
+          🗺️ マップ範囲内
+        </button>
 
         {/* ステータス */}
         <button

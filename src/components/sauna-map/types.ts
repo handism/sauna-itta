@@ -42,9 +42,11 @@ export interface VisitFilters {
   search: string;
   status: "all" | "visited" | "wishlist";
   minRating: number;
-  sort: "recent" | "oldest" | "ratingDesc" | "ratingAsc";
+  sort: "recent" | "oldest" | "ratingDesc" | "ratingAsc" | "visitCountDesc" | "nameAsc";
   selectedTag?: string;
   selectedArea?: string;
+  filterByBounds?: boolean;
+  mapBounds?: { northEast: LatLng; southWest: LatLng } | null;
 }
 
 export interface VisitStats {
