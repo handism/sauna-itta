@@ -90,6 +90,64 @@
   }
 }
 
+/* Marker Badges & Pills */
+.sauna-marker-badges {
+  position: absolute;
+  left: 28px;
+  top: -8px;
+  transform: rotate(45deg);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+  animation: badgeFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sauna-marker-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.sauna-marker-pill--rating {
+  background: rgba(30, 30, 30, 0.85);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.sauna-marker-pill--count {
+  background: rgba(255, 140, 56, 0.9);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.sauna-marker-pill--wishlist {
+  background: rgba(16, 185, 129, 0.9);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+@keyframes badgeFadeIn {
+  from {
+    opacity: 0;
+    transform: rotate(45deg) scale(0.7) translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(45deg) scale(1) translateX(0);
+  }
+}
 
 /* Leaflet Overrides */
 .leaflet-popup-content-wrapper {

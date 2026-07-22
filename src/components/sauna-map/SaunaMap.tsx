@@ -8,8 +8,23 @@ import {
   Marker,
   Popup,
   ZoomControl,
+  useMapEvents,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+
+function ZoomObserver({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  const map = useMapEvents({
+    zoomend: () => {
+      onZoomChange(map.getZoom());
+    },
+  });
+
+  useEffect(() => {
+    onZoomChange(map.getZoom());
+  }, [map, onZoomChange]);
+
+  return null;
+}
 import { FilterModal } from "./components/FilterModal";
 import { ShareModal } from "./components/ShareModal";
 import { VisitForm } from "./components/VisitForm";
@@ -87,6 +102,13 @@ export default function SaunaMap() {
   const [mapTargetOverride, setMapTargetOverride] = useState<LatLng | null>(null);
   const [snapPosition, setSnapPosition] = useState<SheetSnapPosition>("min");
   const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>("map");
+  const [zoomLevel, setZoomLevel] = useState<number>(6);
+
+  const handleZoomChange = useCallback((zoom: number) => {
+    setZoomLevel(zoom);
+  }, []);
+
+  const showBadges = zoomLevel >= 13;
 
   const activeMapTarget = mapTargetOverride || mapTarget;
 
@@ -307,11 +329,13 @@ export default function SaunaMap() {
           />
 
           <MapController target={activeMapTarget} isMobile={isMobile} />
+          <ZoomObserver onZoomChange={handleZoomChange} />
           <VisitMarkers
             visits={filteredVisits}
             editingId={editingId}
             selectedId={selectedId}
             hoveredId={hoveredId}
+            showBadges={showBadges}
             onEdit={startEditing}
             onSelectVisit={handleSelectVisit}
           />
