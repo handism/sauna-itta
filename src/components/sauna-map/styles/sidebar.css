@@ -142,6 +142,49 @@
   justify-content: space-between;
   gap: 0.5rem;
   margin-bottom: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.sauna-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.view-mode-toggle {
+  display: flex;
+  background: var(--input-bg);
+  padding: 2px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  gap: 2px;
+}
+
+.view-mode-btn {
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  opacity: 0.7;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.78rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.view-mode-btn:hover {
+  opacity: 1;
+  background: var(--glass-hover);
+}
+
+.view-mode-btn.is-active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
+  color: white;
+  opacity: 1;
+  font-weight: 600;
+  box-shadow: 0 2px 8px var(--primary-glow);
 }
 
 .filters-open-btn {
@@ -164,6 +207,117 @@
   color: var(--primary);
   background: var(--glass-heavy);
   box-shadow: 0 0 12px var(--primary-glow);
+}
+
+/* Compact List View Styles */
+.sauna-compact-item {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  margin-bottom: 0.45rem;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+
+.sauna-compact-item:hover,
+.sauna-compact-item.is-hovered {
+  border-color: var(--primary-glow);
+  background: var(--glass-heavy);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.sauna-compact-item.is-selected {
+  border-color: var(--primary);
+  box-shadow: 0 0 16px var(--primary-glow), 0 4px 16px rgba(0, 0, 0, 0.2);
+  background: color-mix(in srgb, var(--primary-glow) 8%, var(--glass-heavy));
+}
+
+.sauna-compact-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  gap: 0.5rem;
+}
+
+.sauna-compact-main-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.sauna-compact-chevron {
+  font-size: 0.65rem;
+  color: var(--primary);
+  transition: transform 0.25s ease;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.sauna-compact-chevron.is-expanded {
+  transform: rotate(90deg);
+}
+
+.sauna-compact-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sauna-compact-area {
+  font-size: 0.72rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: var(--input-bg);
+  color: var(--foreground);
+  opacity: 0.75;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sauna-compact-side-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.sauna-compact-rating {
+  font-size: 0.8rem;
+}
+
+.compact-edit-btn {
+  padding: 0.2rem 0.45rem !important;
+  font-size: 0.78rem !important;
+}
+
+.sauna-compact-body {
+  padding: 0.75rem 0.85rem 0.85rem;
+  border-top: 1px dashed var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  animation: fadeIn 0.2s ease-out;
+  background: color-mix(in srgb, var(--glass) 50%, transparent);
+}
+
+.sauna-compact-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.2rem;
 }
 
 .sauna-search-box {
