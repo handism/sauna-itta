@@ -10,6 +10,7 @@ interface VisitMarkersProps {
   editingId: string | null;
   selectedId?: string | null;
   hoveredId?: string | null;
+  showBadges?: boolean;
   onEdit: (visit: SaunaVisit) => void;
   onSelectVisit?: (visit: SaunaVisit) => void;
 }
@@ -19,6 +20,7 @@ export function VisitMarkers({
   editingId,
   selectedId,
   hoveredId,
+  showBadges = false,
   onEdit,
   onSelectVisit,
 }: VisitMarkersProps) {
@@ -38,6 +40,9 @@ export function VisitMarkers({
               selected: visit.id === editingId || isSelected,
               wishlist: (visit.status ?? "visited") === "wishlist",
               hovered: isHovered,
+              rating: visit.rating,
+              visitCount,
+              showBadges,
             })}
             eventHandlers={{
               click: () => onSelectVisit?.(visit),
