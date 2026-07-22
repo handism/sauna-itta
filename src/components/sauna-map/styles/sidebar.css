@@ -291,6 +291,72 @@
   font-weight: 500;
 }
 
+.label-row-with-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.label-row-with-actions label {
+  margin-bottom: 0;
+}
+
+.quick-date-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn-quick-date {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--primary);
+  font-size: 0.78rem;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-quick-date:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.preset-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.preset-tag-chip {
+  font-size: 0.78rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--foreground);
+  opacity: 0.85;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-tag-chip:hover {
+  opacity: 1;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.preset-tag-chip.is-selected {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  opacity: 1;
+  font-weight: 500;
+}
+
 .checkbox-row {
   display: flex;
   align-items: center;
@@ -665,6 +731,19 @@ input[type="date"].input {
   padding: 0.1rem 0.35rem;
   border-radius: 999px;
   background: var(--glass);
+  color: var(--foreground);
+}
+
+.sauna-tag-btn {
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.sauna-tag-btn:hover {
+  background: var(--primary);
+  color: #ffffff;
 }
 
 .sauna-card-comment {
