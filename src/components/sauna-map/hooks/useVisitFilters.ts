@@ -9,6 +9,8 @@ const DEFAULT_FILTERS: VisitFilters = {
   sort: "recent",
   selectedTag: "",
   selectedArea: "",
+  filterByBounds: false,
+  mapBounds: null,
 };
 
 export function useVisitFilters(visits: SaunaVisit[]) {
@@ -34,6 +36,15 @@ export function useVisitFilters(visits: SaunaVisit[]) {
         return false;
       }
 
+      if (filters.filterByBounds && filters.mapBounds) {
+        const { northEast, southWest } = filters.mapBounds;
+        const inLat = v.lat >= Math.min(southWest.lat, northEast.lat) && v.lat <= Math.max(southWest.lat, northEast.lat);
+        const minLng = Math.min(southWest.lng, northEast.lng);
+        const maxLng = Math.max(southWest.lng, northEast.lng);
+        const inLng = v.lng >= minLng && v.lng <= maxLng;
+        if (!inLat || !inLng) return false;
+      }
+
       if (keyword) {
         const text = `${v.name} ${v.comment ?? ""} ${v.area ?? ""} ${(v.tags ?? []).join(" ")}`.toLowerCase();
         if (!text.includes(keyword)) return false;
@@ -50,6 +61,10 @@ export function useVisitFilters(visits: SaunaVisit[]) {
           return (b.rating ?? 0) - (a.rating ?? 0) || b.date.localeCompare(a.date);
         case "ratingAsc":
           return (a.rating ?? 0) - (b.rating ?? 0) || b.date.localeCompare(a.date);
+        case "visitCountDesc":
+          return (b.visitCount ?? 1) - (a.visitCount ?? 1) || b.date.localeCompare(a.date);
+        case "nameAsc":
+          return a.name.localeCompare(b.name, "ja");
         case "recent":
         default:
           return b.date.localeCompare(a.date);
@@ -69,6 +84,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
     if (filters.sort !== "recent") count++;
     if (filters.selectedTag) count++;
     if (filters.selectedArea) count++;
+    if (filters.filterByBounds) count++;
     return count;
   }, [filters]);
 

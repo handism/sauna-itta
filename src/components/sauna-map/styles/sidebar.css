@@ -1227,6 +1227,13 @@ input[type="date"].input {
   box-shadow: 0 2px 8px rgba(238, 143, 67, 0.2);
 }
 
+.chip-bounds-btn.is-active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.35));
+  color: #60a5fa;
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
 .quick-filter-container {
   margin-bottom: 0.75rem;
 }
