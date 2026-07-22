@@ -299,6 +299,20 @@ export default function SaunaMap() {
 
       {!isMobilePickingLocation && (
         <div className="ui-layer">
+          {!isSidebarExpanded && (
+            <button
+              type="button"
+              className="desktop-sidebar-open-btn"
+              onClick={toggleSidebar}
+              aria-label="サイドバーを開く"
+              title="サイドバーを開く"
+            >
+              <span className="open-btn-icon">♨️</span>
+              <span className="open-btn-text">サウナイッタ</span>
+              <span className="open-btn-arrow">▶</span>
+            </button>
+          )}
+
           {isMobileMenuOpen && (
             <div
               className="mobile-menu-backdrop"
@@ -320,6 +334,15 @@ export default function SaunaMap() {
                 <p>マイととのいマップ</p>
               </div>
               <div className="mobile-menu-wrap" ref={mobileMenuRef}>
+                <button
+                  type="button"
+                  className="desktop-sidebar-close-btn"
+                  onClick={toggleSidebar}
+                  aria-label="サイドバーを折りたたむ"
+                  title="サイドバーを折りたたむ"
+                >
+                  ◀
+                </button>
                 {!isAdding && (
                   <button
                     type="button"
@@ -421,6 +444,8 @@ export default function SaunaMap() {
                 <VisitList
                   visits={visits}
                   filteredVisits={filteredVisits}
+                  filters={filters}
+                  setFilters={setFilters}
                   isFilterActive={isFilterActive}
                   onOpenFilters={openFilterModal}
                   onEdit={startEditing}
