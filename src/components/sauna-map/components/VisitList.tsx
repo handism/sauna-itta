@@ -66,75 +66,12 @@ export function VisitList({
     }
   }, [selectedId]);
 
-  const statusCounts = useMemo(() => {
-    const keyword = filters.search.trim().toLowerCase();
-    const baseFiltered = visits.filter((v) => {
-      if ((v.rating ?? 0) < filters.minRating) return false;
-      if (filters.selectedTag && (!v.tags || !v.tags.includes(filters.selectedTag))) return false;
-      if (filters.selectedArea && (!v.area || !v.area.includes(filters.selectedArea))) return false;
-      if (filters.filterByBounds && filters.mapBounds) {
-        const { northEast, southWest } = filters.mapBounds;
-        const inLat =
-          v.lat >= Math.min(southWest.lat, northEast.lat) &&
-          v.lat <= Math.max(southWest.lat, northEast.lat);
-        const minLng = Math.min(southWest.lng, northEast.lng);
-        const maxLng = Math.max(southWest.lng, northEast.lng);
-        if (!inLat || !(v.lng >= minLng && v.lng <= maxLng)) return false;
-      }
-      if (keyword) {
-        const text = `${v.name} ${v.comment ?? ""} ${v.area ?? ""} ${(v.tags ?? []).join(" ")}`.toLowerCase();
-        if (!text.includes(keyword)) return false;
-      }
-      return true;
-    });
-
-    return {
-      all: baseFiltered.length,
-      visited: baseFiltered.filter((v) => (v.status ?? "visited") === "visited").length,
-      wishlist: baseFiltered.filter((v) => v.status === "wishlist").length,
-    };
-  }, [
-    visits,
-    filters.search,
-    filters.minRating,
-    filters.selectedTag,
-    filters.selectedArea,
-    filters.filterByBounds,
-    filters.mapBounds,
-  ]);
-
   return (
     <div className="sauna-list" ref={containerRef}>
       <div className="sauna-list-header">
-        <div className="status-tabs" role="tablist" aria-label="ステータスフィルター">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={filters.status === "all"}
-            className={`status-tab ${filters.status === "all" ? "is-active" : ""}`}
-            onClick={() => setFilters((prev) => ({ ...prev, status: "all" }))}
-          >
-            すべて ({statusCounts.all})
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={filters.status === "visited"}
-            className={`status-tab ${filters.status === "visited" ? "is-active" : ""}`}
-            onClick={() => setFilters((prev) => ({ ...prev, status: "visited" }))}
-          >
-            行った ({statusCounts.visited})
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={filters.status === "wishlist"}
-            className={`status-tab ${filters.status === "wishlist" ? "is-active" : ""}`}
-            onClick={() => setFilters((prev) => ({ ...prev, status: "wishlist" }))}
-          >
-            イキタイ ({statusCounts.wishlist})
-          </button>
-        </div>
+        <h2 className="panel-title">
+          訪れたサウナ ({filteredVisits.length}件)
+        </h2>
 
         <div className="sauna-header-actions">
           <div className="view-mode-toggle" role="group" aria-label="表示形式切り替え">
@@ -169,28 +106,58 @@ export function VisitList({
       </div>
 
       <div className="sauna-search-box">
-        <div className="sauna-search-tools-row">
-          <div className="search-input-wrapper">
-            <span className="search-icon">🔍</span>
-            <input
-              type="text"
-              className="input search-input"
-              placeholder="サウナ名・エリア・タグで即検索..."
-              value={filters.search}
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, search: e.target.value }))
-              }
-            />
-            {filters.search && (
-              <button
-                type="button"
-                className="search-clear-btn"
-                onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
-                aria-label="検索のクリア"
-              >
-                ✕
-              </button>
-            )}
+        <div className="search-input-wrapper">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            className="input search-input"
+            placeholder="サウナ名・エリア・タグで即検索..."
+            value={filters.search}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, search: e.target.value }))
+            }
+          />
+          {filters.search && (
+            <button
+              type="button"
+              className="search-clear-btn"
+              onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
+              aria-label="検索のクリア"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div className="sauna-quick-controls-row">
+          <div className="status-tabs" role="tablist" aria-label="ステータスフィルター">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filters.status === "all"}
+              className={`status-tab ${filters.status === "all" ? "is-active" : ""}`}
+              onClick={() => setFilters((prev) => ({ ...prev, status: "all" }))}
+            >
+              すべて
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filters.status === "visited"}
+              className={`status-tab ${filters.status === "visited" ? "is-active" : ""}`}
+              onClick={() => setFilters((prev) => ({ ...prev, status: "visited" }))}
+            >
+              行った
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filters.status === "wishlist"}
+              className={`status-tab ${filters.status === "wishlist" ? "is-active" : ""}`}
+              onClick={() => setFilters((prev) => ({ ...prev, status: "wishlist" }))}
+            >
+              イキタイ
+            </button>
           </div>
 
           <button
