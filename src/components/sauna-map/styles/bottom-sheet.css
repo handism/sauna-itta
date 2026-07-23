@@ -1,5 +1,6 @@
 /* モバイル専用 ボトムシート & 下部固定ナビゲーションバー */
 
+/* JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
 @media (max-width: 767px) {
   /* ボトムシートコンテナ */
   .bottom-sheet {
@@ -206,7 +207,7 @@
   }
 }
 
-/* デスクトップ非表示 */
+/* デスクトップ非表示。JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
 @media (min-width: 768px) {
   .bottom-sheet,
   .mobile-nav-bar {

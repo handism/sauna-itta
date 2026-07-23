@@ -1,5 +1,5 @@
 import { Dispatch, DragEvent, FormEvent, SetStateAction, useRef, useState } from "react";
-import { CheckCircle2, Star, Check, ImagePlus, X } from "lucide-react";
+import { CheckCircle2, Star, Check, ImagePlus, X, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { VisitFormState, VisitHistoryEntry } from "../types";
 import { sanitizeImageUrl } from "../utils";
 import { ImageLightbox } from "./common";
@@ -106,6 +106,7 @@ function HistorySection({
   historyEntries: VisitHistoryEntry[];
   onDeleteEntry?: (index: number) => void;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const recentEntries = historyEntries
     .map((entry, index) => ({ entry, index }))
     .reverse()
@@ -113,47 +114,58 @@ function HistorySection({
 
   return (
     <div className="form-group">
-      <label>訪問履歴</label>
-      <div className="history-summary">
-        <span>現在の履歴: {historyCount}件</span>
-        {shouldAppend && <span className="history-badge">保存で+1</span>}
-      </div>
-      {historyCount > 0 && (
-        <ul className="history-list">
-          {recentEntries.map(({ entry, index }) => (
-            <li key={`${entry.date}-${index}`} className="history-item">
-              <div className="history-item-header">
-                <span>{entry.date}</span>
-                <span className="history-rating">
-                  {entry.rating ? (
-                    <>
-                      <Star size={11} fill="currentColor" className="rating-star--filled" /> {entry.rating}
-                    </>
-                  ) : (
-                    "評価なし"
-                  )}
-                </span>
-                {historyCount > 1 && onDeleteEntry && (
-                  <button
-                    type="button"
-                    className="history-delete-btn"
-                    onClick={() => onDeleteEntry(index)}
-                    aria-label="この履歴を削除"
-                    title="この履歴を削除"
-                  >
-                    <X size={12} />
-                  </button>
-                )}
-              </div>
-              <span className="history-comment">
-                {entry.comment ? entry.comment : "コメントなし"}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {historyCount > 5 && (
-        <div className="history-more">最新5件のみ表示中</div>
+      <button
+        type="button"
+        className="history-section-toggle"
+        onClick={() => setIsExpanded((prev) => !prev)}
+        aria-expanded={isExpanded}
+      >
+        <span className="history-section-toggle-label">
+          訪問履歴（{historyCount}件）
+          {shouldAppend && <span className="history-badge">保存で+1</span>}
+        </span>
+        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </button>
+      {isExpanded && (
+        <>
+          {historyCount > 0 && (
+            <ul className="history-list">
+              {recentEntries.map(({ entry, index }) => (
+                <li key={`${entry.date}-${index}`} className="history-item">
+                  <div className="history-item-header">
+                    <span>{entry.date}</span>
+                    <span className="history-rating">
+                      {entry.rating ? (
+                        <>
+                          <Star size={11} fill="currentColor" className="rating-star--filled" /> {entry.rating}
+                        </>
+                      ) : (
+                        "評価なし"
+                      )}
+                    </span>
+                    {historyCount > 1 && onDeleteEntry && (
+                      <button
+                        type="button"
+                        className="history-delete-btn"
+                        onClick={() => onDeleteEntry(index)}
+                        aria-label="この履歴を削除"
+                        title="この履歴を削除"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                  <span className="history-comment">
+                    {entry.comment ? entry.comment : "コメントなし"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {historyCount > 5 && (
+            <div className="history-more">最新5件のみ表示中</div>
+          )}
+        </>
       )}
     </div>
   );
@@ -333,7 +345,11 @@ function ImageField({
         </div>
       )}
 
-      {uploading && <p className="form-hint">画像を圧縮しています…</p>}
+      {uploading && (
+        <p className="form-hint form-hint--loading">
+          <Loader2 size={13} className="spin-icon" /> 画像を圧縮しています…
+        </p>
+      )}
 
       <ImageLightbox
         src={lightboxOpen ? previewUrl ?? null : null}

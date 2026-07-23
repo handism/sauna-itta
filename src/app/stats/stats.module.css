@@ -58,6 +58,26 @@
   transform: translateY(-1px);
 }
 
+.emptyState {
+  width: 100%;
+  max-width: 1200px;
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--glass-heavy) 88%, transparent);
+  border: 1px solid var(--glass-border);
+}
+
+.emptyState p {
+  margin: 0;
+  opacity: 0.85;
+}
+
 .summaryGrid {
   width: 100%;
   max-width: 1200px;
@@ -205,6 +225,12 @@
     padding: 0.5rem 1rem;
     font-size: 0.9rem;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  .emptyState {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 1rem;
   }
 
   .summaryGrid {
