@@ -1,7 +1,8 @@
 import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import { List, LayoutGrid, SlidersHorizontal, Search, X, Pencil, Navigation, ChevronRight } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
-import { RatingStars, WishlistChip } from "./common";
+import { RatingStars, WishlistChip, ImageLightbox } from "./common";
 import { QuickFilterChips } from "./QuickFilterChips";
 
 type ViewMode = "card" | "compact";
@@ -41,6 +42,7 @@ export function VisitList({
   onHoverVisit,
 }: VisitListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -82,7 +84,7 @@ export function VisitList({
               title="リスト（コンパクト）表示"
               aria-label="リスト表示"
             >
-              ☰ リスト
+              <List size={15} /> リスト
             </button>
             <button
               type="button"
@@ -91,16 +93,16 @@ export function VisitList({
               title="カード表示"
               aria-label="カード表示"
             >
-              🗂️ カード
+              <LayoutGrid size={15} /> カード
             </button>
           </div>
           <button
             type="button"
             className={`filters-open-btn ${isFilterActive ? "is-active" : ""}`}
             onClick={onOpenFilters}
-            title="詳細フィルター"
+            title="詳細フィルター（並び順・最低評価・マップ内表示）"
           >
-            ⚙️ {isFilterActive && <span className="filters-badge" />}
+            <SlidersHorizontal size={16} /> {isFilterActive && <span className="filters-badge" />}
           </button>
         </div>
       </div>
@@ -108,7 +110,7 @@ export function VisitList({
       <div className="sauna-search-box">
         <div className="search-row">
           <div className="search-input-wrapper">
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><Search size={15} /></span>
             <input
               type="text"
               className="input search-input"
@@ -125,24 +127,10 @@ export function VisitList({
                 onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
                 aria-label="検索のクリア"
               >
-                ✕
+                <X size={14} />
               </button>
             )}
           </div>
-
-          <button
-            type="button"
-            className={`bounds-toggle-btn ${filters.filterByBounds ? "is-active" : ""}`}
-            onClick={() =>
-              setFilters((prev) => ({
-                ...prev,
-                filterByBounds: !prev.filterByBounds,
-              }))
-            }
-            title="地図の表示エリア内にあるサウナのみを表示"
-          >
-            🗺️ マップ内
-          </button>
         </div>
 
         <div className="controls-row">
@@ -175,25 +163,6 @@ export function VisitList({
               イキタイ
             </button>
           </div>
-
-          <select
-            className="quick-sort-select"
-            value={filters.sort}
-            onChange={(e) =>
-              setFilters((prev) => ({
-                ...prev,
-                sort: e.target.value as VisitFilters["sort"],
-              }))
-            }
-            aria-label="並び順"
-          >
-            <option value="recent">📅 新しい順</option>
-            <option value="oldest">📅 古い順</option>
-            <option value="ratingDesc">⭐ 評価が高い順</option>
-            <option value="ratingAsc">⭐ 評価が低い順</option>
-            <option value="visitCountDesc">🔥 訪問回数が多い順</option>
-            <option value="nameAsc">🔤 名前順 (あ〜ん)</option>
-          </select>
         </div>
 
         <QuickFilterChips
@@ -255,7 +224,7 @@ export function VisitList({
                 >
                   <div className="sauna-compact-main-info">
                     <span className={`sauna-compact-chevron ${isSelected ? "is-expanded" : ""}`}>
-                      ▶
+                      <ChevronRight size={14} />
                     </span>
                     <h3 className="sauna-compact-title">
                       {visit.name}
@@ -274,7 +243,7 @@ export function VisitList({
                       }}
                       title="記録を編集"
                     >
-                      ✏️
+                      <Pencil size={14} />
                     </button>
                   </div>
                 </div>
@@ -306,6 +275,10 @@ export function VisitList({
                         src={sanitizeImageUrl(visit.image)}
                         className="sauna-img-preview"
                         alt={`${visit.name}の写真`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxSrc(sanitizeImageUrl(visit.image) ?? null);
+                        }}
                       />
                     )}
                     <div className="sauna-card-meta">
@@ -320,7 +293,7 @@ export function VisitList({
                         onClick={(e) => e.stopPropagation()}
                         className="route-link"
                       >
-                        🧭 ここへ行く
+                        <Navigation size={14} /> ここへ行く
                       </a>
                       {onDeselectVisit && (
                         <button
@@ -331,7 +304,7 @@ export function VisitList({
                             onDeselectVisit();
                           }}
                         >
-                          ✕ 解除
+                          <X size={13} /> 解除
                         </button>
                       )}
                     </div>
@@ -367,7 +340,7 @@ export function VisitList({
                       title="選択を解除"
                       aria-label="選択を解除"
                     >
-                      ✕ 解除
+                      <X size={13} /> 解除
                     </button>
                   )}
                   <button
@@ -379,7 +352,7 @@ export function VisitList({
                     }}
                     title="記録を編集"
                   >
-                    ✏️ 編集
+                    <Pencil size={14} /> 編集
                   </button>
                 </div>
               </div>
@@ -410,6 +383,10 @@ export function VisitList({
                   src={sanitizeImageUrl(visit.image)}
                   className="sauna-img-preview"
                   alt={`${visit.name}の写真`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxSrc(sanitizeImageUrl(visit.image) ?? null);
+                  }}
                 />
               )}
               <div className="sauna-card-meta">
@@ -423,12 +400,14 @@ export function VisitList({
                 onClick={(e) => e.stopPropagation()}
                 className="route-link"
               >
-                🧭 ここへ行く
+                <Navigation size={14} /> ここへ行く
               </a>
             </div>
           );
         })
       )}
+
+      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   );
 }

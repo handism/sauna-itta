@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
+import { X, Map } from "lucide-react";
 import { VisitFilters } from "../types";
 
 interface FilterComponentProps {
@@ -27,6 +28,51 @@ function MinRatingSelect({ filters, setFilters }: FilterComponentProps) {
         <option value={4}>★4以上</option>
         <option value={5}>★5のみ</option>
       </select>
+    </div>
+  );
+}
+
+function SortSelect({ filters, setFilters }: FilterComponentProps) {
+  return (
+    <div className="form-group">
+      <label className="filters-label">並び順</label>
+      <select
+        className="input select-input"
+        value={filters.sort}
+        onChange={(e) =>
+          setFilters((prev) => ({
+            ...prev,
+            sort: e.target.value as VisitFilters["sort"],
+          }))
+        }
+      >
+        <option value="recent">📅 新しい順</option>
+        <option value="oldest">📅 古い順</option>
+        <option value="ratingDesc">⭐ 評価が高い順</option>
+        <option value="ratingAsc">⭐ 評価が低い順</option>
+        <option value="visitCountDesc">🔥 訪問回数が多い順</option>
+        <option value="nameAsc">🔤 名前順 (あ〜ん)</option>
+      </select>
+    </div>
+  );
+}
+
+function BoundsToggle({ filters, setFilters }: FilterComponentProps) {
+  return (
+    <div className="form-group">
+      <label className="filters-label">表示エリア</label>
+      <button
+        type="button"
+        className={`btn bounds-toggle-btn bounds-toggle-btn--full ${filters.filterByBounds ? "is-active" : ""}`}
+        onClick={() =>
+          setFilters((prev) => ({
+            ...prev,
+            filterByBounds: !prev.filterByBounds,
+          }))
+        }
+      >
+        <Map size={15} /> 地図の表示エリア内のみ表示
+      </button>
     </div>
   );
 }
@@ -68,11 +114,13 @@ export function FilterModal({
             onClick={onClose}
             aria-label="閉じる"
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
         <div className="filters">
+          <SortSelect filters={filters} setFilters={setFilters} />
           <MinRatingSelect filters={filters} setFilters={setFilters} />
+          <BoundsToggle filters={filters} setFilters={setFilters} />
           {isFilterActive && (
             <button
               type="button"

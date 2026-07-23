@@ -87,6 +87,9 @@
   }
 
   .summary-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
     color: var(--primary);
     font-weight: 600;
     background: color-mix(in srgb, var(--primary) 15%, transparent);
@@ -161,7 +164,9 @@
   }
 
   .mobile-nav-icon {
-    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
     margin-bottom: 2px;
   }

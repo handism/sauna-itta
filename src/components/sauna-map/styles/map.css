@@ -36,9 +36,11 @@
 }
 
 .sauna-marker-icon {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transform: rotate(45deg);
-  font-size: 14px;
+  color: #ffffff;
   line-height: 1;
   user-select: none;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
@@ -318,7 +320,10 @@
 }
 
 .popup-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
   margin-top: 0.75rem;
   padding: 0.62rem;
   background: var(--glass);
@@ -522,7 +527,8 @@
 }
 
 .sauna-cluster-icon {
-  font-size: 0.8rem;
+  display: inline-flex;
+  align-items: center;
   line-height: 1;
 }
 

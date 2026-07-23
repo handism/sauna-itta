@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction, useMemo } from "react";
+import { X, Star, MapPin, Tag } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getPopularAreas, getPopularTags } from "../utils";
 
@@ -56,7 +57,7 @@ export function QuickFilterChips({
             onClick={onClearFilters}
             title="フィルターをクリア"
           >
-            ✕ クリア {activeFilterCount > 0 && <span className="chip-badge">{activeFilterCount}</span>}
+            <X size={13} /> クリア {activeFilterCount > 0 && <span className="chip-badge">{activeFilterCount}</span>}
           </button>
         )}
 
@@ -65,7 +66,7 @@ export function QuickFilterChips({
           className={`chip-btn ${filters.minRating === 4 ? "is-active" : ""}`}
           onClick={() => handleRatingToggle(4)}
         >
-          ★ 4.0以上
+          <Star size={13} /> 4.0以上
         </button>
 
         {/* 動的エリアチップ */}
@@ -76,7 +77,7 @@ export function QuickFilterChips({
             className={`chip-btn ${filters.selectedArea === area ? "is-active" : ""}`}
             onClick={() => handleAreaToggle(area)}
           >
-            📍 {area}
+            <MapPin size={13} /> {area}
           </button>
         ))}
 
@@ -88,7 +89,7 @@ export function QuickFilterChips({
             className={`chip-btn ${filters.selectedTag === tag ? "is-active" : ""}`}
             onClick={() => handleTagToggle(tag)}
           >
-            🏷️ {tag}
+            <Tag size={13} /> {tag}
           </button>
         ))}
       </div>

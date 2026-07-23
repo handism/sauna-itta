@@ -1,4 +1,5 @@
 import L from "leaflet";
+import { flameIconSvg, starIconSvg } from "./iconSvg";
 
 export function getSaunaIcon(
   options: {
@@ -29,13 +30,15 @@ export function getSaunaIcon(
     .filter(Boolean)
     .join(" ");
 
-  const iconEmoji = wishlist ? "⭐" : "♨️";
+  const iconSvg = wishlist ? starIconSvg(16) : flameIconSvg(16);
 
   let badgesHtml = "";
   if (showBadges) {
     const pills: string[] = [];
     if (rating && rating > 0) {
-      pills.push(`<span class="sauna-marker-pill sauna-marker-pill--rating">★${rating.toFixed(1)}</span>`);
+      pills.push(
+        `<span class="sauna-marker-pill sauna-marker-pill--rating">${starIconSvg(11)}${rating.toFixed(1)}</span>`,
+      );
     }
     if (visitCount && visitCount > 1) {
       pills.push(`<span class="sauna-marker-pill sauna-marker-pill--count">${visitCount}回</span>`);
@@ -50,7 +53,7 @@ export function getSaunaIcon(
 
   return L.divIcon({
     className: "custom-marker",
-    html: `<div class="${classes}"><span class="sauna-marker-icon">${iconEmoji}</span>${badgesHtml}</div>`,
+    html: `<div class="${classes}"><span class="sauna-marker-icon">${iconSvg}</span>${badgesHtml}</div>`,
     iconSize: [34, 34],
     iconAnchor: [17, 34],
     popupAnchor: [0, -34],

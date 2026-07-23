@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useMap } from "react-leaflet";
+import { LocateFixed, Loader2 } from "lucide-react";
 
 export function LocationControl() {
   const map = useMap();
@@ -47,7 +48,7 @@ export function LocationControl() {
         aria-label="現在地へ移動"
         title="現在地へ移動"
       >
-        {locating ? "…" : "📍"}
+        {locating ? <Loader2 size={18} className="spin-icon" /> : <LocateFixed size={18} />}
       </button>
       {toastMessage && (
         <div className="location-toast" role="status" aria-live="polite">
