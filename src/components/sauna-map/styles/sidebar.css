@@ -823,6 +823,9 @@ input[type="date"].input {
 }
 
 .sauna-card-deselect-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   background: rgba(255, 80, 80, 0.18);
   border: 1px solid rgba(255, 100, 100, 0.4);
   border-radius: 8px;
@@ -843,6 +846,9 @@ input[type="date"].input {
 }
 
 .sauna-card-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--glass-border);
   border-radius: 8px;
@@ -976,6 +982,9 @@ input[type="date"].input {
 }
 
 .panel-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   font-size: 0.85rem;
   opacity: 0.64;
   margin-bottom: 1.3rem;
@@ -1203,6 +1212,9 @@ input[type="date"].input {
 }
 
 .history-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   color: var(--primary);
   font-weight: 600;
   font-size: 0.78rem;
