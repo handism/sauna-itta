@@ -333,31 +333,42 @@
   margin-bottom: 1.2rem;
 }
 
-.sauna-quick-controls-row {
+.search-row {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   width: 100%;
 }
 
-.sauna-quick-controls-row .status-tabs {
-  flex: 1 1 auto;
+.search-row .search-input-wrapper {
+  flex: 1;
   min-width: 0;
 }
 
-.sauna-quick-controls-row .bounds-toggle-btn {
+.search-row .bounds-toggle-btn {
   flex: 0 0 auto;
   white-space: nowrap;
-  padding: 0.4rem 0.55rem;
-  font-size: 0.76rem;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.78rem;
 }
 
-.sauna-quick-controls-row .quick-sort-select {
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.controls-row .status-tabs {
+  flex: 1;
+  min-width: 0;
+}
+
+.controls-row .quick-sort-select {
   flex: 0 0 auto;
-  max-width: 118px;
-  font-size: 0.76rem;
-  padding-left: 0.4rem;
-  padding-right: 0.4rem;
+  font-size: 0.78rem;
+  padding: 0.4rem 0.65rem;
 }
 
 .search-input-wrapper {
