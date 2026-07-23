@@ -7,7 +7,7 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 56px; /* モバイルナビバーの高さ */
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px)); /* モバイルナビバーの高さ（セーフエリア考慮） */
     z-index: 1000;
     background: var(--glass-heavy);
     backdrop-filter: blur(24px);
@@ -38,7 +38,8 @@
 
   .bottom-sheet--full {
     transform: translateY(calc(var(--drag-offset-y, 0px)));
-    height: calc(100vh - 60px);
+    height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
+    max-height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
   }
 
   /* ハンドル領域 */
@@ -127,7 +128,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    height: 56px;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
     z-index: 1001;
     background: var(--glass-heavy);
     border-top: 1px solid var(--glass-border);
@@ -137,6 +138,7 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    box-sizing: border-box;
   }
 
   .mobile-nav-item {
