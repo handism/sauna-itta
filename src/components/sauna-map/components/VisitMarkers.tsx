@@ -71,7 +71,7 @@ export function VisitMarkers({
           click: () => onSelectVisit?.(visit),
         }}
       >
-        <Popup>
+        <Popup autoPan={false}>
           <div className="popup-card">
             <h3 className="popup-title">
               {visit.name}
