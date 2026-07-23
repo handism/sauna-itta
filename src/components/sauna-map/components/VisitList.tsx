@@ -72,7 +72,7 @@ export function VisitList({
     <div className="sauna-list" ref={containerRef}>
       <div className="sauna-list-header">
         <h2 className="panel-title">
-          訪れたサウナ ({filteredVisits.length}件)
+          訪れたサウナ <span className="panel-title-count">({filteredVisits.length}件)</span>
         </h2>
 
         <div className="sauna-header-actions">

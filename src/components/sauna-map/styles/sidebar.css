@@ -149,9 +149,15 @@
   font-size: 1.05rem;
   font-weight: 700;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.sauna-list-header .panel-title-count {
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0.8;
 }
 
 .sauna-header-actions {
@@ -205,9 +211,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-  padding: 0.35rem 0.55rem;
+  width: 32px;
   height: 32px;
+  min-height: 32px !important;
+  max-width: 32px !important;
+  padding: 0;
   background: var(--glass);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
@@ -216,6 +224,7 @@
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
+  position: relative;
 }
 
 .filters-open-btn:hover,
@@ -1512,12 +1521,13 @@ input[type="date"].input {
 }
 
 .filters-badge {
-  display: inline-block;
-  width: 7px;
-  height: 7px;
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background-color: var(--primary, #ee8f43);
-  margin-left: 0.25rem;
 }
 
 /* Theme specific contrast & readability overrides */
