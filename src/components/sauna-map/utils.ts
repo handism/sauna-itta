@@ -64,6 +64,14 @@ export function getInitialIsMobile(): boolean {
   return typeof window !== "undefined" && window.innerWidth < 768;
 }
 
+export function applyThemeClass(theme: "dark" | "light"): void {
+  if (theme === "light") {
+    document.documentElement.classList.add("light-theme");
+  } else {
+    document.documentElement.classList.remove("light-theme");
+  }
+}
+
 export function getTodayDate(): string {
   return new Date().toISOString().split("T")[0];
 }

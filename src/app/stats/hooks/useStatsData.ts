@@ -5,6 +5,7 @@ import {
   flattenVisitHistory,
   getInitialVisits,
   calculateStats,
+  applyThemeClass,
 } from "@/components/sauna-map/utils";
 
 export function useStatsData() {
@@ -34,11 +35,7 @@ export function useStatsData() {
 
   useEffect(() => {
     if (!mounted) return;
-    if (theme === 'light') {
-      document.documentElement.classList.add("light-theme");
-    } else {
-      document.documentElement.classList.remove("light-theme");
-    }
+    applyThemeClass(theme);
   }, [theme, mounted]);
 
   const stats = useMemo(() => calculateStats(visits), [visits]);

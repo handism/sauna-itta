@@ -1,3 +1,5 @@
+import { useModalBehavior } from "../hooks/useModalBehavior";
+
 interface ConfirmModalProps {
   isOpen: boolean;
   title: string;
@@ -19,6 +21,8 @@ export function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const containerRef = useModalBehavior(isOpen, onCancel);
+
   if (!isOpen) {
     return null;
   }
@@ -26,11 +30,13 @@ export function ConfirmModal({
   return (
     <div className="confirm-overlay" onClick={onCancel} role="presentation">
       <div
+        ref={containerRef}
         className="confirm-modal"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
+        tabIndex={-1}
       >
         <h3 id="confirm-title" className="confirm-title">
           {title}

@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { X, Map } from "lucide-react";
 import { VisitFilters } from "../types";
+import { useModalBehavior } from "../hooks/useModalBehavior";
 
 interface FilterComponentProps {
   filters: VisitFilters;
@@ -94,6 +95,8 @@ export function FilterModal({
   onClearFilters,
   onClose,
 }: FilterModalProps) {
+  const containerRef = useModalBehavior(isOpen, onClose);
+
   if (!isOpen) {
     return null;
   }
@@ -101,10 +104,13 @@ export function FilterModal({
   return (
     <div className="filters-modal-overlay" onClick={onClose} role="presentation">
       <div
+        ref={containerRef}
         className="filters-modal-sheet"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="filters-modal-title"
+        tabIndex={-1}
       >
         <div className="filters-modal-header">
           <h3 id="filters-modal-title">詳細フィルター</h3>
