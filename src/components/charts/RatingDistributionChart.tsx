@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart as PieChartIcon } from 'lucide-react';
 import { SaunaVisit } from '@/components/sauna-map/types';
 import { flattenVisitHistory } from '@/components/sauna-map/utils';
 
@@ -88,36 +89,47 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
 
 
   if (data.length === 0) {
-    return <p>評価付きの訪問記録がありません。</p>;
+    return (
+      <div className="chart-empty-state">
+        <PieChartIcon size={32} />
+        <p>評価付きの訪問記録がありません。訪問に評価を付けると分布が表示されます。</p>
+      </div>
+    );
   }
 
+  const chartSummary = `満足度分布の円グラフ。${data
+    .map((d) => `${d.name}が${d.value}件`)
+    .join('、')}。`;
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          outerRadius={80}
-          fill={theme === 'light' ? '#e3702d' : '#f49b56'}
-          dataKey="value"
-          nameKey="name"
-          labelLine={false}
-          label={renderCustomizedLabel}
-        >
-          {data.map((entry) => (
-            <Cell key={`cell-${entry.rating}`} fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR} />
-          ))}
-        </Pie>
-        <Tooltip
-          contentStyle={{
-            backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(13, 13, 13, 0.8)',
-            borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)',
-            color: textColor
-          }}
-        />
-        <Legend wrapperStyle={{ color: textColor, fontSize: 12 }}/>
-      </PieChart>
-    </ResponsiveContainer>
+    <div role="img" aria-label={chartSummary}>
+      <ResponsiveContainer width="100%" height={300}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            outerRadius={80}
+            fill={theme === 'light' ? '#e3702d' : '#f49b56'}
+            dataKey="value"
+            nameKey="name"
+            labelLine={false}
+            label={renderCustomizedLabel}
+          >
+            {data.map((entry) => (
+              <Cell key={`cell-${entry.rating}`} fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR} />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(13, 13, 13, 0.8)',
+              borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)',
+              color: textColor
+            }}
+          />
+          <Legend wrapperStyle={{ color: textColor, fontSize: 12 }}/>
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
   );
 }

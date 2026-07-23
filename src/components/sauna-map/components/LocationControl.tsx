@@ -1,28 +1,24 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { useMap } from "react-leaflet";
 import { LocateFixed, Loader2 } from "lucide-react";
 
-export function LocationControl() {
+interface LocationControlProps {
+  onNotify?: (message: string, tone: "info" | "success" | "error") => void;
+}
+
+export function LocationControl({ onNotify }: LocationControlProps) {
   const map = useMap();
   const [locating, setLocating] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = window.setTimeout(() => setToastMessage(null), 2600);
-    return () => window.clearTimeout(timer);
-  }, [toastMessage]);
 
   const handleLocate = useCallback(() => {
     if (!navigator.geolocation) {
-      setToastMessage("お使いのブラウザは位置情報に対応していません");
+      onNotify?.("お使いのブラウザは位置情報に対応していません", "error");
       return;
     }
 
     setLocating(true);
-    setToastMessage(null);
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -31,12 +27,12 @@ export function LocationControl() {
         setLocating(false);
       },
       () => {
-        setToastMessage("位置情報を取得できませんでした");
+        onNotify?.("位置情報を取得できませんでした", "error");
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
-  }, [map]);
+  }, [map, onNotify]);
 
   return (
     <div className="location-control" style={{ position: "absolute", zIndex: 1000 }}>
@@ -50,11 +46,6 @@ export function LocationControl() {
       >
         {locating ? <Loader2 size={18} className="spin-icon" /> : <LocateFixed size={18} />}
       </button>
-      {toastMessage && (
-        <div className="location-toast" role="status" aria-live="polite">
-          {toastMessage}
-        </div>
-      )}
     </div>
   );
 }

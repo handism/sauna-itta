@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
 import { RatingStars, WishlistChip } from "./common";
+import { useModalBehavior } from "../hooks/useModalBehavior";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -10,19 +11,29 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ isOpen, stats, filteredVisits, onClose }: ShareModalProps) {
+  const containerRef = useModalBehavior(isOpen, onClose);
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="share-overlay" onClick={onClose}>
-      <div className="share-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="share-overlay" onClick={onClose} role="presentation">
+      <div
+        ref={containerRef}
+        className="share-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="share-modal-title"
+        tabIndex={-1}
+      >
         <div className="share-header">
           <div>
-            <h2>サウナイッタ シェアビュー</h2>
+            <h2 id="share-modal-title">サウナイッタ シェアビュー</h2>
             <p>この画面をスクリーンショットしてSNSに投稿できます</p>
           </div>
-          <button onClick={onClose} className="share-close">
+          <button type="button" onClick={onClose} className="share-close" aria-label="閉じる">
             <X size={18} />
           </button>
         </div>

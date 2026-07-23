@@ -70,6 +70,7 @@ import {
   getVisitHistoryEntries,
   toFormState,
   compressAndGetBase64,
+  applyThemeClass,
 } from "./utils";
 import { SaunaVisit, VisitFormState, LatLng } from "./types";
 
@@ -86,7 +87,7 @@ export default function SaunaMap() {
 
   const [form, setForm] = useState<VisitFormState>(getDefaultForm());
   const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
-  const [isMobile] = useState(getInitialIsMobile);
+  const [isMobile, setIsMobile] = useState(getInitialIsMobile);
   const [mounted, setMounted] = useState(false);
   const {
     state: editorState,
@@ -181,11 +182,14 @@ export default function SaunaMap() {
   }, []);
 
   useEffect(() => {
-    if (theme === "light") {
-      document.documentElement.classList.add("light-theme");
-    } else {
-      document.documentElement.classList.remove("light-theme");
-    }
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    applyThemeClass(theme);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -408,7 +412,7 @@ export default function SaunaMap() {
           style={{ height: "100%", width: "100%" }}
         >
           <ZoomControl position="topright" />
-          <LocationControl />
+          <LocationControl onNotify={showToast} />
           <MapClusterControl
             enableClustering={enableClustering}
             onToggleClustering={() => setEnableClustering((prev) => !prev)}
