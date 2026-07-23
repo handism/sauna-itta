@@ -1,24 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef, ChangeEvent, FormEvent } from "react";
-import Link from "next/link";
-import {
-  MapPin,
-  X,
-  Flame,
-  Sun,
-  Moon,
-  Camera,
-  BarChart3,
-  Download,
-  Upload,
-  ChevronUp,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  MoreHorizontal,
-} from "lucide-react";
+import { MapPin, X } from "lucide-react";
 import {
   MapContainer,
   TileLayer,
@@ -58,6 +41,7 @@ import type { ToastState } from "./components/Toast";
 import { BottomSheet } from "./components/BottomSheet";
 import type { SheetSnapPosition } from "./types";
 import { MobileNavBar, MobileTab } from "./components/MobileNavBar";
+import { DesktopSidebar } from "./components/DesktopSidebar";
 import { getSaunaIcon } from "./components/markerIcon";
 import { useSaunaVisits } from "./hooks/useSaunaVisits";
 import { useEditorState } from "./hooks/useEditorState";
@@ -69,6 +53,7 @@ import {
   getInitialTheme,
   getTodayDate,
   THEME_STORAGE_KEY,
+  MOBILE_BREAKPOINT,
   getVisitHistoryEntries,
   toFormState,
   compressAndGetBase64,
@@ -174,7 +159,7 @@ export default function SaunaMap() {
   }, []);
 
   useEffect(() => {
-    if (!toast) return;
+    if (!toast || toast.tone === "error") return;
     const timer = window.setTimeout(() => setToast(null), 3000);
     return () => window.clearTimeout(timer);
   }, [toast]);
@@ -184,7 +169,7 @@ export default function SaunaMap() {
   }, []);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
     const handleChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
@@ -466,156 +451,26 @@ export default function SaunaMap() {
       )}
 
       {!isMobilePickingLocation && !isMobile && (
-        <div className="ui-layer">
-          {!isSidebarExpanded && (
-            <button
-              type="button"
-              className="desktop-sidebar-open-btn"
-              onClick={toggleSidebar}
-              aria-label="サイドバーを開く"
-              title="サイドバーを開く"
-            >
-              <span className="open-btn-icon"><Flame size={18} /></span>
-              <span className="open-btn-text">サウナイッタ</span>
-              <span className="open-btn-arrow"><ChevronRight size={13} /></span>
-            </button>
-          )}
-
-          {isMobileMenuOpen && (
-            <div
-              className="mobile-menu-backdrop"
-              onClick={closeMobileMenu}
-              aria-hidden
-            />
-          )}
-          <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
-            <button
-              className="mobile-toggle"
-              onClick={toggleSidebar}
-              aria-label="パネルを開く・閉じる"
-            >
-              {isSidebarExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-            </button>
-            <div className="sidebar-header">
-              <div className="sidebar-header-main">
-                <h1 className="text-primary">サウナイッタ</h1>
-                <p>マイととのいマップ</p>
-              </div>
-              <div className="mobile-menu-wrap" ref={mobileMenuRef}>
-                <button
-                  type="button"
-                  className="desktop-sidebar-close-btn sidebar-action-btn"
-                  onClick={toggleSidebar}
-                  aria-label="サイドバーを折りたたむ"
-                  title="サイドバーを折りたたむ"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                {!isAdding && (
-                  <button
-                    type="button"
-                    className="mobile-menu-btn sidebar-action-btn"
-                    onClick={() => {
-                      startNewVisit();
-                      closeMobileMenu();
-                    }}
-                    aria-label="新規ピンを立てる"
-                    title="新規ピンを立てる"
-                  >
-                    <Plus size={18} />
-                  </button>
-                )}
-                <Link
-                  href="/stats"
-                  prefetch={false}
-                  className="mobile-menu-btn sidebar-action-btn"
-                  onClick={closeMobileMenu}
-                  aria-label="統計ダッシュボード"
-                  title="統計ダッシュボード"
-                >
-                  <BarChart3 size={18} />
-                </Link>
-                <button
-                  type="button"
-                  className="mobile-menu-btn sidebar-action-btn"
-                  onClick={toggleMobileMenu}
-                  aria-label="メニュー"
-                  aria-expanded={isMobileMenuOpen}
-                >
-                  <MoreHorizontal size={18} />
-                </button>
-                {isMobileMenuOpen && (
-                  <div
-                    className={`mobile-menu-dropdown ${
-                      isSidebarExpanded ? "mobile-menu-dropdown--down" : ""
-                    }`}
-                    role="menu"
-                  >
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        toggleTheme();
-                        closeMobileMenu();
-                      }}
-                    >
-                      {theme === "dark" ? (
-                        <>
-                          <Sun size={15} /> ライトモード
-                        </>
-                      ) : (
-                        <>
-                          <Moon size={15} /> ダークモード
-                        </>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        openShareView();
-                        closeMobileMenu();
-                      }}
-                    >
-                      <Camera size={15} /> シェア用ビュー
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        exportVisits();
-                        closeMobileMenu();
-                      }}
-                    >
-                      <Download size={15} /> エクスポート
-                    </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      disabled={importing}
-                      onClick={() => {
-                        importInputRef.current?.click();
-                        closeMobileMenu();
-                      }}
-                    >
-                      <Upload size={15} /> {importing ? "取り込み中..." : "インポート"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="sidebar-content">{renderPanelContent()}</div>
-
-            <input
-              ref={importInputRef}
-              type="file"
-              accept="application/json"
-              style={{ display: "none" }}
-              onChange={handleImportData}
-            />
-          </aside>
-        </div>
+        <DesktopSidebar
+          isSidebarExpanded={isSidebarExpanded}
+          onToggleSidebar={toggleSidebar}
+          isMobileMenuOpen={isMobileMenuOpen}
+          mobileMenuRef={mobileMenuRef}
+          onToggleMobileMenu={toggleMobileMenu}
+          onCloseMobileMenu={closeMobileMenu}
+          isAdding={isAdding}
+          onStartNewVisit={startNewVisit}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onOpenShareView={openShareView}
+          onExportVisits={exportVisits}
+          importing={importing}
+          importInputRef={importInputRef}
+          onImportClick={() => importInputRef.current?.click()}
+          onImportChange={handleImportData}
+        >
+          {renderPanelContent()}
+        </DesktopSidebar>
       )}
 
       {/* モバイル専用 ボトムシート UI */}

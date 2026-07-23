@@ -4,6 +4,8 @@ import { SaunaVisit, VisitFormState, VisitHistoryEntry, VisitStats, SaunaVisitSc
 
 export const VISITS_STORAGE_KEY = "sauna-itta_visits";
 export const THEME_STORAGE_KEY = "sauna-itta_theme";
+// スタイル側の @media (max-width) ブレークポイント（767/768px）と値を揃えること
+export const MOBILE_BREAKPOINT = 768;
 
 export function extractPrefecture(area: string | undefined): string | null {
   const s = (area ?? "").trim();
@@ -61,7 +63,7 @@ export function getInitialTheme(): "dark" | "light" {
 }
 
 export function getInitialIsMobile(): boolean {
-  return typeof window !== "undefined" && window.innerWidth < 768;
+  return typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT;
 }
 
 export function applyThemeClass(theme: "dark" | "light"): void {

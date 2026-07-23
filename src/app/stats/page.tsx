@@ -52,6 +52,15 @@ export default function StatsPage() {
           </Link>
         </header>
 
+        {stats.total === 0 && (
+          <div className={styles.emptyState}>
+            <p>まだ訪問記録がありません。地図からサウナを登録すると、ここに統計が表示されます。</p>
+            <Link href="/" className={styles.backLink}>
+              マップでサウナを登録する
+            </Link>
+          </div>
+        )}
+
         <SummaryGrid stats={stats} />
 
         <PrefectureSection prefectures={stats.prefectures} count={stats.prefectureCount} />
