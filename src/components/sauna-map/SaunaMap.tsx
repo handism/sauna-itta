@@ -402,12 +402,14 @@ export default function SaunaMap() {
           zoomControl={false}
           style={{ height: "100%", width: "100%" }}
         >
-          <MapZoomControl />
-          <LocationControl onNotify={showToast} />
-          <MapClusterControl
-            enableClustering={enableClustering}
-            onToggleClustering={() => setEnableClustering((prev) => !prev)}
-          />
+          <div className="map-top-right-controls">
+            <MapClusterControl
+              enableClustering={enableClustering}
+              onToggleClustering={() => setEnableClustering((prev) => !prev)}
+            />
+            <MapZoomControl />
+            <LocationControl onNotify={showToast} />
+          </div>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
