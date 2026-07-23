@@ -164,7 +164,7 @@ export function VisitList({
             </button>
           </div>
           <select
-            className="input select-input quick-sort-select"
+            className="quick-sort-select"
             aria-label="並び順"
             title="並び順"
             value={filters.sort}
