@@ -166,6 +166,32 @@
   background: var(--glass-heavy) !important;
 }
 
+.leaflet-container a.leaflet-popup-close-button {
+  top: 12px !important;
+  right: 12px !important;
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 22px !important;
+  line-height: 32px !important;
+  color: var(--foreground) !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  opacity: 0.7;
+  padding: 0 !important;
+  background: transparent !important;
+  transition: opacity 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 0.15s ease !important;
+}
+
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:active {
+  opacity: 1;
+  background: var(--glass-border) !important;
+  color: var(--primary) !important;
+  transform: scale(1.08);
+}
+
 /* マップ右上コントロール群の統一コンテナ */
 .map-top-right-controls {
   position: absolute;
