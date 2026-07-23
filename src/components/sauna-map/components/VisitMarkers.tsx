@@ -100,7 +100,8 @@ export function VisitMarkers({
               rel="noopener noreferrer"
               className="popup-link"
             >
-              <Navigation size={14} /> ここへ行く
+              <span className="popup-link-icon"><Navigation size={14} /></span>
+              <span className="popup-link-text">ここへ行く</span>
             </a>
             <button onClick={() => onEdit(visit)} className="popup-edit-btn">
               編集する

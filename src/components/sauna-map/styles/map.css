@@ -171,8 +171,13 @@
   margin: 0 !important;
 }
 
+.leaflet-top.leaflet-right {
+  top: 2rem !important;
+  right: calc(2rem + 48px + 0.5rem) !important;
+}
+
 .leaflet-top.leaflet-right .leaflet-control-zoom {
-  margin: 2rem calc(2rem + 48px + 0.5rem) 0 0 !important;
+  margin: 0 !important;
   display: flex;
   gap: 0.5rem;
 }
@@ -309,7 +314,7 @@
 }
 
 .popup-link {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
@@ -323,6 +328,21 @@
   font-size: 0.84rem;
   text-decoration: none;
   min-height: 42px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.popup-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.popup-link-text {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .popup-edit-btn {
@@ -422,8 +442,13 @@
     min-height: 44px;
   }
 
+  .leaflet-top.leaflet-right {
+    top: max(1rem, env(safe-area-inset-top, 0px)) !important;
+    right: calc(1rem + 48px + 0.5rem) !important;
+  }
+
   .leaflet-top.leaflet-right .leaflet-control-zoom {
-    margin: max(1rem, env(safe-area-inset-top, 0px)) calc(1rem + 48px + 0.5rem) 0 0 !important;
+    margin: 0 !important;
   }
 
   .leaflet-control-zoom a,
@@ -471,6 +496,7 @@
     height: 48px;
     padding: 0 0.8rem;
     font-size: 0.82rem;
+    box-sizing: border-box;
   }
 }
 

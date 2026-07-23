@@ -1202,6 +1202,7 @@ input[type="date"].input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.4rem;
   margin-top: 0.52rem;
   font-size: 0.81rem;
   color: var(--primary);
@@ -1211,6 +1212,19 @@ input[type="date"].input {
   padding: 0.5rem 0.72rem;
   min-height: 40px;
   background: color-mix(in srgb, var(--glass) 84%, transparent);
+}
+
+.route-link-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.route-link-text {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .route-link:hover {
