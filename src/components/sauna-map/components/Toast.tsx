@@ -16,8 +16,14 @@ export function Toast({ toast, onClose }: ToastProps) {
     return null;
   }
 
+  const isUrgent = toast.tone === "error";
+
   return (
-    <div className={`app-toast app-toast--${toast.tone}`} role="status" aria-live="polite">
+    <div
+      className={`app-toast app-toast--${toast.tone}`}
+      role={isUrgent ? "alert" : "status"}
+      aria-live={isUrgent ? "assertive" : "polite"}
+    >
       <span>{toast.message}</span>
       <button type="button" className="app-toast-close" onClick={onClose} aria-label="閉じる">
         ✕

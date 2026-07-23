@@ -10,7 +10,14 @@ interface RatingDistributionChartProps {
   theme: 'dark' | 'light';
 }
 
-const COLORS = ['#f08d49', '#f8c04e', '#6fcf97', '#5b9dff', '#8f7cf7'];
+const RATING_COLORS: { [key: number]: string } = {
+  1: '#e0574c',
+  2: '#f08d49',
+  3: '#f8c04e',
+  4: '#a3d977',
+  5: '#6fcf97',
+};
+const FALLBACK_COLOR = '#8f7cf7';
 const RATING_LABELS: { [key: number]: string } = {
   1: '★1',
   2: '★2',
@@ -31,13 +38,17 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
         }
       });
 
-    const chartData = Object.keys(ratingCounts).map(rating => ({
-      name: RATING_LABELS[parseInt(rating, 10)] || `評価${rating}`,
-      value: ratingCounts[rating],
-    }));
+    const chartData = Object.keys(ratingCounts).map(rating => {
+      const ratingNum = parseInt(rating, 10);
+      return {
+        rating: ratingNum,
+        name: RATING_LABELS[ratingNum] || `評価${rating}`,
+        value: ratingCounts[rating],
+      };
+    });
 
-    // Sort by rating
-    chartData.sort((a, b) => (a.name).localeCompare(b.name));
+    // Sort by rating (numeric, not string)
+    chartData.sort((a, b) => a.rating - b.rating);
 
     return chartData;
   }, [visits]);
@@ -94,8 +105,8 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
           labelLine={false}
           label={renderCustomizedLabel}
         >
-          {data.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+          {data.map((entry) => (
+            <Cell key={`cell-${entry.rating}`} fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR} />
           ))}
         </Pie>
         <Tooltip

@@ -13,6 +13,7 @@ interface VisitFormProps {
   onDelete: () => void;
   onCancel: () => void;
   onDeleteLastHistory?: () => void;
+  imageUploading?: boolean;
 }
 
 function FormHeader({ editingId, selectedLocation }: { editingId: string | null; selectedLocation: { lat: number; lng: number } | null }) {
@@ -69,7 +70,7 @@ function RatingField({ rating, onChange }: { rating: number; onChange: (rating: 
             type="button"
             onClick={() => onChange(star)}
             className="rating-star-btn"
-            aria-label={`${star} star`}
+            aria-label={`${star}つ星`}
           >
             {rating >= star ? "★" : "☆"}
           </button>
@@ -78,6 +79,7 @@ function RatingField({ rating, onChange }: { rating: number; onChange: (rating: 
           type="button"
           onClick={() => onChange(0)}
           className="clear-rating"
+          aria-label="評価をクリア"
         >
           クリア
         </button>
@@ -218,7 +220,15 @@ function TagsField({ tagsText, onChange }: { tagsText: string; onChange: (tagsTe
   );
 }
 
-function ImageField({ image, onChange }: { image: string; onChange: (e: ChangeEvent<HTMLInputElement>) => void }) {
+function ImageField({
+  image,
+  onChange,
+  uploading,
+}: {
+  image: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  uploading?: boolean;
+}) {
   return (
     <div className="form-group">
       <label>写真を追加</label>
@@ -227,10 +237,16 @@ function ImageField({ image, onChange }: { image: string; onChange: (e: ChangeEv
         className="input input-file"
         accept="image/*"
         onChange={onChange}
+        disabled={uploading}
       />
+      {uploading && <p className="form-hint">画像を圧縮しています…</p>}
       {sanitizeImageUrl(image) && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={sanitizeImageUrl(image)!} className="sauna-img-preview" alt="Preview" />
+        <img
+          src={sanitizeImageUrl(image)!}
+          className="sauna-img-preview"
+          alt="アップロードした写真のプレビュー"
+        />
       )}
     </div>
   );
@@ -349,6 +365,7 @@ export function VisitForm({
   onDelete,
   onCancel,
   onDeleteLastHistory,
+  imageUploading,
 }: VisitFormProps) {
   const historyCount = historyEntries.length;
   const shouldAppend = Boolean(editingId && form.appendHistory);
@@ -362,7 +379,7 @@ export function VisitForm({
       <StatusField status={form.status} onChange={(status) => setForm({ ...form, status })} />
       <RatingField rating={form.rating} onChange={(rating) => setForm({ ...form, rating })} />
       <TagsField tagsText={form.tagsText} onChange={(tagsText) => setForm({ ...form, tagsText })} />
-      <ImageField image={form.image} onChange={onImageChange} />
+      <ImageField image={form.image} onChange={onImageChange} uploading={imageUploading} />
       <DateField date={form.date} onChange={(date) => setForm({ ...form, date })} />
 
       {editingId && (
