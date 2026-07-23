@@ -23,6 +23,7 @@ interface VisitListProps {
   onDeselectVisit?: () => void;
   hoveredId?: string | null;
   onHoverVisit?: (id: string | null) => void;
+  isMobile?: boolean;
 }
 
 export function VisitList({
@@ -40,6 +41,7 @@ export function VisitList({
   onDeselectVisit,
   hoveredId,
   onHoverVisit,
+  isMobile,
 }: VisitListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
@@ -96,14 +98,16 @@ export function VisitList({
               <LayoutGrid size={15} /> カード
             </button>
           </div>
-          <button
-            type="button"
-            className={`filters-open-btn ${isFilterActive ? "is-active" : ""}`}
-            onClick={onOpenFilters}
-            title="詳細フィルター（並び順・最低評価・マップ内表示）"
-          >
-            <SlidersHorizontal size={16} /> {isFilterActive && <span className="filters-badge" />}
-          </button>
+          {!isMobile && (
+            <button
+              type="button"
+              className={`filters-open-btn ${isFilterActive ? "is-active" : ""}`}
+              onClick={onOpenFilters}
+              title="詳細フィルター（並び順・最低評価・マップ内表示）"
+            >
+              <SlidersHorizontal size={16} /> {isFilterActive && <span className="filters-badge" />}
+            </button>
+          )}
         </div>
       </div>
 
