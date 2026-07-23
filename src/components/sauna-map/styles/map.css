@@ -168,6 +168,7 @@
 
 .leaflet-control-zoom {
   border: none !important;
+  margin: 0 !important;
 }
 
 .leaflet-top.leaflet-right .leaflet-control-zoom {
@@ -185,19 +186,21 @@
   -webkit-backdrop-filter: blur(16px);
   border-radius: 50% !important;
   text-indent: 0 !important;
-  font: 600 1.25rem/1 inherit !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
 }
 
-.leaflet-control-zoom a {
+.leaflet-control-zoom a,
+.leaflet-control-zoom button {
   display: flex !important;
-  align-items: center;
-  justify-content: center;
+  align-items: center !important;
+  justify-content: center !important;
   width: 48px !important;
   height: 48px !important;
   line-height: 1 !important;
   padding: 0 !important;
   font-size: 1.25rem !important;
+  cursor: pointer;
+  outline: none;
   transition:
     background 0.25s,
     border-color 0.25s,
@@ -233,6 +236,7 @@
 }
 
 .leaflet-control-zoom a:hover,
+.leaflet-control-zoom button:hover,
 .location-control-btn:hover:not(:disabled) {
   background: color-mix(
     in srgb,
@@ -244,6 +248,7 @@
 }
 
 .leaflet-control-zoom a:active,
+.leaflet-control-zoom button:active,
 .location-control-btn:active:not(:disabled) {
   transform: scale(0.96);
 }
@@ -420,10 +425,11 @@
     margin: max(1rem, env(safe-area-inset-top)) calc(1rem + 48px + 0.5rem) 0 0 !important;
   }
 
-  .leaflet-control-zoom a {
+  .leaflet-control-zoom a,
+  .leaflet-control-zoom button {
     width: 48px !important;
     height: 48px !important;
-    line-height: 48px !important;
+    line-height: 1 !important;
     font-size: 1.25rem !important;
   }
 
@@ -531,7 +537,7 @@
 .map-cluster-control-btn {
   pointer-events: auto;
   height: 48px;
-  padding: 0 1rem;
+  padding: 0 1.1rem;
   border-radius: 999px;
   border: 1px solid var(--glass-border);
   background: var(--glass-heavy);
@@ -543,13 +549,28 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.45rem;
+  line-height: 1;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   transition:
     background 0.25s,
     border-color 0.25s,
     transform 0.15s,
     box-shadow 0.25s;
+}
+
+.map-cluster-control-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.map-cluster-control-text {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
 }
 
 .map-cluster-control-btn:hover {

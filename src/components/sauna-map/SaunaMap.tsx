@@ -22,7 +22,6 @@ import {
   TileLayer,
   Marker,
   Popup,
-  ZoomControl,
   useMapEvents,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
@@ -50,6 +49,7 @@ import { LocationPicker } from "./components/LocationPicker";
 import { MapController } from "./components/MapController";
 import { LocationControl } from "./components/LocationControl";
 import { MapClusterControl } from "./components/MapClusterControl";
+import { MapZoomControl } from "./components/MapZoomControl";
 import { MapBoundsObserver } from "./components/MapBoundsObserver";
 import { Toast } from "./components/Toast";
 import type { ToastState } from "./components/Toast";
@@ -411,7 +411,7 @@ export default function SaunaMap() {
           zoomControl={false}
           style={{ height: "100%", width: "100%" }}
         >
-          <ZoomControl position="topright" />
+          <MapZoomControl />
           <LocationControl onNotify={showToast} />
           <MapClusterControl
             enableClustering={enableClustering}
