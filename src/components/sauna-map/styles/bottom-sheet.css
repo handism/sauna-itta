@@ -16,11 +16,10 @@
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45), 0 0 24px var(--primary-glow);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    touch-action: none;
   }
 
   .bottom-sheet.is-dragging {
@@ -29,17 +28,19 @@
 
   /* スナップポジション高さ指定 */
   .bottom-sheet--min {
-    transform: translateY(calc(100% - 54px + var(--drag-offset-y, 0px)));
+    height: 54px;
+    transform: translateY(calc(var(--drag-offset-y, 0px)));
   }
 
   .bottom-sheet--half {
-    transform: translateY(calc(100% - 45vh + var(--drag-offset-y, 0px)));
+    height: 45vh;
+    transform: translateY(calc(var(--drag-offset-y, 0px)));
   }
 
   .bottom-sheet--full {
-    transform: translateY(calc(var(--drag-offset-y, 0px)));
     height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
     max-height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
+    transform: translateY(calc(var(--drag-offset-y, 0px)));
   }
 
   /* ハンドル領域 */
@@ -54,6 +55,7 @@
     background: inherit;
     border-top-left-radius: 24px;
     border-top-right-radius: 24px;
+    touch-action: none;
   }
 
   .bottom-sheet-handle-bar-container {
@@ -118,6 +120,7 @@
   .bottom-sheet-content {
     flex: 1;
     overflow-y: auto;
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
     padding: 0 1rem 1rem;
   }
