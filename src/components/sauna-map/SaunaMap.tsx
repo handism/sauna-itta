@@ -107,6 +107,8 @@ export default function SaunaMap() {
   const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>("map");
   const [zoomLevel, setZoomLevel] = useState<number>(6);
   const [enableClustering, setEnableClustering] = useState<boolean>(true);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const handleZoomChange = useCallback((zoom: number) => {
     setZoomLevel(zoom);
@@ -265,12 +267,15 @@ export default function SaunaMap() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setImageUploading(true);
     try {
       const base64 = await compressAndGetBase64(file);
       setForm((prev) => ({ ...prev, image: base64 }));
     } catch (error) {
       console.error(error);
       showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
+    } finally {
+      setImageUploading(false);
     }
   };
 
@@ -279,6 +284,7 @@ export default function SaunaMap() {
       const file = e.target.files?.[0];
       if (!file) return;
 
+      setImporting(true);
       try {
         const { added, success } = await importVisitsFromFile(file);
         if (added === 0) {
@@ -298,6 +304,7 @@ export default function SaunaMap() {
         console.error(error);
         showToast("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
       } finally {
+        setImporting(false);
         e.target.value = "";
       }
     },
@@ -309,6 +316,50 @@ export default function SaunaMap() {
   const isCreating = mode === "creating:pick" || mode === "creating:form";
   const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
   const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
+
+  const handleListEdit = (visit: SaunaVisit) => {
+    startEditing(visit);
+    if (isMobile) setSnapPosition("full");
+  };
+
+  const handleListSelectVisit = (visit: SaunaVisit) => {
+    handleSelectVisit(visit);
+    if (isMobile) setSnapPosition("half");
+  };
+
+  const renderPanelContent = () =>
+    isAdding ? (
+      <VisitForm
+        form={form}
+        setForm={setForm}
+        selectedLocation={selectedLocation}
+        editingId={editingId}
+        historyEntries={historyEntries}
+        onSubmit={handleSubmit}
+        onImageChange={handleImageChange}
+        onDelete={handleDelete}
+        onCancel={() => cancelEditing()}
+        onDeleteLastHistory={editingId ? handleDeleteLastHistory : undefined}
+        imageUploading={imageUploading}
+      />
+    ) : (
+      <VisitList
+        visits={visits}
+        filteredVisits={filteredVisits}
+        filters={filters}
+        setFilters={setFilters}
+        isFilterActive={isFilterActive}
+        activeFilterCount={activeFilterCount}
+        onClearFilters={clearFilters}
+        onOpenFilters={openFilterModal}
+        onEdit={handleListEdit}
+        selectedId={selectedId}
+        onSelectVisit={handleListSelectVisit}
+        onDeselectVisit={handleDeselectVisit}
+        hoveredId={hoveredId}
+        onHoverVisit={setHoveredId}
+      />
+    );
 
   const handleDeleteLastHistory = () => {
     if (!editingId) return;
@@ -511,51 +562,20 @@ export default function SaunaMap() {
                     <button
                       type="button"
                       role="menuitem"
+                      disabled={importing}
                       onClick={() => {
                         importInputRef.current?.click();
                         closeMobileMenu();
                       }}
                     >
-                      📤 インポート
+                      {importing ? "📤 取り込み中..." : "📤 インポート"}
                     </button>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="sidebar-content">
-              {isAdding ? (
-                <VisitForm
-                  form={form}
-                  setForm={setForm}
-                  selectedLocation={selectedLocation}
-                  editingId={editingId}
-                  historyEntries={historyEntries}
-                  onSubmit={handleSubmit}
-                  onImageChange={handleImageChange}
-                  onDelete={handleDelete}
-                  onCancel={() => cancelEditing()}
-                  onDeleteLastHistory={editingId ? handleDeleteLastHistory : undefined}
-                />
-              ) : (
-                <VisitList
-                  visits={visits}
-                  filteredVisits={filteredVisits}
-                  filters={filters}
-                  setFilters={setFilters}
-                  isFilterActive={isFilterActive}
-                  activeFilterCount={activeFilterCount}
-                  onClearFilters={clearFilters}
-                  onOpenFilters={openFilterModal}
-                  onEdit={startEditing}
-                  selectedId={selectedId}
-                  onSelectVisit={handleSelectVisit}
-                  onDeselectVisit={handleDeselectVisit}
-                  hoveredId={hoveredId}
-                  onHoverVisit={setHoveredId}
-                />
-              )}
-            </div>
+            <div className="sidebar-content">{renderPanelContent()}</div>
 
             <input
               ref={importInputRef}
@@ -576,43 +596,7 @@ export default function SaunaMap() {
           filteredCount={filteredVisits.length}
           selectedVisitName={selectedVisit?.name}
         >
-          {isAdding ? (
-            <VisitForm
-              form={form}
-              setForm={setForm}
-              selectedLocation={selectedLocation}
-              editingId={editingId}
-              historyEntries={historyEntries}
-              onSubmit={handleSubmit}
-              onImageChange={handleImageChange}
-              onDelete={handleDelete}
-              onCancel={() => cancelEditing()}
-              onDeleteLastHistory={editingId ? handleDeleteLastHistory : undefined}
-            />
-          ) : (
-            <VisitList
-              visits={visits}
-              filteredVisits={filteredVisits}
-              filters={filters}
-              setFilters={setFilters}
-              isFilterActive={isFilterActive}
-              activeFilterCount={activeFilterCount}
-              onClearFilters={clearFilters}
-              onOpenFilters={openFilterModal}
-              onEdit={(visit) => {
-                startEditing(visit);
-                setSnapPosition("full");
-              }}
-              selectedId={selectedId}
-              onSelectVisit={(visit) => {
-                handleSelectVisit(visit);
-                setSnapPosition("half");
-              }}
-              onDeselectVisit={handleDeselectVisit}
-              hoveredId={hoveredId}
-              onHoverVisit={setHoveredId}
-            />
-          )}
+          {renderPanelContent()}
         </BottomSheet>
       )}
 

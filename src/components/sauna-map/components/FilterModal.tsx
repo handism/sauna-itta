@@ -6,76 +6,6 @@ interface FilterComponentProps {
   setFilters: Dispatch<SetStateAction<VisitFilters>>;
 }
 
-function SearchInput({ filters, setFilters }: FilterComponentProps) {
-  return (
-    <div className="search-input-wrapper">
-      <input
-        className="input search-input"
-        placeholder="キーワード検索 (サウナ名、エリア、タグなど)"
-        value={filters.search}
-        onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-      />
-      {filters.search && (
-        <button
-          type="button"
-          className="search-clear-btn"
-          onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
-          aria-label="検索キーワードをクリア"
-        >
-          ✕
-        </button>
-      )}
-    </div>
-  );
-}
-
-function StatusSelect({ filters, setFilters }: FilterComponentProps) {
-  return (
-    <div className="form-group">
-      <label className="filters-label">ステータス</label>
-      <select
-        className="input select-input"
-        value={filters.status}
-        onChange={(e) =>
-          setFilters((prev) => ({
-            ...prev,
-            status: e.target.value as VisitFilters["status"],
-          }))
-        }
-      >
-        <option value="all">すべて</option>
-        <option value="visited">行った</option>
-        <option value="wishlist">行きたい</option>
-      </select>
-    </div>
-  );
-}
-
-function SortSelect({ filters, setFilters }: FilterComponentProps) {
-  return (
-    <div className="form-group">
-      <label className="filters-label">並び順</label>
-      <select
-        className="input select-input"
-        value={filters.sort}
-        onChange={(e) =>
-          setFilters((prev) => ({
-            ...prev,
-            sort: e.target.value as VisitFilters["sort"],
-          }))
-        }
-      >
-        <option value="recent">新しい順</option>
-        <option value="oldest">古い順</option>
-        <option value="ratingDesc">満足度が高い順</option>
-        <option value="ratingAsc">満足度が低い順</option>
-        <option value="visitCountDesc">訪問回数が多い順</option>
-        <option value="nameAsc">名前順 (あ〜ん)</option>
-      </select>
-    </div>
-  );
-}
-
 function MinRatingSelect({ filters, setFilters }: FilterComponentProps) {
   return (
     <div className="form-group">
@@ -131,7 +61,7 @@ export function FilterModal({
         aria-labelledby="filters-modal-title"
       >
         <div className="filters-modal-header">
-          <h3 id="filters-modal-title">フィルター</h3>
+          <h3 id="filters-modal-title">詳細フィルター</h3>
           <button
             type="button"
             className="filters-modal-close"
@@ -142,9 +72,6 @@ export function FilterModal({
           </button>
         </div>
         <div className="filters">
-          <SearchInput filters={filters} setFilters={setFilters} />
-          <StatusSelect filters={filters} setFilters={setFilters} />
-          <SortSelect filters={filters} setFilters={setFilters} />
           <MinRatingSelect filters={filters} setFilters={setFilters} />
           {isFilterActive && (
             <button

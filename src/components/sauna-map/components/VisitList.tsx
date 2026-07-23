@@ -91,7 +91,7 @@ export function VisitList({
               title="カード表示"
               aria-label="カード表示"
             >
-              㗊 カード
+              🗂️ カード
             </button>
           </div>
           <button
@@ -302,7 +302,11 @@ export function VisitList({
                     {visit.comment && <p className="sauna-card-comment">{visit.comment}</p>}
                     {sanitizeImageUrl(visit.image) && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={sanitizeImageUrl(visit.image)} className="sauna-img-preview" alt="" />
+                      <img
+                        src={sanitizeImageUrl(visit.image)}
+                        className="sauna-img-preview"
+                        alt={`${visit.name}の写真`}
+                      />
                     )}
                     <div className="sauna-card-meta">
                       <span>日付: {visit.date}</span>
@@ -402,7 +406,11 @@ export function VisitList({
               <p className="sauna-card-comment">{visit.comment}</p>
               {sanitizeImageUrl(visit.image) && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={sanitizeImageUrl(visit.image)} className="sauna-img-preview" alt="" />
+                <img
+                  src={sanitizeImageUrl(visit.image)}
+                  className="sauna-img-preview"
+                  alt={`${visit.name}の写真`}
+                />
               )}
               <div className="sauna-card-meta">
                 <span>日付: {visit.date}</span>
