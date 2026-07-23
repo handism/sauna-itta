@@ -321,7 +321,8 @@ export function VisitList({
                         onClick={(e) => e.stopPropagation()}
                         className="route-link"
                       >
-                        <Navigation size={14} /> ここへ行く
+                        <span className="route-link-icon"><Navigation size={14} /></span>
+                        <span className="route-link-text">ここへ行く</span>
                       </a>
                       {onDeselectVisit && (
                         <button
@@ -428,7 +429,8 @@ export function VisitList({
                 onClick={(e) => e.stopPropagation()}
                 className="route-link"
               >
-                <Navigation size={14} /> ここへ行く
+                <span className="route-link-icon"><Navigation size={14} /></span>
+                <span className="route-link-text">ここへ行く</span>
               </a>
             </div>
           );
