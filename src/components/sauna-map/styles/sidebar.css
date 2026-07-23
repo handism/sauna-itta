@@ -91,25 +91,36 @@
   margin-left: 0.2rem;
 }
 
-.desktop-sidebar-close-btn {
+.sidebar-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  box-sizing: border-box;
   border-radius: 10px;
-  background: var(--glass);
+  background: color-mix(in srgb, var(--glass) 85%, transparent);
   border: 1px solid var(--glass-border);
   color: var(--foreground);
   cursor: pointer;
-  font-size: 0.85rem;
-  transition: all 0.2s;
+  padding: 0;
+  margin: 0;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.desktop-sidebar-close-btn:hover {
+.sidebar-action-btn:hover {
   background: var(--glass-border);
   color: var(--primary);
-  transform: scale(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-action-btn:active {
+  transform: translateY(0) scale(0.96);
 }
 
 @media (max-width: 768px) {
