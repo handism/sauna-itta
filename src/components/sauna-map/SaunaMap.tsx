@@ -363,6 +363,7 @@ export default function SaunaMap() {
         onDeselectVisit={handleDeselectVisit}
         hoveredId={hoveredId}
         onHoverVisit={setHoveredId}
+        isMobile={isMobile}
       />
     );
 

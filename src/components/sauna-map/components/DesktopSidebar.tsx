@@ -131,6 +131,15 @@ export function DesktopSidebar({
             <button
               type="button"
               className="mobile-menu-btn sidebar-action-btn"
+              onClick={onToggleTheme}
+              aria-label={theme === "dark" ? "ライトモードに切り替え" : "ダークモードに切り替え"}
+              title={theme === "dark" ? "ライトモードに切り替え" : "ダークモードに切り替え"}
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button
+              type="button"
+              className="mobile-menu-btn sidebar-action-btn"
               onClick={onToggleMobileMenu}
               aria-label="メニュー"
               aria-expanded={isMobileMenuOpen}
@@ -144,24 +153,6 @@ export function DesktopSidebar({
                 }`}
                 role="menu"
               >
-                <button
-                  type="button"
-                  role="menuitem"
-                  onClick={() => {
-                    onToggleTheme();
-                    onCloseMobileMenu();
-                  }}
-                >
-                  {theme === "dark" ? (
-                    <>
-                      <Sun size={15} /> ライトモード
-                    </>
-                  ) : (
-                    <>
-                      <Moon size={15} /> ダークモード
-                    </>
-                  )}
-                </button>
                 <button
                   type="button"
                   role="menuitem"

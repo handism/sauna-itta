@@ -401,15 +401,27 @@ function DateField({ date, onChange }: { date: string; onChange: (date: string) 
   );
 }
 
-function CommentField({ comment, onChange }: { comment: string; onChange: (comment: string) => void }) {
+function CommentField({
+  comment,
+  onChange,
+  isWishlist,
+}: {
+  comment: string;
+  onChange: (comment: string) => void;
+  isWishlist: boolean;
+}) {
   return (
     <div className="form-group">
-      <label>感想・メモ</label>
+      <label>{isWishlist ? "メモ" : "感想・メモ"}</label>
       <textarea
         className="input textarea"
         value={comment}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="水風呂の温度、外気浴の雰囲気など..."
+        placeholder={
+          isWishlist
+            ? "気になるポイント、行きたい理由など..."
+            : "水風呂の温度、外気浴の雰囲気など..."
+        }
       />
     </div>
   );
@@ -477,6 +489,7 @@ export function VisitForm({
 }: VisitFormProps) {
   const historyCount = historyEntries.length;
   const shouldAppend = Boolean(editingId && form.appendHistory);
+  const isWishlist = form.status === "wishlist";
 
   return (
     <form onSubmit={onSubmit}>
@@ -485,12 +498,16 @@ export function VisitForm({
       <NameField name={form.name} onChange={(name) => setForm({ ...form, name })} />
       <AreaField area={form.area} onChange={(area) => setForm({ ...form, area })} />
       <StatusField status={form.status} onChange={(status) => setForm({ ...form, status })} />
-      <RatingField rating={form.rating} onChange={(rating) => setForm({ ...form, rating })} />
+      {!isWishlist && (
+        <RatingField rating={form.rating} onChange={(rating) => setForm({ ...form, rating })} />
+      )}
       <TagsField tagsText={form.tagsText} onChange={(tagsText) => setForm({ ...form, tagsText })} />
       <ImageField image={form.image} onFile={onImageFile} onRemove={onRemoveImage} uploading={imageUploading} />
-      <DateField date={form.date} onChange={(date) => setForm({ ...form, date })} />
+      {!isWishlist && (
+        <DateField date={form.date} onChange={(date) => setForm({ ...form, date })} />
+      )}
 
-      {editingId && (
+      {editingId && !isWishlist && (
         <HistorySection
           historyCount={historyCount}
           shouldAppend={shouldAppend}
@@ -499,9 +516,13 @@ export function VisitForm({
         />
       )}
 
-      <CommentField comment={form.comment} onChange={(comment) => setForm({ ...form, comment })} />
+      <CommentField
+        comment={form.comment}
+        onChange={(comment) => setForm({ ...form, comment })}
+        isWishlist={isWishlist}
+      />
 
-      {editingId && (
+      {editingId && !isWishlist && (
         <AppendHistoryField
           appendHistory={form.appendHistory}
           onChange={(appendHistory) => setForm({ ...form, appendHistory })}
