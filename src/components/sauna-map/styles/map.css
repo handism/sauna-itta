@@ -171,7 +171,7 @@
 }
 
 .leaflet-top.leaflet-right .leaflet-control-zoom {
-  margin: 2rem calc(2rem + 48px + 0.5rem + 115px + 0.5rem) 0 0 !important;
+  margin: 2rem calc(2rem + 48px + 0.5rem) 0 0 !important;
   display: flex;
   gap: 0.5rem;
 }
@@ -433,7 +433,7 @@
   }
 
   .leaflet-top.leaflet-right .leaflet-control-zoom {
-    margin: max(1rem, env(safe-area-inset-top)) calc(1rem + 48px + 0.5rem + 105px + 0.5rem) 0 0 !important;
+    margin: max(1rem, env(safe-area-inset-top)) calc(1rem + 48px + 0.5rem) 0 0 !important;
   }
 
   .leaflet-control-zoom a {
@@ -473,7 +473,7 @@
 
   .map-cluster-control {
     top: max(1rem, env(safe-area-inset-top));
-    right: calc(1rem + 48px + 0.5rem);
+    right: calc(1rem + 48px + 0.5rem + 104px + 0.5rem);
   }
 
   .map-cluster-control-btn {
@@ -540,7 +540,7 @@
 /* Cluster Control Button */
 .map-cluster-control {
   top: 2rem;
-  right: calc(2rem + 48px + 0.5rem);
+  right: calc(2rem + 48px + 0.5rem + 104px + 0.5rem);
   pointer-events: none;
 }
 
@@ -593,11 +593,6 @@
   .location-control {
     top: 1rem;
     right: 1rem;
-  }
-
-  .map-cluster-control {
-    top: 1rem;
-    right: calc(1rem + 48px + 0.5rem);
   }
 }
 
