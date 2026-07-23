@@ -14,7 +14,29 @@ import { VisitCalendar } from './components/VisitCalendar';
 export default function StatsPage() {
   const { visits, theme, date, setDate, mounted, stats, visitDates } = useStatsData();
   if (!mounted) {
-    return <div className={styles.page} style={{ background: "var(--background)", minHeight: "100vh" }} />;
+    return (
+      <div className={styles.page}>
+        <main className={styles.main}>
+          <header className={styles.description}>
+            <div>
+              <p className={styles.eyebrow}>Sauna Itta Analytics</p>
+              <h1>統計ダッシュボード</h1>
+            </div>
+          </header>
+          <div className={styles.summaryGrid} aria-hidden="true">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className={`${styles.statCard} ${styles.skeleton}`} />
+            ))}
+          </div>
+          <div className={styles.chartsWrap}>
+            <div className={styles.chartGrid}>
+              <div className={`${styles.chartCard} ${styles.skeleton}`} style={{ minHeight: 260 }} />
+              <div className={`${styles.chartCard} ${styles.skeleton}`} style={{ minHeight: 260 }} />
+            </div>
+          </div>
+        </main>
+      </div>
+    );
   }
 
   return (

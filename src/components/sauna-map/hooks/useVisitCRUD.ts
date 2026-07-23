@@ -89,13 +89,13 @@ export function useVisitCRUD(
     [visits, saveVisits],
   );
 
-  const removeLastHistoryEntry = useCallback(
-    (id: string) => {
+  const removeHistoryEntry = useCallback(
+    (id: string, index: number) => {
       const nextVisits = visits.map((v) => {
         if (v.id !== id) return v;
         const history = getVisitHistoryEntries(v);
         if (history.length <= 1) return v;
-        const trimmed = history.slice(0, -1);
+        const trimmed = history.filter((_, i) => i !== index);
         const latest = trimmed[trimmed.length - 1];
         return {
           ...v,
@@ -116,6 +116,6 @@ export function useVisitCRUD(
     addVisit,
     editVisit,
     deleteVisit,
-    removeLastHistoryEntry,
+    removeHistoryEntry,
   };
 }

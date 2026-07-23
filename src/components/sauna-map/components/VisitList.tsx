@@ -163,6 +163,22 @@ export function VisitList({
               イキタイ
             </button>
           </div>
+          <select
+            className="input select-input quick-sort-select"
+            aria-label="並び順"
+            title="並び順"
+            value={filters.sort}
+            onChange={(e) =>
+              setFilters((prev) => ({ ...prev, sort: e.target.value as VisitFilters["sort"] }))
+            }
+          >
+            <option value="recent">📅 新しい順</option>
+            <option value="oldest">📅 古い順</option>
+            <option value="ratingDesc">⭐ 評価が高い順</option>
+            <option value="ratingAsc">⭐ 評価が低い順</option>
+            <option value="visitCountDesc">🔥 訪問回数が多い順</option>
+            <option value="nameAsc">🔤 名前順 (あ〜ん)</option>
+          </select>
         </div>
 
         <QuickFilterChips
@@ -233,6 +249,14 @@ export function VisitList({
                     {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
                   </div>
                   <div className="sauna-compact-side-info">
+                    {sanitizeImageUrl(visit.image) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={sanitizeImageUrl(visit.image)}
+                        className="sauna-compact-thumb"
+                        alt=""
+                      />
+                    )}
                     <RatingStars rating={visit.rating ?? 0} className="sauna-compact-rating" />
                     <button
                       type="button"

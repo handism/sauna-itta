@@ -15,7 +15,7 @@ interface VisitFormProps {
   onRemoveImage: () => void;
   onDelete: () => void;
   onCancel: () => void;
-  onDeleteLastHistory?: () => void;
+  onDeleteHistoryEntry?: (index: number) => void;
   imageUploading?: boolean;
 }
 
@@ -99,13 +99,18 @@ function HistorySection({
   historyCount,
   shouldAppend,
   historyEntries,
-  onDeleteLastHistory,
+  onDeleteEntry,
 }: {
   historyCount: number;
   shouldAppend: boolean;
   historyEntries: VisitHistoryEntry[];
-  onDeleteLastHistory?: () => void;
+  onDeleteEntry?: (index: number) => void;
 }) {
+  const recentEntries = historyEntries
+    .map((entry, index) => ({ entry, index }))
+    .reverse()
+    .slice(0, 5);
+
   return (
     <div className="form-group">
       <label>訪問履歴</label>
@@ -115,12 +120,9 @@ function HistorySection({
       </div>
       {historyCount > 0 && (
         <ul className="history-list">
-          {historyEntries
-            .slice()
-            .reverse()
-            .slice(0, 5)
-            .map((entry, index) => (
-              <li key={`${entry.date}-${index}`} className="history-item">
+          {recentEntries.map(({ entry, index }) => (
+            <li key={`${entry.date}-${index}`} className="history-item">
+              <div className="history-item-header">
                 <span>{entry.date}</span>
                 <span className="history-rating">
                   {entry.rating ? (
@@ -131,24 +133,27 @@ function HistorySection({
                     "評価なし"
                   )}
                 </span>
-                <span className="history-comment">
-                  {entry.comment ? entry.comment : "コメントなし"}
-                </span>
-              </li>
-            ))}
+                {historyCount > 1 && onDeleteEntry && (
+                  <button
+                    type="button"
+                    className="history-delete-btn"
+                    onClick={() => onDeleteEntry(index)}
+                    aria-label="この履歴を削除"
+                    title="この履歴を削除"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+              <span className="history-comment">
+                {entry.comment ? entry.comment : "コメントなし"}
+              </span>
+            </li>
+          ))}
         </ul>
       )}
       {historyCount > 5 && (
         <div className="history-more">最新5件のみ表示中</div>
-      )}
-      {historyCount > 1 && onDeleteLastHistory && (
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={onDeleteLastHistory}
-        >
-          最後の履歴を削除
-        </button>
       )}
     </div>
   );
@@ -451,7 +456,7 @@ export function VisitForm({
   onRemoveImage,
   onDelete,
   onCancel,
-  onDeleteLastHistory,
+  onDeleteHistoryEntry,
   imageUploading,
 }: VisitFormProps) {
   const historyCount = historyEntries.length;
@@ -474,7 +479,7 @@ export function VisitForm({
           historyCount={historyCount}
           shouldAppend={shouldAppend}
           historyEntries={historyEntries}
-          onDeleteLastHistory={onDeleteLastHistory}
+          onDeleteEntry={onDeleteHistoryEntry}
         />
       )}
 

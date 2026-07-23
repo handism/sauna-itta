@@ -62,7 +62,7 @@ describe("useSaunaVisits", () => {
       addVisit: vi.fn(),
       editVisit: vi.fn(),
       deleteVisit: vi.fn(),
-      removeLastHistoryEntry: vi.fn(),
+      removeHistoryEntry: vi.fn(),
     });
     vi.mocked(useVisitImportExport.useVisitImportExport).mockReturnValue({
       importVisitsFromFile: vi.fn(),
@@ -75,7 +75,7 @@ describe("useSaunaVisits", () => {
       addVisit: vi.fn(),
       editVisit: vi.fn(),
       deleteVisit: vi.fn(),
-      removeLastHistoryEntry: vi.fn(),
+      removeHistoryEntry: vi.fn(),
     };
     const mockImportExportMethods = {
       importVisitsFromFile: vi.fn(),

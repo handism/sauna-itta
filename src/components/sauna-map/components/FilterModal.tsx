@@ -33,31 +33,6 @@ function MinRatingSelect({ filters, setFilters }: FilterComponentProps) {
   );
 }
 
-function SortSelect({ filters, setFilters }: FilterComponentProps) {
-  return (
-    <div className="form-group">
-      <label className="filters-label">並び順</label>
-      <select
-        className="input select-input"
-        value={filters.sort}
-        onChange={(e) =>
-          setFilters((prev) => ({
-            ...prev,
-            sort: e.target.value as VisitFilters["sort"],
-          }))
-        }
-      >
-        <option value="recent">📅 新しい順</option>
-        <option value="oldest">📅 古い順</option>
-        <option value="ratingDesc">⭐ 評価が高い順</option>
-        <option value="ratingAsc">⭐ 評価が低い順</option>
-        <option value="visitCountDesc">🔥 訪問回数が多い順</option>
-        <option value="nameAsc">🔤 名前順 (あ〜ん)</option>
-      </select>
-    </div>
-  );
-}
-
 function BoundsToggle({ filters, setFilters }: FilterComponentProps) {
   return (
     <div className="form-group">
@@ -124,7 +99,6 @@ export function FilterModal({
           </button>
         </div>
         <div className="filters">
-          <SortSelect filters={filters} setFilters={setFilters} />
           <MinRatingSelect filters={filters} setFilters={setFilters} />
           <BoundsToggle filters={filters} setFilters={setFilters} />
           {isFilterActive && (
@@ -140,7 +114,7 @@ export function FilterModal({
             </button>
           )}
           <button type="button" className="btn btn-primary" onClick={onClose}>
-            反映して閉じる
+            閉じる
           </button>
         </div>
       </div>

@@ -152,6 +152,35 @@
   margin-bottom: 0.4rem;
 }
 
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  color: transparent;
+  background: color-mix(in srgb, var(--glass) 70%, transparent);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--foreground) 8%, transparent),
+    transparent
+  );
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @media (max-width: 720px) {
   .page {
     padding-bottom: env(safe-area-inset-bottom, 0);

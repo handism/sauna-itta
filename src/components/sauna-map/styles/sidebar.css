@@ -334,6 +334,15 @@
   font-size: 0.8rem;
 }
 
+.sauna-compact-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid var(--glass-border);
+}
+
 .compact-edit-btn {
   padding: 0.2rem 0.45rem !important;
   font-size: 0.78rem !important;
@@ -1237,6 +1246,38 @@ input[type="date"].input {
   background: color-mix(in srgb, var(--glass) 78%, transparent);
   border: 1px solid var(--glass-border);
   font-size: 0.82rem;
+}
+
+.history-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-item-header > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--foreground);
+  opacity: 0.65;
+  cursor: pointer;
+}
+
+.history-delete-btn:hover {
+  opacity: 1;
+  border-color: color-mix(in srgb, #ef4444 55%, var(--glass-border));
+  color: #ef4444;
 }
 
 .history-rating {
