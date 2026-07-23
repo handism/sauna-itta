@@ -106,30 +106,46 @@ export function VisitList({
       </div>
 
       <div className="sauna-search-box">
-        <div className="search-input-wrapper">
-          <span className="search-icon">🔍</span>
-          <input
-            type="text"
-            className="input search-input"
-            placeholder="サウナ名・エリア・タグで即検索..."
-            value={filters.search}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, search: e.target.value }))
+        <div className="search-row">
+          <div className="search-input-wrapper">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              className="input search-input"
+              placeholder="サウナ名・エリア・タグで即検索..."
+              value={filters.search}
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, search: e.target.value }))
+              }
+            />
+            {filters.search && (
+              <button
+                type="button"
+                className="search-clear-btn"
+                onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
+                aria-label="検索のクリア"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className={`bounds-toggle-btn ${filters.filterByBounds ? "is-active" : ""}`}
+            onClick={() =>
+              setFilters((prev) => ({
+                ...prev,
+                filterByBounds: !prev.filterByBounds,
+              }))
             }
-          />
-          {filters.search && (
-            <button
-              type="button"
-              className="search-clear-btn"
-              onClick={() => setFilters((prev) => ({ ...prev, search: "" }))}
-              aria-label="検索のクリア"
-            >
-              ✕
-            </button>
-          )}
+            title="地図の表示エリア内にあるサウナのみを表示"
+          >
+            🗺️ マップ内
+          </button>
         </div>
 
-        <div className="sauna-quick-controls-row">
+        <div className="controls-row">
           <div className="status-tabs" role="tablist" aria-label="ステータスフィルター">
             <button
               type="button"
@@ -159,20 +175,6 @@ export function VisitList({
               イキタイ
             </button>
           </div>
-
-          <button
-            type="button"
-            className={`bounds-toggle-btn ${filters.filterByBounds ? "is-active" : ""}`}
-            onClick={() =>
-              setFilters((prev) => ({
-                ...prev,
-                filterByBounds: !prev.filterByBounds,
-              }))
-            }
-            title="地図の表示エリア内にあるサウナのみを表示"
-          >
-            🗺️ マップ範囲内
-          </button>
 
           <select
             className="quick-sort-select"
