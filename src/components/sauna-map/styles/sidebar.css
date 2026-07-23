@@ -140,21 +140,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.4rem;
   margin-bottom: 0.75rem;
 }
 
 .sauna-list-header .panel-title {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 700;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .sauna-header-actions {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
+  flex-shrink: 0;
 }
 
 .view-mode-toggle {
@@ -164,18 +168,19 @@
   border-radius: 10px;
   border: 1px solid var(--glass-border);
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .view-mode-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.25rem;
   border: none;
   background: transparent;
   color: var(--foreground);
   opacity: 0.92;
-  padding: 0.35rem 0.65rem;
-  font-size: 0.78rem;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.76rem;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -199,8 +204,10 @@
 .filters-open-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.45rem 0.8rem;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.55rem;
+  height: 32px;
   background: var(--glass);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
@@ -208,6 +215,7 @@
   font-size: 0.82rem;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
 }
 
 .filters-open-btn:hover,
