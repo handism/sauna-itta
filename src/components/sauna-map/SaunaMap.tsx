@@ -203,6 +203,9 @@ export default function SaunaMap() {
   const cancelEditing = (completed = false) => {
     cancelEdit(completed);
     setForm(getDefaultForm());
+    if (isMobile) {
+      setSnapPosition("min");
+    }
   };
 
   const handleDelete = () => {
