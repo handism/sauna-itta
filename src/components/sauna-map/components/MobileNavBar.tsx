@@ -3,10 +3,11 @@ import { SheetSnapPosition } from "./BottomSheet";
 
 export type MobileTab = "map" | "list" | "add" | "menu";
 
-interface MobileNavBarProps {
+export interface MobileNavBarProps {
   activeTab: MobileTab;
   onSelectTab: (tab: MobileTab) => void;
   snapPosition: SheetSnapPosition;
+  isAdding: boolean;
   onOpenFilter: () => void;
   isFilterActive: boolean;
 }
@@ -15,14 +16,18 @@ export function MobileNavBar({
   activeTab,
   onSelectTab,
   snapPosition,
+  isAdding,
   onOpenFilter,
   isFilterActive,
 }: MobileNavBarProps) {
+  const isMapActive = !isAdding && (activeTab === "map" || snapPosition === "min");
+  const isListActive = !isAdding && (activeTab === "list" || snapPosition !== "min");
+
   return (
     <nav className="mobile-nav-bar" aria-label="モバイルナビゲーション">
       <button
         type="button"
-        className={`mobile-nav-item ${activeTab === "map" && snapPosition === "min" ? "is-active" : ""}`}
+        className={`mobile-nav-item ${isMapActive ? "is-active" : ""}`}
         onClick={() => onSelectTab("map")}
       >
         <span className="mobile-nav-icon">🗺️</span>
@@ -31,7 +36,7 @@ export function MobileNavBar({
 
       <button
         type="button"
-        className={`mobile-nav-item ${activeTab === "list" && snapPosition !== "min" ? "is-active" : ""}`}
+        className={`mobile-nav-item ${isListActive ? "is-active" : ""}`}
         onClick={() => onSelectTab("list")}
       >
         <span className="mobile-nav-icon">📋</span>
@@ -40,7 +45,7 @@ export function MobileNavBar({
 
       <button
         type="button"
-        className={`mobile-nav-item mobile-nav-item--add ${activeTab === "add" ? "is-active" : ""}`}
+        className={`mobile-nav-item mobile-nav-item--add ${isAdding ? "is-active" : ""}`}
         onClick={() => onSelectTab("add")}
         aria-label="サウナ追加"
       >

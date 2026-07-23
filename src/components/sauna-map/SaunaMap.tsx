@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import {
   MapContainer,
@@ -115,13 +115,19 @@ export default function SaunaMap() {
 
   const activeMapTarget = mapTargetOverride || mapTarget;
 
+  const selectedVisit = useMemo(
+    () => visits.find((v) => v.id === selectedId),
+    [visits, selectedId]
+  );
+
   const handleSelectVisit = useCallback((visit: SaunaVisit) => {
     setSelectedId(visit.id);
     setHoveredId(visit.id);
     setMapTargetOverride({ lat: visit.lat, lng: visit.lng });
     if (isMobile) {
-      setSnapPosition("half");
-      setActiveMobileTab("list");
+      // ピンタップ時はマップの操作性を重視し min（最小化）のまま保つ（バー横に選択名を表示）
+      setSnapPosition("min");
+      setActiveMobileTab("map");
     }
   }, [isMobile]);
 
@@ -134,8 +140,10 @@ export default function SaunaMap() {
   const handleSelectMobileTab = useCallback((tab: MobileTab) => {
     setActiveMobileTab(tab);
     if (tab === "map") {
+      cancelEditing(true);
       setSnapPosition("min");
     } else if (tab === "list") {
+      cancelEditing(true);
       setSnapPosition("half");
     } else if (tab === "add") {
       startCreate();
@@ -561,7 +569,12 @@ export default function SaunaMap() {
 
       {/* モバイル専用 ボトムシート UI */}
       {!isMobilePickingLocation && (
-        <BottomSheet snapPosition={snapPosition} onSnapChange={setSnapPosition}>
+        <BottomSheet
+          snapPosition={snapPosition}
+          onSnapChange={setSnapPosition}
+          filteredCount={filteredVisits.length}
+          selectedVisitName={selectedVisit?.name}
+        >
           {isAdding ? (
             <VisitForm
               form={form}
@@ -608,6 +621,7 @@ export default function SaunaMap() {
           activeTab={activeMobileTab}
           onSelectTab={handleSelectMobileTab}
           snapPosition={snapPosition}
+          isAdding={isAdding}
           onOpenFilter={openFilterModal}
           isFilterActive={isFilterActive}
         />

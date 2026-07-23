@@ -582,3 +582,20 @@
   transform: scale(0.96);
 }
 
+/* モバイル用 コントロールボタン位置レスポンシブ調整 */
+@media (max-width: 767px) {
+  .location-control {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .map-cluster-control {
+    top: 1rem;
+    right: calc(1rem + 48px + 0.5rem);
+  }
+
+  .leaflet-top.leaflet-right .leaflet-control-zoom {
+    margin: 1rem 1rem 0 0 !important;
+  }
+}
+
