@@ -440,7 +440,7 @@ export default function SaunaMap() {
               position={[selectedLocation.lat, selectedLocation.lng]}
               icon={getSaunaIcon({ selected: true })}
             >
-              <Popup>ここにピンを立てますか？</Popup>
+              <Popup autoPan={false}>ここにピンを立てますか？</Popup>
             </Marker>
           )}
         </MapContainer>
