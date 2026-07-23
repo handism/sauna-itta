@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { BarChart3 } from 'lucide-react';
 import { SaunaVisit } from '@/components/sauna-map/types';
 import { flattenVisitHistory } from '@/components/sauna-map/utils';
@@ -27,9 +27,7 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
       visits: monthlyCounts[month],
     }));
 
-    // Sort by month
     chartData.sort((a, b) => a.month.localeCompare(b.month));
-
     return chartData;
   }, [visits]);
 
@@ -45,13 +43,13 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
       .map((d) => ({ month: d.month, year: d.month.slice(0, 4) }));
   }, [data]);
 
-  const tickColor = theme === 'light' ? '#334155' : '#f1f5f9';
-  const gridColor = theme === 'light' ? 'rgba(15, 23, 42, 0.14)' : 'rgba(241, 245, 249, 0.18)';
+  const tickColor = theme === 'light' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(241, 245, 249, 0.8)';
+  const gridColor = theme === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(241, 245, 249, 0.1)';
 
   if (data.length === 0) {
     return (
-      <div className="chart-empty-state">
-        <BarChart3 size={32} />
+      <div className="chart-empty-state" style={{ minHeight: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.6 }}>
+        <BarChart3 size={32} style={{ marginBottom: 8 }} />
         <p>訪問記録がありません。サウナを追加すると月別の推移が表示されます。</p>
       </div>
     );
@@ -61,33 +59,62 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
   const chartSummary = `月別訪問数の棒グラフ。${data[0].month}から${data[data.length - 1].month}まで、合計${totalVisits}件の訪問。`;
 
   return (
-    <div role="img" aria-label={chartSummary}>
-      <ResponsiveContainer width="100%" height={300}>
+    <div role="img" aria-label={chartSummary} style={{ width: '100%', height: 260 }}>
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
-          margin={{
-            top: 5, right: 30, left: 20, bottom: 5,
-          }}
+          margin={{ top: 15, right: 15, left: -20, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-          <XAxis dataKey="month" tick={{ fill: tickColor, fontSize: 11 }} />
-          <YAxis allowDecimals={false} tick={{ fill: tickColor, fontSize: 11 }} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(13, 13, 13, 0.8)',
-              borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)',
-              color: tickColor,
-            }}
+          <defs>
+            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ff7e40" stopOpacity={1} />
+              <stop offset="100%" stopColor="#e34d26" stopOpacity={0.8} />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+          <XAxis
+            dataKey="month"
+            tick={{ fill: tickColor, fontSize: 11 }}
+            axisLine={{ stroke: gridColor }}
+            tickLine={false}
           />
-          <Legend wrapperStyle={{ color: tickColor, fontSize: 12 }} />
-          <Bar dataKey="visits" fill={theme === 'light' ? '#e3702d' : '#f49b56'} name="訪問数" />
+          <YAxis
+            allowDecimals={false}
+            tick={{ fill: tickColor, fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            cursor={{ fill: theme === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)' }}
+            contentStyle={{
+              backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(20, 24, 33, 0.92)',
+              backdropFilter: 'blur(12px)',
+              borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.15)',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+              color: tickColor,
+              fontWeight: 600,
+              fontSize: '13px',
+              padding: '8px 14px',
+            }}
+            formatter={(value: any) => [`${value ?? 0} 回`, '訪問数']}
+          />
+          <Bar
+            dataKey="visits"
+            fill="url(#barGradient)"
+            name="訪問数"
+            radius={[6, 6, 0, 0]}
+            maxBarSize={40}
+          />
           {yearBoundaries.length > 1 &&
             yearBoundaries.map(({ month, year }) => (
               <ReferenceLine
                 key={year}
                 x={month}
                 stroke={gridColor}
-                label={{ value: year, position: 'insideTopLeft', fill: tickColor, fontSize: 11 }}
+                strokeDasharray="2 2"
+                label={{ value: year, position: 'insideTopLeft', fill: tickColor, fontSize: 10, opacity: 0.7 }}
               />
             ))}
         </BarChart>

@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from 'react';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { PieChart as PieChartIcon } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import { Star, PieChart as PieChartIcon } from 'lucide-react';
 import { SaunaVisit } from '@/components/sauna-map/types';
 import { flattenVisitHistory } from '@/components/sauna-map/utils';
 
@@ -12,122 +12,120 @@ interface RatingDistributionChartProps {
 }
 
 const RATING_COLORS: { [key: number]: string } = {
-  1: '#e0574c',
-  2: '#f08d49',
-  3: '#f8c04e',
-  4: '#a3d977',
-  5: '#6fcf97',
+  5: '#10b981', // Emerald green
+  4: '#3b82f6', // Blue
+  3: '#f59e0b', // Amber
+  2: '#f97316', // Orange
+  1: '#ef4444', // Red
 };
-const FALLBACK_COLOR = '#8f7cf7';
+const FALLBACK_COLOR = '#8b5cf6';
 const RATING_LABELS: { [key: number]: string } = {
-  1: '★1',
-  2: '★2',
-  3: '★3',
-  4: '★4',
-  5: '★5',
+  5: '★5 (最高)',
+  4: '★4 (満足)',
+  3: '★3 (普通)',
+  2: '★2 (イマイチ)',
+  1: '★1 (うーん)',
 };
 
 export default function RatingDistributionChart({ visits, theme }: RatingDistributionChartProps) {
-  const data = useMemo(() => {
-    const ratingCounts: { [key: string]: number } = {};
+  const { data, avgRating, totalRated } = useMemo(() => {
+    const ratingCounts: { [key: number]: number } = {};
+    let totalScore = 0;
+    let totalCount = 0;
 
-    flattenVisitHistory(visits)
-      .forEach((entry) => {
-        if (entry.status === "visited" && entry.rating && entry.rating > 0) {
-          const rating = entry.rating;
-          ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
-        }
-      });
-
-    const chartData = Object.keys(ratingCounts).map(rating => {
-      const ratingNum = parseInt(rating, 10);
-      return {
-        rating: ratingNum,
-        name: RATING_LABELS[ratingNum] || `評価${rating}`,
-        value: ratingCounts[rating],
-      };
+    flattenVisitHistory(visits).forEach((entry) => {
+      if (entry.status === "visited" && entry.rating && entry.rating > 0) {
+        const rating = entry.rating;
+        ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
+        totalScore += rating;
+        totalCount += 1;
+      }
     });
 
-    // Sort by rating (numeric, not string)
-    chartData.sort((a, b) => a.rating - b.rating);
+    const chartData = [5, 4, 3, 2, 1]
+      .filter((r) => ratingCounts[r])
+      .map((r) => ({
+        rating: r,
+        name: RATING_LABELS[r] || `★${r}`,
+        value: ratingCounts[r],
+      }));
 
-    return chartData;
+    const avg = totalCount > 0 ? (totalScore / totalCount).toFixed(1) : "0.0";
+
+    return { data: chartData, avgRating: avg, totalRated: totalCount };
   }, [visits]);
 
-  const textColor = theme === 'light' ? '#2c3e50' : '#f2f2f2';
-
-  type PieLabelProps = {
-    cx?: number;
-    cy?: number;
-    midAngle?: number;
-    innerRadius?: number;
-    outerRadius?: number;
-    percent?: number;
-    name?: string;
-  };
-
-  const renderCustomizedLabel = ({
-    cx = 0,
-    cy = 0,
-    midAngle = 0,
-    innerRadius = 0,
-    outerRadius = 0,
-    percent = 0,
-    name = '',
-  }: PieLabelProps) => {
-    const RADIAN = Math.PI / 180;
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
-    const x = cx + radius * Math.cos(-midAngle * RADIAN);
-    const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-    return (
-      <text x={x} y={y} fill={textColor} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize={12}>
-        {`${name} ${(percent * 100).toFixed(0)}%`}
-      </text>
-    );
-  };
-
+  const textColor = theme === 'light' ? '#1e293b' : '#f8fafc';
 
   if (data.length === 0) {
     return (
-      <div className="chart-empty-state">
-        <PieChartIcon size={32} />
+      <div className="chart-empty-state" style={{ minHeight: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.6 }}>
+        <PieChartIcon size={32} style={{ marginBottom: 8 }} />
         <p>評価付きの訪問記録がありません。訪問に評価を付けると分布が表示されます。</p>
       </div>
     );
   }
 
-  const chartSummary = `満足度分布の円グラフ。${data
-    .map((d) => `${d.name}が${d.value}件`)
-    .join('、')}。`;
+  const chartSummary = `満足度分布のドーナツグラフ。平均満足度${avgRating}。`;
 
   return (
-    <div role="img" aria-label={chartSummary}>
-      <ResponsiveContainer width="100%" height={300}>
+    <div role="img" aria-label={chartSummary} style={{ width: '100%', height: 260, position: 'relative' }}>
+      {/* Center avg rating indicator */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -60%)',
+          textAlign: 'center',
+          pointerEvents: 'none',
+          zIndex: 2,
+        }}
+      >
+        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: textColor, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+          <span>{avgRating}</span>
+          <Star size={18} fill="#f59e0b" color="#f59e0b" style={{ marginTop: -2 }} />
+        </div>
+        <div style={{ fontSize: '0.72rem', opacity: 0.65, marginTop: '2px', letterSpacing: '0.05em' }}>
+          平均 ({totalRated}件)
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
             data={data}
             cx="50%"
             cy="50%"
-            outerRadius={80}
-            fill={theme === 'light' ? '#e3702d' : '#f49b56'}
+            innerRadius={62}
+            outerRadius={90}
+            paddingAngle={4}
             dataKey="value"
             nameKey="name"
-            labelLine={false}
-            label={renderCustomizedLabel}
+            stroke="none"
           >
             {data.map((entry) => (
-              <Cell key={`cell-${entry.rating}`} fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR} />
+              <Cell
+                key={`cell-${entry.rating}`}
+                fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR}
+                style={{ outline: 'none', filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.15))' }}
+              />
             ))}
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.8)' : 'rgba(13, 13, 13, 0.8)',
-              borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)',
-              color: textColor
+              backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(20, 24, 33, 0.92)',
+              backdropFilter: 'blur(12px)',
+              borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.15)',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+              color: textColor,
+              fontWeight: 600,
+              fontSize: '13px',
+              padding: '8px 14px',
             }}
+            formatter={(value: any) => [`${value ?? 0} 件`, '訪問数']}
           />
-          <Legend wrapperStyle={{ color: textColor, fontSize: 12 }}/>
         </PieChart>
       </ResponsiveContainer>
     </div>
