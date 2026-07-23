@@ -35,7 +35,7 @@ export function LocationControl({ onNotify }: LocationControlProps) {
   }, [map, onNotify]);
 
   return (
-    <div className="location-control" style={{ position: "absolute", zIndex: 1000 }}>
+    <div className="location-control">
       <button
         type="button"
         onClick={handleLocate}

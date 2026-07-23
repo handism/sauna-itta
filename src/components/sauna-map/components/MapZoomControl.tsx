@@ -7,8 +7,8 @@ export function MapZoomControl() {
   const map = useMap();
 
   return (
-    <div className="leaflet-top leaflet-right" style={{ pointerEvents: "none" }}>
-      <div className="leaflet-control leaflet-control-zoom" style={{ pointerEvents: "auto" }}>
+    <div className="map-zoom-control">
+      <div className="leaflet-control-zoom">
         <button
           type="button"
           className="leaflet-control-zoom-in"
