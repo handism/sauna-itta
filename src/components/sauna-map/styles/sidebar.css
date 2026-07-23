@@ -442,7 +442,7 @@
   border: none;
   background: transparent;
   color: var(--foreground);
-  opacity: 0.75;
+  opacity: 0.92;
   padding: 0.4rem 0.5rem;
   font-size: 0.78rem;
   border-radius: 9px;
@@ -470,7 +470,7 @@
   border: 1px solid var(--glass-border);
   background: var(--input-bg);
   color: var(--foreground);
-  opacity: 0.85;
+  opacity: 0.95;
   padding: 0.4rem 0.65rem;
   font-size: 0.78rem;
   border-radius: 10px;
@@ -599,7 +599,7 @@
   border: 1px solid var(--glass-border);
   background: var(--glass);
   color: var(--foreground);
-  opacity: 0.85;
+  opacity: 0.95;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -652,10 +652,15 @@
   transition: all 0.25s ease;
 }
 
+.input::placeholder {
+  color: var(--foreground);
+  opacity: 0.72;
+}
+
 .input:focus {
   outline: none;
   border-color: var(--primary);
-  background: var(--glass);
+  background: var(--glass-heavy);
   box-shadow: 0 0 16px var(--primary-glow);
 }
 
@@ -1493,5 +1498,20 @@ input[type="date"].input {
   border-radius: 50%;
   background-color: var(--primary, #ee8f43);
   margin-left: 0.25rem;
+}
+
+/* Theme specific contrast & readability overrides */
+.light-theme .view-mode-btn:not(.is-active),
+.light-theme .status-tab:not(.is-active),
+.light-theme .bounds-toggle-btn:not(.is-active) {
+  color: #1e293b;
+  opacity: 0.95;
+  font-weight: 500;
+}
+
+.light-theme .preset-tag-chip:not(.is-selected) {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.9);
+  opacity: 0.95;
 }
 
