@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+// --- ドメイン型基本定義 ---
+export type VisitStatus = "visited" | "wishlist";
+
+// --- Zod バリデーションスキーマ ---
 export const VisitHistoryEntrySchema = z.object({
   date: z.string(),
   comment: z.string(),
@@ -17,15 +21,17 @@ export const SaunaVisitSchema = z.object({
   date: z.string(),
   rating: z.number().optional(),
   tags: z.array(z.string()).optional(),
-  status: z.enum(["visited", "wishlist"]).optional(),
+  status: z.enum(["visited", "wishlist"] as const).optional(),
   area: z.string().optional(),
   visitCount: z.number().optional(),
   history: z.array(VisitHistoryEntrySchema).optional(),
 });
 
+// --- TypeScript 型定義 (ドメインモデル) ---
 export type SaunaVisit = z.infer<typeof SaunaVisitSchema>;
 export type VisitHistoryEntry = z.infer<typeof VisitHistoryEntrySchema>;
 
+// --- UI / フォーム型定義 ---
 export interface VisitFormState {
   name: string;
   comment: string;
@@ -33,16 +39,24 @@ export interface VisitFormState {
   date: string;
   rating: number;
   tagsText: string;
-  status: "visited" | "wishlist";
+  status: VisitStatus;
   area: string;
   appendHistory: boolean;
 }
 
+export type SortOrder =
+  | "recent"
+  | "oldest"
+  | "ratingDesc"
+  | "ratingAsc"
+  | "visitCountDesc"
+  | "nameAsc";
+
 export interface VisitFilters {
   search: string;
-  status: "all" | "visited" | "wishlist";
+  status: "all" | VisitStatus;
   minRating: number;
-  sort: "recent" | "oldest" | "ratingDesc" | "ratingAsc" | "visitCountDesc" | "nameAsc";
+  sort: SortOrder;
   selectedTag?: string;
   selectedArea?: string;
   filterByBounds?: boolean;
