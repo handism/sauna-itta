@@ -82,7 +82,7 @@ const STORAGE_ERROR_MSG =
 export default function SaunaMap() {
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
-  const { visits, addVisit, editVisit, deleteVisit, removeLastHistoryEntry, importVisitsFromFile, exportVisits } =
+  const { visits, addVisit, editVisit, deleteVisit, removeHistoryEntry, importVisitsFromFile, exportVisits } =
     useSaunaVisits();
   const { filters, setFilters, filteredVisits, stats, isFilterActive, activeFilterCount, clearFilters } =
     useVisitFilters(visits);
@@ -359,7 +359,7 @@ export default function SaunaMap() {
         onRemoveImage={handleRemoveImage}
         onDelete={handleDelete}
         onCancel={() => cancelEditing()}
-        onDeleteLastHistory={editingId ? handleDeleteLastHistory : undefined}
+        onDeleteHistoryEntry={editingId ? handleDeleteHistoryEntry : undefined}
         imageUploading={imageUploading}
       />
     ) : (
@@ -381,12 +381,12 @@ export default function SaunaMap() {
       />
     );
 
-  const handleDeleteLastHistory = () => {
+  const handleDeleteHistoryEntry = (index: number) => {
     if (!editingId) return;
 
-    removeLastHistoryEntry(editingId);
+    removeHistoryEntry(editingId, index);
 
-    const newLatest = historyEntries[historyEntries.length - 2];
+    const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
 
     if (newLatest) {
       setForm((prev) => ({
