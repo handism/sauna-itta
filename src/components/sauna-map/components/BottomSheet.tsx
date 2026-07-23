@@ -1,6 +1,5 @@
 import { ReactNode, useRef, useState, TouchEvent, CSSProperties } from "react";
-
-export type SheetSnapPosition = "min" | "half" | "full";
+import type { SheetSnapPosition } from "../types";
 
 interface BottomSheetProps {
   snapPosition: SheetSnapPosition;

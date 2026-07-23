@@ -65,3 +65,5 @@ export interface LatLng {
   lat: number;
   lng: number;
 }
+
+export type SheetSnapPosition = "min" | "half" | "full";

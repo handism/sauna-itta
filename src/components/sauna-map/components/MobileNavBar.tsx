@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SheetSnapPosition } from "./BottomSheet";
+import type { SheetSnapPosition } from "../types";
 
 export type MobileTab = "map" | "list" | "add" | "menu";
 
