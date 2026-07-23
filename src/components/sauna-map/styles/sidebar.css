@@ -133,7 +133,7 @@
 
 .sidebar-header {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   justify-content: space-between;
   align-items: flex-start;
   padding: 1.6rem 1.6rem 1.2rem;
@@ -1028,16 +1028,22 @@ input[type="date"].input {
   margin-bottom: 1.3rem;
 }
 
+.sidebar-header-main {
+  flex-shrink: 0;
+}
+
 .sidebar-header-main h1 {
   color: var(--primary);
   font-size: 1.4rem;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .sidebar-header-main p {
   margin-top: 0.2rem;
   font-size: 0.82rem;
   opacity: 0.76;
+  white-space: nowrap;
 }
 
 .segmented {
@@ -1396,10 +1402,12 @@ input[type="date"].input {
   .sidebar-header-main h1 {
     font-size: 1.15rem;
     line-height: 1.3;
+    white-space: nowrap;
   }
 
   .sidebar-header-main p {
     font-size: 0.8rem;
+    white-space: nowrap;
   }
 
   .sidebar-content {
