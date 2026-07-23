@@ -171,7 +171,7 @@
 }
 
 .leaflet-top.leaflet-right .leaflet-control-zoom {
-  margin: 2rem calc(2rem + 48px + 0.5rem) 0 0 !important;
+  margin: 2rem calc(2rem + 48px + 0.5rem + 115px + 0.5rem) 0 0 !important;
   display: flex;
   gap: 0.5rem;
 }
@@ -433,7 +433,7 @@
   }
 
   .leaflet-top.leaflet-right .leaflet-control-zoom {
-    margin: max(1rem, env(safe-area-inset-top)) calc(1rem + 48px + 0.5rem) 0 0 !important;
+    margin: max(1rem, env(safe-area-inset-top)) calc(1rem + 48px + 0.5rem + 105px + 0.5rem) 0 0 !important;
   }
 
   .leaflet-control-zoom a {
@@ -598,10 +598,6 @@
   .map-cluster-control {
     top: 1rem;
     right: calc(1rem + 48px + 0.5rem);
-  }
-
-  .leaflet-top.leaflet-right .leaflet-control-zoom {
-    margin: 1rem 1rem 0 0 !important;
   }
 }
 
