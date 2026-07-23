@@ -37,12 +37,12 @@ import { MapClusterControl } from "./components/MapClusterControl";
 import { MapZoomControl } from "./components/MapZoomControl";
 import { MapBoundsObserver } from "./components/MapBoundsObserver";
 import { Toast } from "./components/Toast";
-import type { ToastState } from "./components/Toast";
 import { BottomSheet } from "./components/BottomSheet";
 import type { SheetSnapPosition } from "./types";
 import { MobileNavBar, MobileTab } from "./components/MobileNavBar";
 import { DesktopSidebar } from "./components/DesktopSidebar";
 import { getSaunaIcon } from "./components/markerIcon";
+import { useToast } from "./hooks/useToast";
 import { useSaunaVisits } from "./hooks/useSaunaVisits";
 import { useEditorState } from "./hooks/useEditorState";
 import { useVisitFilters } from "./hooks/useVisitFilters";
@@ -102,7 +102,7 @@ export default function SaunaMap() {
     closeDeleteConfirm,
   } = useUIState();
 
-  const [toast, setToast] = useState<ToastState | null>(null);
+  const { toast, showToast, clearToast } = useToast();
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapTargetOverride, setMapTargetOverride] = useState<LatLng | null>(null);
@@ -153,16 +153,6 @@ export default function SaunaMap() {
       setSnapPosition("full");
     }
   }, [startCreate]);
-
-  const showToast = useCallback((message: string, tone: ToastState["tone"] = "info") => {
-    setToast({ id: Date.now(), message, tone });
-  }, []);
-
-  useEffect(() => {
-    if (!toast || toast.tone === "error") return;
-    const timer = window.setTimeout(() => setToast(null), 3000);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
 
   useEffect(() => {
     setMounted(true);
@@ -532,7 +522,7 @@ export default function SaunaMap() {
         onCancel={closeDeleteConfirm}
       />
 
-      <Toast toast={toast} onClose={() => setToast(null)} />
+      <Toast toast={toast} onClose={clearToast} />
     </div>
   );
 }
