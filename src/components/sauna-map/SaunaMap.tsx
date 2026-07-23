@@ -198,6 +198,9 @@ export default function SaunaMap() {
     setSelectedId(visit.id);
     startEdit(visit);
     setForm(toFormState(visit));
+    if (isMobile) {
+      setSnapPosition("full");
+    }
   };
 
   const cancelEditing = (completed = false) => {
