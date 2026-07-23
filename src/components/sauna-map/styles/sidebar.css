@@ -167,6 +167,9 @@
 }
 
 .view-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   border: none;
   background: transparent;
   color: var(--foreground);
@@ -587,6 +590,9 @@
 }
 
 .preset-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.78rem;
   padding: 0.3rem 0.65rem;
   border-radius: 999px;
@@ -875,6 +881,79 @@ input[type="date"].input {
   object-fit: cover;
   border-radius: 8px;
   margin-top: 0.8rem;
+  cursor: zoom-in;
+}
+
+.visually-hidden-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.image-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 96px;
+  padding: 1rem;
+  border: 2px dashed var(--glass-border);
+  border-radius: 12px;
+  background: var(--input-bg);
+  color: var(--foreground);
+  opacity: 0.75;
+  font-size: 0.82rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.image-dropzone:hover {
+  opacity: 1;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.image-dropzone.is-dragover {
+  opacity: 1;
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, var(--input-bg));
+}
+
+.image-dropzone--filled {
+  display: block;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+  min-height: 0;
+}
+
+.image-dropzone-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.btn-sm {
+  padding: 0.4rem 0.75rem !important;
+  font-size: 0.8rem !important;
+  min-height: 38px !important;
+}
+
+.image-remove-btn {
+  color: var(--error);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 
@@ -938,15 +1017,21 @@ input[type="date"].input {
 }
 
 .rating-star-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   cursor: pointer;
   min-width: 44px;
   min-height: 44px;
-  font-size: 1.4rem;
-  line-height: 1;
   border-radius: 10px;
   color: var(--foreground);
+  opacity: 0.5;
+}
+
+.rating-star-btn:has(.rating-star--filled) {
+  opacity: 1;
 }
 
 .rating-star-btn:active {
@@ -1302,6 +1387,9 @@ input[type="date"].input {
 }
 
 .chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   flex: 0 0 auto;
   padding: 0.35rem 0.75rem;
   font-size: 0.8rem;

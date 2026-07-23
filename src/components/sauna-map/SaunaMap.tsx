@@ -3,6 +3,21 @@
 import { useState, useEffect, useCallback, useMemo, useRef, ChangeEvent, FormEvent } from "react";
 import Link from "next/link";
 import {
+  MapPin,
+  X,
+  Flame,
+  Sun,
+  Moon,
+  Camera,
+  BarChart3,
+  Download,
+  Upload,
+  ChevronUp,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
   MapContainer,
   TileLayer,
   Marker,
@@ -104,7 +119,6 @@ export default function SaunaMap() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapTargetOverride, setMapTargetOverride] = useState<LatLng | null>(null);
   const [snapPosition, setSnapPosition] = useState<SheetSnapPosition>("min");
-  const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>("map");
   const [zoomLevel, setZoomLevel] = useState<number>(6);
   const [enableClustering, setEnableClustering] = useState<boolean>(true);
   const [imageUploading, setImageUploading] = useState(false);
@@ -130,7 +144,6 @@ export default function SaunaMap() {
     if (isMobile) {
       // ピンタップ時はマップの操作性を重視し min（最小化）のまま保つ（バー横に選択名を表示）
       setSnapPosition("min");
-      setActiveMobileTab("map");
     }
   }, [isMobile]);
 
@@ -141,7 +154,6 @@ export default function SaunaMap() {
   }, []);
 
   const handleSelectMobileTab = useCallback((tab: MobileTab) => {
-    setActiveMobileTab(tab);
     if (tab === "map") {
       cancelEditing(true);
       setSnapPosition("min");
@@ -263,10 +275,7 @@ export default function SaunaMap() {
     cancelEditing(true);
   };
 
-  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleImageFile = async (file: File) => {
     setImageUploading(true);
     try {
       const base64 = await compressAndGetBase64(file);
@@ -277,6 +286,10 @@ export default function SaunaMap() {
     } finally {
       setImageUploading(false);
     }
+  };
+
+  const handleRemoveImage = () => {
+    setForm((prev) => ({ ...prev, image: "" }));
   };
 
   const handleImportData = useCallback(
@@ -336,7 +349,8 @@ export default function SaunaMap() {
         editingId={editingId}
         historyEntries={historyEntries}
         onSubmit={handleSubmit}
-        onImageChange={handleImageChange}
+        onImageFile={handleImageFile}
+        onRemoveImage={handleRemoveImage}
         onDelete={handleDelete}
         onCancel={() => cancelEditing()}
         onDeleteLastHistory={editingId ? handleDeleteLastHistory : undefined}
@@ -434,18 +448,18 @@ export default function SaunaMap() {
 
       {isMobilePickingLocation && (
         <div className="pin-hint">
-          <div className="pin-hint-icon">📍</div>
+          <div className="pin-hint-icon"><MapPin size={20} /></div>
           <div className="pin-hint-text">
             <strong>地図をタップして場所を選択</strong>
             <span>サウナの場所をタップしてね</span>
           </div>
           <button className="pin-hint-cancel" onClick={() => cancelEditing()}>
-            ✕
+            <X size={16} />
           </button>
         </div>
       )}
 
-      {!isMobilePickingLocation && (
+      {!isMobilePickingLocation && !isMobile && (
         <div className="ui-layer">
           {!isSidebarExpanded && (
             <button
@@ -455,9 +469,9 @@ export default function SaunaMap() {
               aria-label="サイドバーを開く"
               title="サイドバーを開く"
             >
-              <span className="open-btn-icon">♨️</span>
+              <span className="open-btn-icon"><Flame size={18} /></span>
               <span className="open-btn-text">サウナイッタ</span>
-              <span className="open-btn-arrow">▶</span>
+              <span className="open-btn-arrow"><ChevronRight size={13} /></span>
             </button>
           )}
 
@@ -474,7 +488,7 @@ export default function SaunaMap() {
               onClick={toggleSidebar}
               aria-label="パネルを開く・閉じる"
             >
-              {isSidebarExpanded ? "↓" : "↑"}
+              {isSidebarExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
             </button>
             <div className="sidebar-header">
               <div className="sidebar-header-main">
@@ -489,7 +503,7 @@ export default function SaunaMap() {
                   aria-label="サイドバーを折りたたむ"
                   title="サイドバーを折りたたむ"
                 >
-                  ◀
+                  <ChevronLeft size={15} />
                 </button>
                 {!isAdding && (
                   <button
@@ -505,6 +519,16 @@ export default function SaunaMap() {
                     +
                   </button>
                 )}
+                <Link
+                  href="/stats"
+                  prefetch={false}
+                  className="mobile-menu-btn"
+                  onClick={closeMobileMenu}
+                  aria-label="統計ダッシュボード"
+                  title="統計ダッシュボード"
+                >
+                  <BarChart3 size={16} />
+                </Link>
                 <button
                   type="button"
                   className="mobile-menu-btn"
@@ -529,7 +553,15 @@ export default function SaunaMap() {
                         closeMobileMenu();
                       }}
                     >
-                      {theme === "dark" ? "☀️ ライトモード" : "🌙 ダークモード"}
+                      {theme === "dark" ? (
+                        <>
+                          <Sun size={15} /> ライトモード
+                        </>
+                      ) : (
+                        <>
+                          <Moon size={15} /> ダークモード
+                        </>
+                      )}
                     </button>
                     <button
                       type="button"
@@ -539,16 +571,8 @@ export default function SaunaMap() {
                         closeMobileMenu();
                       }}
                     >
-                      📸 シェア用ビュー
+                      <Camera size={15} /> シェア用ビュー
                     </button>
-                    <Link
-                      href="/stats"
-                      prefetch={false}
-                      role="menuitem"
-                      onClick={closeMobileMenu}
-                    >
-                      📊 ダッシュボード
-                    </Link>
                     <button
                       type="button"
                       role="menuitem"
@@ -557,7 +581,7 @@ export default function SaunaMap() {
                         closeMobileMenu();
                       }}
                     >
-                      📥 エクスポート
+                      <Download size={15} /> エクスポート
                     </button>
                     <button
                       type="button"
@@ -568,7 +592,7 @@ export default function SaunaMap() {
                         closeMobileMenu();
                       }}
                     >
-                      {importing ? "📤 取り込み中..." : "📤 インポート"}
+                      <Upload size={15} /> {importing ? "取り込み中..." : "インポート"}
                     </button>
                   </div>
                 )}
@@ -589,7 +613,7 @@ export default function SaunaMap() {
       )}
 
       {/* モバイル専用 ボトムシート UI */}
-      {!isMobilePickingLocation && (
+      {!isMobilePickingLocation && isMobile && (
         <BottomSheet
           snapPosition={snapPosition}
           onSnapChange={setSnapPosition}
@@ -601,9 +625,8 @@ export default function SaunaMap() {
       )}
 
       {/* モバイル専用 下部ナビゲーションバー */}
-      {!isMobilePickingLocation && (
+      {!isMobilePickingLocation && isMobile && (
         <MobileNavBar
-          activeTab={activeMobileTab}
           onSelectTab={handleSelectMobileTab}
           snapPosition={snapPosition}
           isAdding={isAdding}

@@ -1,6 +1,8 @@
-import { ChangeEvent, Dispatch, FormEvent, SetStateAction } from "react";
+import { Dispatch, DragEvent, FormEvent, SetStateAction, useRef, useState } from "react";
+import { CheckCircle2, Star, Check, ImagePlus, X } from "lucide-react";
 import { VisitFormState, VisitHistoryEntry } from "../types";
 import { sanitizeImageUrl } from "../utils";
+import { ImageLightbox } from "./common";
 
 interface VisitFormProps {
   form: VisitFormState;
@@ -9,7 +11,8 @@ interface VisitFormProps {
   editingId: string | null;
   historyEntries: VisitHistoryEntry[];
   onSubmit: (e: FormEvent) => void;
-  onImageChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onImageFile: (file: File) => void;
+  onRemoveImage: () => void;
   onDelete: () => void;
   onCancel: () => void;
   onDeleteLastHistory?: () => void;
@@ -21,11 +24,15 @@ function FormHeader({ editingId, selectedLocation }: { editingId: string | null;
     <>
       <h2 className="panel-title mb-2">{editingId ? "サウナの編集" : "新規サウナ登録"}</h2>
       <p className="panel-subtitle">
-        {editingId
-          ? "内容を更新します"
-          : selectedLocation
-            ? "場所が選択されました ✅"
-            : "地図上をクリックして場所を選択してください"}
+        {editingId ? (
+          "内容を更新します"
+        ) : selectedLocation ? (
+          <>
+            場所が選択されました <CheckCircle2 size={14} />
+          </>
+        ) : (
+          "地図上をクリックして場所を選択してください"
+        )}
       </p>
     </>
   );
@@ -62,7 +69,7 @@ function StatusField({ status, onChange }: { status: "visited" | "wishlist"; onC
 function RatingField({ rating, onChange }: { rating: number; onChange: (rating: number) => void }) {
   return (
     <div className="form-group">
-      <label>満足度（★1〜5）</label>
+      <label>満足度（1〜5）</label>
       <div className="rating-row">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
@@ -72,7 +79,7 @@ function RatingField({ rating, onChange }: { rating: number; onChange: (rating: 
             className="rating-star-btn"
             aria-label={`${star}つ星`}
           >
-            {rating >= star ? "★" : "☆"}
+            <Star size={22} fill={rating >= star ? "currentColor" : "none"} className={rating >= star ? "rating-star--filled" : ""} />
           </button>
         ))}
         <button
@@ -116,7 +123,13 @@ function HistorySection({
               <li key={`${entry.date}-${index}`} className="history-item">
                 <span>{entry.date}</span>
                 <span className="history-rating">
-                  {entry.rating ? `★${entry.rating}` : "評価なし"}
+                  {entry.rating ? (
+                    <>
+                      <Star size={11} fill="currentColor" className="rating-star--filled" /> {entry.rating}
+                    </>
+                  ) : (
+                    "評価なし"
+                  )}
                 </span>
                 <span className="history-comment">
                   {entry.comment ? entry.comment : "コメントなし"}
@@ -211,7 +224,7 @@ function TagsField({ tagsText, onChange }: { tagsText: string; onChange: (tagsTe
               className={`preset-tag-chip ${isSelected ? "is-selected" : ""}`}
               onClick={() => toggleTag(tag)}
             >
-              {isSelected ? `✓ ${tag}` : `+ ${tag}`}
+              {isSelected ? <Check size={12} /> : "+"} {tag}
             </button>
           );
         })}
@@ -222,32 +235,105 @@ function TagsField({ tagsText, onChange }: { tagsText: string; onChange: (tagsTe
 
 function ImageField({
   image,
-  onChange,
+  onFile,
+  onRemove,
   uploading,
 }: {
   image: string;
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onFile: (file: File) => void;
+  onRemove: () => void;
   uploading?: boolean;
 }) {
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const previewUrl = sanitizeImageUrl(image);
+
+  const handleFiles = (files: FileList | null) => {
+    const file = files?.[0];
+    if (file) onFile(file);
+  };
+
+  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (uploading) return;
+    handleFiles(e.dataTransfer.files);
+  };
+
   return (
     <div className="form-group">
       <label>写真を追加</label>
       <input
+        ref={inputRef}
         type="file"
-        className="input input-file"
+        className="visually-hidden-file-input"
         accept="image/*"
-        onChange={onChange}
+        onChange={(e) => {
+          handleFiles(e.target.files);
+          e.target.value = "";
+        }}
         disabled={uploading}
       />
-      {uploading && <p className="form-hint">画像を圧縮しています…</p>}
-      {sanitizeImageUrl(image) && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={sanitizeImageUrl(image)!}
-          className="sauna-img-preview"
-          alt="アップロードした写真のプレビュー"
-        />
+
+      {previewUrl ? (
+        <div className="image-dropzone image-dropzone--filled">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl}
+            className="sauna-img-preview"
+            alt="アップロードした写真のプレビュー"
+            onClick={() => setLightboxOpen(true)}
+          />
+          <div className="image-dropzone-actions">
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+            >
+              変更
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm image-remove-btn"
+              onClick={onRemove}
+              disabled={uploading}
+            >
+              <X size={13} /> 削除
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`image-dropzone ${isDragOver ? "is-dragover" : ""}`}
+          onClick={() => !uploading && inputRef.current?.click()}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
+          onDrop={handleDrop}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              if (!uploading) inputRef.current?.click();
+            }
+          }}
+          role="button"
+          tabIndex={0}
+        >
+          <ImagePlus size={22} />
+          <span>クリックまたはドラッグ&ドロップで写真を追加</span>
+        </div>
       )}
+
+      {uploading && <p className="form-hint">画像を圧縮しています…</p>}
+
+      <ImageLightbox
+        src={lightboxOpen ? previewUrl ?? null : null}
+        onClose={() => setLightboxOpen(false)}
+      />
     </div>
   );
 }
@@ -361,7 +447,8 @@ export function VisitForm({
   editingId,
   historyEntries,
   onSubmit,
-  onImageChange,
+  onImageFile,
+  onRemoveImage,
   onDelete,
   onCancel,
   onDeleteLastHistory,
@@ -379,7 +466,7 @@ export function VisitForm({
       <StatusField status={form.status} onChange={(status) => setForm({ ...form, status })} />
       <RatingField rating={form.rating} onChange={(rating) => setForm({ ...form, rating })} />
       <TagsField tagsText={form.tagsText} onChange={(tagsText) => setForm({ ...form, tagsText })} />
-      <ImageField image={form.image} onChange={onImageChange} uploading={imageUploading} />
+      <ImageField image={form.image} onFile={onImageFile} onRemove={onRemoveImage} uploading={imageUploading} />
       <DateField date={form.date} onChange={(date) => setForm({ ...form, date })} />
 
       {editingId && (

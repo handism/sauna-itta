@@ -1,4 +1,5 @@
 import { ReactNode, useRef, useState, TouchEvent, CSSProperties } from "react";
+import { MapPin } from "lucide-react";
 import type { SheetSnapPosition } from "../types";
 
 interface BottomSheetProps {
@@ -102,7 +103,7 @@ export function BottomSheet({
         <div className="bottom-sheet-handle-bar-container">
           <div className="bottom-sheet-handle" />
           <div className="bottom-sheet-summary-badge">
-            <span className="summary-count">📍 {filteredCount ?? 0}件表示中</span>
+            <span className="summary-count"><MapPin size={13} /> {filteredCount ?? 0}件表示中</span>
             {selectedVisitName && (
               <span className="summary-selected" title={selectedVisitName}>
                 選択中: {selectedVisitName}

@@ -1,3 +1,5 @@
+import { X } from "lucide-react";
+
 export type ToastTone = "info" | "success" | "error";
 
 export interface ToastState {
@@ -26,7 +28,7 @@ export function Toast({ toast, onClose }: ToastProps) {
     >
       <span>{toast.message}</span>
       <button type="button" className="app-toast-close" onClick={onClose} aria-label="閉じる">
-        ✕
+        <X size={16} />
       </button>
     </div>
   );

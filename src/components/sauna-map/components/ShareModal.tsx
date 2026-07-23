@@ -1,3 +1,4 @@
+import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
 import { RatingStars, WishlistChip } from "./common";
 
@@ -22,7 +23,7 @@ export function ShareModal({ isOpen, stats, filteredVisits, onClose }: ShareModa
             <p>この画面をスクリーンショットしてSNSに投稿できます</p>
           </div>
           <button onClick={onClose} className="share-close">
-            ✕
+            <X size={18} />
           </button>
         </div>
         <div className="share-summary">

@@ -1,9 +1,11 @@
 import { Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
+import { Navigation } from "lucide-react";
 import { SaunaVisit } from "../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
 import { getSaunaIcon } from "./markerIcon";
+import { flameIconSvg } from "./iconSvg";
 import { RatingStars, WishlistChip } from "./common";
 import Image from "next/image";
 
@@ -28,7 +30,7 @@ const createCustomClusterIcon = (cluster: any) => {
   }
 
   return L.divIcon({
-    html: `<div class="sauna-cluster ${sizeClass}"><span class="sauna-cluster-icon">♨️</span><span class="sauna-cluster-count">${count}</span></div>`,
+    html: `<div class="sauna-cluster ${sizeClass}"><span class="sauna-cluster-icon">${flameIconSvg(16)}</span><span class="sauna-cluster-count">${count}</span></div>`,
     className: "custom-cluster-marker",
     iconSize: [42, 42],
     iconAnchor: [21, 21],
@@ -98,7 +100,7 @@ export function VisitMarkers({
               rel="noopener noreferrer"
               className="popup-link"
             >
-              🧭 ここへ行く
+              <Navigation size={14} /> ここへ行く
             </a>
             <button onClick={() => onEdit(visit)} className="popup-edit-btn">
               編集する

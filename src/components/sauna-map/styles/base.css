@@ -82,6 +82,35 @@ body.allow-page-scroll {
   overflow-y: auto;
 }
 
+.rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.rating-star {
+  color: var(--foreground);
+  opacity: 0.35;
+}
+
+.rating-star--filled {
+  color: #fbbf24;
+  opacity: 1;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 h1,
 h2,
 h3,

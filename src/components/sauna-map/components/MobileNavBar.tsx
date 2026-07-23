@@ -1,10 +1,10 @@
 import Link from "next/link";
+import { Map, List, Plus, BarChart3, SlidersHorizontal } from "lucide-react";
 import type { SheetSnapPosition } from "../types";
 
-export type MobileTab = "map" | "list" | "add" | "menu";
+export type MobileTab = "map" | "list" | "add";
 
 export interface MobileNavBarProps {
-  activeTab: MobileTab;
   onSelectTab: (tab: MobileTab) => void;
   snapPosition: SheetSnapPosition;
   isAdding: boolean;
@@ -13,15 +13,14 @@ export interface MobileNavBarProps {
 }
 
 export function MobileNavBar({
-  activeTab,
   onSelectTab,
   snapPosition,
   isAdding,
   onOpenFilter,
   isFilterActive,
 }: MobileNavBarProps) {
-  const isMapActive = !isAdding && (activeTab === "map" || snapPosition === "min");
-  const isListActive = !isAdding && (activeTab === "list" || snapPosition !== "min");
+  const isMapActive = !isAdding && snapPosition === "min";
+  const isListActive = !isAdding && snapPosition !== "min";
 
   return (
     <nav className="mobile-nav-bar" aria-label="モバイルナビゲーション">
@@ -30,7 +29,7 @@ export function MobileNavBar({
         className={`mobile-nav-item ${isMapActive ? "is-active" : ""}`}
         onClick={() => onSelectTab("map")}
       >
-        <span className="mobile-nav-icon">🗺️</span>
+        <span className="mobile-nav-icon"><Map size={19} /></span>
         <span className="mobile-nav-label">マップ</span>
       </button>
 
@@ -39,7 +38,7 @@ export function MobileNavBar({
         className={`mobile-nav-item ${isListActive ? "is-active" : ""}`}
         onClick={() => onSelectTab("list")}
       >
-        <span className="mobile-nav-icon">📋</span>
+        <span className="mobile-nav-icon"><List size={19} /></span>
         <span className="mobile-nav-label">一覧</span>
       </button>
 
@@ -49,7 +48,7 @@ export function MobileNavBar({
         onClick={() => onSelectTab("add")}
         aria-label="サウナ追加"
       >
-        <span className="mobile-nav-icon-add">+</span>
+        <span className="mobile-nav-icon-add"><Plus size={22} /></span>
         <span className="mobile-nav-label">追加</span>
       </button>
 
@@ -58,7 +57,7 @@ export function MobileNavBar({
         prefetch={false}
         className="mobile-nav-item"
       >
-        <span className="mobile-nav-icon">📊</span>
+        <span className="mobile-nav-icon"><BarChart3 size={19} /></span>
         <span className="mobile-nav-label">統計</span>
       </Link>
 
@@ -67,7 +66,7 @@ export function MobileNavBar({
         className={`mobile-nav-item ${isFilterActive ? "has-badge" : ""}`}
         onClick={onOpenFilter}
       >
-        <span className="mobile-nav-icon">⚙️</span>
+        <span className="mobile-nav-icon"><SlidersHorizontal size={19} /></span>
         <span className="mobile-nav-label">絞り込み</span>
       </button>
     </nav>
