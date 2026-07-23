@@ -5,12 +5,16 @@ export type SheetSnapPosition = "min" | "half" | "full";
 interface BottomSheetProps {
   snapPosition: SheetSnapPosition;
   onSnapChange: (snap: SheetSnapPosition) => void;
+  filteredCount?: number;
+  selectedVisitName?: string;
   children: ReactNode;
 }
 
 export function BottomSheet({
   snapPosition,
   onSnapChange,
+  filteredCount,
+  selectedVisitName,
   children,
 }: BottomSheetProps) {
   const startYRef = useRef<number | null>(null);
@@ -96,7 +100,17 @@ export function BottomSheet({
         onClick={handleHandleClick}
         title="タップまたはスワイプでパネルを開閉"
       >
-        <div className="bottom-sheet-handle" />
+        <div className="bottom-sheet-handle-bar-container">
+          <div className="bottom-sheet-handle" />
+          <div className="bottom-sheet-summary-badge">
+            <span className="summary-count">📍 {filteredCount ?? 0}件表示中</span>
+            {selectedVisitName && (
+              <span className="summary-selected" title={selectedVisitName}>
+                選択中: {selectedVisitName}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
       <div className="bottom-sheet-content">{children}</div>
     </div>
