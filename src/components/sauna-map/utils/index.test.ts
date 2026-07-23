@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate, sanitizeImageUrl, getPopularTags, getPopularAreas } from "./utils";
-import { SaunaVisit, VisitFormState } from "./types";
+import { normalizeVisits, getDirectionsUrl, extractPrefecture, toNormalizedTags, compressAndGetBase64, getVisitHistoryEntries, getVisitCount, calculateStats, toFormState, getInitialTheme, getInitialVisits, THEME_STORAGE_KEY, buildHistoryUpdate, getTodayDate, sanitizeImageUrl, getPopularTags, getPopularAreas } from "./index";
+import { SaunaVisit, VisitFormState } from "../types";
 
 vi.mock("browser-image-compression", () => ({
   default: vi.fn(),

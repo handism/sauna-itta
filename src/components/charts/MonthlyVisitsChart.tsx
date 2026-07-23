@@ -98,7 +98,7 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
               fontSize: '13px',
               padding: '8px 14px',
             }}
-            formatter={(value: any) => [`${value ?? 0} 回`, '訪問数']}
+            formatter={(value: number | string | undefined) => [`${value ?? 0} 回`, '訪問数']}
           />
           <Bar
             dataKey="visits"

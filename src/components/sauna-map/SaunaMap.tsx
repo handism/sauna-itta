@@ -47,17 +47,15 @@ import { useSaunaVisits } from "./hooks/useSaunaVisits";
 import { useEditorState } from "./hooks/useEditorState";
 import { useVisitFilters } from "./hooks/useVisitFilters";
 import { useUIState } from "./hooks/useUIState";
+import { useTheme } from "./hooks/useTheme";
 import {
   getDefaultForm,
   getInitialIsMobile,
-  getInitialTheme,
   getTodayDate,
-  THEME_STORAGE_KEY,
   MOBILE_BREAKPOINT,
   getVisitHistoryEntries,
   toFormState,
   compressAndGetBase64,
-  applyThemeClass,
 } from "./utils";
 import { SaunaVisit, VisitFormState, LatLng } from "./types";
 
@@ -73,7 +71,7 @@ export default function SaunaMap() {
     useVisitFilters(visits);
 
   const [form, setForm] = useState<VisitFormState>(getDefaultForm());
-  const [theme, setTheme] = useState<"dark" | "light">(getInitialTheme);
+  const { theme, toggleTheme } = useTheme();
   const [isMobile, setIsMobile] = useState(getInitialIsMobile);
   const [mounted, setMounted] = useState(false);
   const {
@@ -141,6 +139,14 @@ export default function SaunaMap() {
     setMapTargetOverride(null);
   }, []);
 
+  const cancelEditing = useCallback((completed = false) => {
+    cancelEdit(completed);
+    setForm(getDefaultForm());
+    if (isMobile) {
+      setSnapPosition("min");
+    }
+  }, [cancelEdit, isMobile]);
+
   const handleSelectMobileTab = useCallback((tab: MobileTab) => {
     if (tab === "map") {
       cancelEditing(true);
@@ -152,7 +158,7 @@ export default function SaunaMap() {
       startCreate();
       setSnapPosition("full");
     }
-  }, [startCreate]);
+  }, [cancelEditing, startCreate]);
 
   useEffect(() => {
     setMounted(true);
@@ -165,20 +171,6 @@ export default function SaunaMap() {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  useEffect(() => {
-    applyThemeClass(theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-    } catch (error) {
-      console.warn("Failed to save theme to localStorage:", error);
-    }
-  };
-
   const startNewVisit = () => {
     startCreate();
     setForm(getDefaultForm(getTodayDate()));
@@ -190,14 +182,6 @@ export default function SaunaMap() {
     setForm(toFormState(visit));
     if (isMobile) {
       setSnapPosition("full");
-    }
-  };
-
-  const cancelEditing = (completed = false) => {
-    cancelEdit(completed);
-    setForm(getDefaultForm());
-    if (isMobile) {
-      setSnapPosition("min");
     }
   };
 

@@ -124,7 +124,7 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
               fontSize: '13px',
               padding: '8px 14px',
             }}
-            formatter={(value: any) => [`${value ?? 0} 件`, '訪問数']}
+            formatter={(value: number | string | undefined) => [`${value ?? 0} 件`, '訪問数']}
           />
         </PieChart>
       </ResponsiveContainer>

@@ -19,8 +19,11 @@ interface VisitMarkersProps {
   onEdit: (visit: SaunaVisit) => void;
   onSelectVisit?: (visit: SaunaVisit) => void;
 }
+interface MarkerClusterLike {
+  getChildCount(): number;
+}
 
-const createCustomClusterIcon = (cluster: any) => {
+const createCustomClusterIcon = (cluster: MarkerClusterLike) => {
   const count = cluster.getChildCount();
   let sizeClass = "sauna-cluster--small";
   if (count >= 20) {
