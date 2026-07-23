@@ -16,6 +16,8 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Plus,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   MapContainer,
@@ -502,17 +504,17 @@ export default function SaunaMap() {
               <div className="mobile-menu-wrap" ref={mobileMenuRef}>
                 <button
                   type="button"
-                  className="desktop-sidebar-close-btn"
+                  className="desktop-sidebar-close-btn sidebar-action-btn"
                   onClick={toggleSidebar}
                   aria-label="サイドバーを折りたたむ"
                   title="サイドバーを折りたたむ"
                 >
-                  <ChevronLeft size={15} />
+                  <ChevronLeft size={18} />
                 </button>
                 {!isAdding && (
                   <button
                     type="button"
-                    className="mobile-menu-btn"
+                    className="mobile-menu-btn sidebar-action-btn"
                     onClick={() => {
                       startNewVisit();
                       closeMobileMenu();
@@ -520,27 +522,27 @@ export default function SaunaMap() {
                     aria-label="新規ピンを立てる"
                     title="新規ピンを立てる"
                   >
-                    +
+                    <Plus size={18} />
                   </button>
                 )}
                 <Link
                   href="/stats"
                   prefetch={false}
-                  className="mobile-menu-btn"
+                  className="mobile-menu-btn sidebar-action-btn"
                   onClick={closeMobileMenu}
                   aria-label="統計ダッシュボード"
                   title="統計ダッシュボード"
                 >
-                  <BarChart3 size={16} />
+                  <BarChart3 size={18} />
                 </Link>
                 <button
                   type="button"
-                  className="mobile-menu-btn"
+                  className="mobile-menu-btn sidebar-action-btn"
                   onClick={toggleMobileMenu}
                   aria-label="メニュー"
                   aria-expanded={isMobileMenuOpen}
                 >
-                  ⋯
+                  <MoreHorizontal size={18} />
                 </button>
                 {isMobileMenuOpen && (
                   <div
