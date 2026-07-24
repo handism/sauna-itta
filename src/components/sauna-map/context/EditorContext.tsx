@@ -73,7 +73,10 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const isCreating = mode === "creating:pick" || mode === "creating:form";
 
   const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
-  const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
+  const historyEntries = useMemo(
+    () => (editingVisit ? getVisitHistoryEntries(editingVisit) : []),
+    [editingVisit],
+  );
 
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
@@ -108,7 +111,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   } = useVisitForm({
     editingId,
     selectedLocation,
-    editingVisit,
     historyEntries,
     addVisit,
     editVisit,

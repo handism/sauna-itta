@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, ChangeEvent, RefObject } from "react";
+import { useState, useRef, useCallback, ChangeEvent } from "react";
 import { z } from "zod";
 import { SaunaVisit, SaunaVisitSchema } from "../types";
 import { normalizeVisits } from "../utils";
