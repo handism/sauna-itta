@@ -6,6 +6,7 @@ import { VisitTagsField } from "./VisitTagsField";
 import { VisitImageField } from "./VisitImageField";
 import {
   FormHeader,
+  LocationSearchField,
   StatusField,
   RatingField,
   NameField,
@@ -13,6 +14,7 @@ import {
   DateField,
 } from "./VisitFormFields";
 import { useSaunaEditor } from "../context";
+import { GeocodingResult } from "../utils/geocoding";
 
 export interface VisitFormViewProps {
   form: VisitFormState;
@@ -26,6 +28,7 @@ export interface VisitFormViewProps {
   onDelete: () => void;
   onCancel: () => void;
   onDeleteHistoryEntry?: (index: number) => void;
+  onLocationSelect?: (lat: number, lng: number) => void;
   imageUploading: boolean;
 }
 
@@ -41,13 +44,27 @@ export function VisitFormView({
   onDelete,
   onCancel,
   onDeleteHistoryEntry,
+  onLocationSelect,
   imageUploading,
 }: VisitFormViewProps) {
   const historyCount = editingId ? Math.max(1, historyEntries.length) : 0;
 
+  const handleGeocodingSelect = (result: GeocodingResult) => {
+    if (onLocationSelect) {
+      onLocationSelect(result.lat, result.lng);
+    }
+    setForm((prev) => ({
+      ...prev,
+      name: prev.name ? prev.name : result.name,
+      area: prev.area ? prev.area : result.addressText,
+    }));
+  };
+
   return (
     <form className="sauna-form" onSubmit={onSubmit}>
       <FormHeader editingId={editingId} selectedLocation={selectedLocation} />
+
+      <LocationSearchField onSelectLocation={handleGeocodingSelect} />
 
       <StatusField
         status={form.status}
@@ -184,6 +201,7 @@ export function VisitForm(props: Partial<VisitFormViewProps>) {
       onDelete={props.onDelete ?? editor.handleDelete}
       onCancel={props.onCancel ?? (() => editor.cancelEditing())}
       onDeleteHistoryEntry={onDeleteHistoryEntry}
+      onLocationSelect={props.onLocationSelect ?? editor.handleLocationSelect}
       imageUploading={props.imageUploading ?? editor.imageUploading}
     />
   );
