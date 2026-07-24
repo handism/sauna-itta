@@ -69,7 +69,9 @@ function VisitMarkersComponent({
         <Marker
           key={visit.id}
           position={[visit.lat, visit.lng]}
-          zIndexOffset={isSelected ? 1000 : isHovered ? 500 : isWishlist ? 100 : undefined}
+          zIndexOffset={
+            isSelected ? 1000 : isHovered ? 500 : isWishlist ? 100 : undefined
+          }
           icon={getSaunaIcon({
             selected: visit.id === editingId || isSelected,
             wishlist: isWishlist,
@@ -83,7 +85,11 @@ function VisitMarkersComponent({
           }}
         >
           <Popup autoPan={false}>
-            <SaunaMarkerPopup visit={visit} isWishlist={isWishlist} onEdit={onEdit} />
+            <SaunaMarkerPopup
+              visit={visit}
+              isWishlist={isWishlist}
+              onEdit={onEdit}
+            />
           </Popup>
         </Marker>
       );
@@ -123,4 +129,29 @@ function VisitMarkersComponent({
   );
 }
 
-export const VisitMarkers = memo(VisitMarkersComponent);
+const areVisitsEqual = (
+  a: import("../types").SaunaVisit[],
+  b: import("../types").SaunaVisit[],
+) => {
+  if (a === b) return true;
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].id !== b[i].id) return false;
+    if (a[i].lat !== b[i].lat || a[i].lng !== b[i].lng) return false;
+  }
+  return true;
+};
+
+const propsAreEqual = (prev: VisitMarkersProps, next: VisitMarkersProps) => {
+  if (prev.editingId !== next.editingId) return false;
+  if (prev.selectedId !== next.selectedId) return false;
+  if (prev.hoveredId !== next.hoveredId) return false;
+  if (prev.showBadges !== next.showBadges) return false;
+  if (prev.enableClustering !== next.enableClustering) return false;
+  if (prev.onEdit !== next.onEdit) return false;
+  if (prev.onSelectVisit !== next.onSelectVisit) return false;
+  if (!areVisitsEqual(prev.visits, next.visits)) return false;
+  return true;
+};
+
+export const VisitMarkers = memo(VisitMarkersComponent, propsAreEqual);
