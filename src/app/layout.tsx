@@ -15,7 +15,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "サウナイッタ",
   description: "マイととのいマップ - サウナ訪問記録・マップ可視化アプリ",
-  manifest: "/sauna-itta/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

@@ -7,6 +7,8 @@ const PRECACHE_ASSETS = [
   "/sauna-itta/icon.svg",
   "/sauna-itta/icons/icon-192.png",
   "/sauna-itta/icons/icon-512.png",
+  "/sauna-itta/icons/icon-maskable-192.png",
+  "/sauna-itta/icons/icon-maskable-512.png",
   "/sauna-itta/icons/apple-icon.png",
 ];
 
