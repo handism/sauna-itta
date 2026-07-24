@@ -1,16 +1,18 @@
 import L from "leaflet";
 import { flameIconSvg, starIconSvg } from "./iconSvg";
 
-export function getSaunaIcon(
-  options: {
-    selected?: boolean;
-    wishlist?: boolean;
-    hovered?: boolean;
-    rating?: number;
-    visitCount?: number;
-    showBadges?: boolean;
-  } = {},
-) {
+const iconCache = new Map<string, L.DivIcon>();
+
+interface SaunaIconOptions {
+  selected?: boolean;
+  wishlist?: boolean;
+  hovered?: boolean;
+  rating?: number;
+  visitCount?: number;
+  showBadges?: boolean;
+}
+
+export function getSaunaIcon(options: SaunaIconOptions = {}): L.DivIcon {
   const {
     selected = false,
     wishlist = false,
@@ -19,6 +21,13 @@ export function getSaunaIcon(
     visitCount,
     showBadges = false,
   } = options;
+
+  const key = `${selected ? 1 : 0}_${wishlist ? 1 : 0}_${hovered ? 1 : 0}_${showBadges ? 1 : 0}_${rating ?? 0}_${visitCount ?? 0}`;
+
+  const cached = iconCache.get(key);
+  if (cached) {
+    return cached;
+  }
 
   const classes = [
     "sauna-marker",
@@ -51,13 +60,14 @@ export function getSaunaIcon(
     }
   }
 
-  return L.divIcon({
+  const icon = L.divIcon({
     className: "custom-marker",
     html: `<div class="${classes}"><span class="sauna-marker-icon">${iconSvg}</span>${badgesHtml}</div>`,
     iconSize: [34, 34],
     iconAnchor: [17, 34],
     popupAnchor: [0, -34],
   });
+
+  iconCache.set(key, icon);
+  return icon;
 }
-
-

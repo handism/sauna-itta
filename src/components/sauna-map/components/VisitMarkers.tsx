@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
@@ -17,12 +18,18 @@ interface VisitMarkersProps {
   onEdit: (visit: SaunaVisit) => void;
   onSelectVisit?: (visit: SaunaVisit) => void;
 }
+
 interface MarkerClusterLike {
   getChildCount(): number;
 }
 
+const clusterIconCache = new Map<number, L.DivIcon>();
+
 const createCustomClusterIcon = (cluster: MarkerClusterLike) => {
   const count = cluster.getChildCount();
+  const cached = clusterIconCache.get(count);
+  if (cached) return cached;
+
   let sizeClass = "sauna-cluster--small";
   if (count >= 20) {
     sizeClass = "sauna-cluster--large";
@@ -30,15 +37,18 @@ const createCustomClusterIcon = (cluster: MarkerClusterLike) => {
     sizeClass = "sauna-cluster--medium";
   }
 
-  return L.divIcon({
+  const icon = L.divIcon({
     html: `<div class="sauna-cluster ${sizeClass}"><span class="sauna-cluster-icon">${flameIconSvg(16)}</span><span class="sauna-cluster-count">${count}</span></div>`,
     className: "custom-cluster-marker",
     iconSize: [42, 42],
     iconAnchor: [21, 21],
   });
+
+  clusterIconCache.set(count, icon);
+  return icon;
 };
 
-export function VisitMarkers({
+function VisitMarkersComponent({
   visits,
   editingId,
   selectedId,
@@ -48,35 +58,38 @@ export function VisitMarkers({
   onEdit,
   onSelectVisit,
 }: VisitMarkersProps) {
-  const renderMarker = (visit: SaunaVisit) => {
-    const visitCount = getVisitCount(visit);
-    const isHovered = visit.id === hoveredId;
-    const isSelected = visit.id === selectedId;
-    const isWishlist = (visit.status ?? "visited") === "wishlist";
+  const renderMarker = useCallback(
+    (visit: SaunaVisit) => {
+      const visitCount = getVisitCount(visit);
+      const isHovered = visit.id === hoveredId;
+      const isSelected = visit.id === selectedId;
+      const isWishlist = (visit.status ?? "visited") === "wishlist";
 
-    return (
-      <Marker
-        key={visit.id}
-        position={[visit.lat, visit.lng]}
-        zIndexOffset={isSelected ? 1000 : isHovered ? 500 : isWishlist ? 100 : undefined}
-        icon={getSaunaIcon({
-          selected: visit.id === editingId || isSelected,
-          wishlist: isWishlist,
-          hovered: isHovered,
-          rating: visit.rating,
-          visitCount,
-          showBadges,
-        })}
-        eventHandlers={{
-          click: () => onSelectVisit?.(visit),
-        }}
-      >
-        <Popup autoPan={false}>
-          <SaunaMarkerPopup visit={visit} isWishlist={isWishlist} onEdit={onEdit} />
-        </Popup>
-      </Marker>
-    );
-  };
+      return (
+        <Marker
+          key={visit.id}
+          position={[visit.lat, visit.lng]}
+          zIndexOffset={isSelected ? 1000 : isHovered ? 500 : isWishlist ? 100 : undefined}
+          icon={getSaunaIcon({
+            selected: visit.id === editingId || isSelected,
+            wishlist: isWishlist,
+            hovered: isHovered,
+            rating: visit.rating,
+            visitCount,
+            showBadges,
+          })}
+          eventHandlers={{
+            click: () => onSelectVisit?.(visit),
+          }}
+        >
+          <Popup autoPan={false}>
+            <SaunaMarkerPopup visit={visit} isWishlist={isWishlist} onEdit={onEdit} />
+          </Popup>
+        </Marker>
+      );
+    },
+    [editingId, hoveredId, onEdit, onSelectVisit, selectedId, showBadges],
+  );
 
   if (!enableClustering) {
     return <>{visits.map(renderMarker)}</>;
@@ -109,3 +122,5 @@ export function VisitMarkers({
     </>
   );
 }
+
+export const VisitMarkers = memo(VisitMarkersComponent);

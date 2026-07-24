@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, memo } from "react";
 import { Navigation, Pencil, X } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
@@ -16,7 +16,7 @@ interface VisitCardItemProps {
   onOpenImage: (src: string) => void;
 }
 
-export function VisitCardItem({
+function VisitCardItemComponent({
   visit,
   isHovered,
   isSelected,
@@ -121,3 +121,5 @@ export function VisitCardItem({
     </div>
   );
 }
+
+export const VisitCardItem = memo(VisitCardItemComponent);
