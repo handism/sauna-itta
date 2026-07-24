@@ -98,7 +98,7 @@
     font-weight: 600;
     background: color-mix(in srgb, var(--primary) 15%, transparent);
     padding: 2px 8px;
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     font-size: 0.74rem;
   }
 
