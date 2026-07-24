@@ -6,19 +6,20 @@ import { VisitCardItem } from "./VisitCardItem";
 import { VisitListHeader, ViewMode } from "./VisitListHeader";
 import { VisitListSearch } from "./VisitListSearch";
 import { VisitListEmpty } from "./VisitListEmpty";
+import { useSaunaMap } from "../context/SaunaMapContext";
 
 const STORAGE_KEY = "sauna_itta_view_mode";
 
 interface VisitListProps {
-  visits: SaunaVisit[];
-  filteredVisits: SaunaVisit[];
-  filters: VisitFilters;
-  setFilters: Dispatch<SetStateAction<VisitFilters>>;
-  isFilterActive: boolean;
+  visits?: SaunaVisit[];
+  filteredVisits?: SaunaVisit[];
+  filters?: VisitFilters;
+  setFilters?: Dispatch<SetStateAction<VisitFilters>>;
+  isFilterActive?: boolean;
   activeFilterCount?: number;
   onClearFilters?: () => void;
-  onOpenFilters: () => void;
-  onEdit: (visit: SaunaVisit) => void;
+  onOpenFilters?: () => void;
+  onEdit?: (visit: SaunaVisit) => void;
   selectedId?: string | null;
   onSelectVisit?: (visit: SaunaVisit) => void;
   onDeselectVisit?: () => void;
@@ -27,23 +28,25 @@ interface VisitListProps {
   isMobile?: boolean;
 }
 
-export function VisitList({
-  visits,
-  filteredVisits,
-  filters,
-  setFilters,
-  isFilterActive,
-  activeFilterCount,
-  onClearFilters,
-  onOpenFilters,
-  onEdit,
-  selectedId,
-  onSelectVisit,
-  onDeselectVisit,
-  hoveredId,
-  onHoverVisit,
-  isMobile,
-}: VisitListProps) {
+export function VisitList(props: VisitListProps) {
+  const context = useSaunaMap();
+
+  const visits = props.visits ?? context.visits;
+  const filteredVisits = props.filteredVisits ?? context.filteredVisits;
+  const filters = props.filters ?? context.filters;
+  const setFilters = props.setFilters ?? context.setFilters;
+  const isFilterActive = props.isFilterActive ?? context.isFilterActive;
+  const activeFilterCount = props.activeFilterCount ?? context.activeFilterCount;
+  const onClearFilters = props.onClearFilters ?? context.clearFilters;
+  const onOpenFilters = props.onOpenFilters ?? context.openFilterModal;
+  const onEdit = props.onEdit ?? context.handleListEdit;
+  const selectedId = props.selectedId ?? context.selectedId;
+  const onSelectVisit = props.onSelectVisit ?? context.handleListSelectVisit;
+  const onDeselectVisit = props.onDeselectVisit ?? context.handleDeselectVisit;
+  const hoveredId = props.hoveredId ?? context.hoveredId;
+  const onHoverVisit = props.onHoverVisit ?? context.setHoveredId;
+  const isMobile = props.isMobile ?? context.isMobile;
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -71,16 +74,6 @@ export function VisitList({
     }
   }, [selectedId]);
 
-  const defaultClearFilters = () =>
-    setFilters({
-      search: "",
-      status: "all",
-      minRating: 0,
-      sort: "recent",
-      filterByBounds: false,
-      mapBounds: null,
-    });
-
   return (
     <div className="sauna-list" ref={containerRef}>
       <VisitListHeader
@@ -105,7 +98,7 @@ export function VisitList({
           hasVisits={visits.length > 0}
           filterByBounds={filters.filterByBounds}
           isFilterActive={isFilterActive}
-          onClearFilters={onClearFilters ?? defaultClearFilters}
+          onClearFilters={onClearFilters}
         />
       ) : (
         filteredVisits.map((visit) => {

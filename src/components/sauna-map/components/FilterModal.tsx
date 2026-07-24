@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction } from "react";
 import { X, Map } from "lucide-react";
 import { VisitFilters } from "../types";
 import { useModalBehavior } from "../hooks/useModalBehavior";
+import { useSaunaMap } from "../context/SaunaMapContext";
 
 interface FilterComponentProps {
   filters: VisitFilters;
@@ -54,22 +55,24 @@ function BoundsToggle({ filters, setFilters }: FilterComponentProps) {
 }
 
 interface FilterModalProps {
-  isOpen: boolean;
-  filters: VisitFilters;
-  setFilters: Dispatch<SetStateAction<VisitFilters>>;
-  isFilterActive: boolean;
-  onClearFilters: () => void;
-  onClose: () => void;
+  isOpen?: boolean;
+  filters?: VisitFilters;
+  setFilters?: Dispatch<SetStateAction<VisitFilters>>;
+  isFilterActive?: boolean;
+  onClearFilters?: () => void;
+  onClose?: () => void;
 }
 
-export function FilterModal({
-  isOpen,
-  filters,
-  setFilters,
-  isFilterActive,
-  onClearFilters,
-  onClose,
-}: FilterModalProps) {
+export function FilterModal(props: FilterModalProps) {
+  const context = useSaunaMap();
+
+  const isOpen = props.isOpen ?? context.isFilterModalOpen;
+  const filters = props.filters ?? context.filters;
+  const setFilters = props.setFilters ?? context.setFilters;
+  const isFilterActive = props.isFilterActive ?? context.isFilterActive;
+  const onClearFilters = props.onClearFilters ?? context.clearFilters;
+  const onClose = props.onClose ?? context.closeFilterModal;
+
   const containerRef = useModalBehavior(isOpen, onClose);
 
   if (!isOpen) {
@@ -98,23 +101,28 @@ export function FilterModal({
             <X size={18} />
           </button>
         </div>
-        <div className="filters">
+
+        <div className="filters-modal-body">
           <MinRatingSelect filters={filters} setFilters={setFilters} />
           <BoundsToggle filters={filters} setFilters={setFilters} />
+        </div>
+
+        <div className="filters-modal-footer">
           {isFilterActive && (
             <button
               type="button"
-              className="btn btn-ghost filters-reset"
-              onClick={() => {
-                onClearFilters();
-                onClose();
-              }}
+              className="btn btn-ghost"
+              onClick={onClearFilters}
             >
-              フィルター解除
+              リセット
             </button>
           )}
-          <button type="button" className="btn btn-primary" onClick={onClose}>
-            閉じる
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={onClose}
+          >
+            適用
           </button>
         </div>
       </div>

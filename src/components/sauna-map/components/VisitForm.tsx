@@ -11,36 +11,39 @@ import {
   AreaField,
   DateField,
 } from "./VisitFormFields";
+import { useSaunaMap } from "../context/SaunaMapContext";
 
 interface VisitFormProps {
-  form: VisitFormState;
-  setForm: Dispatch<SetStateAction<VisitFormState>>;
-  selectedLocation: { lat: number; lng: number } | null;
-  editingId: string | null;
-  historyEntries: VisitHistoryEntry[];
-  onSubmit: (e: FormEvent) => void;
-  onImageFile: (file: File) => void;
-  onRemoveImage: () => void;
-  onDelete: () => void;
-  onCancel: () => void;
+  form?: VisitFormState;
+  setForm?: Dispatch<SetStateAction<VisitFormState>>;
+  selectedLocation?: { lat: number; lng: number } | null;
+  editingId?: string | null;
+  historyEntries?: VisitHistoryEntry[];
+  onSubmit?: (e: FormEvent) => void;
+  onImageFile?: (file: File) => void;
+  onRemoveImage?: () => void;
+  onDelete?: () => void;
+  onCancel?: () => void;
   onDeleteHistoryEntry?: (index: number) => void;
   imageUploading?: boolean;
 }
 
-export function VisitForm({
-  form,
-  setForm,
-  selectedLocation,
-  editingId,
-  historyEntries,
-  onSubmit,
-  onImageFile,
-  onRemoveImage,
-  onDelete,
-  onCancel,
-  onDeleteHistoryEntry,
-  imageUploading,
-}: VisitFormProps) {
+export function VisitForm(props: VisitFormProps) {
+  const context = useSaunaMap();
+
+  const form = props.form ?? context.form;
+  const setForm = props.setForm ?? context.setForm;
+  const selectedLocation = props.selectedLocation ?? context.selectedLocation;
+  const editingId = props.editingId ?? context.editingId;
+  const historyEntries = props.historyEntries ?? context.historyEntries;
+  const onSubmit = props.onSubmit ?? context.handleSubmit;
+  const onImageFile = props.onImageFile ?? context.handleImageFile;
+  const onRemoveImage = props.onRemoveImage ?? context.handleRemoveImage;
+  const onDelete = props.onDelete ?? context.handleDelete;
+  const onCancel = props.onCancel ?? (() => context.cancelEditing());
+  const onDeleteHistoryEntry = props.onDeleteHistoryEntry ?? (editingId ? context.handleDeleteHistoryEntry : undefined);
+  const imageUploading = props.imageUploading ?? context.imageUploading;
+
   const historyCount = editingId ? Math.max(1, historyEntries.length) : 0;
 
   return (
