@@ -1,9 +1,8 @@
-import { useState, useCallback, FormEvent, Dispatch, SetStateAction } from "react";
+import { useState, useCallback, FormEvent } from "react";
 import { SaunaVisit, VisitFormState, LatLng, VisitHistoryEntry } from "../types";
 import {
   getDefaultForm,
   getTodayDate,
-  getVisitHistoryEntries,
   toFormState,
   compressAndGetBase64,
 } from "../utils";
@@ -14,7 +13,6 @@ const STORAGE_ERROR_MSG =
 export interface UseVisitFormOptions {
   editingId: string | null;
   selectedLocation: LatLng | null;
-  editingVisit: SaunaVisit | null;
   historyEntries: VisitHistoryEntry[];
   addVisit: (location: LatLng, formState: VisitFormState) => { success: boolean };
   editVisit: (id: string, location: LatLng, formState: VisitFormState) => { success: boolean };
@@ -31,7 +29,6 @@ export interface UseVisitFormOptions {
 export function useVisitForm({
   editingId,
   selectedLocation,
-  editingVisit,
   historyEntries,
   addVisit,
   editVisit,

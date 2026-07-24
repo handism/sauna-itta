@@ -120,7 +120,7 @@ describe("useSaunaVisits", () => {
       throw new Error("QuotaExceeded");
     });
 
-    const { result } = renderHook(() => useSaunaVisits());
+    renderHook(() => useSaunaVisits());
 
     const saveVisits = vi.mocked(useVisitCRUD.useVisitCRUD).mock.calls[0][1];
 

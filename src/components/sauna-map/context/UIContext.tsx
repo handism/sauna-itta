@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useMemo,
+  useSyncExternalStore,
   ReactNode,
   RefObject,
 } from "react";
@@ -13,6 +14,10 @@ import { useUIState } from "../hooks/useUIState";
 import { useTheme } from "../hooks/useTheme";
 import { useToast } from "../hooks/useToast";
 import { getInitialIsMobile, MOBILE_BREAKPOINT } from "../utils";
+
+const emptySubscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 interface UIContextType {
   isMobile: boolean;
@@ -46,7 +51,7 @@ const UIContext = createContext<UIContextType | null>(null);
 export function UIProvider({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const [isMobile, setIsMobile] = useState(getInitialIsMobile);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
 
   const {
     isShareViewOpen,
@@ -65,10 +70,6 @@ export function UIProvider({ children }: { children: ReactNode }) {
   } = useUIState();
 
   const { toast, showToast, clearToast } = useToast();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
