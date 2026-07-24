@@ -1,4 +1,5 @@
 import { Dispatch, FormEvent, SetStateAction } from "react";
+import { Check, Save, X, Trash2 } from "lucide-react";
 import { VisitFormState, VisitHistoryEntry } from "../types";
 import { VisitHistorySection } from "./VisitHistorySection";
 import { VisitTagsField } from "./VisitTagsField";
@@ -139,20 +140,25 @@ export function VisitFormView({
           className="btn btn-primary"
           disabled={!selectedLocation || !form.name || imageUploading}
         >
-          {editingId ? "更新する" : "保存する"}
+          {editingId ? <Check size={18} /> : <Save size={18} />}
+          <span>{editingId ? "更新する" : "保存する"}</span>
         </button>
-        <button type="button" className="btn btn-ghost" onClick={onCancel}>
-          キャンセル
-        </button>
-        {editingId && (
-          <button
-            type="button"
-            className="btn btn-danger btn-delete"
-            onClick={onDelete}
-          >
-            削除
+        <div className={`form-actions-secondary ${!editingId ? "form-actions-secondary--single" : ""}`}>
+          {editingId && (
+            <button
+              type="button"
+              className="btn btn-danger btn-delete"
+              onClick={onDelete}
+            >
+              <Trash2 size={16} />
+              <span>削除</span>
+            </button>
+          )}
+          <button type="button" className="btn btn-ghost" onClick={onCancel}>
+            <X size={16} />
+            <span>キャンセル</span>
           </button>
-        )}
+        </div>
       </div>
     </form>
   );
