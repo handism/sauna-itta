@@ -1,110 +1,45 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useMemo,
-  ReactNode,
-  ChangeEvent,
-  RefObject,
-} from "react";
-import { useSaunaVisits } from "../hooks/useSaunaVisits";
-import { useVisitFilters } from "../hooks/useVisitFilters";
-import { useSaunaUI } from "./UIContext";
-import { SaunaVisit } from "../types";
+export { useVisitsCRUD } from "./VisitsCRUDContext";
+export { useVisitFiltersContext } from "./VisitFiltersContext";
+import { VisitsCRUDProvider } from "./VisitsCRUDContext";
+import { VisitFiltersProvider } from "./VisitFiltersContext";
 
-interface VisitsDataContextType {
-  visits: SaunaVisit[];
-  filteredVisits: SaunaVisit[];
-  filters: ReturnType<typeof useVisitFilters>["filters"];
-  setFilters: ReturnType<typeof useVisitFilters>["setFilters"];
-  stats: ReturnType<typeof useVisitFilters>["stats"];
-  isFilterActive: boolean;
-  activeFilterCount: number;
-  clearFilters: () => void;
-  exportVisits: () => void;
-  handleImportData: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
-  importing: boolean;
-  importInputRef: RefObject<HTMLInputElement | null>;
-  addVisit: ReturnType<typeof useSaunaVisits>["addVisit"];
-  editVisit: ReturnType<typeof useSaunaVisits>["editVisit"];
-  deleteVisit: ReturnType<typeof useSaunaVisits>["deleteVisit"];
-  removeHistoryEntry: ReturnType<typeof useSaunaVisits>["removeHistoryEntry"];
-}
+// 後方互換用に旧 API を提供するラッパーをここで用意する。
+// 既存コードは `useSaunaVisitsData` を期待しているため、CRUD + Filters を組み合わせて返す。
+import { useVisitsCRUD } from "./VisitsCRUDContext";
+import { useVisitFiltersContext } from "./VisitFiltersContext";
 
-const VisitsDataContext = createContext<VisitsDataContextType | null>(null);
-
-export function VisitsDataProvider({ children }: { children: ReactNode }) {
-  const { showToast } = useSaunaUI();
-
-  const {
-    visits,
-    addVisit,
-    editVisit,
-    deleteVisit,
-    removeHistoryEntry,
-    exportVisits,
-    handleImportData,
-    importing,
-    importInputRef,
-  } = useSaunaVisits(showToast);
-
-  const {
-    filters,
-    setFilters,
-    filteredVisits,
-    stats,
-    isFilterActive,
-    activeFilterCount,
-    clearFilters,
-  } = useVisitFilters(visits);
-
-  const value = useMemo(
-    () => ({
-      visits,
-      filteredVisits,
-      filters,
-      setFilters,
-      stats,
-      isFilterActive,
-      activeFilterCount,
-      clearFilters,
-      exportVisits,
-      handleImportData,
-      importing,
-      importInputRef,
-      addVisit,
-      editVisit,
-      deleteVisit,
-      removeHistoryEntry,
-    }),
-    [
-      visits,
-      filteredVisits,
-      filters,
-      setFilters,
-      stats,
-      isFilterActive,
-      activeFilterCount,
-      clearFilters,
-      exportVisits,
-      handleImportData,
-      importing,
-      importInputRef,
-      addVisit,
-      editVisit,
-      deleteVisit,
-      removeHistoryEntry,
-    ],
+export function VisitsDataProvider({ children }: { children: any }) {
+  return (
+    <VisitsCRUDProvider>
+      <VisitFiltersProvider>{children}</VisitFiltersProvider>
+    </VisitsCRUDProvider>
   );
-
-  return <VisitsDataContext.Provider value={value}>{children}</VisitsDataContext.Provider>;
 }
 
 export function useSaunaVisitsData() {
-  const context = useContext(VisitsDataContext);
-  if (!context) {
-    throw new Error("useSaunaVisitsData must be used within a VisitsDataProvider");
-  }
-  return context;
+  const crud = useVisitsCRUD();
+  const filters = useVisitFiltersContext();
+
+  return {
+    // CRUD
+    visits: crud.visits,
+    addVisit: crud.addVisit,
+    editVisit: crud.editVisit,
+    deleteVisit: crud.deleteVisit,
+    removeHistoryEntry: crud.removeHistoryEntry,
+    exportVisits: crud.exportVisits,
+    handleImportData: crud.handleImportData,
+    importing: crud.importing,
+    importInputRef: crud.importInputRef,
+    // Filters / derived
+    filters: filters.filters,
+    setFilters: filters.setFilters,
+    filteredVisits: filters.filteredVisits,
+    stats: filters.stats,
+    isFilterActive: filters.isFilterActive,
+    activeFilterCount: filters.activeFilterCount,
+    clearFilters: filters.clearFilters,
+  };
 }
