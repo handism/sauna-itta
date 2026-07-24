@@ -40,7 +40,7 @@ describe("LocationSearchInput", () => {
 
     render(<LocationSearchInput onSelectLocation={mockOnSelectLocation} />);
 
-    const input = screen.getByRole("textbox", { name: "地点検索" });
+    const input = screen.getByRole("combobox", { name: "地点検索" });
     fireEvent.change(input, { target: { value: "東京駅" } });
 
     await waitFor(
@@ -65,7 +65,7 @@ describe("LocationSearchInput", () => {
 
     render(<LocationSearchInput onSelectLocation={mockOnSelectLocation} />);
 
-    const input = screen.getByRole("textbox", { name: "地点検索" });
+    const input = screen.getByRole("combobox", { name: "地点検索" });
     fireEvent.change(input, { target: { value: "東京駅" } });
 
     await waitFor(() => {
