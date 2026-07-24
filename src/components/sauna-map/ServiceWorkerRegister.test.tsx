@@ -38,6 +38,6 @@ describe("ServiceWorkerRegister", () => {
     // Dispatch load event to trigger registration callback
     window.dispatchEvent(new Event("load"));
 
-    expect(registerMock).toHaveBeenCalledWith("/sauna-itta/sw.js");
+    expect(registerMock).toHaveBeenCalledWith("/sauna-itta/sw.js", { scope: "/sauna-itta/" });
   });
 });
