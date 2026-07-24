@@ -8,15 +8,15 @@
     left: 0;
     right: 0;
     bottom: calc(56px + env(safe-area-inset-bottom, 0px)); /* モバイルナビバーの高さ（セーフエリア考慮） */
-    z-index: 1000;
+    z-index: var(--z-sheet);
     background: var(--glass-heavy);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    backdrop-filter: var(--backdrop-blur-heavy);
+    -webkit-backdrop-filter: var(--backdrop-blur-heavy);
     border-top: 1px solid var(--glass-border);
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45), 0 0 24px var(--primary-glow);
-    transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: height var(--transition-smooth), transform var(--transition-smooth);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -53,8 +53,8 @@
     cursor: grab;
     user-select: none;
     background: inherit;
-    border-top-left-radius: 24px;
-    border-top-right-radius: 24px;
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
     touch-action: none;
   }
 
@@ -71,9 +71,9 @@
     width: 40px;
     height: 5px;
     background-color: var(--glass-border);
-    border-radius: 999px;
+    border-radius: var(--radius-full);
     opacity: 0.85;
-    transition: background-color 0.2s, opacity 0.2s;
+    transition: background-color var(--transition-fast), opacity var(--transition-fast);
   }
 
   .bottom-sheet-summary-badge {
