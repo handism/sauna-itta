@@ -56,6 +56,7 @@ export function StatusField({
           className={`btn segmented-btn segmented-btn--visited ${
             status === "visited" ? "is-active" : ""
           }`}
+          aria-pressed={status === "visited"}
           onClick={() => onChange("visited")}
         >
           行った
@@ -65,6 +66,7 @@ export function StatusField({
           className={`btn segmented-btn segmented-btn--wishlist ${
             status === "wishlist" ? "is-active" : ""
           }`}
+          aria-pressed={status === "wishlist"}
           onClick={() => onChange("wishlist")}
         >
           行きたい
@@ -91,6 +93,7 @@ export function RatingField({
             type="button"
             onClick={() => onChange(star)}
             className="rating-star-btn"
+            aria-pressed={rating >= star}
             aria-label={`${star}つ星`}
           >
             <Star
