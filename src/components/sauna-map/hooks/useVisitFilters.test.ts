@@ -85,4 +85,18 @@ describe("useVisitFilters", () => {
 
     expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["北欧", "かるまる"]);
   });
+
+  it("should filter by search keyword across name, comment, area and tags", () => {
+    const { result } = renderHook(() => useVisitFilters(mockVisits));
+
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, search: "聖地" }));
+    });
+    expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["しきじ"]);
+
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, search: "池袋" }));
+    });
+    expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["かるまる"]);
+  });
 });
