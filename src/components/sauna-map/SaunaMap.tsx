@@ -18,9 +18,7 @@ import { VisitMarkers } from "./components/VisitMarkers";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { LocationPicker } from "./components/LocationPicker";
 import { MapController } from "./components/MapController";
-import { LocationControl } from "./components/LocationControl";
-import { MapClusterControl } from "./components/MapClusterControl";
-import { MapZoomControl } from "./components/MapZoomControl";
+import { MapTopRightControls } from "./components/MapTopRightControls";
 import { MapBoundsObserver } from "./components/MapBoundsObserver";
 import { ZoomObserver } from "./components/ZoomObserver";
 import { Toast } from "./components/Toast";
@@ -116,14 +114,11 @@ function SaunaMapContent() {
           zoomControl={false}
           style={{ height: "100%", width: "100%" }}
         >
-          <div className="map-top-right-controls">
-            <MapClusterControl
-              enableClustering={enableClustering}
-              onToggleClustering={toggleClustering}
-            />
-            <MapZoomControl />
-            <LocationControl onNotify={showToast} />
-          </div>
+          <MapTopRightControls
+            enableClustering={enableClustering}
+            onToggleClustering={toggleClustering}
+            onNotify={showToast}
+          />
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
