@@ -112,7 +112,7 @@
   align-items: center;
   gap: 2px;
   padding: 2px 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
@@ -157,7 +157,7 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   color: var(--foreground) !important;
-  border-radius: 20px !important;
+  border-radius: var(--radius-lg) !important;
   border: 1px solid var(--glass-border) !important;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px var(--primary-glow) !important;
 }
@@ -326,7 +326,7 @@
 .popup-image {
   width: 100%;
   height: auto;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   margin-bottom: 0.5rem;
 }
 
@@ -351,7 +351,7 @@
   padding: 0.62rem;
   background: var(--glass);
   border: 1px solid var(--glass-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--primary);
   text-align: center;
   font-size: 0.84rem;
@@ -380,7 +380,7 @@
   padding: 0.62rem;
   background: var(--primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: #fff;
   cursor: pointer;
   min-height: 42px;
@@ -399,7 +399,7 @@
   background: var(--glass-heavy);
   backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   padding: 0.9rem 1.2rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);

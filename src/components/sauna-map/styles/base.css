@@ -16,6 +16,7 @@
   --water-glow: rgba(0, 210, 255, 0.38);
   --accent-wishlist: #10b981;
   --wishlist-glow: rgba(16, 185, 129, 0.35);
+  --star-color: #fbbf24;
 
   /* スチームグラスモフィズム */
   --glass: rgba(30, 41, 59, 0.65);
@@ -126,7 +127,7 @@ body.allow-page-scroll {
 }
 
 .rating-star--filled {
-  color: #fbbf24;
+  color: var(--star-color);
   opacity: 1;
 }
 
