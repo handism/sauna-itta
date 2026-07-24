@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   useRef,
   ReactNode,
   ChangeEvent,
@@ -227,26 +228,29 @@ export function SaunaMapProvider({ children }: { children: ReactNode }) {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  const startNewVisit = () => {
+  const startNewVisit = useCallback(() => {
     startCreate();
     setForm(getDefaultForm(getTodayDate()));
-  };
+  }, [startCreate]);
 
-  const startEditing = (visit: SaunaVisit) => {
-    setSelectedId(visit.id);
-    startEdit(visit);
-    setForm(toFormState(visit));
-    if (isMobile) {
-      setSnapPosition("full");
-    }
-  };
+  const startEditing = useCallback(
+    (visit: SaunaVisit) => {
+      setSelectedId(visit.id);
+      startEdit(visit);
+      setForm(toFormState(visit));
+      if (isMobile) {
+        setSnapPosition("full");
+      }
+    },
+    [setSelectedId, startEdit, isMobile, setSnapPosition],
+  );
 
-  const handleDelete = () => {
+  const handleDelete = useCallback(() => {
     if (!editingId) return;
     openDeleteConfirm();
-  };
+  }, [editingId, openDeleteConfirm]);
 
-  const confirmDelete = () => {
+  const confirmDelete = useCallback(() => {
     if (!editingId) return;
     const { success } = deleteVisit(editingId);
     if (!success) {
@@ -256,7 +260,7 @@ export function SaunaMapProvider({ children }: { children: ReactNode }) {
     }
     closeDeleteConfirm();
     cancelEditing(true);
-  };
+  }, [editingId, deleteVisit, showToast, closeDeleteConfirm, cancelEditing]);
 
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
@@ -275,42 +279,48 @@ export function SaunaMapProvider({ children }: { children: ReactNode }) {
     [setFilters],
   );
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (!selectedLocation || !form.name) return;
+  const handleSubmit = useCallback(
+    (e: FormEvent) => {
+      e.preventDefault();
+      if (!selectedLocation || !form.name) return;
 
-    let success = false;
-    if (editingId) {
-      const result = editVisit(editingId, selectedLocation, form);
-      success = result.success;
-    } else {
-      const result = addVisit(selectedLocation, form);
-      success = result.success;
-    }
+      let success = false;
+      if (editingId) {
+        const result = editVisit(editingId, selectedLocation, form);
+        success = result.success;
+      } else {
+        const result = addVisit(selectedLocation, form);
+        success = result.success;
+      }
 
-    if (!success) {
-      showToast(STORAGE_ERROR_MSG, "error");
-    }
+      if (!success) {
+        showToast(STORAGE_ERROR_MSG, "error");
+      }
 
-    cancelEditing(true);
-  };
+      cancelEditing(true);
+    },
+    [selectedLocation, form, editingId, editVisit, addVisit, showToast, cancelEditing],
+  );
 
-  const handleImageFile = async (file: File) => {
-    setImageUploading(true);
-    try {
-      const base64 = await compressAndGetBase64(file);
-      setForm((prev) => ({ ...prev, image: base64 }));
-    } catch (error) {
-      console.error(error);
-      showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
-    } finally {
-      setImageUploading(false);
-    }
-  };
+  const handleImageFile = useCallback(
+    async (file: File) => {
+      setImageUploading(true);
+      try {
+        const base64 = await compressAndGetBase64(file);
+        setForm((prev) => ({ ...prev, image: base64 }));
+      } catch (error) {
+        console.error(error);
+        showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
+      } finally {
+        setImageUploading(false);
+      }
+    },
+    [showToast],
+  );
 
-  const handleRemoveImage = () => {
+  const handleRemoveImage = useCallback(() => {
     setForm((prev) => ({ ...prev, image: "" }));
-  };
+  }, []);
 
   const handleImportData = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
@@ -348,110 +358,195 @@ export function SaunaMapProvider({ children }: { children: ReactNode }) {
   const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
   const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
 
-  const handleListEdit = (visit: SaunaVisit) => {
-    startEditing(visit);
-    if (isMobile) setSnapPosition("full");
-  };
+  const handleListEdit = useCallback(
+    (visit: SaunaVisit) => {
+      startEditing(visit);
+      if (isMobile) setSnapPosition("full");
+    },
+    [startEditing, isMobile, setSnapPosition],
+  );
 
-  const handleListSelectVisit = (visit: SaunaVisit) => {
-    handleSelectVisit(visit);
-    if (isMobile) setSnapPosition("half");
-  };
+  const handleListSelectVisit = useCallback(
+    (visit: SaunaVisit) => {
+      handleSelectVisit(visit);
+      if (isMobile) setSnapPosition("half");
+    },
+    [handleSelectVisit, isMobile, setSnapPosition],
+  );
 
-  const handleDeleteHistoryEntry = (index: number) => {
-    if (!editingId) return;
+  const handleDeleteHistoryEntry = useCallback(
+    (index: number) => {
+      if (!editingId) return;
 
-    removeHistoryEntry(editingId, index);
+      removeHistoryEntry(editingId, index);
 
-    const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
+      const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
 
-    if (newLatest) {
-      setForm((prev) => ({
-        ...prev,
-        date: newLatest.date,
-        comment: newLatest.comment,
-        rating: newLatest.rating ?? 0,
-        image: newLatest.image ?? "",
-      }));
-    }
-  };
+      if (newLatest) {
+        setForm((prev) => ({
+          ...prev,
+          date: newLatest.date,
+          comment: newLatest.comment,
+          rating: newLatest.rating ?? 0,
+          image: newLatest.image ?? "",
+        }));
+      }
+    },
+    [editingId, removeHistoryEntry, historyEntries],
+  );
 
-  const value: SaunaMapContextType = {
-    isMobile,
-    mounted,
-    theme,
-    toggleTheme,
-    visits,
-    filteredVisits,
-    filters,
-    setFilters,
-    stats,
-    isFilterActive,
-    activeFilterCount,
-    clearFilters,
-    exportVisits,
-    form,
-    setForm,
-    editorState,
-    mode,
-    editingId,
-    selectedLocation,
-    isSidebarExpanded,
-    isAdding,
-    isMobilePickingLocation,
-    isCreating,
-    editingVisit,
-    historyEntries,
-    imageUploading,
-    importing,
-    importInputRef,
-    startNewVisit,
-    startEditing,
-    handleDelete,
-    confirmDelete,
-    handleLocationSelect,
-    handleBoundsChange,
-    handleSubmit,
-    handleImageFile,
-    handleRemoveImage,
-    handleImportData,
-    handleDeleteHistoryEntry,
-    cancelEditing,
-    toggleSidebar,
-    hoveredId,
-    setHoveredId,
-    selectedId,
-    setSelectedId,
-    activeMapTarget,
-    snapPosition,
-    setSnapPosition,
-    handleZoomChange,
-    enableClustering,
-    toggleClustering,
-    showBadges,
-    selectedVisit: selectedVisit ?? null,
-    handleSelectVisit,
-    handleDeselectVisit,
-    handleListEdit,
-    handleListSelectVisit,
-    handleSelectMobileTab,
-    isShareViewOpen,
-    isMobileMenuOpen,
-    isFilterModalOpen,
-    isDeleteConfirmOpen,
-    mobileMenuRef,
-    openShareView,
-    closeShareView,
-    toggleMobileMenu,
-    closeMobileMenu,
-    openFilterModal,
-    closeFilterModal,
-    openDeleteConfirm,
-    closeDeleteConfirm,
-    toast,
-    showToast,
-    clearToast,
-  };
+  const value: SaunaMapContextType = useMemo(
+    () => ({
+      isMobile,
+      mounted,
+      theme,
+      toggleTheme,
+      visits,
+      filteredVisits,
+      filters,
+      setFilters,
+      stats,
+      isFilterActive,
+      activeFilterCount,
+      clearFilters,
+      exportVisits,
+      form,
+      setForm,
+      editorState,
+      mode,
+      editingId,
+      selectedLocation,
+      isSidebarExpanded,
+      isAdding,
+      isMobilePickingLocation,
+      isCreating,
+      editingVisit,
+      historyEntries,
+      imageUploading,
+      importing,
+      importInputRef,
+      startNewVisit,
+      startEditing,
+      handleDelete,
+      confirmDelete,
+      handleLocationSelect,
+      handleBoundsChange,
+      handleSubmit,
+      handleImageFile,
+      handleRemoveImage,
+      handleImportData,
+      handleDeleteHistoryEntry,
+      cancelEditing,
+      toggleSidebar,
+      hoveredId,
+      setHoveredId,
+      selectedId,
+      setSelectedId,
+      activeMapTarget,
+      snapPosition,
+      setSnapPosition,
+      handleZoomChange,
+      enableClustering,
+      toggleClustering,
+      showBadges,
+      selectedVisit: selectedVisit ?? null,
+      handleSelectVisit,
+      handleDeselectVisit,
+      handleListEdit,
+      handleListSelectVisit,
+      handleSelectMobileTab,
+      isShareViewOpen,
+      isMobileMenuOpen,
+      isFilterModalOpen,
+      isDeleteConfirmOpen,
+      mobileMenuRef,
+      openShareView,
+      closeShareView,
+      toggleMobileMenu,
+      closeMobileMenu,
+      openFilterModal,
+      closeFilterModal,
+      openDeleteConfirm,
+      closeDeleteConfirm,
+      toast,
+      showToast,
+      clearToast,
+    }),
+    [
+      isMobile,
+      mounted,
+      theme,
+      toggleTheme,
+      visits,
+      filteredVisits,
+      filters,
+      setFilters,
+      stats,
+      isFilterActive,
+      activeFilterCount,
+      clearFilters,
+      exportVisits,
+      form,
+      editorState,
+      mode,
+      editingId,
+      selectedLocation,
+      isSidebarExpanded,
+      isAdding,
+      isMobilePickingLocation,
+      isCreating,
+      editingVisit,
+      historyEntries,
+      imageUploading,
+      importing,
+      startNewVisit,
+      startEditing,
+      handleDelete,
+      confirmDelete,
+      handleLocationSelect,
+      handleBoundsChange,
+      handleSubmit,
+      handleImageFile,
+      handleRemoveImage,
+      handleImportData,
+      handleDeleteHistoryEntry,
+      cancelEditing,
+      toggleSidebar,
+      hoveredId,
+      setHoveredId,
+      selectedId,
+      setSelectedId,
+      activeMapTarget,
+      snapPosition,
+      setSnapPosition,
+      handleZoomChange,
+      enableClustering,
+      toggleClustering,
+      showBadges,
+      selectedVisit,
+      handleSelectVisit,
+      handleDeselectVisit,
+      handleListEdit,
+      handleListSelectVisit,
+      handleSelectMobileTab,
+      isShareViewOpen,
+      isMobileMenuOpen,
+      isFilterModalOpen,
+      isDeleteConfirmOpen,
+      mobileMenuRef,
+      openShareView,
+      closeShareView,
+      toggleMobileMenu,
+      closeMobileMenu,
+      openFilterModal,
+      closeFilterModal,
+      openDeleteConfirm,
+      closeDeleteConfirm,
+      toast,
+      showToast,
+      clearToast,
+    ],
+  );
 
   return <SaunaMapContext.Provider value={value}>{children}</SaunaMapContext.Provider>;
 }
