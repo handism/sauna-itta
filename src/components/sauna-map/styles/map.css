@@ -463,6 +463,17 @@
   }
 }
 
+@keyframes fadeInUpMobile {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
 @media (max-width: 768px) {
   .popup-link,
@@ -494,6 +505,8 @@
     max-width: none;
     padding: 1rem 1rem;
     transform: none;
+    animation: fadeInUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform, opacity;
   }
 
   .pin-hint-cancel {

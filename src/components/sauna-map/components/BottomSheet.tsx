@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useState, TouchEvent, CSSProperties } from "react";
+import { ReactNode, useRef, TouchEvent } from "react";
 import { MapPin } from "lucide-react";
 import type { SheetSnapPosition } from "../types";
 
@@ -17,15 +17,16 @@ export function BottomSheet({
   selectedVisitName,
   children,
 }: BottomSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
-  const [dragOffsetY, setDragOffsetY] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
 
   const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
     startYRef.current = e.touches[0].clientY;
     startTimeRef.current = Date.now();
-    setIsDragging(true);
+    if (sheetRef.current) {
+      sheetRef.current.classList.add("is-dragging");
+    }
   };
 
   const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
@@ -40,7 +41,9 @@ export function BottomSheet({
       diffY *= 0.25;
     }
 
-    setDragOffsetY(diffY);
+    if (sheetRef.current) {
+      sheetRef.current.style.setProperty("--drag-offset-y", `${diffY}px`);
+    }
   };
 
   const handleTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
@@ -51,8 +54,10 @@ export function BottomSheet({
     const velocity = diffY / elapsedTime; // px/ms
 
     startYRef.current = null;
-    setIsDragging(false);
-    setDragOffsetY(0);
+    if (sheetRef.current) {
+      sheetRef.current.classList.remove("is-dragging");
+      sheetRef.current.style.setProperty("--drag-offset-y", "0px");
+    }
 
     // 強烈なスワイプ（速いフリック）または距離閾値の判定
     const isFlickUp = velocity > 0.4 || diffY > 50;
@@ -79,16 +84,10 @@ export function BottomSheet({
     else onSnapChange("min");
   };
 
-  const style = {
-    "--drag-offset-y": `${dragOffsetY}px`,
-  } as CSSProperties;
-
   return (
     <div
-      className={`bottom-sheet bottom-sheet--${snapPosition} ${
-        isDragging ? "is-dragging" : ""
-      }`}
-      style={style}
+      ref={sheetRef}
+      className={`bottom-sheet bottom-sheet--${snapPosition}`}
       role="region"
       aria-label="ボトムシートパネル"
     >
@@ -103,7 +102,9 @@ export function BottomSheet({
         <div className="bottom-sheet-handle-bar-container">
           <div className="bottom-sheet-handle" />
           <div className="bottom-sheet-summary-badge">
-            <span className="summary-count"><MapPin size={13} /> {filteredCount ?? 0}件表示中</span>
+            <span className="summary-count">
+              <MapPin size={13} /> {filteredCount ?? 0}件表示中
+            </span>
             {selectedVisitName && (
               <span className="summary-selected" title={selectedVisitName}>
                 選択中: {selectedVisitName}

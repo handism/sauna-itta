@@ -17,6 +17,8 @@
     border-top-right-radius: var(--radius-xl);
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45), 0 0 24px var(--primary-glow);
     transition: height var(--transition-smooth), transform var(--transition-smooth);
+    will-change: transform;
+    contain: content;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -24,6 +26,7 @@
 
   .bottom-sheet.is-dragging {
     transition: none;
+    will-change: transform;
   }
 
   /* スナップポジション高さ指定 */
