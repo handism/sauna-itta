@@ -1,4 +1,4 @@
-import { SaunaVisit, VisitFormState } from "../types";
+import { SaunaVisit, VisitFormState, VisitFormInputSchema } from "../types";
 import { getVisitHistoryEntries } from "./visitHistory";
 
 export function getTodayDate(): string {
@@ -40,4 +40,17 @@ export function toNormalizedTags(tagsText: string): string[] {
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean);
+}
+
+export type VisitFormValidationResult =
+  | { success: true; data: VisitFormState }
+  | { success: false; errors: string[] };
+
+export function validateVisitForm(form: VisitFormState): VisitFormValidationResult {
+  const result = VisitFormInputSchema.safeParse(form);
+  if (result.success) {
+    return { success: true, data: form };
+  }
+  const errors = result.error.issues.map((issue) => issue.message);
+  return { success: false, errors };
 }
