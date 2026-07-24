@@ -122,4 +122,15 @@ function VisitCompactItemComponent({
   );
 }
 
-export const VisitCompactItem = memo(VisitCompactItemComponent);
+function areCompactItemPropsEqual(
+  prevProps: VisitCompactItemProps,
+  nextProps: VisitCompactItemProps,
+): boolean {
+  return (
+    prevProps.isHovered === nextProps.isHovered &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.visit === nextProps.visit
+  );
+}
+
+export const VisitCompactItem = memo(VisitCompactItemComponent, areCompactItemPropsEqual);
