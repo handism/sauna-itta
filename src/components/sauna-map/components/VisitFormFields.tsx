@@ -1,4 +1,6 @@
 import { CheckCircle2, Star } from "lucide-react";
+import { LocationSearchInput } from "./LocationSearchInput";
+import { GeocodingResult } from "../utils/geocoding";
 
 export function FormHeader({
   editingId,
@@ -22,6 +24,19 @@ export function FormHeader({
         )}
       </p>
     </>
+  );
+}
+
+export function LocationSearchField({
+  onSelectLocation,
+}: {
+  onSelectLocation: (result: GeocodingResult) => void;
+}) {
+  return (
+    <div className="form-group">
+      <label>場所・施設名を検索（任意）</label>
+      <LocationSearchInput onSelectLocation={onSelectLocation} />
+    </div>
   );
 }
 
