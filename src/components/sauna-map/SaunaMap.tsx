@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { MapPin, X } from "lucide-react";
 import {
   MapContainer,
@@ -27,14 +28,31 @@ import { BottomSheet } from "./components/BottomSheet";
 import { MobileNavBar } from "./components/MobileNavBar";
 import { DesktopSidebar } from "./components/DesktopSidebar";
 import { getSaunaIcon } from "./components/markerIcon";
-import { SaunaMapProvider, useSaunaMap } from "./context/SaunaMapContext";
+import {
+  SaunaMapProvider,
+  useSaunaUI,
+  useSaunaVisitsData,
+  useSaunaEditor,
+  useSaunaMapState,
+} from "./context";
+import { SaunaVisit } from "./types";
 
 function SaunaMapContent() {
   const {
     isMobile,
     mounted,
     theme,
-    filteredVisits,
+    isDeleteConfirmOpen,
+    openFilterModal,
+    closeDeleteConfirm,
+    toast,
+    showToast,
+    clearToast,
+  } = useSaunaUI();
+
+  const { filteredVisits, isFilterActive } = useSaunaVisitsData();
+
+  const {
     editingId,
     selectedLocation,
     isAdding,
@@ -43,9 +61,14 @@ function SaunaMapContent() {
     confirmDelete,
     handleLocationSelect,
     handleBoundsChange,
-    cancelEditing,
+    cancelEditing: editorCancelEditing,
+    startEditing: editorStartEditing,
+  } = useSaunaEditor();
+
+  const {
     hoveredId,
     selectedId,
+    setSelectedId,
     activeMapTarget,
     snapPosition,
     setSnapPosition,
@@ -54,17 +77,30 @@ function SaunaMapContent() {
     toggleClustering,
     showBadges,
     selectedVisit,
-    startEditing,
     handleSelectVisit,
     handleSelectMobileTab,
-    isDeleteConfirmOpen,
-    openFilterModal,
-    isFilterActive,
-    closeDeleteConfirm,
-    toast,
-    showToast,
-    clearToast,
-  } = useSaunaMap();
+  } = useSaunaMapState();
+
+  const startEditing = useCallback(
+    (visit: SaunaVisit) => {
+      setSelectedId(visit.id);
+      editorStartEditing(visit);
+      if (isMobile) {
+        setSnapPosition("full");
+      }
+    },
+    [setSelectedId, editorStartEditing, isMobile, setSnapPosition],
+  );
+
+  const cancelEditing = useCallback(
+    (completed = false) => {
+      editorCancelEditing(completed);
+      if (isMobile) {
+        setSnapPosition("min");
+      }
+    },
+    [editorCancelEditing, isMobile, setSnapPosition],
+  );
 
   if (!mounted) {
     return <div className="map-container" style={{ background: "var(--background)", height: "100%", width: "100%" }} />;
