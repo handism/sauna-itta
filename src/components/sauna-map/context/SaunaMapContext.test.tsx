@@ -5,8 +5,12 @@ import {
   SaunaMapProvider,
   useSaunaMap,
   useSaunaUI,
+  useSaunaUIState,
+  useSaunaUIActions,
   useSaunaVisitsData,
   useSaunaEditor,
+  useSaunaEditorState,
+  useSaunaEditorActions,
   useSaunaMapState,
 } from "./SaunaMapContext";
 
@@ -115,5 +119,41 @@ describe("SaunaMap Contexts", () => {
     });
 
     expect(result.current.theme).toBeDefined();
+  });
+
+  it("分離された UIState と UIActions フックがそれぞれ正常に動作すること", () => {
+    const { result } = renderHook(
+      () => ({
+        state: useSaunaUIState(),
+        actions: useSaunaUIActions(),
+      }),
+      { wrapper },
+    );
+
+    expect(result.current.state.isShareViewOpen).toBe(false);
+
+    act(() => {
+      result.current.actions.openShareView();
+    });
+
+    expect(result.current.state.isShareViewOpen).toBe(true);
+  });
+
+  it("分離された EditorState と EditorActions フックがそれぞれ正常に動作すること", () => {
+    const { result } = renderHook(
+      () => ({
+        state: useSaunaEditorState(),
+        actions: useSaunaEditorActions(),
+      }),
+      { wrapper },
+    );
+
+    expect(result.current.state.mode).toBe("list");
+
+    act(() => {
+      result.current.actions.startNewVisit();
+    });
+
+    expect(result.current.state.mode).toBe("creating:pick");
   });
 });
