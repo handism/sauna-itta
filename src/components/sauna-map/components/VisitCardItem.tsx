@@ -96,4 +96,15 @@ function VisitCardItemComponent({
   );
 }
 
-export const VisitCardItem = memo(VisitCardItemComponent);
+function areCardItemPropsEqual(
+  prevProps: VisitCardItemProps,
+  nextProps: VisitCardItemProps,
+): boolean {
+  return (
+    prevProps.isHovered === nextProps.isHovered &&
+    prevProps.isSelected === nextProps.isSelected &&
+    prevProps.visit === nextProps.visit
+  );
+}
+
+export const VisitCardItem = memo(VisitCardItemComponent, areCardItemPropsEqual);
