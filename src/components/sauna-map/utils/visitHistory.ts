@@ -138,57 +138,6 @@ export function getInitialVisits(): SaunaVisit[] {
   }
 }
 
-function getUniqueAreasCount(visits: SaunaVisit[]): number {
-  const areas = new Set<string>();
-  for (const visit of visits) {
-    const area = (visit.area ?? "").trim();
-    if (area.length > 0) {
-      areas.add(area);
-    }
-  }
-  return areas.size;
-}
-
-function getPrefectures(visitedVisits: SaunaVisit[]): string[] {
-  const prefectureSet = new Set<string>();
-  for (const visit of visitedVisits) {
-    const pref = extractPrefecture(visit.area);
-    if (pref != null) {
-      prefectureSet.add(pref);
-    }
-  }
-  return Array.from(prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
-}
-
-function getDateAndRatingStats(visitedVisits: SaunaVisit[]) {
-  let firstDate: string | null = null;
-  let lastDate: string | null = null;
-  let ratingSum = 0;
-  let ratingCount = 0;
-
-  for (const visit of visitedVisits) {
-    const history = getVisitHistoryEntries(visit);
-    for (const entry of history) {
-      if (firstDate === null || entry.date < firstDate) {
-        firstDate = entry.date;
-      }
-      if (lastDate === null || entry.date > lastDate) {
-        lastDate = entry.date;
-      }
-
-      const rating = entry.rating ?? 0;
-      if (rating > 0) {
-        ratingSum += rating;
-        ratingCount++;
-      }
-    }
-  }
-
-  const avgRating = ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0;
-
-  return { firstDate, lastDate, avgRating };
-}
-
 export function calculateStats(visits: SaunaVisit[]): VisitStats {
   const total = visits.length;
   if (total === 0) {
@@ -205,11 +154,49 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
     };
   }
 
-  const visitedVisits = visits.filter((v) => (v.status ?? "visited") === "visited");
-  const visitedCount = visitedVisits.length;
-  const uniqueAreas = getUniqueAreasCount(visits);
-  const prefectures = getPrefectures(visitedVisits);
-  const { firstDate, lastDate, avgRating } = getDateAndRatingStats(visitedVisits);
+  let visitedCount = 0;
+  const areasSet = new Set<string>();
+  const prefectureSet = new Set<string>();
+  let firstDate: string | null = null;
+  let lastDate: string | null = null;
+  let ratingSum = 0;
+  let ratingCount = 0;
+
+  for (const visit of visits) {
+    const area = (visit.area ?? "").trim();
+    if (area.length > 0) {
+      areasSet.add(area);
+    }
+
+    const isVisited = (visit.status ?? "visited") === "visited";
+    if (isVisited) {
+      visitedCount++;
+
+      const pref = extractPrefecture(visit.area);
+      if (pref != null) {
+        prefectureSet.add(pref);
+      }
+
+      const history = getVisitHistoryEntries(visit);
+      for (const entry of history) {
+        if (firstDate === null || entry.date < firstDate) {
+          firstDate = entry.date;
+        }
+        if (lastDate === null || entry.date > lastDate) {
+          lastDate = entry.date;
+        }
+
+        const rating = entry.rating ?? 0;
+        if (rating > 0) {
+          ratingSum += rating;
+          ratingCount++;
+        }
+      }
+    }
+  }
+
+  const avgRating = ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0;
+  const prefectures = Array.from(prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
 
   return {
     total,
@@ -218,7 +205,7 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
     firstDate,
     lastDate,
     avgRating,
-    uniqueAreas,
+    uniqueAreas: areasSet.size,
     prefectures,
     prefectureCount: prefectures.length,
   };
