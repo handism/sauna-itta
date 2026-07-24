@@ -33,6 +33,8 @@
   --radius-full: 9999px;
 
   /* デザイントークン: Z-Index 階層 */
+  --z-map-base: 0;
+  --z-map-overlay: 10;
   --z-map-controls: 500;
   --z-sidebar: 1000;
   --z-sheet: 1100;

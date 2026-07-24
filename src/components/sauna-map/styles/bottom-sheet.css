@@ -1,7 +1,7 @@
 /* モバイル専用 ボトムシート & 下部固定ナビゲーションバー */
 
 /* JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
-@media (max-width: 767px) {
+@media (max-width: 768px) {
   /* ボトムシートコンテナ */
   .bottom-sheet {
     position: fixed;
@@ -132,7 +132,7 @@
     left: 0;
     right: 0;
     height: calc(56px + env(safe-area-inset-bottom, 0px));
-    z-index: 1001;
+    z-index: calc(var(--z-sheet) + 1);
     background: var(--glass-heavy);
     border-top: 1px solid var(--glass-border);
     display: flex;
