@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toFormState, getTodayDate } from "./form";
+import { toFormState, getTodayDate, validateVisitForm } from "./form";
 import { buildHistoryUpdate } from "./visitHistory";
 import { SaunaVisit, VisitFormState } from "../types";
 
@@ -244,5 +244,80 @@ describe("toFormState", () => {
 
     const formState = toFormState(visit);
     expect(formState.tagsText).toBe("a, b, c");
+  });
+});
+
+describe("validateVisitForm", () => {
+  it("validates valid form state successfully", () => {
+    const validForm: VisitFormState = {
+      name: "サウナしきじ",
+      comment: "聖地巡礼",
+      image: "",
+      date: "2026-07-24",
+      rating: 5,
+      tagsText: "水風呂, 薬草サウナ",
+      status: "visited",
+      area: "静岡",
+    };
+
+    const result = validateVisitForm(validForm);
+    expect(result.success).toBe(true);
+  });
+
+  it("returns error when sauna name is empty", () => {
+    const invalidForm: VisitFormState = {
+      name: "   ",
+      comment: "",
+      image: "",
+      date: "2026-07-24",
+      rating: 4,
+      tagsText: "",
+      status: "visited",
+      area: "",
+    };
+
+    const result = validateVisitForm(invalidForm);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors).toContain("サウナ名を入力してください。");
+    }
+  });
+
+  it("returns error when date format is invalid", () => {
+    const invalidForm: VisitFormState = {
+      name: "ウェルビー栄",
+      comment: "",
+      image: "",
+      date: "2026/07/24", // Invalid format
+      rating: 5,
+      tagsText: "",
+      status: "visited",
+      area: "名古屋",
+    };
+
+    const result = validateVisitForm(invalidForm);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors).toContain("日付の形式が正しくありません。");
+    }
+  });
+
+  it("returns error when rating is out of range", () => {
+    const invalidForm: VisitFormState = {
+      name: "北欧",
+      comment: "",
+      image: "",
+      date: "2026-07-24",
+      rating: 6, // Invalid rating
+      tagsText: "",
+      status: "visited",
+      area: "上野",
+    };
+
+    const result = validateVisitForm(invalidForm);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors).toContain("満足度は5以下で指定してください。");
+    }
   });
 });

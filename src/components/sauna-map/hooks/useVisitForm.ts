@@ -5,6 +5,7 @@ import {
   getTodayDate,
   toFormState,
   compressAndGetBase64,
+  validateVisitForm,
 } from "../utils";
 
 const STORAGE_ERROR_MSG =
@@ -85,7 +86,16 @@ export function useVisitForm({
   const handleSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault();
-      if (!selectedLocation || !form.name) return;
+      if (!selectedLocation) {
+        showToast("サウナの場所が選択されていません。", "error");
+        return;
+      }
+
+      const validation = validateVisitForm(form);
+      if (!validation.success) {
+        showToast(validation.errors[0] ?? "入力内容に不備があります。", "error");
+        return;
+      }
 
       let success = false;
       if (editingId) {
@@ -98,6 +108,7 @@ export function useVisitForm({
 
       if (!success) {
         showToast(STORAGE_ERROR_MSG, "error");
+        return;
       }
 
       cancelEditing(true);

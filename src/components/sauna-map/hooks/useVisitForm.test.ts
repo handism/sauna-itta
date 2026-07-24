@@ -95,4 +95,33 @@ describe("useVisitForm", () => {
     expect(options.showToast).toHaveBeenCalledWith("記録を削除しました。", "success");
     expect(options.closeDeleteConfirm).toHaveBeenCalled();
   });
+
+  it("handleSubmit でサウナ名未入力時にバリデーションエラーのトーストが表示され登録がキャンセルされること", () => {
+    const { result } = renderHook(() => useVisitForm(defaultOptions));
+
+    act(() => {
+      const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      result.current.handleSubmit(e);
+    });
+
+    expect(defaultOptions.showToast).toHaveBeenCalledWith("サウナ名を入力してください。", "error");
+    expect(defaultOptions.addVisit).not.toHaveBeenCalled();
+  });
+
+  it("handleSubmit で場所未選択時にエラーのトーストが表示されること", () => {
+    const options = { ...defaultOptions, selectedLocation: null };
+    const { result } = renderHook(() => useVisitForm(options));
+
+    act(() => {
+      result.current.setForm((prev) => ({ ...prev, name: "サウナ北欧" }));
+    });
+
+    act(() => {
+      const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      result.current.handleSubmit(e);
+    });
+
+    expect(options.showToast).toHaveBeenCalledWith("サウナの場所が選択されていません。", "error");
+    expect(options.addVisit).not.toHaveBeenCalled();
+  });
 });
