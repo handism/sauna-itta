@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, memo } from "react";
 import { ChevronRight, Navigation, Pencil, X } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
@@ -16,7 +16,7 @@ interface VisitCompactItemProps {
   onOpenImage: (src: string) => void;
 }
 
-export function VisitCompactItem({
+function VisitCompactItemComponent({
   visit,
   isHovered,
   isSelected,
@@ -147,3 +147,5 @@ export function VisitCompactItem({
     </div>
   );
 }
+
+export const VisitCompactItem = memo(VisitCompactItemComponent);
