@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useMap } from "react-leaflet";
 import { LocateFixed, Loader2 } from "lucide-react";
+import { MapControlButton } from "./MapControlButton";
 
 interface LocationControlProps {
   onNotify?: (message: string, tone: "info" | "success" | "error") => void;
@@ -36,16 +37,15 @@ export function LocationControl({ onNotify }: LocationControlProps) {
 
   return (
     <div className="location-control">
-      <button
-        type="button"
+      <MapControlButton
         onClick={handleLocate}
         disabled={locating}
         className="location-control-btn"
-        aria-label="現在地へ移動"
+        ariaLabel="現在地へ移動"
         title="現在地へ移動"
       >
         {locating ? <Loader2 size={18} className="spin-icon" /> : <LocateFixed size={18} />}
-      </button>
+      </MapControlButton>
     </div>
   );
 }

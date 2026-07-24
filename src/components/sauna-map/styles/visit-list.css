@@ -117,6 +117,8 @@
   margin-bottom: 0.45rem;
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  content-visibility: auto;
+  contain-intrinsic-size: 50px;
 }
 
 .sauna-compact-item:hover,

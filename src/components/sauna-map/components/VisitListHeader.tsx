@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { List, LayoutGrid, SlidersHorizontal } from "lucide-react";
 
 export type ViewMode = "card" | "compact";
@@ -11,7 +12,7 @@ interface VisitListHeaderProps {
   isMobile?: boolean;
 }
 
-export function VisitListHeader({
+function VisitListHeaderComponent({
   filteredCount,
   viewMode,
   onViewModeChange,
@@ -60,3 +61,5 @@ export function VisitListHeader({
     </div>
   );
 }
+
+export const VisitListHeader = memo(VisitListHeaderComponent);

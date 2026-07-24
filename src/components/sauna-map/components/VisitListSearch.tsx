@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, memo } from "react";
 import { Search, X } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { QuickFilterChips } from "./QuickFilterChips";
@@ -11,7 +11,7 @@ interface VisitListSearchProps {
   onClearFilters?: () => void;
 }
 
-export function VisitListSearch({
+function VisitListSearchComponent({
   filters,
   setFilters,
   visits,
@@ -103,3 +103,5 @@ export function VisitListSearch({
     </div>
   );
 }
+
+export const VisitListSearch = memo(VisitListSearchComponent);
