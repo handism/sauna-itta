@@ -38,11 +38,25 @@ function VisitCompactItemComponent({
     >
       <div
         className="sauna-compact-header"
+        role="button"
+        tabIndex={0}
+        aria-expanded={isSelected}
+        aria-label={`${visit.name}の情報を${isSelected ? "折りたたむ" : "展開する"}`}
         onClick={() => {
           if (isSelected) {
             onDeselectVisit?.();
           } else {
             onSelectVisit?.(visit);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (isSelected) {
+              onDeselectVisit?.();
+            } else {
+              onSelectVisit?.(visit);
+            }
           }
         }}
       >
@@ -88,17 +102,23 @@ function VisitCompactItemComponent({
           />
           {visit.comment && <p className="sauna-card-comment">{visit.comment}</p>}
           {sanitizeImageUrl(visit.image) && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={sanitizeImageUrl(visit.image)}
-              className="sauna-img-preview"
-              alt={`${visit.name}の写真`}
+            <button
+              type="button"
+              className="sauna-img-preview-btn"
               onClick={(e) => {
                 e.stopPropagation();
                 const src = sanitizeImageUrl(visit.image);
                 if (src) onOpenImage(src);
               }}
-            />
+              aria-label={`${visit.name}の写真拡大表示`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={sanitizeImageUrl(visit.image)}
+                className="sauna-img-preview"
+                alt={`${visit.name}の写真`}
+              />
+            </button>
           )}
           <VisitMetaInfo date={visit.date} visitCount={visitCount} />
           <div className="sauna-compact-footer-actions">

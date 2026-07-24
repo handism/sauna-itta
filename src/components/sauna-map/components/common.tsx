@@ -15,7 +15,11 @@ export function RatingStars({ rating, className, size = 14 }: RatingStarsProps) 
 
   const safeRating = Math.max(0, Math.min(5, Math.round(rating)));
   return (
-    <span className={`rating-stars ${className ?? ""}`}>
+    <span
+      className={`rating-stars ${className ?? ""}`}
+      role="img"
+      aria-label={`満足度: ${safeRating}/5`}
+    >
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}

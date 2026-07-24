@@ -144,13 +144,35 @@
   overflow: hidden;
 }
 
+.sauna-img-preview-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: zoom-in;
+  margin-top: 0.8rem;
+  border-radius: var(--radius-sm);
+  text-align: left;
+}
+
+.sauna-img-preview-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .sauna-img-preview {
   width: 100%;
   height: 120px;
   object-fit: cover;
   border-radius: var(--radius-sm);
-  margin-top: 0.8rem;
-  cursor: zoom-in;
+  display: block;
+}
+
+.sauna-card:focus-visible,
+.sauna-compact-header:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
 .visually-hidden-file-input {

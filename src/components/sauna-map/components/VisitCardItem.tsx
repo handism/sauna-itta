@@ -33,7 +33,17 @@ function VisitCardItemComponent({
     <div
       data-visit-id={visit.id}
       className={`sauna-card ${isHovered ? "is-hovered" : ""} ${isSelected ? "is-selected" : ""}`}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      aria-label={`${visit.name}を選択`}
       onClick={() => onSelectVisit?.(visit)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelectVisit?.(visit);
+        }
+      }}
       onMouseEnter={() => onHoverVisit?.(visit.id)}
       onMouseLeave={() => onHoverVisit?.(null)}
     >
@@ -78,17 +88,23 @@ function VisitCardItemComponent({
       />
       <p className="sauna-card-comment">{visit.comment}</p>
       {sanitizeImageUrl(visit.image) && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={sanitizeImageUrl(visit.image)}
-          className="sauna-img-preview"
-          alt={`${visit.name}の写真`}
+        <button
+          type="button"
+          className="sauna-img-preview-btn"
           onClick={(e) => {
             e.stopPropagation();
             const src = sanitizeImageUrl(visit.image);
             if (src) onOpenImage(src);
           }}
-        />
+          aria-label={`${visit.name}の写真拡大表示`}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={sanitizeImageUrl(visit.image)}
+            className="sauna-img-preview"
+            alt={`${visit.name}の写真`}
+          />
+        </button>
       )}
       <VisitMetaInfo date={visit.date} visitCount={visitCount} />
       <RouteLink lat={visit.lat} lng={visit.lng} />
