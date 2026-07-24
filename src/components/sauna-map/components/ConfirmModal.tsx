@@ -36,12 +36,15 @@ export function ConfirmModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-title"
+        aria-describedby="confirm-message"
         tabIndex={-1}
       >
         <h3 id="confirm-title" className="confirm-title">
           {title}
         </h3>
-        <p className="confirm-message">{message}</p>
+        <p id="confirm-message" className="confirm-message">
+          {message}
+        </p>
         <div className="confirm-actions">
           <button type="button" className="btn btn-ghost" onClick={onCancel}>
             {cancelLabel}
