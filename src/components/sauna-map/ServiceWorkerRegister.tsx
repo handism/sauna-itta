@@ -11,7 +11,12 @@ export function ServiceWorkerRegister() {
         navigator.serviceWorker
           .register(swUrl, { scope: `${basePath}/` })
           .then((registration) => {
-            console.log("ServiceWorker registration successful with scope: ", registration.scope);
+            if (process.env.NODE_ENV !== "production") {
+              console.debug(
+                "ServiceWorker registration successful with scope: ",
+                registration.scope,
+              );
+            }
           })
           .catch((err) => {
             console.warn("ServiceWorker registration failed: ", err);
