@@ -15,7 +15,7 @@ import { useSaunaVisitsData } from "./VisitsDataContext";
 import { getVisitHistoryEntries } from "../utils";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 
-interface EditorContextType {
+export interface EditorStateContextType {
   form: VisitFormState;
   setForm: React.Dispatch<React.SetStateAction<VisitFormState>>;
   editorState: ReturnType<typeof useEditorState>["state"];
@@ -29,6 +29,9 @@ interface EditorContextType {
   editingVisit: SaunaVisit | null;
   historyEntries: ReturnType<typeof getVisitHistoryEntries>;
   imageUploading: boolean;
+}
+
+export interface EditorActionsContextType {
   startNewVisit: () => void;
   startEditing: (visit: SaunaVisit) => void;
   handleDelete: () => void;
@@ -44,7 +47,10 @@ interface EditorContextType {
   startCreate: ReturnType<typeof useEditorState>["startCreate"];
 }
 
-const EditorContext = createContext<EditorContextType | null>(null);
+export type EditorContextType = EditorStateContextType & EditorActionsContextType;
+
+const EditorStateContext = createContext<EditorStateContextType | null>(null);
+const EditorActionsContext = createContext<EditorActionsContextType | null>(null);
 
 export function EditorProvider({ children }: { children: ReactNode }) {
   const { isMobile, showToast, openDeleteConfirm, closeDeleteConfirm } = useSaunaUI();
@@ -124,7 +130,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     showToast,
   });
 
-  const value = useMemo(
+  const stateValue = useMemo(
     () => ({
       form,
       setForm,
@@ -139,19 +145,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       editingVisit,
       historyEntries,
       imageUploading,
-      startNewVisit,
-      startEditing,
-      handleDelete,
-      confirmDelete,
-      handleLocationSelect,
-      handleBoundsChange,
-      handleSubmit,
-      handleImageFile,
-      handleRemoveImage,
-      handleDeleteHistoryEntry,
-      cancelEditing,
-      toggleSidebar,
-      startCreate,
     }),
     [
       form,
@@ -167,6 +160,26 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       editingVisit,
       historyEntries,
       imageUploading,
+    ],
+  );
+
+  const actionsValue = useMemo(
+    () => ({
+      startNewVisit,
+      startEditing,
+      handleDelete,
+      confirmDelete,
+      handleLocationSelect,
+      handleBoundsChange,
+      handleSubmit,
+      handleImageFile,
+      handleRemoveImage,
+      handleDeleteHistoryEntry,
+      cancelEditing,
+      toggleSidebar,
+      startCreate,
+    }),
+    [
       startNewVisit,
       startEditing,
       handleDelete,
@@ -183,13 +196,33 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <EditorContext.Provider value={value}>{children}</EditorContext.Provider>;
+  return (
+    <EditorStateContext.Provider value={stateValue}>
+      <EditorActionsContext.Provider value={actionsValue}>
+        {children}
+      </EditorActionsContext.Provider>
+    </EditorStateContext.Provider>
+  );
 }
 
-export function useSaunaEditor() {
-  const context = useContext(EditorContext);
+export function useSaunaEditorState() {
+  const context = useContext(EditorStateContext);
   if (!context) {
-    throw new Error("useSaunaEditor must be used within an EditorProvider");
+    throw new Error("useSaunaEditorState must be used within an EditorProvider");
   }
   return context;
+}
+
+export function useSaunaEditorActions() {
+  const context = useContext(EditorActionsContext);
+  if (!context) {
+    throw new Error("useSaunaEditorActions must be used within an EditorProvider");
+  }
+  return context;
+}
+
+export function useSaunaEditor(): EditorContextType {
+  const state = useSaunaEditorState();
+  const actions = useSaunaEditorActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

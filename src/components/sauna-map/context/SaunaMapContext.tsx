@@ -140,7 +140,17 @@ export function useSaunaMap() {
 }
 
 // 他の Context / Hook も再エクスポート
-export { useSaunaUI, UIProvider } from "./UIContext";
+export {
+  useSaunaUI,
+  useSaunaUIState,
+  useSaunaUIActions,
+  UIProvider,
+} from "./UIContext";
 export { useSaunaVisitsData, VisitsDataProvider } from "./VisitsDataContext";
-export { useSaunaEditor, EditorProvider } from "./EditorContext";
+export {
+  useSaunaEditor,
+  useSaunaEditorState,
+  useSaunaEditorActions,
+  EditorProvider,
+} from "./EditorContext";
 export { useSaunaMapState, MapStateProvider } from "./MapStateContext";
