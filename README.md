@@ -1,113 +1,122 @@
 # サウナイッタ (sauna-itta)
 
 「サウナイッタ」は、訪れたサウナや行きたいサウナを地図上に記録し、あとから振り返るためのマイととのいマップです。  
-Next.js + React Leaflet で構築されており、データはブラウザの `localStorage` に保存されます。
+Next.js 16 (App Router) + React Leaflet で構築されており、データはすべてブラウザの `localStorage` に保存されます。
 
-## 主な機能
+---
 
-- 地図をタップしてサウナを登録（訪問済み / 行きたい）
-- 名前・日付・感想・エリア・タグ・満足度（★1〜5）・訪問回数・写真を記録
-- キーワード検索、ステータス、最低満足度、並び順で絞り込み
-- 登録データの編集 / 削除
-- JSON エクスポート / インポート（既存ID重複は除外してマージ）
-- シェア用ビュー（一覧 + サマリ）
-- 統計ダッシュボード（`/stats`）
-  - 合計件数、行った/行きたい、記録期間、平均満足度、都道府県制覇
-  - 月別訪問数、満足度分布チャート、訪問カレンダー
-- ダーク / ライトテーマ切り替え
-- 現在地移動ボタン
-- `alert/confirm` を使わない UI 通知
-  - Toast（info/success/error）
-  - ConfirmModal（削除確認）
+## 🌟 主な機能
 
-## 技術スタック
+- **インタラクティブなサウナマップ**
+  - OpenStreetMap ＆ Leaflet による地図表示
+  - マーカーの自動クラスタリング機能（ズーム度合いに応じた集約表示）
+  - 現在地移動、マップ範囲連動フィルタリング
+- **充実した訪問記録・編集機能**
+  - サウナ情報の登録（訪問済み / 行きたい）
+  - 基本情報（サウナ名、エリア、住所、ピン位置、満足度 ★1〜5、写真添付）
+  - 複数回の訪問履歴管理（日付、水風呂温度、サウナ室温度、ととのい度、メモ）
+  - 画像の自動クライアントサイド圧縮（最大1MB / 1024px）
+- **高度な検索・フィルタリング**
+  - キーワード検索、訪問ステータス（訪問済み/行きたい）、最低満足度、タグ絞り込み
+  - マップ表示範囲内のサウナのみ抽出表示する連動機能
+- **レスポンシブ UI / デザイン**
+  - デスク: デスク用サイドバーレイアウト
+  - モバイル: スワイプ操作対応ボトムシート ＆ ボトムナビゲーション
+  - ダークモード / ライトテーマ切り替え
+  - デザイントークンに基づく統一感のあるUIスタイル
+- **統計ダッシュボード (`/stats`)**
+  - 訪問サウナ数、行きたい数、平均満足度、エリア制覇率
+  - 月別訪問数グラフ（Recharts）、満足度分布グラフ
+  - 訪問カレンダー（React Calendar）、タグクラウド、ホームサウナカード、トップサウナ
+- **データ管理・バックアップ**
+  - JSON エクスポート / インポート（ID重複除外マージ）
+  - データ永続化（`localStorage`）
 
-- Framework: Next.js 16 (App Router)
-- UI: React 19 + TypeScript
-- Map: React Leaflet / Leaflet / OpenStreetMap
-- Chart: Recharts
-- Calendar: React Calendar
-- Styling: CSS Modules + Global CSS
-- Lint: ESLint 9
+---
 
-## ディレクトリ構成（主要部分）
+## 🛠 技術スタック
+
+- **Framework**: Next.js 16 (App Router, Static Export)
+- **Core UI**: React 19 + TypeScript (React Compiler 有効)
+- **Map / Geospatial**: React Leaflet 5 / Leaflet 1.9 / React Leaflet Cluster / OpenStreetMap
+- **Icons**: Lucide React
+- **Validation**: Zod 4
+- **Visualization**: Recharts 3, React Calendar 6
+- **Styling**: Vanilla CSS Modules + CSS Design Tokens
+- **Testing**: Vitest 4 + React Testing Library + jsdom
+- **Linting**: ESLint 9
+
+---
+
+## 📁 ディレクトリ構成
 
 ```text
 src/
-  app/
-    layout.tsx
-    page.tsx
-    globals.css
-    stats/
-      page.tsx
-      stats.module.css
-      calendar.css
-  components/
-    SaunaMap.tsx      # 画面のオーケストレーション
-    charts/
-      MonthlyVisitsChart.tsx
-      RatingDistributionChart.tsx
-    sauna-map/
-      types.ts
-      utils.ts
-      hooks/
-        useEditorState.ts
-        useSaunaVisits.ts
-        useVisitFilters.ts
-        useUIState.ts
-      components/
-        VisitForm.tsx
-        VisitList.tsx
-        VisitMarkers.tsx
-        FilterModal.tsx
-        ShareModal.tsx
-        ConfirmModal.tsx
-        LocationControl.tsx
-        LocationPicker.tsx
-        MapController.tsx
-        Toast.tsx
-        common.tsx
-        markerIcon.ts
-      styles/
-        (各コンポーネント用 CSS)
-  data/
-    sauna-visits.json # シードデータ
+├── app/                      # Next.js App Router ページ構成
+│   ├── layout.tsx            # 全体レイアウト
+│   ├── page.tsx              # メインマップ画面 (/)
+│   ├── globals.css           # グローバルCSS
+│   └── stats/                # 統計ダッシュボード (/stats)
+│       ├── page.tsx
+│       ├── stats.module.css
+│       ├── calendar.css
+│       ├── components/       # 統計用コンポーネント
+│       └── hooks/            # 統計データ集計フック
+├── components/
+│   ├── charts/               # 汎用グラフコンポーネント (Recharts)
+│   │   ├── MonthlyVisitsChart.tsx
+│   │   └── RatingDistributionChart.tsx
+│   └── sauna-map/            # メインマップ機能の設計単位
+│       ├── SaunaMap.tsx      # ルートエントリポイント
+│       ├── context/          # 状態管理 (モジュール化された Context)
+│       │   ├── SaunaMapContext.tsx      # 全体統合コンテキスト
+│       │   ├── VisitsDataContext.tsx    # 訪問データ CRUD 状態
+│       │   ├── EditorContext.tsx        # フォーム・編集状態ステートマシン
+│       │   ├── UIContext.tsx            # モーダル・テーマ・UI状態
+│       │   └── MapStateContext.tsx      # マップ表示・フィルター状態
+│       ├── components/       # 分割された UI コンポーネント群
+│       │   ├── DesktopSidebar.tsx       # デスクトップ用サイドバー
+│       │   ├── BottomSheet.tsx          # モバイル用ボトムシート
+│       │   ├── MobileNavBar.tsx         # モバイル用ボトムナビ
+│       │   ├── VisitForm.tsx            # 登録/編集フォーム
+│       │   ├── VisitList.tsx            # サウナ一覧
+│       │   ├── SaunaMarkerPopup.tsx     # マーカーポップアップ
+│       │   ├── MapClusterControl.tsx    # クラスタリング制御
+│       │   ├── MapZoomControl.tsx       # ズームコントロール
+│       │   └── Toast.tsx, etc.
+│       ├── hooks/            # ドメイン・UIのカスタムフック群
+│       ├── types/            # 型定義 (domain.ts / ui.ts)
+│       ├── utils/            # ユーティリティ (geo.ts, form.ts, image.ts, etc.)
+│       └── styles/           # 構成要素ごとに分離された CSS スタイル
+└── data/
+    └── sauna-visits.json     # 初期ロード用シードデータ
 ```
 
-## セットアップ
+---
+
+## 🚀 セットアップ ＆ 開発
+
+### インストール
 
 ```bash
 git clone <repository_url>
 cd sauna-itta
 npm install
-npm run dev
 ```
 
-- アプリ: `http://localhost:3000`
-- 統計: `http://localhost:3000/stats`
-
-## スクリプト
+### スクリプト一覧
 
 ```bash
-npm run dev
-npm run build
-npm run start
-npm run lint
+npm run dev      # 開発サーバー起動 (http://localhost:3000)
+npm run build    # 本番ビルド (./out 配下へ静的エクスポート)
+npm run start    # ビルド結果の起動確認
+npm run lint     # ESLint による静的解析
+npm run test     # Vitest による単体テスト・フックテスト実行
 ```
 
-## データ保存について
+---
 
-- 保存先: `localStorage`
-  - `sauna-itta_visits`
-  - `sauna-itta_theme`
-- サーバー同期は行いません。
-- ブラウザストレージ削除時にデータは消えるため、必要に応じて JSON エクスポートでバックアップしてください。
+## 💾 データ保存 ＆ 静的デプロイ
 
-## GitHub Pages デプロイ
-
-`.github/workflows/deploy.yml` により、`main` ブランチ push 時に GitHub Pages へデプロイします。
-
-必要設定:
-
-- GitHub リポジトリの `Settings > Pages > Build and deployment > Source` を `GitHub Actions` にする
-
+- **データ保存**: すべてのデータはブラウザの `localStorage`（キー: `sauna-itta_visits`, `sauna-itta_theme`）に保存されます。
+- **GitHub Pages デプロイ**: `.github/workflows/deploy.yml` により、`main` ブランチへ Push された際に GitHub Pages へ自動デプロイされます (`basePath: "/sauna-itta"` 設定済み)。
