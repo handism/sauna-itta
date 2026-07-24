@@ -1,29 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, useRef, ChangeEvent, FormEvent } from "react";
+import { useState, useEffect, useCallback, useRef, ChangeEvent, FormEvent } from "react";
 import { MapPin, X } from "lucide-react";
 import {
   MapContainer,
   TileLayer,
   Marker,
   Popup,
-  useMapEvents,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-function ZoomObserver({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
-  const map = useMapEvents({
-    zoomend: () => {
-      onZoomChange(map.getZoom());
-    },
-  });
-
-  useEffect(() => {
-    onZoomChange(map.getZoom());
-  }, [map, onZoomChange]);
-
-  return null;
-}
 import { FilterModal } from "./components/FilterModal";
 import { ShareModal } from "./components/ShareModal";
 import { VisitForm } from "./components/VisitForm";
@@ -36,18 +22,22 @@ import { LocationControl } from "./components/LocationControl";
 import { MapClusterControl } from "./components/MapClusterControl";
 import { MapZoomControl } from "./components/MapZoomControl";
 import { MapBoundsObserver } from "./components/MapBoundsObserver";
+import { ZoomObserver } from "./components/ZoomObserver";
 import { Toast } from "./components/Toast";
 import { BottomSheet } from "./components/BottomSheet";
 import type { SheetSnapPosition } from "./types";
 import { MobileNavBar, MobileTab } from "./components/MobileNavBar";
 import { DesktopSidebar } from "./components/DesktopSidebar";
 import { getSaunaIcon } from "./components/markerIcon";
+
 import { useToast } from "./hooks/useToast";
 import { useSaunaVisits } from "./hooks/useSaunaVisits";
 import { useEditorState } from "./hooks/useEditorState";
 import { useVisitFilters } from "./hooks/useVisitFilters";
 import { useUIState } from "./hooks/useUIState";
 import { useTheme } from "./hooks/useTheme";
+import { useMapViewState } from "./hooks/useMapViewState";
+
 import {
   getDefaultForm,
   getInitialIsMobile,
@@ -74,6 +64,7 @@ export default function SaunaMap() {
   const { theme, toggleTheme } = useTheme();
   const [isMobile, setIsMobile] = useState(getInitialIsMobile);
   const [mounted, setMounted] = useState(false);
+
   const {
     state: editorState,
     startCreate,
@@ -83,7 +74,24 @@ export default function SaunaMap() {
     toggleSidebar,
   } = useEditorState(isMobile);
   const { mode, editingId, selectedLocation, isSidebarExpanded, mapTarget } = editorState;
-  
+
+  const {
+    hoveredId,
+    setHoveredId,
+    selectedId,
+    setSelectedId,
+    mapTargetOverride,
+    snapPosition,
+    setSnapPosition,
+    handleZoomChange,
+    enableClustering,
+    toggleClustering,
+    showBadges,
+    selectedVisit,
+    handleSelectVisit,
+    handleDeselectVisit,
+  } = useMapViewState(visits, isMobile);
+
   const {
     isShareViewOpen,
     isMobileMenuOpen,
@@ -101,64 +109,37 @@ export default function SaunaMap() {
   } = useUIState();
 
   const { toast, showToast, clearToast } = useToast();
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [mapTargetOverride, setMapTargetOverride] = useState<LatLng | null>(null);
-  const [snapPosition, setSnapPosition] = useState<SheetSnapPosition>("min");
-  const [zoomLevel, setZoomLevel] = useState<number>(6);
-  const [enableClustering, setEnableClustering] = useState<boolean>(true);
   const [imageUploading, setImageUploading] = useState(false);
   const [importing, setImporting] = useState(false);
 
-  const handleZoomChange = useCallback((zoom: number) => {
-    setZoomLevel(zoom);
-  }, []);
-
-  const showBadges = zoomLevel >= 13;
-
   const activeMapTarget = mapTargetOverride || mapTarget;
 
-  const selectedVisit = useMemo(
-    () => visits.find((v) => v.id === selectedId),
-    [visits, selectedId]
+  const cancelEditing = useCallback(
+    (completed = false) => {
+      cancelEdit(completed);
+      setForm(getDefaultForm());
+      if (isMobile) {
+        setSnapPosition("min");
+      }
+    },
+    [cancelEdit, isMobile, setSnapPosition],
   );
 
-  const handleSelectVisit = useCallback((visit: SaunaVisit) => {
-    setSelectedId(visit.id);
-    setHoveredId(visit.id);
-    setMapTargetOverride({ lat: visit.lat, lng: visit.lng });
-    if (isMobile) {
-      // ピンタップ時はマップの操作性を重視し min（最小化）のまま保つ（バー横に選択名を表示）
-      setSnapPosition("min");
-    }
-  }, [isMobile]);
-
-  const handleDeselectVisit = useCallback(() => {
-    setSelectedId(null);
-    setHoveredId(null);
-    setMapTargetOverride(null);
-  }, []);
-
-  const cancelEditing = useCallback((completed = false) => {
-    cancelEdit(completed);
-    setForm(getDefaultForm());
-    if (isMobile) {
-      setSnapPosition("min");
-    }
-  }, [cancelEdit, isMobile]);
-
-  const handleSelectMobileTab = useCallback((tab: MobileTab) => {
-    if (tab === "map") {
-      cancelEditing(true);
-      setSnapPosition("min");
-    } else if (tab === "list") {
-      cancelEditing(true);
-      setSnapPosition("half");
-    } else if (tab === "add") {
-      startCreate();
-      setSnapPosition("full");
-    }
-  }, [cancelEditing, startCreate]);
+  const handleSelectMobileTab = useCallback(
+    (tab: MobileTab) => {
+      if (tab === "map") {
+        cancelEditing(true);
+        setSnapPosition("min");
+      } else if (tab === "list") {
+        cancelEditing(true);
+        setSnapPosition("half");
+      } else if (tab === "add") {
+        startCreate();
+        setSnapPosition("full");
+      }
+    },
+    [cancelEditing, startCreate, setSnapPosition],
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -194,17 +175,13 @@ export default function SaunaMap() {
     if (!editingId) return;
     const { success } = deleteVisit(editingId);
     if (!success) {
-      showToast(
-        STORAGE_ERROR_MSG,
-        "error",
-      );
+      showToast(STORAGE_ERROR_MSG, "error");
     } else {
       showToast("記録を削除しました。", "success");
     }
     closeDeleteConfirm();
     cancelEditing(true);
   };
-
 
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
@@ -220,7 +197,7 @@ export default function SaunaMap() {
         mapBounds: bounds,
       }));
     },
-    [setFilters]
+    [setFilters],
   );
 
   const handleSubmit = (e: FormEvent) => {
@@ -237,10 +214,7 @@ export default function SaunaMap() {
     }
 
     if (!success) {
-      showToast(
-        STORAGE_ERROR_MSG,
-        "error",
-      );
+      showToast(STORAGE_ERROR_MSG, "error");
     }
 
     cancelEditing(true);
@@ -277,10 +251,7 @@ export default function SaunaMap() {
         }
 
         if (!success) {
-          showToast(
-            STORAGE_ERROR_MSG,
-            "error",
-          );
+          showToast(STORAGE_ERROR_MSG, "error");
         } else {
           showToast(`データを${added}件取り込みました。`, "success");
         }
@@ -298,6 +269,7 @@ export default function SaunaMap() {
   const isAdding = mode !== "list";
   const isMobilePickingLocation = isMobile && mode === "creating:pick";
   const isCreating = mode === "creating:pick" || mode === "creating:form";
+
   const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
   const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
 
@@ -309,6 +281,24 @@ export default function SaunaMap() {
   const handleListSelectVisit = (visit: SaunaVisit) => {
     handleSelectVisit(visit);
     if (isMobile) setSnapPosition("half");
+  };
+
+  const handleDeleteHistoryEntry = (index: number) => {
+    if (!editingId) return;
+
+    removeHistoryEntry(editingId, index);
+
+    const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
+
+    if (newLatest) {
+      setForm((prev) => ({
+        ...prev,
+        date: newLatest.date,
+        comment: newLatest.comment,
+        rating: newLatest.rating ?? 0,
+        image: newLatest.image ?? "",
+      }));
+    }
   };
 
   const renderPanelContent = () =>
@@ -347,24 +337,6 @@ export default function SaunaMap() {
       />
     );
 
-  const handleDeleteHistoryEntry = (index: number) => {
-    if (!editingId) return;
-
-    removeHistoryEntry(editingId, index);
-
-    const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
-
-    if (newLatest) {
-      setForm((prev) => ({
-        ...prev,
-        date: newLatest.date,
-        comment: newLatest.comment,
-        rating: newLatest.rating ?? 0,
-        image: newLatest.image ?? "",
-      }));
-    }
-  };
-
   if (!mounted) {
     return <div className="map-container" style={{ background: "var(--background)", height: "100%", width: "100%" }} />;
   }
@@ -382,7 +354,7 @@ export default function SaunaMap() {
           <div className="map-top-right-controls">
             <MapClusterControl
               enableClustering={enableClustering}
-              onToggleClustering={() => setEnableClustering((prev) => !prev)}
+              onToggleClustering={toggleClustering}
             />
             <MapZoomControl />
             <LocationControl onNotify={showToast} />
@@ -422,7 +394,9 @@ export default function SaunaMap() {
 
       {isMobilePickingLocation && (
         <div className="pin-hint">
-          <div className="pin-hint-icon"><MapPin size={20} /></div>
+          <div className="pin-hint-icon">
+            <MapPin size={20} />
+          </div>
           <div className="pin-hint-text">
             <strong>地図をタップして場所を選択</strong>
             <span>サウナの場所をタップしてね</span>
