@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction, memo } from "react";
-import { Navigation, Pencil, X } from "lucide-react";
+import { Pencil, X } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
-import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../utils";
-import { RatingStars, WishlistChip } from "./common";
+import { getVisitCount, sanitizeImageUrl } from "../utils";
+import { RatingStars, RouteLink, VisitMetaInfo, VisitTagList, WishlistChip } from "./common";
 
 interface VisitCardItemProps {
   visit: SaunaVisit;
@@ -72,24 +72,10 @@ function VisitCardItemComponent({
       </div>
       {visit.area && <div className="sauna-card-area">{visit.area}</div>}
       <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" />
-      {visit.tags && visit.tags.length > 0 && (
-        <div className="sauna-tag-list">
-          {visit.tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              className="sauna-tag sauna-tag-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                setFilters((prev) => ({ ...prev, search: tag }));
-              }}
-              title={`タグ「${tag}」で絞り込み`}
-            >
-              {tag}
-            </button>
-          ))}
-        </div>
-      )}
+      <VisitTagList
+        tags={visit.tags}
+        onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
+      />
       <p className="sauna-card-comment">{visit.comment}</p>
       {sanitizeImageUrl(visit.image) && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -104,20 +90,8 @@ function VisitCardItemComponent({
           }}
         />
       )}
-      <div className="sauna-card-meta">
-        <span>日付: {visit.date}</span>
-        {visitCount > 1 && <span>訪問 {visitCount}回目</span>}
-      </div>
-      <a
-        href={getDirectionsUrl(visit.lat, visit.lng)}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => e.stopPropagation()}
-        className="route-link"
-      >
-        <span className="route-link-icon"><Navigation size={14} /></span>
-        <span className="route-link-text">ここへ行く</span>
-      </a>
+      <VisitMetaInfo date={visit.date} visitCount={visitCount} />
+      <RouteLink lat={visit.lat} lng={visit.lng} />
     </div>
   );
 }
