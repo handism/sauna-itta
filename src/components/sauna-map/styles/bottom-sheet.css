@@ -8,6 +8,8 @@
     left: 0;
     right: 0;
     bottom: calc(56px + env(safe-area-inset-bottom, 0px)); /* モバイルナビバーの高さ（セーフエリア考慮） */
+    height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
+    max-height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
     z-index: var(--z-sheet);
     background: var(--glass-heavy);
     backdrop-filter: var(--backdrop-blur-heavy);
@@ -16,7 +18,7 @@
     border-top-left-radius: var(--radius-xl);
     border-top-right-radius: var(--radius-xl);
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45), 0 0 24px var(--primary-glow);
-    transition: height var(--transition-smooth), transform var(--transition-smooth);
+    transition: transform var(--transition-smooth);
     will-change: transform;
     contain: content;
     display: flex;
@@ -29,20 +31,16 @@
     will-change: transform;
   }
 
-  /* スナップポジション高さ指定 */
+  /* スナップポジション位置指定 (translateY による純粋な位置移動) */
   .bottom-sheet--min {
-    height: 54px;
-    transform: translateY(calc(var(--drag-offset-y, 0px)));
+    transform: translateY(calc(100% - 54px + var(--drag-offset-y, 0px)));
   }
 
   .bottom-sheet--half {
-    height: 45vh;
-    transform: translateY(calc(var(--drag-offset-y, 0px)));
+    transform: translateY(calc(100% - 45vh + var(--drag-offset-y, 0px)));
   }
 
   .bottom-sheet--full {
-    height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
-    max-height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
     transform: translateY(calc(var(--drag-offset-y, 0px)));
   }
 
