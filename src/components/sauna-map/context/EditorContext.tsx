@@ -3,26 +3,17 @@
 import {
   createContext,
   useContext,
-  useState,
   useCallback,
   useMemo,
   ReactNode,
   FormEvent,
 } from "react";
 import { useEditorState } from "../hooks/useEditorState";
+import { useVisitForm } from "../hooks/useVisitForm";
 import { useSaunaUI } from "./UIContext";
 import { useSaunaVisitsData } from "./VisitsDataContext";
-import {
-  getDefaultForm,
-  getTodayDate,
-  getVisitHistoryEntries,
-  toFormState,
-  compressAndGetBase64,
-} from "../utils";
+import { getVisitHistoryEntries } from "../utils";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
-
-const STORAGE_ERROR_MSG =
-  "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
 
 interface EditorContextType {
   form: VisitFormState;
@@ -66,9 +57,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     setFilters,
   } = useSaunaVisitsData();
 
-  const [form, setForm] = useState<VisitFormState>(getDefaultForm());
-  const [imageUploading, setImageUploading] = useState(false);
-
   const {
     state: editorState,
     startCreate,
@@ -80,43 +68,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   const { mode, editingId, selectedLocation, isSidebarExpanded } = editorState;
 
-  const cancelEditing = useCallback(
-    (completed = false) => {
-      cancelEdit(completed);
-      setForm(getDefaultForm());
-    },
-    [cancelEdit],
-  );
+  const isAdding = mode !== "list";
+  const isMobilePickingLocation = isMobile && mode === "creating:pick";
+  const isCreating = mode === "creating:pick" || mode === "creating:form";
 
-  const startNewVisit = useCallback(() => {
-    startCreate();
-    setForm(getDefaultForm(getTodayDate()));
-  }, [startCreate]);
-
-  const startEditing = useCallback(
-    (visit: SaunaVisit) => {
-      startEdit(visit);
-      setForm(toFormState(visit));
-    },
-    [startEdit],
-  );
-
-  const handleDelete = useCallback(() => {
-    if (!editingId) return;
-    openDeleteConfirm();
-  }, [editingId, openDeleteConfirm]);
-
-  const confirmDelete = useCallback(() => {
-    if (!editingId) return;
-    const { success } = deleteVisit(editingId);
-    if (!success) {
-      showToast(STORAGE_ERROR_MSG, "error");
-    } else {
-      showToast("記録を削除しました。", "success");
-    }
-    closeDeleteConfirm();
-    cancelEditing(true);
-  }, [editingId, deleteVisit, showToast, closeDeleteConfirm, cancelEditing]);
+  const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
+  const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
 
   const handleLocationSelect = useCallback(
     (lat: number, lng: number) => {
@@ -135,76 +92,35 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     [setFilters],
   );
 
-  const handleSubmit = useCallback(
-    (e: FormEvent) => {
-      e.preventDefault();
-      if (!selectedLocation || !form.name) return;
-
-      let success = false;
-      if (editingId) {
-        const result = editVisit(editingId, selectedLocation, form);
-        success = result.success;
-      } else {
-        const result = addVisit(selectedLocation, form);
-        success = result.success;
-      }
-
-      if (!success) {
-        showToast(STORAGE_ERROR_MSG, "error");
-      }
-
-      cancelEditing(true);
-    },
-    [selectedLocation, form, editingId, editVisit, addVisit, showToast, cancelEditing],
-  );
-
-  const handleImageFile = useCallback(
-    async (file: File) => {
-      setImageUploading(true);
-      try {
-        const base64 = await compressAndGetBase64(file);
-        setForm((prev) => ({ ...prev, image: base64 }));
-      } catch (error) {
-        console.error(error);
-        showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
-      } finally {
-        setImageUploading(false);
-      }
-    },
-    [showToast],
-  );
-
-  const handleRemoveImage = useCallback(() => {
-    setForm((prev) => ({ ...prev, image: "" }));
-  }, []);
-
-  const isAdding = mode !== "list";
-  const isMobilePickingLocation = isMobile && mode === "creating:pick";
-  const isCreating = mode === "creating:pick" || mode === "creating:form";
-
-  const editingVisit = editingId ? visits.find((v) => v.id === editingId) ?? null : null;
-  const historyEntries = editingVisit ? getVisitHistoryEntries(editingVisit) : [];
-
-  const handleDeleteHistoryEntry = useCallback(
-    (index: number) => {
-      if (!editingId) return;
-
-      removeHistoryEntry(editingId, index);
-
-      const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
-
-      if (newLatest) {
-        setForm((prev) => ({
-          ...prev,
-          date: newLatest.date,
-          comment: newLatest.comment,
-          rating: newLatest.rating ?? 0,
-          image: newLatest.image ?? "",
-        }));
-      }
-    },
-    [editingId, removeHistoryEntry, historyEntries],
-  );
+  const {
+    form,
+    setForm,
+    imageUploading,
+    startNewVisit,
+    startEditing,
+    cancelEditing,
+    handleDelete,
+    confirmDelete,
+    handleSubmit,
+    handleImageFile,
+    handleRemoveImage,
+    handleDeleteHistoryEntry,
+  } = useVisitForm({
+    editingId,
+    selectedLocation,
+    editingVisit,
+    historyEntries,
+    addVisit,
+    editVisit,
+    deleteVisit,
+    removeHistoryEntry,
+    startCreate,
+    startEdit,
+    cancelEdit,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    showToast,
+  });
 
   const value = useMemo(
     () => ({
@@ -237,6 +153,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     }),
     [
       form,
+      setForm,
       editorState,
       mode,
       editingId,

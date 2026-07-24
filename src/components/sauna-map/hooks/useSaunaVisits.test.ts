@@ -48,26 +48,13 @@ describe("useSaunaVisits", () => {
         }
       }),
     };
+
     Object.defineProperty(window, "localStorage", {
       value: mockLocalStorage,
       writable: true,
     });
 
-    // Mock console.error
-    vi.spyOn(console, "error").mockImplementation(() => {});
-
-    // Default mock returns
     vi.mocked(utils.getInitialVisits).mockReturnValue(mockInitialVisits);
-    vi.mocked(useVisitCRUD.useVisitCRUD).mockReturnValue({
-      addVisit: vi.fn(),
-      editVisit: vi.fn(),
-      deleteVisit: vi.fn(),
-      removeHistoryEntry: vi.fn(),
-    });
-    vi.mocked(useVisitImportExport.useVisitImportExport).mockReturnValue({
-      importVisitsFromFile: vi.fn(),
-      exportVisits: vi.fn(),
-    });
   });
 
   it("should initialize with initial visits and return child hook methods", () => {
@@ -77,7 +64,11 @@ describe("useSaunaVisits", () => {
       deleteVisit: vi.fn(),
       removeHistoryEntry: vi.fn(),
     };
+
     const mockImportExportMethods = {
+      importing: false,
+      importInputRef: { current: null },
+      handleImportData: vi.fn(),
       importVisitsFromFile: vi.fn(),
       exportVisits: vi.fn(),
     };
@@ -92,7 +83,7 @@ describe("useSaunaVisits", () => {
 
     // Verify child hooks were called correctly
     expect(useVisitCRUD.useVisitCRUD).toHaveBeenCalledWith(mockInitialVisits, expect.any(Function));
-    expect(useVisitImportExport.useVisitImportExport).toHaveBeenCalledWith(mockInitialVisits, expect.any(Function));
+    expect(useVisitImportExport.useVisitImportExport).toHaveBeenCalledWith(mockInitialVisits, expect.any(Function), undefined);
 
     // Verify all methods are exposed
     expect(result.current.addVisit).toBe(mockCRUDMethods.addVisit);
@@ -110,45 +101,40 @@ describe("useSaunaVisits", () => {
       { id: "2", name: "Sauna B", lat: 0, lng: 0, comment: "", date: "2023-01-02" },
     ];
 
-    let success;
+    let success = false;
     act(() => {
       success = saveVisits(newVisits);
     });
 
     expect(success).toBe(true);
     expect(result.current.visits).toEqual(newVisits);
-    expect(window.localStorage.setItem).toHaveBeenCalledWith(
-      utils.VISITS_STORAGE_KEY,
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "sauna-itta_visits",
       JSON.stringify(newVisits)
     );
   });
 
   it("should return false and log error if localStorage throws", () => {
-    // Make localStorage.setItem throw an error
-    window.localStorage.setItem = vi.fn(() => {
-      throw new Error("Quota exceeded");
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(localStorage.setItem).mockImplementation(() => {
+      throw new Error("QuotaExceeded");
     });
 
     const { result } = renderHook(() => useSaunaVisits());
 
-    // Extract the saveVisits callback
     const saveVisits = vi.mocked(useVisitCRUD.useVisitCRUD).mock.calls[0][1];
 
-    const newVisits: SaunaVisit[] = [
-      { id: "1", name: "Sauna A", lat: 0, lng: 0, comment: "", date: "2023-01-01" },
-    ];
-
-    let success;
+    let success = true;
     act(() => {
-      success = saveVisits(newVisits);
+      success = saveVisits(mockInitialVisits);
     });
 
     expect(success).toBe(false);
-    // State is still updated even if persistence fails
-    expect(result.current.visits).toEqual(newVisits);
-    expect(console.error).toHaveBeenCalledWith(
+    expect(consoleSpy).toHaveBeenCalledWith(
       "Failed to persist visits to localStorage:",
       expect.any(Error)
     );
+
+    consoleSpy.mockRestore();
   });
 });

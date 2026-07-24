@@ -4,7 +4,9 @@ import { SaunaVisit } from "../types";
 import { useVisitCRUD } from "./useVisitCRUD";
 import { useVisitImportExport } from "./useVisitImportExport";
 
-export function useSaunaVisits() {
+export function useSaunaVisits(
+  showToast?: (message: string, type: "success" | "error" | "info") => void
+) {
   const [visits, setVisits] = useState<SaunaVisit[]>(getInitialVisits);
 
   const saveVisits = useCallback((newVisits: SaunaVisit[]) => {
@@ -19,7 +21,7 @@ export function useSaunaVisits() {
   }, []);
 
   const crud = useVisitCRUD(visits, saveVisits);
-  const importExport = useVisitImportExport(visits, saveVisits);
+  const importExport = useVisitImportExport(visits, saveVisits, showToast);
 
   return {
     visits,
