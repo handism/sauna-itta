@@ -17,7 +17,7 @@
 「サウナイッタ (sauna-itta)」は、サウナ訪問記録や行きたいサウナを Leaflet マップ上に記録・視覚化するクライアントサイド専用 Next.js アプリです。すべてのデータはブラウザの `localStorage` に保存され、GitHub Pages に静的エクスポートされて運用されています。
 
 - **リポジトリ**: `sauna-itta`
-- **主要スタック**: Next.js 16 (App Router) / React 19 / TypeScript / Vitest / React Leaflet / Recharts / Zod
+- **主要スタック**: Next.js 16 (App Router) / React 19 / TypeScript / Vitest / React Leaflet / Recharts / Zod / PWA (Web App Manifest + Service Worker)
 - **静的出力設定**: `output: "export"`, `basePath: "/sauna-itta"`
 
 ---

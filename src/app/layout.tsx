@@ -14,7 +14,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "サウナイッタ",
-  description: "マイととのいマップ",
+  description: "マイととのいマップ - サウナ訪問記録・マップ可視化アプリ",
+  manifest: "/sauna-itta/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "サウナイッタ",
+  },
+  icons: {
+    icon: [
+      { url: "/sauna-itta/icon.svg", type: "image/svg+xml" },
+      { url: "/sauna-itta/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/sauna-itta/icons/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export const viewport = {
@@ -22,6 +37,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({

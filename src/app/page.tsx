@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
+import { ServiceWorkerRegister } from "@/components/sauna-map/ServiceWorkerRegister";
 
 function MapLoadingPlaceholder() {
   return (
@@ -31,6 +32,7 @@ const SaunaMap = dynamic(() => import("@/components/sauna-map/SaunaMap"), {
 export default function Home() {
   return (
     <main>
+      <ServiceWorkerRegister />
       <SaunaMap />
     </main>
   );
