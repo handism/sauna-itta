@@ -33,3 +33,5 @@ export interface VisitFilters {
 }
 
 export type SheetSnapPosition = "min" | "half" | "full";
+
+export type MobileTab = "map" | "list" | "add";

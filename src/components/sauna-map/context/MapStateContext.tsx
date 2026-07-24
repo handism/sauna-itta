@@ -11,8 +11,7 @@ import { useMapViewState } from "../hooks/useMapViewState";
 import { useSaunaUI } from "./UIContext";
 import { useSaunaVisitsData } from "./VisitsDataContext";
 import { useSaunaEditor } from "./EditorContext";
-import { MobileTab } from "../components/MobileNavBar";
-import { SheetSnapPosition, SaunaVisit, LatLng } from "../types";
+import { SheetSnapPosition, SaunaVisit, LatLng, MobileTab } from "../types";
 
 interface MapStateContextType {
   hoveredId: string | null;
