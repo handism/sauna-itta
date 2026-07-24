@@ -6,47 +6,45 @@ import { VisitCardItem } from "./VisitCardItem";
 import { VisitListHeader, ViewMode } from "./VisitListHeader";
 import { VisitListSearch } from "./VisitListSearch";
 import { VisitListEmpty } from "./VisitListEmpty";
-import { useSaunaMap } from "../context/SaunaMapContext";
+import { useSaunaUI, useSaunaVisitsData, useSaunaMapState } from "../context";
 
 const STORAGE_KEY = "sauna_itta_view_mode";
 
-interface VisitListProps {
-  visits?: SaunaVisit[];
-  filteredVisits?: SaunaVisit[];
-  filters?: VisitFilters;
-  setFilters?: Dispatch<SetStateAction<VisitFilters>>;
-  isFilterActive?: boolean;
-  activeFilterCount?: number;
-  onClearFilters?: () => void;
-  onOpenFilters?: () => void;
-  onEdit?: (visit: SaunaVisit) => void;
-  selectedId?: string | null;
-  onSelectVisit?: (visit: SaunaVisit) => void;
-  onDeselectVisit?: () => void;
-  hoveredId?: string | null;
-  onHoverVisit?: (id: string | null) => void;
-  isMobile?: boolean;
+export interface VisitListViewProps {
+  visits: SaunaVisit[];
+  filteredVisits: SaunaVisit[];
+  filters: VisitFilters;
+  setFilters: Dispatch<SetStateAction<VisitFilters>>;
+  isFilterActive: boolean;
+  activeFilterCount: number;
+  onClearFilters: () => void;
+  onOpenFilters: () => void;
+  onEdit: (visit: SaunaVisit) => void;
+  selectedId: string | null;
+  onSelectVisit: (visit: SaunaVisit) => void;
+  onDeselectVisit: () => void;
+  hoveredId: string | null;
+  onHoverVisit: (id: string | null) => void;
+  isMobile: boolean;
 }
 
-export function VisitList(props: VisitListProps) {
-  const context = useSaunaMap();
-
-  const visits = props.visits ?? context.visits;
-  const filteredVisits = props.filteredVisits ?? context.filteredVisits;
-  const filters = props.filters ?? context.filters;
-  const setFilters = props.setFilters ?? context.setFilters;
-  const isFilterActive = props.isFilterActive ?? context.isFilterActive;
-  const activeFilterCount = props.activeFilterCount ?? context.activeFilterCount;
-  const onClearFilters = props.onClearFilters ?? context.clearFilters;
-  const onOpenFilters = props.onOpenFilters ?? context.openFilterModal;
-  const onEdit = props.onEdit ?? context.handleListEdit;
-  const selectedId = props.selectedId ?? context.selectedId;
-  const onSelectVisit = props.onSelectVisit ?? context.handleListSelectVisit;
-  const onDeselectVisit = props.onDeselectVisit ?? context.handleDeselectVisit;
-  const hoveredId = props.hoveredId ?? context.hoveredId;
-  const onHoverVisit = props.onHoverVisit ?? context.setHoveredId;
-  const isMobile = props.isMobile ?? context.isMobile;
-
+export function VisitListView({
+  visits,
+  filteredVisits,
+  filters,
+  setFilters,
+  isFilterActive,
+  activeFilterCount,
+  onClearFilters,
+  onOpenFilters,
+  onEdit,
+  selectedId,
+  onSelectVisit,
+  onDeselectVisit,
+  hoveredId,
+  onHoverVisit,
+  isMobile,
+}: VisitListViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -141,5 +139,31 @@ export function VisitList(props: VisitListProps) {
 
       <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
+  );
+}
+
+export function VisitList(props: Partial<VisitListViewProps>) {
+  const ui = useSaunaUI();
+  const visitsData = useSaunaVisitsData();
+  const mapState = useSaunaMapState();
+
+  return (
+    <VisitListView
+      visits={props.visits ?? visitsData.visits}
+      filteredVisits={props.filteredVisits ?? visitsData.filteredVisits}
+      filters={props.filters ?? visitsData.filters}
+      setFilters={props.setFilters ?? visitsData.setFilters}
+      isFilterActive={props.isFilterActive ?? visitsData.isFilterActive}
+      activeFilterCount={props.activeFilterCount ?? visitsData.activeFilterCount}
+      onClearFilters={props.onClearFilters ?? visitsData.clearFilters}
+      onOpenFilters={props.onOpenFilters ?? ui.openFilterModal}
+      onEdit={props.onEdit ?? mapState.handleListEdit}
+      selectedId={props.selectedId ?? mapState.selectedId}
+      onSelectVisit={props.onSelectVisit ?? mapState.handleListSelectVisit}
+      onDeselectVisit={props.onDeselectVisit ?? mapState.handleDeselectVisit}
+      hoveredId={props.hoveredId ?? mapState.hoveredId}
+      onHoverVisit={props.onHoverVisit ?? mapState.setHoveredId}
+      isMobile={props.isMobile ?? ui.isMobile}
+    />
   );
 }

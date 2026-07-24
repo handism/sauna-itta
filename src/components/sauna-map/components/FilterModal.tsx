@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from "react";
 import { X, Map } from "lucide-react";
 import { VisitFilters } from "../types";
 import { useModalBehavior } from "../hooks/useModalBehavior";
-import { useSaunaMap } from "../context/SaunaMapContext";
+import { useSaunaUI, useSaunaVisitsData } from "../context";
 
 interface FilterComponentProps {
   filters: VisitFilters;
@@ -54,25 +54,23 @@ function BoundsToggle({ filters, setFilters }: FilterComponentProps) {
   );
 }
 
-interface FilterModalProps {
-  isOpen?: boolean;
-  filters?: VisitFilters;
-  setFilters?: Dispatch<SetStateAction<VisitFilters>>;
-  isFilterActive?: boolean;
-  onClearFilters?: () => void;
-  onClose?: () => void;
+export interface FilterModalViewProps {
+  isOpen: boolean;
+  filters: VisitFilters;
+  setFilters: Dispatch<SetStateAction<VisitFilters>>;
+  isFilterActive: boolean;
+  onClearFilters: () => void;
+  onClose: () => void;
 }
 
-export function FilterModal(props: FilterModalProps) {
-  const context = useSaunaMap();
-
-  const isOpen = props.isOpen ?? context.isFilterModalOpen;
-  const filters = props.filters ?? context.filters;
-  const setFilters = props.setFilters ?? context.setFilters;
-  const isFilterActive = props.isFilterActive ?? context.isFilterActive;
-  const onClearFilters = props.onClearFilters ?? context.clearFilters;
-  const onClose = props.onClose ?? context.closeFilterModal;
-
+export function FilterModalView({
+  isOpen,
+  filters,
+  setFilters,
+  isFilterActive,
+  onClearFilters,
+  onClose,
+}: FilterModalViewProps) {
   const containerRef = useModalBehavior(isOpen, onClose);
 
   if (!isOpen) {
@@ -127,5 +125,21 @@ export function FilterModal(props: FilterModalProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+export function FilterModal(props: Partial<FilterModalViewProps>) {
+  const ui = useSaunaUI();
+  const visitsData = useSaunaVisitsData();
+
+  return (
+    <FilterModalView
+      isOpen={props.isOpen ?? ui.isFilterModalOpen}
+      filters={props.filters ?? visitsData.filters}
+      setFilters={props.setFilters ?? visitsData.setFilters}
+      isFilterActive={props.isFilterActive ?? visitsData.isFilterActive}
+      onClearFilters={props.onClearFilters ?? visitsData.clearFilters}
+      onClose={props.onClose ?? ui.closeFilterModal}
+    />
   );
 }

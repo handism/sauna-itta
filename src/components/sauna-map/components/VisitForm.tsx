@@ -11,39 +11,37 @@ import {
   AreaField,
   DateField,
 } from "./VisitFormFields";
-import { useSaunaMap } from "../context/SaunaMapContext";
+import { useSaunaEditor } from "../context";
 
-interface VisitFormProps {
-  form?: VisitFormState;
-  setForm?: Dispatch<SetStateAction<VisitFormState>>;
-  selectedLocation?: { lat: number; lng: number } | null;
-  editingId?: string | null;
-  historyEntries?: VisitHistoryEntry[];
-  onSubmit?: (e: FormEvent) => void;
-  onImageFile?: (file: File) => void;
-  onRemoveImage?: () => void;
-  onDelete?: () => void;
-  onCancel?: () => void;
+export interface VisitFormViewProps {
+  form: VisitFormState;
+  setForm: Dispatch<SetStateAction<VisitFormState>>;
+  selectedLocation: { lat: number; lng: number } | null;
+  editingId: string | null;
+  historyEntries: VisitHistoryEntry[];
+  onSubmit: (e: FormEvent) => void;
+  onImageFile: (file: File) => void;
+  onRemoveImage: () => void;
+  onDelete: () => void;
+  onCancel: () => void;
   onDeleteHistoryEntry?: (index: number) => void;
-  imageUploading?: boolean;
+  imageUploading: boolean;
 }
 
-export function VisitForm(props: VisitFormProps) {
-  const context = useSaunaMap();
-
-  const form = props.form ?? context.form;
-  const setForm = props.setForm ?? context.setForm;
-  const selectedLocation = props.selectedLocation ?? context.selectedLocation;
-  const editingId = props.editingId ?? context.editingId;
-  const historyEntries = props.historyEntries ?? context.historyEntries;
-  const onSubmit = props.onSubmit ?? context.handleSubmit;
-  const onImageFile = props.onImageFile ?? context.handleImageFile;
-  const onRemoveImage = props.onRemoveImage ?? context.handleRemoveImage;
-  const onDelete = props.onDelete ?? context.handleDelete;
-  const onCancel = props.onCancel ?? (() => context.cancelEditing());
-  const onDeleteHistoryEntry = props.onDeleteHistoryEntry ?? (editingId ? context.handleDeleteHistoryEntry : undefined);
-  const imageUploading = props.imageUploading ?? context.imageUploading;
-
+export function VisitFormView({
+  form,
+  setForm,
+  selectedLocation,
+  editingId,
+  historyEntries,
+  onSubmit,
+  onImageFile,
+  onRemoveImage,
+  onDelete,
+  onCancel,
+  onDeleteHistoryEntry,
+  imageUploading,
+}: VisitFormViewProps) {
   const historyCount = editingId ? Math.max(1, historyEntries.length) : 0;
 
   return (
@@ -157,5 +155,30 @@ export function VisitForm(props: VisitFormProps) {
         )}
       </div>
     </form>
+  );
+}
+
+export function VisitForm(props: Partial<VisitFormViewProps>) {
+  const editor = useSaunaEditor();
+
+  const editingId = props.editingId ?? editor.editingId;
+  const onDeleteHistoryEntry =
+    props.onDeleteHistoryEntry ?? (editingId ? editor.handleDeleteHistoryEntry : undefined);
+
+  return (
+    <VisitFormView
+      form={props.form ?? editor.form}
+      setForm={props.setForm ?? editor.setForm}
+      selectedLocation={props.selectedLocation ?? editor.selectedLocation}
+      editingId={editingId}
+      historyEntries={props.historyEntries ?? editor.historyEntries}
+      onSubmit={props.onSubmit ?? editor.handleSubmit}
+      onImageFile={props.onImageFile ?? editor.handleImageFile}
+      onRemoveImage={props.onRemoveImage ?? editor.handleRemoveImage}
+      onDelete={props.onDelete ?? editor.handleDelete}
+      onCancel={props.onCancel ?? (() => editor.cancelEditing())}
+      onDeleteHistoryEntry={onDeleteHistoryEntry}
+      imageUploading={props.imageUploading ?? editor.imageUploading}
+    />
   );
 }

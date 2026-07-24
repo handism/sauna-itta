@@ -18,49 +18,47 @@ import {
   MoreHorizontal,
   Loader2,
 } from "lucide-react";
-import { useSaunaMap } from "../context/SaunaMapContext";
+import { useSaunaUI, useSaunaVisitsData, useSaunaEditor } from "../context";
 
-interface DesktopSidebarProps {
-  isSidebarExpanded?: boolean;
-  onToggleSidebar?: () => void;
-  isMobileMenuOpen?: boolean;
-  mobileMenuRef?: RefObject<HTMLDivElement | null>;
-  onToggleMobileMenu?: () => void;
-  onCloseMobileMenu?: () => void;
-  isAdding?: boolean;
-  onStartNewVisit?: () => void;
-  theme?: "dark" | "light";
-  onToggleTheme?: () => void;
-  onOpenShareView?: () => void;
-  onExportVisits?: () => void;
-  importing?: boolean;
-  importInputRef?: RefObject<HTMLInputElement | null>;
-  onImportClick?: () => void;
-  onImportChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+export interface DesktopSidebarViewProps {
+  isSidebarExpanded: boolean;
+  onToggleSidebar: () => void;
+  isMobileMenuOpen: boolean;
+  mobileMenuRef: RefObject<HTMLDivElement | null>;
+  onToggleMobileMenu: () => void;
+  onCloseMobileMenu: () => void;
+  isAdding: boolean;
+  onStartNewVisit: () => void;
+  theme: "dark" | "light";
+  onToggleTheme: () => void;
+  onOpenShareView: () => void;
+  onExportVisits: () => void;
+  importing: boolean;
+  importInputRef: RefObject<HTMLInputElement | null>;
+  onImportClick: () => void;
+  onImportChange: (e: ChangeEvent<HTMLInputElement>) => void;
   children: ReactNode;
 }
 
-export function DesktopSidebar(props: DesktopSidebarProps) {
-  const context = useSaunaMap();
-
-  const isSidebarExpanded = props.isSidebarExpanded ?? context.isSidebarExpanded;
-  const onToggleSidebar = props.onToggleSidebar ?? context.toggleSidebar;
-  const isMobileMenuOpen = props.isMobileMenuOpen ?? context.isMobileMenuOpen;
-  const mobileMenuRef = props.mobileMenuRef ?? context.mobileMenuRef;
-  const onToggleMobileMenu = props.onToggleMobileMenu ?? context.toggleMobileMenu;
-  const onCloseMobileMenu = props.onCloseMobileMenu ?? context.closeMobileMenu;
-  const isAdding = props.isAdding ?? context.isAdding;
-  const onStartNewVisit = props.onStartNewVisit ?? context.startNewVisit;
-  const theme = props.theme ?? context.theme;
-  const onToggleTheme = props.onToggleTheme ?? context.toggleTheme;
-  const onOpenShareView = props.onOpenShareView ?? context.openShareView;
-  const onExportVisits = props.onExportVisits ?? context.exportVisits;
-  const importing = props.importing ?? context.importing;
-  const importInputRef = props.importInputRef ?? context.importInputRef;
-  const onImportClick = props.onImportClick ?? (() => importInputRef.current?.click());
-  const onImportChange = props.onImportChange ?? context.handleImportData;
-  const children = props.children;
-
+export function DesktopSidebarView({
+  isSidebarExpanded,
+  onToggleSidebar,
+  isMobileMenuOpen,
+  mobileMenuRef,
+  onToggleMobileMenu,
+  onCloseMobileMenu,
+  isAdding,
+  onStartNewVisit,
+  theme,
+  onToggleTheme,
+  onOpenShareView,
+  onExportVisits,
+  importing,
+  importInputRef,
+  onImportClick,
+  onImportChange,
+  children,
+}: DesktopSidebarViewProps) {
   return (
     <div className="ui-layer">
       {!isSidebarExpanded && (
@@ -211,5 +209,36 @@ export function DesktopSidebar(props: DesktopSidebarProps) {
         />
       </aside>
     </div>
+  );
+}
+
+export function DesktopSidebar(props: Partial<DesktopSidebarViewProps> & { children: ReactNode }) {
+  const ui = useSaunaUI();
+  const visitsData = useSaunaVisitsData();
+  const editor = useSaunaEditor();
+
+  const importInputRef = props.importInputRef ?? visitsData.importInputRef;
+
+  return (
+    <DesktopSidebarView
+      isSidebarExpanded={props.isSidebarExpanded ?? editor.isSidebarExpanded}
+      onToggleSidebar={props.onToggleSidebar ?? editor.toggleSidebar}
+      isMobileMenuOpen={props.isMobileMenuOpen ?? ui.isMobileMenuOpen}
+      mobileMenuRef={props.mobileMenuRef ?? ui.mobileMenuRef}
+      onToggleMobileMenu={props.onToggleMobileMenu ?? ui.toggleMobileMenu}
+      onCloseMobileMenu={props.onCloseMobileMenu ?? ui.closeMobileMenu}
+      isAdding={props.isAdding ?? editor.isAdding}
+      onStartNewVisit={props.onStartNewVisit ?? editor.startNewVisit}
+      theme={props.theme ?? ui.theme}
+      onToggleTheme={props.onToggleTheme ?? ui.toggleTheme}
+      onOpenShareView={props.onOpenShareView ?? ui.openShareView}
+      onExportVisits={props.onExportVisits ?? visitsData.exportVisits}
+      importing={props.importing ?? visitsData.importing}
+      importInputRef={importInputRef}
+      onImportClick={props.onImportClick ?? (() => importInputRef.current?.click())}
+      onImportChange={props.onImportChange ?? visitsData.handleImportData}
+    >
+      {props.children}
+    </DesktopSidebarView>
   );
 }
