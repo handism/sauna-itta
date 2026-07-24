@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { Map, List, Plus, BarChart3, SlidersHorizontal } from "lucide-react";
-import type { SheetSnapPosition } from "../types";
+import type { SheetSnapPosition, MobileTab } from "../types";
 
-export type MobileTab = "map" | "list" | "add";
+export type { MobileTab };
 
 export interface MobileNavBarProps {
   onSelectTab: (tab: MobileTab) => void;
@@ -48,8 +48,20 @@ export function MobileNavBar({
         onClick={() => onSelectTab("add")}
         aria-label="サウナ追加"
       >
-        <span className="mobile-nav-icon-add"><Plus size={22} /></span>
+        <span className="mobile-nav-icon mobile-nav-icon--add"><Plus size={22} /></span>
         <span className="mobile-nav-label">追加</span>
+      </button>
+
+      <button
+        type="button"
+        className={`mobile-nav-item ${isFilterActive ? "is-active" : ""}`}
+        onClick={onOpenFilter}
+      >
+        <span className="mobile-nav-icon">
+          <SlidersHorizontal size={19} />
+          {isFilterActive && <span className="filter-active-dot" />}
+        </span>
+        <span className="mobile-nav-label">フィルター</span>
       </button>
 
       <Link
@@ -60,15 +72,6 @@ export function MobileNavBar({
         <span className="mobile-nav-icon"><BarChart3 size={19} /></span>
         <span className="mobile-nav-label">統計</span>
       </Link>
-
-      <button
-        type="button"
-        className={`mobile-nav-item ${isFilterActive ? "has-badge" : ""}`}
-        onClick={onOpenFilter}
-      >
-        <span className="mobile-nav-icon"><SlidersHorizontal size={19} /></span>
-        <span className="mobile-nav-label">絞り込み</span>
-      </button>
     </nav>
   );
 }
