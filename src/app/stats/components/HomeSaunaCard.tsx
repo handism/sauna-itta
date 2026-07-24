@@ -21,7 +21,7 @@ export function HomeSaunaCard({ visits }: HomeSaunaCardProps) {
     let topSauna: SaunaVisit | null = null;
     let maxCount = 0;
 
-    visitedList.forEach((sauna) => {
+    for (const sauna of visitedList) {
       const count = (sauna.history && sauna.history.length > 0)
         ? sauna.history.length
         : (sauna.visitCount ?? 1);
@@ -30,11 +30,11 @@ export function HomeSaunaCard({ visits }: HomeSaunaCardProps) {
         maxCount = count;
         topSauna = sauna;
       }
-    });
+    }
 
     if (!topSauna || maxCount === 0) return null;
 
-    const saunaObj = topSauna as SaunaVisit;
+    const saunaObj = topSauna;
 
     // Dates for this sauna
     const dates: string[] = [];
