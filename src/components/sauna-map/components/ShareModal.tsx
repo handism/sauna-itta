@@ -26,12 +26,13 @@ export function ShareModal({ isOpen, stats, filteredVisits, onClose }: ShareModa
         role="dialog"
         aria-modal="true"
         aria-labelledby="share-modal-title"
+        aria-describedby="share-modal-desc"
         tabIndex={-1}
       >
         <div className="share-header">
           <div>
             <h2 id="share-modal-title">サウナイッタ シェアビュー</h2>
-            <p>この画面をスクリーンショットしてSNSに投稿できます</p>
+            <p id="share-modal-desc">この画面をスクリーンショットしてSNSに投稿できます</p>
           </div>
           <button type="button" onClick={onClose} className="share-close" aria-label="閉じる">
             <X size={18} />

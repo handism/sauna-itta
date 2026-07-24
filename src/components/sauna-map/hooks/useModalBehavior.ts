@@ -6,8 +6,8 @@ const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 
 /**
- * モーダル系オーバーレイ（Esc で閉じる・フォーカストラップ・元の要素へのフォーカス復帰）
- * の挙動を共通化するフック。ConfirmModal / FilterModal / ShareModal で共有する。
+ * モーダル系オーバーレイ（Esc で閉じる・フォーカストラップ・元の要素へのフォーカス復帰・スクロールロック）
+ * の挙動を共通化するフック。ConfirmModal / FilterModal / ShareModal / ImageLightbox で共有する。
  */
 export function useModalBehavior(isOpen: boolean, onClose: () => void) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -17,6 +17,9 @@ export function useModalBehavior(isOpen: boolean, onClose: () => void) {
     if (!isOpen) return;
 
     previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
     const getFocusable = () =>
       Array.from(containerRef.current?.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR) ?? []);
@@ -46,8 +49,10 @@ export function useModalBehavior(isOpen: boolean, onClose: () => void) {
     };
 
     document.addEventListener("keydown", handleKeyDown);
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = originalOverflow;
       previouslyFocusedRef.current?.focus?.();
     };
   }, [isOpen, onClose]);

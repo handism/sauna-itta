@@ -1,5 +1,5 @@
 import { Star, Tag, X } from "lucide-react";
-import { useEffect } from "react";
+import { useModalBehavior } from "../hooks/useModalBehavior";
 
 interface RatingStarsProps {
   rating: number;
@@ -47,14 +47,8 @@ interface ImageLightboxProps {
 }
 
 export function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
-  useEffect(() => {
-    if (!src) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [src, onClose]);
+  const isOpen = Boolean(src);
+  const containerRef = useModalBehavior(isOpen, onClose);
 
   if (!src) return null;
 
@@ -64,21 +58,30 @@ export function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
       onClick={onClose}
       role="presentation"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={alt ?? "拡大画像"}
-        className="image-lightbox-img"
+      <div
+        ref={containerRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="写真拡大表示"
+        tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-      />
-      <button
-        type="button"
-        className="image-lightbox-close"
-        onClick={onClose}
-        aria-label="閉じる"
+        style={{ display: "contents" }}
       >
-        <X size={20} />
-      </button>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={alt ?? "拡大画像"}
+          className="image-lightbox-img"
+        />
+        <button
+          type="button"
+          className="image-lightbox-close"
+          onClick={onClose}
+          aria-label="閉じる"
+        >
+          <X size={20} />
+        </button>
+      </div>
     </div>
   );
 }
