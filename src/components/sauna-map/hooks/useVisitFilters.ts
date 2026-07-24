@@ -56,7 +56,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
       return true;
     });
 
-    result.sort((a, b) => {
+    return result.toSorted((a, b) => {
       switch (filters.sort) {
         case "oldest":
           return a.date.localeCompare(b.date);
@@ -73,8 +73,6 @@ export function useVisitFilters(visits: SaunaVisit[]) {
           return b.date.localeCompare(a.date);
       }
     });
-
-    return result;
   }, [visits, filters]);
 
   const stats = useMemo(() => calculateStats(visits), [visits]);

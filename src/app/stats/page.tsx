@@ -1,19 +1,32 @@
 "use client";
 
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import styles from './stats.module.css';
 import 'react-calendar/dist/Calendar.css';
 import './calendar.css';
-import MonthlyVisitsChart from '@/components/charts/MonthlyVisitsChart';
-import RatingDistributionChart from '@/components/charts/RatingDistributionChart';
 import { useStatsData } from './hooks/useStatsData';
 import { SummaryGrid } from './components/SummaryGrid';
 import { PrefectureSection } from './components/PrefectureSection';
-import { VisitCalendar } from './components/VisitCalendar';
 import { HomeSaunaCard } from './components/HomeSaunaCard';
 import { TopSaunasCard } from './components/TopSaunasCard';
 import { TagCloudCard } from './components/TagCloudCard';
+
+const MonthlyVisitsChart = dynamic(() => import('@/components/charts/MonthlyVisitsChart'), {
+  loading: () => <div className={`${styles.chartCard} ${styles.skeleton}`} style={{ minHeight: 260 }} />,
+  ssr: false,
+});
+
+const RatingDistributionChart = dynamic(() => import('@/components/charts/RatingDistributionChart'), {
+  loading: () => <div className={`${styles.chartCard} ${styles.skeleton}`} style={{ minHeight: 260 }} />,
+  ssr: false,
+});
+
+const VisitCalendar = dynamic(() => import('./components/VisitCalendar').then((mod) => mod.VisitCalendar), {
+  loading: () => <div className={`${styles.chartCard} ${styles.skeleton}`} style={{ minHeight: 260 }} />,
+  ssr: false,
+});
 
 export default function StatsPage() {
   const { visits, theme, date, setDate, mounted, stats, visitDates } = useStatsData();
