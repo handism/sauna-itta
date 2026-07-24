@@ -106,7 +106,10 @@ function isValidVisit(v: unknown): v is SaunaVisit {
 }
 
 export function getInitialVisits(): SaunaVisit[] {
-  const baseVisits = normalizeVisits(initialVisits as SaunaVisit[]);
+  const parsedInitial = z.array(SaunaVisitSchema).safeParse(initialVisits);
+  const rawBaseVisits = parsedInitial.success ? parsedInitial.data : [];
+  const baseVisits = normalizeVisits(rawBaseVisits);
+
   if (typeof window === "undefined") {
     return baseVisits;
   }
@@ -131,9 +134,9 @@ export function getInitialVisits(): SaunaVisit[] {
     
     // 高速な一括検証を実施。一部無効な要素が含まれる場合のみフォールバック
     const batchResult = z.array(SaunaVisitSchema).safeParse(parsedSaved);
-    const validSaved: SaunaVisit[] = batchResult.success
+    const validSaved = batchResult.success
       ? batchResult.data
-      : (parsedSaved.filter(isValidVisit) as SaunaVisit[]);
+      : parsedSaved.filter(isValidVisit);
 
     const initialIds = new Set(baseVisits.map((v) => v.id));
     const customSaved = validSaved.filter((v) => !initialIds.has(v.id));
