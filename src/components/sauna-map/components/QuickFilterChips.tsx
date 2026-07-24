@@ -64,34 +64,43 @@ export function QuickFilterChips({
         <button
           type="button"
           className={`chip-btn ${filters.minRating === 4 ? "is-active" : ""}`}
+          aria-pressed={filters.minRating === 4}
           onClick={() => handleRatingToggle(4)}
         >
           <Star size={13} /> 4.0以上
         </button>
 
         {/* 動的エリアチップ */}
-        {popularAreas.map((area) => (
-          <button
-            key={`area-${area}`}
-            type="button"
-            className={`chip-btn ${filters.selectedArea === area ? "is-active" : ""}`}
-            onClick={() => handleAreaToggle(area)}
-          >
-            <MapPin size={13} /> {area}
-          </button>
-        ))}
+        {popularAreas.map((area) => {
+          const isActive = filters.selectedArea === area;
+          return (
+            <button
+              key={`area-${area}`}
+              type="button"
+              className={`chip-btn ${isActive ? "is-active" : ""}`}
+              aria-pressed={isActive}
+              onClick={() => handleAreaToggle(area)}
+            >
+              <MapPin size={13} /> {area}
+            </button>
+          );
+        })}
 
         {/* 動的タグチップ */}
-        {popularTags.map((tag) => (
-          <button
-            key={`tag-${tag}`}
-            type="button"
-            className={`chip-btn ${filters.selectedTag === tag ? "is-active" : ""}`}
-            onClick={() => handleTagToggle(tag)}
-          >
-            <Tag size={13} /> {tag}
-          </button>
-        ))}
+        {popularTags.map((tag) => {
+          const isActive = filters.selectedTag === tag;
+          return (
+            <button
+              key={`tag-${tag}`}
+              type="button"
+              className={`chip-btn ${isActive ? "is-active" : ""}`}
+              aria-pressed={isActive}
+              onClick={() => handleTagToggle(tag)}
+            >
+              <Tag size={13} /> {tag}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
