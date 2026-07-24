@@ -1,0 +1,305 @@
+/* Form Controls, Inputs & Button Styles */
+
+.form-group {
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--foreground);
+  opacity: 0.85;
+  font-weight: 500;
+}
+
+.label-row-with-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.label-row-with-actions label {
+  margin-bottom: 0;
+}
+
+.quick-date-actions {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.btn-quick-date {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--primary);
+  font-size: 0.78rem;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-quick-date:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.preset-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.preset-tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  color: var(--foreground);
+  opacity: 0.95;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.preset-tag-chip:hover {
+  opacity: 1;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.preset-tag-chip.is-selected {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  opacity: 1;
+  font-weight: 500;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.form-hint {
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  opacity: 0.62;
+}
+
+.form-hint--loading {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.input {
+  width: 100%;
+  max-width: 100%;
+  padding: 0.8rem 1rem;
+  min-height: 44px;
+  background: var(--input-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: var(--foreground);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.25s ease;
+}
+
+.input::placeholder {
+  color: var(--foreground);
+  opacity: 0.72;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--glass-heavy);
+  box-shadow: 0 0 16px var(--primary-glow);
+}
+
+.input-file {
+  font-size: 0.84rem;
+  padding: 0.55rem;
+}
+
+.select-input {
+  width: 100%;
+}
+
+/* iOS Safari: date input がネイティブ最小幅を優先するのを防ぐ */
+input[type="date"].input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  font-family: inherit;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
+  color: white;
+  box-shadow: 0 6px 20px var(--primary-glow);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px var(--primary-glow);
+  filter: brightness(1.06);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+}
+
+.btn-ghost:hover {
+  background: var(--primary-glow);
+  box-shadow: 0 0 14px var(--primary-glow);
+}
+
+.btn-danger {
+  background: var(--error);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+}
+
+.btn-danger:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.btn-sm {
+  padding: 0.4rem 0.75rem !important;
+  font-size: 0.8rem !important;
+  min-height: 38px !important;
+}
+
+.segmented {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.segmented-btn {
+  flex: 1;
+  background: var(--glass);
+  color: var(--foreground);
+}
+
+.segmented-btn--visited.is-active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.segmented-btn--wishlist.is-active {
+  background: var(--accent-wishlist, #10b981);
+}
+
+.rating-row {
+  display: flex;
+  gap: 0.25rem;
+  font-size: 1.2rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.rating-star-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 10px;
+  color: var(--foreground);
+  opacity: 0.5;
+}
+
+.rating-star-btn:has(.rating-star--filled) {
+  opacity: 1;
+}
+
+.rating-star-btn:active {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+}
+
+.clear-rating {
+  margin-left: 0.4rem;
+  font-size: 0.84rem;
+  background: color-mix(in srgb, var(--glass) 82%, transparent);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  cursor: pointer;
+  min-height: 40px;
+  padding: 0.35rem 0.65rem;
+  opacity: 0.88;
+  color: var(--foreground);
+}
+
+@media (max-width: 768px) {
+  .input,
+  .btn,
+  .rating-star-btn,
+  .clear-rating {
+    min-height: 44px;
+  }
+
+  .input {
+    padding: 0.75rem 1rem;
+    font-size: 16px;
+  }
+}
+
+/* Light theme overrides */
+.light-theme .preset-tag-chip:not(.is-selected) {
+  color: #1e293b;
+  background: rgba(255, 255, 255, 0.9);
+  opacity: 0.95;
+}

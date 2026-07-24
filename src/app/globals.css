@@ -1,6 +1,2 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap");
-@import "../components/sauna-map/styles/base.css";
-@import "../components/sauna-map/styles/map.css";
-@import "../components/sauna-map/styles/sidebar.css";
-@import "../components/sauna-map/styles/bottom-sheet.css";
-@import "../components/sauna-map/styles/modal.css";
+@import "../components/sauna-map/styles/index.css";
