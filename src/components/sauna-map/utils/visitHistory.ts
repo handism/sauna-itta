@@ -1,3 +1,4 @@
+import { z } from "zod";
 import initialVisits from "@/data/sauna-visits.json";
 import { SaunaVisit, VisitHistoryEntry, VisitStats, SaunaVisitSchema } from "../types";
 import { VISITS_STORAGE_KEY } from "./constants";
@@ -127,7 +128,13 @@ export function getInitialVisits(): SaunaVisit[] {
     if (!Array.isArray(parsedSaved)) {
       return baseVisits;
     }
-    const validSaved = parsedSaved.filter(isValidVisit) as SaunaVisit[];
+    
+    // 高速な一括検証を実施。一部無効な要素が含まれる場合のみフォールバック
+    const batchResult = z.array(SaunaVisitSchema).safeParse(parsedSaved);
+    const validSaved: SaunaVisit[] = batchResult.success
+      ? batchResult.data
+      : (parsedSaved.filter(isValidVisit) as SaunaVisit[]);
+
     const initialIds = new Set(baseVisits.map((v) => v.id));
     const customSaved = validSaved.filter((v) => !initialIds.has(v.id));
     const customVisits = normalizeVisits(customSaved);
