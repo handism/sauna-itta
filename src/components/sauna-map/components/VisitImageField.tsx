@@ -2,6 +2,7 @@ import { DragEvent, useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import { sanitizeImageUrl } from "../utils";
 import { ImageLightbox } from "./common";
+import { useImageLightbox } from "../hooks/useImageLightbox";
 
 interface VisitImageFieldProps {
   image: string;
@@ -18,7 +19,7 @@ export function VisitImageField({
 }: VisitImageFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const { lightboxSrc, openImage, closeImage } = useImageLightbox();
   const previewUrl = sanitizeImageUrl(image);
 
   const handleFiles = (files: FileList | null) => {
@@ -55,7 +56,7 @@ export function VisitImageField({
             src={previewUrl}
             className="sauna-img-preview"
             alt="アップロードした写真のプレビュー"
-            onClick={() => setLightboxOpen(true)}
+            onClick={() => previewUrl && openImage(previewUrl)}
           />
           <div className="image-dropzone-actions">
             <button
@@ -107,8 +108,8 @@ export function VisitImageField({
       )}
 
       <ImageLightbox
-        src={lightboxOpen ? previewUrl ?? null : null}
-        onClose={() => setLightboxOpen(false)}
+        src={lightboxSrc}
+        onClose={closeImage}
       />
     </div>
   );
