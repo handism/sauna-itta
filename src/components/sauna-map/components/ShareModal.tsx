@@ -2,15 +2,23 @@ import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
 import { RatingStars, WishlistChip } from "./common";
 import { useModalBehavior } from "../hooks/useModalBehavior";
+import { useSaunaMap } from "../context/SaunaMapContext";
 
 interface ShareModalProps {
-  isOpen: boolean;
-  stats: VisitStats;
-  filteredVisits: SaunaVisit[];
-  onClose: () => void;
+  isOpen?: boolean;
+  stats?: VisitStats;
+  filteredVisits?: SaunaVisit[];
+  onClose?: () => void;
 }
 
-export function ShareModal({ isOpen, stats, filteredVisits, onClose }: ShareModalProps) {
+export function ShareModal(props: ShareModalProps) {
+  const context = useSaunaMap();
+
+  const isOpen = props.isOpen ?? context.isShareViewOpen;
+  const stats = props.stats ?? context.stats;
+  const filteredVisits = props.filteredVisits ?? context.filteredVisits;
+  const onClose = props.onClose ?? context.closeShareView;
+
   const containerRef = useModalBehavior(isOpen, onClose);
 
   if (!isOpen) {

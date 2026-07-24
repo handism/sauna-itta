@@ -18,46 +18,49 @@ import {
   MoreHorizontal,
   Loader2,
 } from "lucide-react";
+import { useSaunaMap } from "../context/SaunaMapContext";
 
 interface DesktopSidebarProps {
-  isSidebarExpanded: boolean;
-  onToggleSidebar: () => void;
-  isMobileMenuOpen: boolean;
-  mobileMenuRef: RefObject<HTMLDivElement | null>;
-  onToggleMobileMenu: () => void;
-  onCloseMobileMenu: () => void;
-  isAdding: boolean;
-  onStartNewVisit: () => void;
-  theme: "dark" | "light";
-  onToggleTheme: () => void;
-  onOpenShareView: () => void;
-  onExportVisits: () => void;
-  importing: boolean;
-  importInputRef: RefObject<HTMLInputElement | null>;
-  onImportClick: () => void;
-  onImportChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  isSidebarExpanded?: boolean;
+  onToggleSidebar?: () => void;
+  isMobileMenuOpen?: boolean;
+  mobileMenuRef?: RefObject<HTMLDivElement | null>;
+  onToggleMobileMenu?: () => void;
+  onCloseMobileMenu?: () => void;
+  isAdding?: boolean;
+  onStartNewVisit?: () => void;
+  theme?: "dark" | "light";
+  onToggleTheme?: () => void;
+  onOpenShareView?: () => void;
+  onExportVisits?: () => void;
+  importing?: boolean;
+  importInputRef?: RefObject<HTMLInputElement | null>;
+  onImportClick?: () => void;
+  onImportChange?: (e: ChangeEvent<HTMLInputElement>) => void;
   children: ReactNode;
 }
 
-export function DesktopSidebar({
-  isSidebarExpanded,
-  onToggleSidebar,
-  isMobileMenuOpen,
-  mobileMenuRef,
-  onToggleMobileMenu,
-  onCloseMobileMenu,
-  isAdding,
-  onStartNewVisit,
-  theme,
-  onToggleTheme,
-  onOpenShareView,
-  onExportVisits,
-  importing,
-  importInputRef,
-  onImportClick,
-  onImportChange,
-  children,
-}: DesktopSidebarProps) {
+export function DesktopSidebar(props: DesktopSidebarProps) {
+  const context = useSaunaMap();
+
+  const isSidebarExpanded = props.isSidebarExpanded ?? context.isSidebarExpanded;
+  const onToggleSidebar = props.onToggleSidebar ?? context.toggleSidebar;
+  const isMobileMenuOpen = props.isMobileMenuOpen ?? context.isMobileMenuOpen;
+  const mobileMenuRef = props.mobileMenuRef ?? context.mobileMenuRef;
+  const onToggleMobileMenu = props.onToggleMobileMenu ?? context.toggleMobileMenu;
+  const onCloseMobileMenu = props.onCloseMobileMenu ?? context.closeMobileMenu;
+  const isAdding = props.isAdding ?? context.isAdding;
+  const onStartNewVisit = props.onStartNewVisit ?? context.startNewVisit;
+  const theme = props.theme ?? context.theme;
+  const onToggleTheme = props.onToggleTheme ?? context.toggleTheme;
+  const onOpenShareView = props.onOpenShareView ?? context.openShareView;
+  const onExportVisits = props.onExportVisits ?? context.exportVisits;
+  const importing = props.importing ?? context.importing;
+  const importInputRef = props.importInputRef ?? context.importInputRef;
+  const onImportClick = props.onImportClick ?? (() => importInputRef.current?.click());
+  const onImportChange = props.onImportChange ?? context.handleImportData;
+  const children = props.children;
+
   return (
     <div className="ui-layer">
       {!isSidebarExpanded && (

@@ -34,44 +34,17 @@ function SaunaMapContent() {
     isMobile,
     mounted,
     theme,
-    toggleTheme,
-    visits,
     filteredVisits,
-    filters,
-    setFilters,
-    stats,
-    isFilterActive,
-    activeFilterCount,
-    clearFilters,
-    exportVisits,
-    form,
-    setForm,
-    mode,
     editingId,
     selectedLocation,
-    isSidebarExpanded,
     isAdding,
     isMobilePickingLocation,
     isCreating,
-    historyEntries,
-    imageUploading,
-    importing,
-    importInputRef,
-    startNewVisit,
-    startEditing,
-    handleDelete,
     confirmDelete,
     handleLocationSelect,
     handleBoundsChange,
-    handleSubmit,
-    handleImageFile,
-    handleRemoveImage,
-    handleImportData,
-    handleDeleteHistoryEntry,
     cancelEditing,
-    toggleSidebar,
     hoveredId,
-    setHoveredId,
     selectedId,
     activeMapTarget,
     snapPosition,
@@ -81,64 +54,17 @@ function SaunaMapContent() {
     toggleClustering,
     showBadges,
     selectedVisit,
+    startEditing,
     handleSelectVisit,
-    handleDeselectVisit,
-    handleListEdit,
-    handleListSelectVisit,
     handleSelectMobileTab,
-    isShareViewOpen,
-    isMobileMenuOpen,
-    isFilterModalOpen,
     isDeleteConfirmOpen,
-    mobileMenuRef,
-    openShareView,
-    closeShareView,
-    toggleMobileMenu,
-    closeMobileMenu,
     openFilterModal,
-    closeFilterModal,
-    openDeleteConfirm,
+    isFilterActive,
     closeDeleteConfirm,
     toast,
     showToast,
     clearToast,
   } = useSaunaMap();
-
-  const renderPanelContent = () =>
-    isAdding ? (
-      <VisitForm
-        form={form}
-        setForm={setForm}
-        selectedLocation={selectedLocation}
-        editingId={editingId}
-        historyEntries={historyEntries}
-        onSubmit={handleSubmit}
-        onImageFile={handleImageFile}
-        onRemoveImage={handleRemoveImage}
-        onDelete={handleDelete}
-        onCancel={() => cancelEditing()}
-        onDeleteHistoryEntry={editingId ? handleDeleteHistoryEntry : undefined}
-        imageUploading={imageUploading}
-      />
-    ) : (
-      <VisitList
-        visits={visits}
-        filteredVisits={filteredVisits}
-        filters={filters}
-        setFilters={setFilters}
-        isFilterActive={isFilterActive}
-        activeFilterCount={activeFilterCount}
-        onClearFilters={clearFilters}
-        onOpenFilters={openFilterModal}
-        onEdit={handleListEdit}
-        selectedId={selectedId}
-        onSelectVisit={handleListSelectVisit}
-        onDeselectVisit={handleDeselectVisit}
-        hoveredId={hoveredId}
-        onHoverVisit={setHoveredId}
-        isMobile={isMobile}
-      />
-    );
 
   if (!mounted) {
     return <div className="map-container" style={{ background: "var(--background)", height: "100%", width: "100%" }} />;
@@ -211,25 +137,8 @@ function SaunaMapContent() {
       )}
 
       {!isMobilePickingLocation && !isMobile && (
-        <DesktopSidebar
-          isSidebarExpanded={isSidebarExpanded}
-          onToggleSidebar={toggleSidebar}
-          isMobileMenuOpen={isMobileMenuOpen}
-          mobileMenuRef={mobileMenuRef}
-          onToggleMobileMenu={toggleMobileMenu}
-          onCloseMobileMenu={closeMobileMenu}
-          isAdding={isAdding}
-          onStartNewVisit={startNewVisit}
-          theme={theme}
-          onToggleTheme={toggleTheme}
-          onOpenShareView={openShareView}
-          onExportVisits={exportVisits}
-          importing={importing}
-          importInputRef={importInputRef}
-          onImportClick={() => importInputRef.current?.click()}
-          onImportChange={handleImportData}
-        >
-          {renderPanelContent()}
+        <DesktopSidebar>
+          {isAdding ? <VisitForm /> : <VisitList />}
         </DesktopSidebar>
       )}
 
@@ -241,7 +150,7 @@ function SaunaMapContent() {
           filteredCount={filteredVisits.length}
           selectedVisitName={selectedVisit?.name}
         >
-          {renderPanelContent()}
+          {isAdding ? <VisitForm /> : <VisitList />}
         </BottomSheet>
       )}
 
@@ -256,21 +165,8 @@ function SaunaMapContent() {
         />
       )}
 
-      <FilterModal
-        isOpen={isFilterModalOpen}
-        filters={filters}
-        setFilters={setFilters}
-        isFilterActive={isFilterActive}
-        onClearFilters={clearFilters}
-        onClose={closeFilterModal}
-      />
-
-      <ShareModal
-        isOpen={isShareViewOpen}
-        stats={stats}
-        filteredVisits={filteredVisits}
-        onClose={closeShareView}
-      />
+      <FilterModal />
+      <ShareModal />
 
       <ConfirmModal
         isOpen={isDeleteConfirmOpen}
