@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { ImageLightbox } from "./common";
+import { useImageLightbox } from "../hooks/useImageLightbox";
 import { VisitCompactItem } from "./VisitCompactItem";
 import { VisitCardItem } from "./VisitCardItem";
 import { VisitListHeader, ViewMode } from "./VisitListHeader";
@@ -46,7 +47,7 @@ export function VisitListView({
   isMobile,
 }: VisitListViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const { lightboxSrc, openImage, closeImage } = useImageLightbox();
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -115,7 +116,7 @@ export function VisitListView({
                 onDeselectVisit={onDeselectVisit}
                 onEdit={onEdit}
                 setFilters={setFilters}
-                onOpenImage={setLightboxSrc}
+                onOpenImage={openImage}
               />
             );
           }
@@ -131,13 +132,13 @@ export function VisitListView({
               onDeselectVisit={onDeselectVisit}
               onEdit={onEdit}
               setFilters={setFilters}
-              onOpenImage={setLightboxSrc}
+              onOpenImage={openImage}
             />
           );
         })
       )}
 
-      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
+      <ImageLightbox src={lightboxSrc} onClose={closeImage} />
     </div>
   );
 }
