@@ -10,7 +10,9 @@ import { VisitFiltersProvider } from "./VisitFiltersContext";
 import { useVisitsCRUD } from "./VisitsCRUDContext";
 import { useVisitFiltersContext } from "./VisitFiltersContext";
 
-export function VisitsDataProvider({ children }: { children: any }) {
+import React from "react";
+
+export function VisitsDataProvider({ children }: { children: React.ReactNode }) {
   return (
     <VisitsCRUDProvider>
       <VisitFiltersProvider>{children}</VisitFiltersProvider>
