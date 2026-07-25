@@ -20,7 +20,6 @@ describe("useVisitForm", () => {
     defaultOptions = {
       editingId: null,
       selectedLocation: { lat: 34.95, lng: 138.4 },
-      editingVisit: null,
       historyEntries: [],
       addVisit: vi.fn().mockReturnValue({ success: true }),
       editVisit: vi.fn().mockReturnValue({ success: true }),

@@ -50,24 +50,41 @@ export function useStatsData() {
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
 
+  /**
+   * 訪問済みの履歴エントリ。カレンダー・月別グラフ・満足度分布はいずれも
+   * これだけを見るため、ここで一度だけ平坦化して各コンポーネントへ渡す。
+   */
+  const visitedEntries = useMemo(
+    () => flattenVisitHistory(visits).filter((entry) => entry.status === "visited"),
+    [visits],
+  );
+
   const visitDates = useMemo(() => {
     const dates = new Map<string, number>();
     const dateCache = new Map<string, string>();
 
-    flattenVisitHistory(visits).forEach((entry) => {
-      if (entry.status === "visited") {
-        let dateStr = dateCache.get(entry.date);
-        if (!dateStr) {
-          // Replace hyphens with slashes to ensure consistent local timezone parsing across browsers
-          const dateToParse = typeof entry.date === 'string' ? entry.date.replace(/-/g, '/') : entry.date;
-          dateStr = new Date(dateToParse).toDateString();
-          dateCache.set(entry.date, dateStr);
-        }
-        dates.set(dateStr, (dates.get(dateStr) ?? 0) + 1);
+    visitedEntries.forEach((entry) => {
+      let dateStr = dateCache.get(entry.date);
+      if (!dateStr) {
+        // Replace hyphens with slashes to ensure consistent local timezone parsing across browsers
+        const dateToParse = typeof entry.date === 'string' ? entry.date.replace(/-/g, '/') : entry.date;
+        dateStr = new Date(dateToParse).toDateString();
+        dateCache.set(entry.date, dateStr);
       }
+      dates.set(dateStr, (dates.get(dateStr) ?? 0) + 1);
     });
     return dates;
-  }, [visits]);
+  }, [visitedEntries]);
 
-  return { visits, theme, toggleTheme, date, setDate, mounted, stats, visitDates };
+  return {
+    visits,
+    theme,
+    toggleTheme,
+    date,
+    setDate,
+    mounted,
+    stats,
+    visitedEntries,
+    visitDates,
+  };
 }

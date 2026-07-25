@@ -258,6 +258,7 @@ describe("validateVisitForm", () => {
       tagsText: "水風呂, 薬草サウナ",
       status: "visited",
       area: "静岡",
+      appendHistory: false,
     };
 
     const result = validateVisitForm(validForm);
@@ -274,6 +275,7 @@ describe("validateVisitForm", () => {
       tagsText: "",
       status: "visited",
       area: "",
+      appendHistory: false,
     };
 
     const result = validateVisitForm(invalidForm);
@@ -293,6 +295,7 @@ describe("validateVisitForm", () => {
       tagsText: "",
       status: "visited",
       area: "名古屋",
+      appendHistory: false,
     };
 
     const result = validateVisitForm(invalidForm);
@@ -312,6 +315,7 @@ describe("validateVisitForm", () => {
       tagsText: "",
       status: "visited",
       area: "上野",
+      appendHistory: false,
     };
 
     const result = validateVisitForm(invalidForm);
