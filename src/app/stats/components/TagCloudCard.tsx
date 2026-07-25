@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Tag } from "lucide-react";
 import { SaunaVisit } from "@/components/sauna-map/types";
+import { countTags } from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface TagCloudCardProps {
@@ -8,25 +9,10 @@ interface TagCloudCardProps {
 }
 
 export function TagCloudCard({ visits }: TagCloudCardProps) {
-  const tagCounts = useMemo(() => {
-    const visitedList = visits.filter((v) => v.status !== "wishlist");
-    const counts: { [tag: string]: number } = {};
-
-    visitedList.forEach((sauna) => {
-      if (sauna.tags && sauna.tags.length > 0) {
-        sauna.tags.forEach((tag) => {
-          const trimmed = tag.trim();
-          if (trimmed) {
-            counts[trimmed] = (counts[trimmed] || 0) + 1;
-          }
-        });
-      }
-    });
-
-    return Object.entries(counts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count);
-  }, [visits]);
+  const tagCounts = useMemo(
+    () => countTags(visits, { excludeWishlist: true }),
+    [visits],
+  );
 
   if (tagCounts.length === 0) return null;
 

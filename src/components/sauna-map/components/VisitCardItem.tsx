@@ -1,8 +1,15 @@
 import { Dispatch, SetStateAction, memo } from "react";
 import { Pencil, X } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
-import { getVisitCount, sanitizeImageUrl } from "../utils";
-import { RatingStars, RouteLink, VisitMetaInfo, VisitTagList, WishlistChip } from "./common";
+import { getVisitCount } from "../utils";
+import {
+  RatingStars,
+  RouteLink,
+  VisitImagePreview,
+  VisitMetaInfo,
+  VisitTagList,
+  WishlistChip,
+} from "./common";
 
 interface VisitCardItemProps {
   visit: SaunaVisit;
@@ -87,25 +94,11 @@ function VisitCardItemComponent({
         onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
       />
       <p className="sauna-card-comment">{visit.comment}</p>
-      {sanitizeImageUrl(visit.image) && (
-        <button
-          type="button"
-          className="sauna-img-preview-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            const src = sanitizeImageUrl(visit.image);
-            if (src) onOpenImage(src);
-          }}
-          aria-label={`${visit.name}の写真拡大表示`}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={sanitizeImageUrl(visit.image)}
-            className="sauna-img-preview"
-            alt={`${visit.name}の写真`}
-          />
-        </button>
-      )}
+      <VisitImagePreview
+        image={visit.image}
+        visitName={visit.name}
+        onOpenImage={onOpenImage}
+      />
       <VisitMetaInfo date={visit.date} visitCount={visitCount} />
       <RouteLink lat={visit.lat} lng={visit.lng} />
     </div>

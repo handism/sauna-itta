@@ -5,10 +5,12 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { BarChart3 } from 'lucide-react';
 import { SaunaVisit } from '@/components/sauna-map/types';
 import { flattenVisitHistory } from '@/components/sauna-map/utils';
+import { ChartTheme, getChartColors, getTooltipStyle } from './chartTheme';
+import { ChartEmptyState } from './ChartEmptyState';
 
 interface MonthlyVisitsChartProps {
   visits: SaunaVisit[];
-  theme: 'dark' | 'light';
+  theme: ChartTheme;
 }
 
 export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChartProps) {
@@ -43,15 +45,14 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
       .map((d) => ({ month: d.month, year: d.month.slice(0, 4) }));
   }, [data]);
 
-  const tickColor = theme === 'light' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(241, 245, 249, 0.8)';
-  const gridColor = theme === 'light' ? 'rgba(15, 23, 42, 0.08)' : 'rgba(241, 245, 249, 0.1)';
+  const { tick: tickColor, grid: gridColor, cursorFill } = getChartColors(theme);
 
   if (data.length === 0) {
     return (
-      <div className="chart-empty-state" style={{ minHeight: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.6 }}>
-        <BarChart3 size={32} style={{ marginBottom: 8 }} />
-        <p>訪問記録がありません。サウナを追加すると月別の推移が表示されます。</p>
-      </div>
+      <ChartEmptyState
+        icon={BarChart3}
+        message="訪問記録がありません。サウナを追加すると月別の推移が表示されます。"
+      />
     );
   }
 
@@ -86,18 +87,8 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
             tickLine={false}
           />
           <Tooltip
-            cursor={{ fill: theme === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.05)' }}
-            contentStyle={{
-              backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(20, 24, 33, 0.92)',
-              backdropFilter: 'blur(12px)',
-              borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.15)',
-              borderRadius: '12px',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-              color: tickColor,
-              fontWeight: 600,
-              fontSize: '13px',
-              padding: '8px 14px',
-            }}
+            cursor={{ fill: cursorFill }}
+            contentStyle={getTooltipStyle(theme)}
             formatter={(value: number | string | undefined) => [`${value ?? 0} 回`, '訪問数']}
           />
           <Bar

@@ -32,6 +32,9 @@
 - **型定義**: `src/components/sauna-map/types/` 内の `domain.ts` (ドメインモデル) と `ui.ts` (UI・フィルター型) に集約し、`any` 型や不必要なキャストを排除すること。
 - **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` に抽出し、単体テストを記述すること。
 - **訪問回数の算出**: 訪問回数は必ず `utils/visitHistory.ts` の `getVisitCount()` を使うこと（`history.length` と `visitCount` の両方を考慮します）。地図側と統計ページで別々に導出すると、旧形式データで表示が食い違います。
+- **タグ集計**: タグの出現回数は `utils/visitHistory.ts` の `countTags()` に集約しています（`getPopularTags()` はその薄いラッパー）。コンポーネント内で `visit.tags` を数え直さないこと。
+- **写真プレビュー**: 訪問記録の写真ボタンは `components/common.tsx` の `VisitImagePreview` を使うこと。`sanitizeImageUrl()` は 1 レンダーにつき 1 回だけ呼びます（同一レンダー内で複数回呼ばない）。
+- **グラフ**: Recharts の配色・ツールチップは `components/charts/chartTheme.ts` の `getChartColors()` / `getTooltipStyle()` を、空データ表示は `ChartEmptyState` を使うこと。チャート側でテーマ別の色分岐を直書きしないでください。
 
 ### 3. CSS ＆ スタイリング
 - Z-Index や共通カラー変数等のレイアウト値は `styles/base.css` 内の CSS デザイントークンを必ず参照・利用してください。

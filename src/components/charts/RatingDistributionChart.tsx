@@ -5,10 +5,12 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Star, PieChart as PieChartIcon } from 'lucide-react';
 import { SaunaVisit } from '@/components/sauna-map/types';
 import { flattenVisitHistory } from '@/components/sauna-map/utils';
+import { ChartTheme, getChartColors, getTooltipStyle } from './chartTheme';
+import { ChartEmptyState } from './ChartEmptyState';
 
 interface RatingDistributionChartProps {
   visits: SaunaVisit[];
-  theme: 'dark' | 'light';
+  theme: ChartTheme;
 }
 
 const RATING_COLORS: { [key: number]: string } = {
@@ -55,14 +57,14 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
     return { data: chartData, avgRating: avg, totalRated: totalCount };
   }, [visits]);
 
-  const textColor = theme === 'light' ? '#1e293b' : '#f8fafc';
+  const { text: textColor } = getChartColors(theme);
 
   if (data.length === 0) {
     return (
-      <div className="chart-empty-state" style={{ minHeight: 240, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.6 }}>
-        <PieChartIcon size={32} style={{ marginBottom: 8 }} />
-        <p>評価付きの訪問記録がありません。訪問に評価を付けると分布が表示されます。</p>
-      </div>
+      <ChartEmptyState
+        icon={PieChartIcon}
+        message="評価付きの訪問記録がありません。訪問に評価を付けると分布が表示されます。"
+      />
     );
   }
 
@@ -113,17 +115,7 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
             ))}
           </Pie>
           <Tooltip
-            contentStyle={{
-              backgroundColor: theme === 'light' ? 'rgba(255, 255, 255, 0.92)' : 'rgba(20, 24, 33, 0.92)',
-              backdropFilter: 'blur(12px)',
-              borderColor: theme === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.15)',
-              borderRadius: '12px',
-              boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
-              color: textColor,
-              fontWeight: 600,
-              fontSize: '13px',
-              padding: '8px 14px',
-            }}
+            contentStyle={getTooltipStyle(theme)}
             formatter={(value: number | string | undefined) => [`${value ?? 0} 件`, '訪問数']}
           />
         </PieChart>
