@@ -2,7 +2,6 @@
   --background: #090d16;
   --foreground: #f0f5fc;
   --text-muted: #94a3b8;
-  --text-subtle: #cbd5e1;
   
   /*
    * アクセント色。ここに追加したものは .light-theme にも必ず対応する定義を置くこと
@@ -102,7 +101,6 @@
   --background: #f2f6fc;
   --foreground: #0f1826;
   --text-muted: #475569;
-  --text-subtle: #334155;
   --primary: #e06c1b;
   --primary-hover: #c95d12;
   --primary-glow: rgba(224, 108, 27, 0.25);
@@ -264,14 +262,13 @@ body.allow-page-scroll {
   }
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
-span,
-div {
-  color: var(--foreground);
-}
+/*
+ * 既定の文字色は html/body の color から継承させる。
+ *
+ * かつてここに `h1〜h6, p, span, div { color: var(--foreground) }` を置いていたが、
+ * span/div まで色を固定すると、色付きの面の中の子要素が親の色を継承できなくなる
+ * （.btn-primary の橙色の面に濃色の <span> が乗る、
+ * .route-link の中の <span> が --primary にならない等）。
+ * AGENTS.md の「button の中身は span で構成する」方針と正面から衝突するため、
+ * 要素セレクタでの一括指定は復活させないこと。
+ */

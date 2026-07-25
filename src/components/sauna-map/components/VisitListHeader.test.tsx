@@ -18,11 +18,11 @@ describe("VisitListHeader", () => {
     );
 
     expect(screen.getByRole("group", { name: "表示形式切り替え" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "リスト表示" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "リスト表示に切り替え" })).toHaveAttribute(
       "aria-pressed",
       "true"
     );
-    expect(screen.getByRole("button", { name: "カード表示" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "カード表示に切り替え" })).toHaveAttribute(
       "aria-pressed",
       "false"
     );
@@ -54,7 +54,7 @@ describe("VisitListHeader", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "カード表示" }));
+    fireEvent.click(screen.getByRole("button", { name: "カード表示に切り替え" }));
 
     expect(onViewModeChange).toHaveBeenCalledWith("card");
   });

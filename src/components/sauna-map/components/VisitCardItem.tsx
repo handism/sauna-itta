@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, memo } from "react";
 import { Pencil, X } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
-import { getVisitCount } from "../utils";
+import { getVisitCount, sanitizeImageUrl } from "../utils";
 import {
   RatingStars,
   RouteLink,
@@ -35,6 +35,7 @@ function VisitCardItemComponent({
   onOpenImage,
 }: VisitCardItemProps) {
   const visitCount = getVisitCount(visit);
+  const imageSrc = sanitizeImageUrl(visit.image);
 
   return (
     // カードは編集ボタン・タグ・経路リンクを内包するため、カード自体を role="button" に
@@ -98,8 +99,8 @@ function VisitCardItemComponent({
       />
       <p className="sauna-card-comment">{visit.comment}</p>
       <VisitImagePreview
-        image={visit.image}
-        visitName={visit.name}
+        src={imageSrc}
+        alt={`${visit.name}の写真`}
         onOpenImage={onOpenImage}
       />
       <VisitMetaInfo date={visit.date} visitCount={visitCount} />

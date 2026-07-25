@@ -1,5 +1,5 @@
 import { Navigation, Star, Tag } from "lucide-react";
-import { getDirectionsUrl, sanitizeImageUrl } from "../utils";
+import { getDirectionsUrl } from "../utils";
 
 interface RatingStarsProps {
   rating: number;
@@ -76,17 +76,21 @@ export function VisitTagList({ tags, onSelectTag }: VisitTagListProps) {
 }
 
 interface VisitImagePreviewProps {
-  image?: string;
-  visitName: string;
+  /** sanitizeImageUrl() を通した URL。呼び出し側で 1 回だけ計算して渡すこと */
+  src: string | null | undefined;
+  /** 画像の代替テキスト。拡大ボタンの名前は「〜を拡大表示」として組み立てる */
+  alt: string;
   onOpenImage: (src: string) => void;
 }
 
 /**
- * 訪問記録の写真プレビュー。画像が無い（またはサニタイズで弾かれた）場合は何も描画しない。
- * sanitizeImageUrl の結果を 1 回だけ計算して使い回すこと。
+ * 写真プレビュー。画像が無い（またはサニタイズで弾かれた）場合は何も描画しない。
+ *
+ * 素の `img` に onClick を付けるとキーボードから開けないため、拡大は必ずこの
+ * コンポーネント（= button）経由にすること。sanitizeImageUrl は同一レンダー内で
+ * 何度も呼ばないよう、呼び出し側が計算済みの src を渡す。
  */
-export function VisitImagePreview({ image, visitName, onOpenImage }: VisitImagePreviewProps) {
-  const src = sanitizeImageUrl(image);
+export function VisitImagePreview({ src, alt, onOpenImage }: VisitImagePreviewProps) {
   if (!src) return null;
 
   return (
@@ -97,10 +101,10 @@ export function VisitImagePreview({ image, visitName, onOpenImage }: VisitImageP
         e.stopPropagation();
         onOpenImage(src);
       }}
-      aria-label={`${visitName}の写真拡大表示`}
+      aria-label={`${alt}を拡大表示`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} className="sauna-img-preview" alt={`${visitName}の写真`} />
+      <img src={src} className="sauna-img-preview" alt={alt} />
     </button>
   );
 }

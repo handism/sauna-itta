@@ -48,7 +48,8 @@ export function QuickFilterChips({
   // もしサブフィルター（★4以上、エリア、タグ、またはアクティブフィルター）が存在しない場合は非表示にすることも視野に入れるが、スクロールチップバーとしてシンプルに提供
   return (
     <div className="quick-filter-container">
-      <div className="quick-filter-chips" aria-label="サブフィルター">
+      {/* role の無い div の aria-label は支援技術に無視されるため group として公開する */}
+      <div className="quick-filter-chips" role="group" aria-label="サブフィルター">
         {/* リセット / アクティブバッジ */}
         {isFilterActive && onClearFilters && (
           <button

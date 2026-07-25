@@ -34,6 +34,15 @@ export function getInitialIsMobile(): boolean {
   return typeof window !== "undefined" && window.innerWidth < MOBILE_BREAKPOINT;
 }
 
+/** テーマの選択を保存する。localStorage が使えない環境では黙って諦める */
+export function saveTheme(theme: "dark" | "light"): void {
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch (error) {
+    console.warn("Failed to save theme to localStorage:", error);
+  }
+}
+
 export function applyThemeClass(theme: "dark" | "light"): void {
   if (theme === "light") {
     document.documentElement.classList.add("light-theme");

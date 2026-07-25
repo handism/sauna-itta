@@ -1,7 +1,7 @@
 import { DragEvent, useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import { sanitizeImageUrl } from "../utils";
-import { ImageLightbox } from "./common";
+import { ImageLightbox, VisitImagePreview } from "./common";
 import { useImageLightbox } from "../hooks/useImageLightbox";
 
 interface VisitImageFieldProps {
@@ -52,12 +52,10 @@ export function VisitImageField({
 
       {previewUrl ? (
         <div className="image-dropzone image-dropzone--filled">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <VisitImagePreview
             src={previewUrl}
-            className="sauna-img-preview"
-            alt="アップロードした写真のプレビュー"
-            onClick={() => previewUrl && openImage(previewUrl)}
+            alt="アップロードした写真"
+            onOpenImage={openImage}
           />
           <div className="image-dropzone-actions">
             <button

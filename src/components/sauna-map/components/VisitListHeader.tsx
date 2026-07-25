@@ -35,7 +35,7 @@ function VisitListHeaderComponent({
             className={`view-mode-btn ${viewMode === "compact" ? "is-active" : ""}`}
             onClick={() => onViewModeChange("compact")}
             title="リスト（コンパクト）表示"
-            aria-label="リスト表示"
+            aria-label="リスト表示に切り替え"
             aria-pressed={viewMode === "compact"}
           >
             <List size={15} aria-hidden="true" /> リスト
@@ -45,7 +45,7 @@ function VisitListHeaderComponent({
             className={`view-mode-btn ${viewMode === "card" ? "is-active" : ""}`}
             onClick={() => onViewModeChange("card")}
             title="カード表示"
-            aria-label="カード表示"
+            aria-label="カード表示に切り替え"
             aria-pressed={viewMode === "card"}
           >
             <LayoutGrid size={15} aria-hidden="true" /> カード

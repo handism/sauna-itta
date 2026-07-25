@@ -105,8 +105,8 @@ function VisitCompactItemComponent({
           />
           {visit.comment && <p className="sauna-card-comment">{visit.comment}</p>}
           <VisitImagePreview
-            image={visit.image}
-            visitName={visit.name}
+            src={thumbSrc}
+            alt={`${visit.name}の写真`}
             onOpenImage={onOpenImage}
           />
           <VisitMetaInfo date={visit.date} visitCount={visitCount} />

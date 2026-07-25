@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
-import { useVisitFilters } from "./useVisitFilters";
+import { describe, it, expect, afterEach } from "vitest";
+import { getInitialFilters, useVisitFilters } from "./useVisitFilters";
 import { SaunaVisit } from "../types";
 
 const mockVisits: SaunaVisit[] = [
@@ -98,5 +98,53 @@ describe("useVisitFilters", () => {
       result.current.setFilters((prev) => ({ ...prev, search: "池袋" }));
     });
     expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["かるまる"]);
+  });
+
+  it("history のみを持つ記録も visitCountDesc で正しく並ぶこと", () => {
+    // visitCount を持たない旧形式は history.length が訪問回数になる
+    const visits: SaunaVisit[] = [
+      { ...mockVisits[0], id: "a", name: "少ない", visitCount: undefined, history: [] },
+      {
+        ...mockVisits[0],
+        id: "b",
+        name: "多い",
+        visitCount: undefined,
+        history: [
+          { date: "2026-01-01", rating: 5 },
+          { date: "2026-02-01", rating: 4 },
+          { date: "2026-03-01", rating: 5 },
+        ],
+      },
+    ];
+
+    const { result } = renderHook(() => useVisitFilters(visits));
+
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, sort: "visitCountDesc" }));
+    });
+
+    expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["多い", "少ない"]);
+  });
+});
+
+describe("getInitialFilters", () => {
+  const originalUrl = window.location.href;
+
+  afterEach(() => {
+    window.history.replaceState({}, "", originalUrl);
+  });
+
+  it("?tag= が無ければ既定のフィルターを返すこと", () => {
+    expect(getInitialFilters().selectedTag).toBe("");
+  });
+
+  it("統計ページからの ?tag= をタグ絞り込みとして読むこと", () => {
+    window.history.replaceState({}, "", "/?tag=" + encodeURIComponent("外気浴最高"));
+
+    const filters = getInitialFilters();
+    expect(filters.selectedTag).toBe("外気浴最高");
+    // 他の条件は既定のまま
+    expect(filters.status).toBe("all");
+    expect(filters.search).toBe("");
   });
 });

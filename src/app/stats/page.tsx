@@ -29,7 +29,7 @@ const VisitCalendar = dynamic(() => import('./components/VisitCalendar').then((m
 });
 
 export default function StatsPage() {
-  const { visits, theme, date, setDate, mounted, stats, visitDates } = useStatsData();
+  const { visits, theme, toggleTheme, date, setDate, mounted, stats, visitDates } = useStatsData();
 
   if (!mounted) {
     return (
@@ -55,7 +55,7 @@ export default function StatsPage() {
   return (
     <div className={`${styles.page} ${theme === 'light' ? 'light-theme' : ''}`}>
       <main className={styles.main}>
-        <StatsHeader />
+        <StatsHeader theme={theme} onToggleTheme={toggleTheme} />
 
         {/*
           記録が 0 件のときは、0 が並ぶサマリーや空のグラフを出さずに
