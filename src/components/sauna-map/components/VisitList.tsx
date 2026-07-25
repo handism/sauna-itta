@@ -17,6 +17,13 @@ import {
 
 const STORAGE_KEY = "sauna_itta_view_mode";
 
+/**
+ * 一度に描画する件数。記録が増えても初期表示が重くならないよう、
+ * リスト末尾が視界に入るたびに CHUNK_SIZE ずつ描画を伸ばす。
+ */
+export const INITIAL_RENDER_COUNT = 40;
+export const CHUNK_SIZE = 40;
+
 export interface VisitListViewProps {
   visits: SaunaVisit[];
   filteredVisits: SaunaVisit[];
@@ -55,6 +62,9 @@ export function VisitListView({
   isMobile,
 }: VisitListViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  // ユーザー操作で伸ばした分の追加件数。実際の描画件数はレンダー中に導出する
+  const [extraCount, setExtraCount] = useState(0);
   const { lightboxSrc, openImage, closeImage } = useImageLightbox();
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window !== "undefined") {
@@ -71,15 +81,47 @@ export function VisitListView({
     }
   };
 
+  // 選択された記録が初期ウィンドウの外にある場合はそこまで描画を伸ばす。
+  // フィルター変更時に extraCount は保持されるが、件数が減れば hasMore が false になり
+  // 番兵も消えるため、描画数は常に filteredVisits の範囲に収まる。
+  const selectedIndex = selectedId
+    ? filteredVisits.findIndex((v) => v.id === selectedId)
+    : -1;
+  const visibleCount = Math.max(
+    INITIAL_RENDER_COUNT + extraCount,
+    selectedIndex + 1
+  );
+  const renderedVisits = filteredVisits.slice(0, visibleCount);
+  const hasMore = filteredVisits.length > renderedVisits.length;
+
   useEffect(() => {
     if (!selectedId || !containerRef.current) return;
     const targetEl = containerRef.current.querySelector<HTMLElement>(
       `[data-visit-id="${selectedId}"]`
     );
-    if (targetEl) {
-      targetEl.scrollIntoView({ behavior: getScrollBehavior(), block: "center" });
-    }
-  }, [selectedId]);
+    // jsdom など scrollIntoView 未実装の環境を考慮して optional call にする
+    targetEl?.scrollIntoView?.({ behavior: getScrollBehavior(), block: "center" });
+  }, [selectedId, visibleCount]);
+
+  // 末尾の番兵が見えたら次のチャンクを描画する
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || typeof IntersectionObserver !== "function") return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setExtraCount((prev) => prev + CHUNK_SIZE);
+        }
+      },
+      // スクロールコンテナは .sidebar-content / .bottom-sheet-content 側なので
+      // root は指定せずビューポート基準で監視する
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [visibleCount, filteredVisits.length]);
 
   return (
     <div className="sauna-list" ref={containerRef}>
@@ -109,7 +151,7 @@ export function VisitListView({
           onStartNewVisit={onStartNewVisit}
         />
       ) : (
-        filteredVisits.map((visit) => {
+        renderedVisits.map((visit) => {
           const isHovered = visit.id === hoveredId;
           const isSelected = visit.id === selectedId;
 
@@ -145,6 +187,18 @@ export function VisitListView({
             />
           );
         })
+      )}
+
+      {hasMore && (
+        <div className="list-load-more" ref={sentinelRef}>
+          <button
+            type="button"
+            className="btn btn-ghost list-load-more-btn"
+            onClick={() => setExtraCount((prev) => prev + CHUNK_SIZE)}
+          >
+            さらに表示（残り {filteredVisits.length - renderedVisits.length} 件）
+          </button>
+        </div>
       )}
 
       <ImageLightbox src={lightboxSrc} onClose={closeImage} />

@@ -439,6 +439,11 @@
 
 .status-tab {
   flex: 1;
+  /* ポインタ操作でも WCAG 2.5.8 の最小サイズ (24px) を確保する */
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   color: var(--foreground);
@@ -704,4 +709,25 @@
   color: #1e293b;
   opacity: 0.95;
   font-weight: 500;
+}
+
+/* タッチ操作時のターゲットサイズ確保 (44px) */
+@media (max-width: 768px) {
+  .status-tab,
+  .bounds-toggle-btn,
+  .view-mode-btn {
+    min-height: 44px;
+  }
+}
+
+/* 増分レンダリングの番兵 兼 フォールバックボタン */
+.list-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 0.75rem;
+}
+
+.list-load-more-btn {
+  min-height: 44px;
+  font-size: 0.82rem;
 }
