@@ -10,7 +10,8 @@ Next.js 16 (App Router) + React Leaflet で構築されており、データは�
 - **インタラクティブなサウナマップ**
   - OpenStreetMap ＆ Leaflet による地図表示
   - マーカーの自動クラスタリング機能（ズーム度合いに応じた集約表示）
-  - 現在地移動、マップ範囲連動フィルタリング
+  - 現在地移動およびマップ上への現在地インジケーター（パルス波紋アニメーション・精度円）表示
+  - マップ範囲連動フィルタリング
 - **充実した訪問記録・編集機能**
   - サウナ情報の登録（訪問済み / 行きたい）
   - Nominatim API を用いた地点・施設名検索（キーワード入力で位置・住所・施設名を自動補完＆マップ移動）
@@ -85,6 +86,7 @@ src/
 │       │   ├── VisitForm.tsx            # 登録/編集フォーム
 │       │   ├── VisitList.tsx            # サウナ一覧
 │       │   ├── SaunaMarkerPopup.tsx     # マーカーポップアップ
+│       │   ├── CurrentLocationMarker.tsx # 現在地マーカーインジケーター
 │       │   ├── MapClusterControl.tsx    # クラスタリング制御
 │       │   ├── MapZoomControl.tsx       # ズームコントロール
 │       │   └── Toast.tsx, etc.
