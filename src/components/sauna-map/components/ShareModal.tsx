@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
 import { RatingStars, WishlistChip } from "./common";
 import { useModalBehavior } from "../hooks/useModalBehavior";
-import { useSaunaUI, useSaunaVisitsData } from "../context";
+import { useSaunaUI, useVisitFiltersContext } from "../context";
 
 export interface ShareModalViewProps {
   isOpen: boolean;
@@ -89,13 +89,13 @@ export function ShareModalView({
 
 export function ShareModal(props: Partial<ShareModalViewProps>) {
   const ui = useSaunaUI();
-  const visitsData = useSaunaVisitsData();
+  const filtersData = useVisitFiltersContext();
 
   return (
     <ShareModalView
       isOpen={props.isOpen ?? ui.isShareViewOpen}
-      stats={props.stats ?? visitsData.stats}
-      filteredVisits={props.filteredVisits ?? visitsData.filteredVisits}
+      stats={props.stats ?? filtersData.stats}
+      filteredVisits={props.filteredVisits ?? filtersData.filteredVisits}
       onClose={props.onClose ?? ui.closeShareView}
     />
   );

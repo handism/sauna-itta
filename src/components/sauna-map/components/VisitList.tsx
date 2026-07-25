@@ -10,7 +10,8 @@ import { VisitListEmpty } from "./VisitListEmpty";
 import { getScrollBehavior } from "../utils/motion";
 import {
   useSaunaUI,
-  useSaunaVisitsData,
+  useVisitsCRUD,
+  useVisitFiltersContext,
   useSaunaMapState,
   useSaunaEditor,
 } from "../context";
@@ -208,19 +209,20 @@ export function VisitListView({
 
 export function VisitList(props: Partial<VisitListViewProps>) {
   const ui = useSaunaUI();
-  const visitsData = useSaunaVisitsData();
+  const crud = useVisitsCRUD();
+  const filtersData = useVisitFiltersContext();
   const mapState = useSaunaMapState();
   const editor = useSaunaEditor();
 
   return (
     <VisitListView
-      visits={props.visits ?? visitsData.visits}
-      filteredVisits={props.filteredVisits ?? visitsData.filteredVisits}
-      filters={props.filters ?? visitsData.filters}
-      setFilters={props.setFilters ?? visitsData.setFilters}
-      isFilterActive={props.isFilterActive ?? visitsData.isFilterActive}
-      activeFilterCount={props.activeFilterCount ?? visitsData.activeFilterCount}
-      onClearFilters={props.onClearFilters ?? visitsData.clearFilters}
+      visits={props.visits ?? crud.visits}
+      filteredVisits={props.filteredVisits ?? filtersData.filteredVisits}
+      filters={props.filters ?? filtersData.filters}
+      setFilters={props.setFilters ?? filtersData.setFilters}
+      isFilterActive={props.isFilterActive ?? filtersData.isFilterActive}
+      activeFilterCount={props.activeFilterCount ?? filtersData.activeFilterCount}
+      onClearFilters={props.onClearFilters ?? filtersData.clearFilters}
       onOpenFilters={props.onOpenFilters ?? ui.openFilterModal}
       onStartNewVisit={props.onStartNewVisit ?? editor.startNewVisit}
       onEdit={props.onEdit ?? mapState.handleEditVisit}

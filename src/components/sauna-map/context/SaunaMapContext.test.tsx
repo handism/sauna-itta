@@ -6,7 +6,8 @@ import {
   useSaunaUI,
   useSaunaUIState,
   useSaunaUIActions,
-  useSaunaVisitsData,
+  useVisitsCRUD,
+  useVisitFiltersContext,
   useSaunaEditor,
   useSaunaEditorState,
   useSaunaEditorActions,
@@ -70,12 +71,37 @@ describe("SaunaMap Contexts", () => {
     expect(result.current.isShareViewOpen).toBe(true);
   });
 
-  it("useSaunaVisitsData が VisitsDataProvider 内で正常に動作すること", () => {
-    const { result } = renderHook(() => useSaunaVisitsData(), { wrapper });
+  it("useVisitsCRUD が VisitsCRUDProvider 内で正常に動作すること", () => {
+    const { result } = renderHook(() => useVisitsCRUD(), { wrapper });
 
     expect(result.current.visits).toBeDefined();
     expect(Array.isArray(result.current.visits)).toBe(true);
+    expect(result.current.importing).toBe(false);
+  });
+
+  it("useVisitFiltersContext が VisitFiltersProvider 内で正常に動作すること", () => {
+    const { result } = renderHook(() => useVisitFiltersContext(), { wrapper });
+
+    expect(Array.isArray(result.current.filteredVisits)).toBe(true);
     expect(result.current.isFilterActive).toBe(false);
+    expect(result.current.activeFilterCount).toBe(0);
+  });
+
+  it("フィルター変更で CRUD 側の Context 値が作り直されないこと", () => {
+    const { result } = renderHook(
+      () => ({ crud: useVisitsCRUD(), filters: useVisitFiltersContext() }),
+      { wrapper },
+    );
+
+    const crudBefore = result.current.crud;
+
+    act(() => {
+      result.current.filters.setFilters((prev) => ({ ...prev, search: "サウナ" }));
+    });
+
+    expect(result.current.filters.isFilterActive).toBe(true);
+    // CRUD 側は同一参照のままであること（束ねるフックを復活させると壊れる）
+    expect(result.current.crud).toBe(crudBefore);
   });
 
   it("useSaunaEditor が EditorProvider 内で正常に動作すること", () => {
@@ -110,12 +136,12 @@ describe("SaunaMap Contexts", () => {
       () => ({
         mapState: useSaunaMapState(),
         editor: useSaunaEditor(),
-        visitsData: useSaunaVisitsData(),
+        crud: useVisitsCRUD(),
       }),
       { wrapper },
     );
 
-    const target = result.current.visitsData.visits[0];
+    const target = result.current.crud.visits[0];
     expect(target).toBeDefined();
 
     act(() => {

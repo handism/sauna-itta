@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useMapViewState } from "../hooks/useMapViewState";
 import { useSaunaUI } from "./UIContext";
-import { useSaunaVisitsData } from "./VisitsDataContext";
+import { useVisitsCRUD } from "./VisitsCRUDContext";
 import { useSaunaEditor } from "./EditorContext";
 import { SheetSnapPosition, SaunaVisit, LatLng, MobileTab } from "../types";
 
@@ -38,7 +38,7 @@ const MapStateContext = createContext<MapStateContextType | null>(null);
 
 export function MapStateProvider({ children }: { children: ReactNode }) {
   const { isMobile } = useSaunaUI();
-  const { visits } = useSaunaVisitsData();
+  const { visits } = useVisitsCRUD();
   const { startEditing, cancelEditing, startCreate } = useSaunaEditor();
 
   const {
