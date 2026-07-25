@@ -90,7 +90,7 @@ export function VisitFormView({
                 setForm((prev) => ({ ...prev, appendHistory: e.target.checked }))
               }
             />
-            新しい訪問記録として追加する（訪問回数+1）
+            <span>新しい訪問記録として追加する（訪問回数+1）</span>
           </label>
           <p className="form-hint">
             チェックを入れると、今回の内容が新しい訪問履歴として保存されます。チェックを外すと前回の記録を修正します。
