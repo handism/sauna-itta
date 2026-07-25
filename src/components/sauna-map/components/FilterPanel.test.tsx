@@ -10,7 +10,7 @@ const defaultFilters: VisitFilters = {
   selectedTag: "",
   selectedArea: "",
   filterByBounds: false,
-  sort: "newest",
+  sort: "recent",
 };
 
 describe("FilterPanel Component", () => {
