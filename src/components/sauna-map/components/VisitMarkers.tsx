@@ -25,7 +25,7 @@ interface MarkerClusterLike {
 
 const clusterIconCache = new Map<number, L.DivIcon>();
 
-const createCustomClusterIcon = (cluster: MarkerClusterLike) => {
+export const createCustomClusterIcon = (cluster: MarkerClusterLike) => {
   const count = cluster.getChildCount();
   const cached = clusterIconCache.get(count);
   if (cached) return cached;
