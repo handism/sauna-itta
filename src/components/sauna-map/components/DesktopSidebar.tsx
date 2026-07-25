@@ -18,7 +18,7 @@ import {
   MoreHorizontal,
   Loader2,
 } from "lucide-react";
-import { useSaunaUI, useSaunaVisitsData, useSaunaEditor } from "../context";
+import { useSaunaUI, useVisitsCRUD, useSaunaEditor } from "../context";
 
 export interface DesktopSidebarViewProps {
   isSidebarExpanded: boolean;
@@ -214,7 +214,7 @@ export function DesktopSidebarView({
 
 export function DesktopSidebar(props: Partial<DesktopSidebarViewProps> & { children: ReactNode }) {
   const ui = useSaunaUI();
-  const visitsData = useSaunaVisitsData();
+  const visitsData = useVisitsCRUD();
   const editor = useSaunaEditor();
 
   const importInputRef = props.importInputRef ?? visitsData.importInputRef;

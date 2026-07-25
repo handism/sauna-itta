@@ -1,47 +1,24 @@
 "use client";
 
-export { useVisitsCRUD } from "./VisitsCRUDContext";
-export { useVisitFiltersContext } from "./VisitFiltersContext";
+import { ReactNode } from "react";
 import { VisitsCRUDProvider } from "./VisitsCRUDContext";
 import { VisitFiltersProvider } from "./VisitFiltersContext";
 
-// 後方互換用に旧 API を提供するラッパーをここで用意する。
-// 既存コードは `useSaunaVisitsData` を期待しているため、CRUD + Filters を組み合わせて返す。
-import { useVisitsCRUD } from "./VisitsCRUDContext";
-import { useVisitFiltersContext } from "./VisitFiltersContext";
+export { useVisitsCRUD, VisitsCRUDProvider } from "./VisitsCRUDContext";
+export { useVisitFiltersContext, VisitFiltersProvider } from "./VisitFiltersContext";
 
-import React from "react";
-
-export function VisitsDataProvider({ children }: { children: React.ReactNode }) {
+/**
+ * 訪問データ関連の Provider をまとめてマウントする。
+ *
+ * 消費側は用途に応じて `useVisitsCRUD`（訪問データ本体・インポート/エクスポート）と
+ * `useVisitFiltersContext`（フィルター・絞り込み結果・統計）を個別に呼ぶこと。
+ * 両者を 1 オブジェクトに束ねるフックを用意すると、CRUD しか使わない画面まで
+ * フィルター変更（検索の 1 文字入力など）のたびに再レンダリングされる。
+ */
+export function VisitsDataProvider({ children }: { children: ReactNode }) {
   return (
     <VisitsCRUDProvider>
       <VisitFiltersProvider>{children}</VisitFiltersProvider>
     </VisitsCRUDProvider>
   );
-}
-
-export function useSaunaVisitsData() {
-  const crud = useVisitsCRUD();
-  const filters = useVisitFiltersContext();
-
-  return {
-    // CRUD
-    visits: crud.visits,
-    addVisit: crud.addVisit,
-    editVisit: crud.editVisit,
-    deleteVisit: crud.deleteVisit,
-    removeHistoryEntry: crud.removeHistoryEntry,
-    exportVisits: crud.exportVisits,
-    handleImportData: crud.handleImportData,
-    importing: crud.importing,
-    importInputRef: crud.importInputRef,
-    // Filters / derived
-    filters: filters.filters,
-    setFilters: filters.setFilters,
-    filteredVisits: filters.filteredVisits,
-    stats: filters.stats,
-    isFilterActive: filters.isFilterActive,
-    activeFilterCount: filters.activeFilterCount,
-    clearFilters: filters.clearFilters,
-  };
 }

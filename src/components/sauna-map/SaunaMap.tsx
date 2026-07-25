@@ -29,7 +29,7 @@ import { getSaunaIcon } from "./components/markerIcon";
 import {
   SaunaMapProvider,
   useSaunaUI,
-  useSaunaVisitsData,
+  useVisitFiltersContext,
   useSaunaEditor,
   useSaunaMapState,
 } from "./context";
@@ -50,7 +50,7 @@ function SaunaMapContent() {
     clearToast,
   } = useSaunaUI();
 
-  const { filteredVisits, isFilterActive } = useSaunaVisitsData();
+  const { filteredVisits, isFilterActive } = useVisitFiltersContext();
 
   const {
     editingId,

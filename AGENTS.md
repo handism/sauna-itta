@@ -23,7 +23,8 @@
 ### 1. 状態管理構造 (`SaunaMapContext`)
 状態管理は巨大な単一ステートを避け、責務ごとの専門 Provider にモジュール分割されています（`src/components/sauna-map/context/` 参照）。コンポーネントやロジックを追加する際は適切な Context / Hook を利用・拡充してください。
 
-- **専用フックを直接使うこと**: 消費側は `useSaunaUI` / `useSaunaVisitsData` / `useSaunaEditor` / `useSaunaMapState` を個別に呼びます。全 Context を束ねる統合フック（旧 `useSaunaMap`）は、どれか 1 つの状態変化で全消費側が再レンダリングされるため復活させないでください。
+- **専用フックを直接使うこと**: 消費側は `useSaunaUI` / `useVisitsCRUD` / `useVisitFiltersContext` / `useSaunaEditor` / `useSaunaMapState` のうち、実際に必要なものだけを個別に呼びます。複数の Context を 1 オブジェクトに束ねるフック（旧 `useSaunaMap` / 旧 `useSaunaVisitsData`）は、どれか 1 つの状態変化で全消費側が再レンダリングされるため復活させないでください。
+- **訪問データとフィルターの分離**: 訪問データ本体・インポート/エクスポートは `useVisitsCRUD`、絞り込み結果・フィルター状態・統計は `useVisitFiltersContext` から取得します。CRUD しか使わない画面（`DesktopSidebar` など）がフィルターを購読すると、検索欄の 1 文字入力ごとに再レンダリングされます。
 - **モバイルのシート位置制御は Context 側に集約**: 編集の開始／終了に伴う `snapPosition` の切り替えは `MapStateContext` の `handleEditVisit` / `handleCancelEditing` が担います。画面コンポーネント側で `startEditing` + `setSnapPosition` を組み合わせて再実装しないでください。
 
 ### 2. ディレクトリ ＆ コンポーネント構造

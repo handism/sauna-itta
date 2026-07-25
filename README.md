@@ -82,10 +82,12 @@ src/
 │       ├── SaunaMap.tsx      # ルートエントリポイント
 │       ├── context/          # 状態管理 (モジュール化された Context)
 │       │   ├── SaunaMapContext.tsx      # Provider の合成と各 Hook の再エクスポート
-│       │   ├── VisitsDataContext.tsx    # 訪問データ CRUD 状態
+│       │   ├── VisitsDataContext.tsx    # 訪問データ系 Provider の合成
+│       │   ├── VisitsCRUDContext.tsx    # 訪問データ本体・インポート/エクスポート
+│       │   ├── VisitFiltersContext.tsx  # フィルター・絞り込み結果・統計
 │       │   ├── EditorContext.tsx        # フォーム・編集状態ステートマシン
 │       │   ├── UIContext.tsx            # モーダル・テーマ・UI状態
-│       │   └── MapStateContext.tsx      # マップ表示・フィルター状態
+│       │   └── MapStateContext.tsx      # マップ表示・選択/ホバー状態
 │       ├── components/       # 分割された UI コンポーネント群
 │       │   ├── DesktopSidebar.tsx       # デスクトップ用サイドバー
 │       │   ├── BottomSheet.tsx          # モバイル用ボトムシート
