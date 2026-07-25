@@ -126,8 +126,9 @@ npm install
 npm run dev      # 開発サーバー起動 (http://localhost:3000)
 npm run build    # 本番ビルド (./out 配下へ静的エクスポート)
 npm run start    # ビルド結果の起動確認
-npm run lint     # ESLint による静的解析
-npm run test     # Vitest による単体テスト・フックテスト実行
+npm run lint      # ESLint による静的解析
+npm run typecheck # tsc --noEmit による型検査（テストファイルを含む）
+npm run test      # Vitest による単体テスト・フックテスト実行
 ```
 
 ---

@@ -29,7 +29,8 @@ const VisitCalendar = dynamic(() => import('./components/VisitCalendar').then((m
 });
 
 export default function StatsPage() {
-  const { visits, theme, toggleTheme, date, setDate, mounted, stats, visitDates } = useStatsData();
+  const { visits, theme, toggleTheme, date, setDate, mounted, stats, visitedEntries, visitDates } =
+    useStatsData();
 
   if (!mounted) {
     return (
@@ -87,7 +88,7 @@ export default function StatsPage() {
                     <h2>月別訪問数</h2>
                     <span className={styles.cardSubtitle}>過去の訪問ペース推移</span>
                   </div>
-                  <MonthlyVisitsChart visits={visits} theme={theme} />
+                  <MonthlyVisitsChart entries={visitedEntries} theme={theme} />
                 </section>
 
                 <section className={`${styles.glassCard} ${styles.chartCard}`}>
@@ -95,7 +96,7 @@ export default function StatsPage() {
                     <h2>満足度分布</h2>
                     <span className={styles.cardSubtitle}>ととのい度評価の内訳</span>
                   </div>
-                  <RatingDistributionChart visits={visits} theme={theme} />
+                  <RatingDistributionChart entries={visitedEntries} theme={theme} />
                 </section>
               </div>
             </div>

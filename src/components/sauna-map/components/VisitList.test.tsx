@@ -25,13 +25,15 @@ const makeVisit = (index: number): SaunaVisit => ({
 });
 
 const defaultFilters: VisitFilters = {
-  keyword: "",
+  search: "",
   status: "all",
   minRating: 0,
-  tags: [],
+  sort: "recent",
+  selectedTag: "",
+  selectedArea: "",
   filterByBounds: false,
-  sortBy: "date-desc",
-} as VisitFilters;
+  mapBounds: null,
+};
 
 describe("VisitListView の増分レンダリング", () => {
   const baseProps = {

@@ -3,25 +3,23 @@
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { BarChart3 } from 'lucide-react';
-import { SaunaVisit } from '@/components/sauna-map/types';
-import { flattenVisitHistory } from '@/components/sauna-map/utils';
+import { FlatVisitHistoryEntry } from '@/components/sauna-map/utils';
 import { ChartTheme, getChartColors, getTooltipStyle } from './chartTheme';
 import { ChartEmptyState } from './ChartEmptyState';
 
 interface MonthlyVisitsChartProps {
-  visits: SaunaVisit[];
+  /** 訪問済みの履歴エントリ。平坦化と status の絞り込みは useStatsData で済ませてある */
+  entries: FlatVisitHistoryEntry[];
   theme: ChartTheme;
 }
 
-export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChartProps) {
+export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChartProps) {
   const data = useMemo(() => {
     const monthlyCounts: { [key: string]: number } = {};
 
-    flattenVisitHistory(visits).forEach((entry) => {
-      if (entry.status === "visited") {
-        const month = entry.date.substring(0, 7); // YYYY-MM
-        monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
-      }
+    entries.forEach((entry) => {
+      const month = entry.date.substring(0, 7); // YYYY-MM
+      monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
     });
 
     const chartData = Object.keys(monthlyCounts).map(month => ({
@@ -31,7 +29,7 @@ export default function MonthlyVisitsChart({ visits, theme }: MonthlyVisitsChart
 
     chartData.sort((a, b) => a.month.localeCompare(b.month));
     return chartData;
-  }, [visits]);
+  }, [entries]);
 
   const yearBoundaries = useMemo(() => {
     const seenYears = new Set<string>();

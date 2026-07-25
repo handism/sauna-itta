@@ -3,13 +3,13 @@
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Star, PieChart as PieChartIcon } from 'lucide-react';
-import { SaunaVisit } from '@/components/sauna-map/types';
-import { flattenVisitHistory } from '@/components/sauna-map/utils';
+import { FlatVisitHistoryEntry } from '@/components/sauna-map/utils';
 import { ChartTheme, getChartColors, getTooltipStyle } from './chartTheme';
 import { ChartEmptyState } from './ChartEmptyState';
 
 interface RatingDistributionChartProps {
-  visits: SaunaVisit[];
+  /** 訪問済みの履歴エントリ。平坦化と status の絞り込みは useStatsData で済ませてある */
+  entries: FlatVisitHistoryEntry[];
   theme: ChartTheme;
 }
 
@@ -29,14 +29,14 @@ const RATING_LABELS: { [key: number]: string } = {
   1: '★1 (うーん)',
 };
 
-export default function RatingDistributionChart({ visits, theme }: RatingDistributionChartProps) {
+export default function RatingDistributionChart({ entries, theme }: RatingDistributionChartProps) {
   const { data, avgRating, totalRated } = useMemo(() => {
     const ratingCounts: { [key: number]: number } = {};
     let totalScore = 0;
     let totalCount = 0;
 
-    flattenVisitHistory(visits).forEach((entry) => {
-      if (entry.status === "visited" && entry.rating && entry.rating > 0) {
+    entries.forEach((entry) => {
+      if (entry.rating && entry.rating > 0) {
         const rating = entry.rating;
         ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
         totalScore += rating;
@@ -55,7 +55,7 @@ export default function RatingDistributionChart({ visits, theme }: RatingDistrib
     const avg = totalCount > 0 ? (totalScore / totalCount).toFixed(1) : "0.0";
 
     return { data: chartData, avgRating: avg, totalRated: totalCount };
-  }, [visits]);
+  }, [entries]);
 
   const { text: textColor } = getChartColors(theme);
 

@@ -110,9 +110,9 @@ describe("useVisitFilters", () => {
         name: "多い",
         visitCount: undefined,
         history: [
-          { date: "2026-01-01", rating: 5 },
-          { date: "2026-02-01", rating: 4 },
-          { date: "2026-03-01", rating: 5 },
+          { date: "2026-01-01", comment: "", rating: 5 },
+          { date: "2026-02-01", comment: "", rating: 4 },
+          { date: "2026-03-01", comment: "", rating: 5 },
         ],
       },
     ];

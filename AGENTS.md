@@ -7,7 +7,7 @@
 ## 🚨 基本ルール (MANDATORY RULES)
 
 - **言語**: 全てのやりとり、提案、ドキュメント、コードコメント、Implementation Plan、Walkthrough、コミットメッセージは**必ず日本語**で出力してください。
-- **検証の徹底**: コードや設定を変更した場合は、必ず `npm run test` および `npm run lint` / `npm run build` を実行してパスしたことを確認してください。
+- **検証の徹底**: コードや設定を変更した場合は、必ず `npm run test` および `npm run lint` / `npm run typecheck` / `npm run build` を実行してパスしたことを確認してください。特に `npm run typecheck` は省略しないこと（Vitest は型検査をせず、`next build` もページから到達しない `*.test.*` を検査しないため、テストファイルの型崩れはこのコマンドでしか検出できません）。
 - **ドキュメントの維持・最新化**: 新機能の追加、仕様変更、アーキテクチャの更新、開発スクリプトの変更等を行った場合は、必ず `AGENTS.md`（および連動する `CLAUDE.md`）と `README.md` を同時に更新し、常にプロジェクトドキュメントを最新の状態に維持してください。
 
 ---
@@ -38,6 +38,7 @@
 - **タグ集計**: タグの出現回数は `utils/visitHistory.ts` の `countTags()` に集約しています（`getPopularTags()` はその薄いラッパー）。コンポーネント内で `visit.tags` を数え直さないこと。
 - **写真プレビュー**: 写真の拡大は必ず `components/common.tsx` の `VisitImagePreview` 経由にすること（素の `img` に `onClick` を付けるとキーボードから開けません）。同コンポーネントは sanitize 済みの `src` を受け取るため、`sanitizeImageUrl()` の呼び出しは各コンポーネントで 1 レンダーにつき 1 回だけにします。
 - **グラフ**: Recharts の配色・ツールチップは `components/charts/chartTheme.ts` の `getChartColors()` / `getTooltipStyle()` を、空データ表示は `ChartEmptyState` を使うこと。チャート側でテーマ別の色分岐を直書きしないでください。
+- **統計ページの履歴平坦化は 1 回だけ**: 訪問履歴の平坦化（`flattenVisitHistory()`）と `status === "visited"` の絞り込みは `useStatsData` の `visitedEntries` に集約しています。グラフやカレンダーは `visits` ではなく `FlatVisitHistoryEntry[]` を props で受け取ること。コンポーネントごとに `flattenVisitHistory(visits)` を呼ぶと、同じ走査を記録件数 × グラフ数だけ繰り返します。
 
 ### 3. CSS ＆ スタイリング
 - Z-Index や共通カラー変数等のレイアウト値は `styles/base.css` 内の CSS デザイントークンを必ず参照・利用してください。

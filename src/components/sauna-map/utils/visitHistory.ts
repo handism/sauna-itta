@@ -24,11 +24,18 @@ export function getVisitCount(visit: SaunaVisit): number {
   return Math.max(1, visit.visitCount ?? 1, historyCount);
 }
 
-export function flattenVisitHistory(
-  visits: SaunaVisit[],
-): Array<VisitHistoryEntry & { visitId: string; status: "visited" | "wishlist" }> {
-  const entries: Array<VisitHistoryEntry & { visitId: string; status: "visited" | "wishlist" }> =
-    [];
+/**
+ * 訪問記録を 1 件ずつに平坦化した履歴エントリ。
+ * 統計ページでは `useStatsData` が一度だけ算出し、各グラフへ渡す
+ * （グラフごとに flattenVisitHistory() を呼ぶと同じ走査を何度も繰り返すため）。
+ */
+export type FlatVisitHistoryEntry = VisitHistoryEntry & {
+  visitId: string;
+  status: "visited" | "wishlist";
+};
+
+export function flattenVisitHistory(visits: SaunaVisit[]): FlatVisitHistoryEntry[] {
+  const entries: FlatVisitHistoryEntry[] = [];
 
   for (const visit of visits) {
     const status = visit.status ?? "visited";
