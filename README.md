@@ -89,6 +89,7 @@ src/
 │       │   ├── CurrentLocationMarker.tsx # 現在地マーカーインジケーター
 │       │   ├── MapClusterControl.tsx    # クラスタリング制御
 │       │   ├── MapZoomControl.tsx       # ズームコントロール
+│       │   ├── FilterPanel.tsx          # インライン詳細フィルターパネル
 │       │   └── Toast.tsx, etc.
 │       ├── hooks/            # ドメイン・UIのカスタムフック群
 │       ├── types/            # 型定義 (domain.ts / ui.ts)

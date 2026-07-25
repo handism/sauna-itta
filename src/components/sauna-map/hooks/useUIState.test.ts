@@ -12,24 +12,22 @@ describe("useUIState", () => {
     expect(result.current.isMobileMenuOpen).toBe(false);
   });
 
-  it("should open share view and close other modals", () => {
+  it("should toggle and control filter panel", () => {
     const { result } = renderHook(() => useUIState());
 
-    act(() => {
-      result.current.openShareView();
-    });
-
-    expect(result.current.activeModal).toBe("share");
-    expect(result.current.isShareViewOpen).toBe(true);
-    expect(result.current.isFilterModalOpen).toBe(false);
+    expect(result.current.isFilterPanelOpen).toBe(false);
 
     act(() => {
-      result.current.openFilterModal();
+      result.current.toggleFilterPanel();
     });
 
-    expect(result.current.activeModal).toBe("filter");
-    expect(result.current.isShareViewOpen).toBe(false);
-    expect(result.current.isFilterModalOpen).toBe(true);
+    expect(result.current.isFilterPanelOpen).toBe(true);
+
+    act(() => {
+      result.current.closeFilterPanel();
+    });
+
+    expect(result.current.isFilterPanelOpen).toBe(false);
   });
 
   it("should close modal via closeModal", () => {

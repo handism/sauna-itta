@@ -40,7 +40,7 @@ npm run test     # Vitest による全テスト実行 (100+ テストケース)
 
 - **`VisitsDataContext`** (`useVisitsData`): `SaunaVisit[]` の CRUD 操作、`localStorage` 永続化
 - **`EditorContext`** (`useEditorState`): 登録/編集フォームのモード・入力状態 (`useReducer`)
-- **`UIContext`** (`useUIState`): モーダル開閉、テーマ (`dark`/`light`)、トースト通知、削除確認
+- **`UIContext`** (`useUIState`): モーダル・インラインパネル開閉、テーマ (`dark`/`light`)、トースト通知、削除確認
 - **`MapStateContext`** (`useMapState`): マップの座標・ズーム度、フィルター（検索、タグ、ステータス、満足度）
 
 ### 2. ディレクトリ ＆ コンポーネント構造
