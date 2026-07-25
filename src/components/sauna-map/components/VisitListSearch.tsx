@@ -2,6 +2,7 @@ import { Dispatch, SetStateAction, memo } from "react";
 import { Search, X } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { QuickFilterChips } from "./QuickFilterChips";
+import { SortSelect } from "./SortSelect";
 
 interface VisitListSearchProps {
   filters: VisitFilters;
@@ -75,22 +76,12 @@ function VisitListSearchComponent({
             イキタイ
           </button>
         </div>
-        <select
-          className="quick-sort-select"
-          aria-label="並び順"
-          title="並び順"
+        <SortSelect
           value={filters.sort}
-          onChange={(e) =>
-            setFilters((prev) => ({ ...prev, sort: e.target.value as VisitFilters["sort"] }))
+          onChange={(newSort) =>
+            setFilters((prev) => ({ ...prev, sort: newSort }))
           }
-        >
-          <option value="recent">📅 新しい順</option>
-          <option value="oldest">📅 古い順</option>
-          <option value="ratingDesc">⭐ 評価が高い順</option>
-          <option value="ratingAsc">⭐ 評価が低い順</option>
-          <option value="visitCountDesc">🔥 訪問回数が多い順</option>
-          <option value="nameAsc">🔤 名前順 (あ〜ん)</option>
-        </select>
+        />
       </div>
 
       <QuickFilterChips
