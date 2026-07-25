@@ -26,9 +26,9 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
   });
 
   describe("VisitCardItem Accessibility", () => {
-    it("renders with role=button, tabIndex=0, aria-selected and handles Enter/Space keys", () => {
+    it("見出し内のネイティブボタンで選択でき、カード自体は role=button にしないこと", () => {
       const handleSelect = vi.fn();
-      render(
+      const { container } = render(
         <VisitCardItem
           visit={mockVisit}
           isHovered={false}
@@ -40,18 +40,18 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
         />
       );
 
-      const card = screen.getByRole("button", { name: "天空サウナを選択" });
-      expect(card).toBeInTheDocument();
-      expect(card).toHaveAttribute("tabIndex", "0");
-      expect(card).toHaveAttribute("aria-pressed", "false");
+      // 対話要素の入れ子を避けるため、カード本体は role="button" を持たない
+      expect(container.querySelector(".sauna-card")).not.toHaveAttribute("role");
 
-      // Enter key
-      fireEvent.keyDown(card, { key: "Enter" });
+      const selectBtn = screen.getByRole("button", { name: "天空サウナ" });
+      expect(selectBtn.tagName).toBe("BUTTON");
+      expect(selectBtn).toHaveAttribute("aria-pressed", "false");
+      // ネイティブ button なので tabindex を付けなくてもフォーカスできる
+      expect(selectBtn).not.toHaveAttribute("tabindex");
+      expect(selectBtn.closest("h3")).not.toBeNull();
+
+      fireEvent.click(selectBtn);
       expect(handleSelect).toHaveBeenCalledWith(mockVisit);
-
-      // Space key
-      fireEvent.keyDown(card, { key: " " });
-      expect(handleSelect).toHaveBeenCalledTimes(2);
     });
 
     it("handles image preview button keyboard focus and click", () => {
@@ -77,27 +77,37 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
   });
 
   describe("VisitCompactItem Accessibility", () => {
-    it("renders compact header with role=button, tabIndex=0, aria-expanded and handles keypress", () => {
+    it("開閉トグルが見出し内のネイティブボタンで、編集ボタンと入れ子にならないこと", () => {
       const handleSelect = vi.fn();
+      const handleEdit = vi.fn();
       render(
         <VisitCompactItem
           visit={mockVisit}
           isHovered={false}
           isSelected={false}
           onSelectVisit={handleSelect}
-          onEdit={vi.fn()}
+          onEdit={handleEdit}
           setFilters={vi.fn()}
           onOpenImage={vi.fn()}
         />
       );
 
-      const header = screen.getByRole("button", { name: "天空サウナの情報を展開する" });
-      expect(header).toBeInTheDocument();
-      expect(header).toHaveAttribute("tabIndex", "0");
-      expect(header).toHaveAttribute("aria-expanded", "false");
+      const toggle = screen.getByRole("button", { name: "天空サウナの情報を展開する" });
+      expect(toggle.tagName).toBe("BUTTON");
+      expect(toggle).toHaveAttribute("aria-expanded", "false");
+      // ネイティブ button なので tabindex を付けなくてもフォーカスできる
+      expect(toggle).not.toHaveAttribute("tabindex");
+      expect(toggle.closest("h3")).not.toBeNull();
 
-      fireEvent.keyDown(header, { key: "Enter" });
+      const editBtn = screen.getByRole("button", { name: "天空サウナの記録を編集" });
+      // ボタンの入れ子は ARIA 上不正なため、必ず兄弟要素であること
+      expect(toggle.contains(editBtn)).toBe(false);
+
+      fireEvent.click(toggle);
       expect(handleSelect).toHaveBeenCalledWith(mockVisit);
+
+      fireEvent.click(editBtn);
+      expect(handleEdit).toHaveBeenCalledWith(mockVisit);
     });
   });
 });

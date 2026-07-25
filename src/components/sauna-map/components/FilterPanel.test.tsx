@@ -85,6 +85,28 @@ describe("FilterPanel Component", () => {
     expect(setFilters).toHaveBeenCalled();
   });
 
+  it("最低満足度がラベルから参照でき、表示エリアがグループとして公開されること", () => {
+    render(
+      <FilterPanel
+        isOpen={true}
+        filters={defaultFilters}
+        setFilters={vi.fn()}
+        isFilterActive={false}
+        onClearFilters={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+
+    expect(screen.getByLabelText("最低満足度")).toBe(screen.getByRole("combobox"));
+    expect(screen.getByRole("group", { name: "表示エリア" })).toBeDefined();
+    expect(
+      screen
+        .getByText(/地図の表示エリア内のみ表示/i)
+        .closest("button")
+        ?.getAttribute("aria-pressed")
+    ).toBe("false");
+  });
+
   it("閉じるボタンを押すと onClose が呼出されること", () => {
     const onClose = vi.fn();
     render(

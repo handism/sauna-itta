@@ -40,8 +40,11 @@ export function FilterPanel({
 
       <div className="filters-panel-body">
         <div className="form-group">
-          <label className="filters-label">最低満足度</label>
+          <label className="filters-label" htmlFor="filter-min-rating">
+            最低満足度
+          </label>
           <select
+            id="filter-min-rating"
             className="input select-input"
             value={filters.minRating}
             onChange={(e) =>
@@ -61,19 +64,25 @@ export function FilterPanel({
         </div>
 
         <div className="form-group">
-          <label className="filters-label">表示エリア</label>
-          <button
-            type="button"
-            className={`btn bounds-toggle-btn bounds-toggle-btn--full ${filters.filterByBounds ? "is-active" : ""}`}
-            onClick={() =>
-              setFilters((prev) => ({
-                ...prev,
-                filterByBounds: !prev.filterByBounds,
-              }))
-            }
-          >
-            <Map size={15} /> 地図の表示エリア内のみ表示
-          </button>
+          {/* 対象がボタンのため label ではなくグループラベルとして関連付ける */}
+          <span className="filters-label form-group-label" id="filter-bounds-label">
+            表示エリア
+          </span>
+          <div role="group" aria-labelledby="filter-bounds-label">
+            <button
+              type="button"
+              className={`btn bounds-toggle-btn bounds-toggle-btn--full ${filters.filterByBounds ? "is-active" : ""}`}
+              aria-pressed={filters.filterByBounds}
+              onClick={() =>
+                setFilters((prev) => ({
+                  ...prev,
+                  filterByBounds: !prev.filterByBounds,
+                }))
+              }
+            >
+              <Map size={15} aria-hidden="true" /> 地図の表示エリア内のみ表示
+            </button>
+          </div>
         </div>
       </div>
 
