@@ -75,6 +75,6 @@ describe("VisitListEmpty", () => {
       />
     );
 
-    expect(screen.getByText(/現在の地図エリア内に該当するサウナ/)).toBeInTheDocument();
+    expect(screen.getByText(/現在の地図エリア内には見つかりませんでした/)).toBeInTheDocument();
   });
 });

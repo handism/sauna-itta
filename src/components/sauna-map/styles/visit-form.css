@@ -260,18 +260,18 @@ input[type="date"].input {
 }
 
 .btn-danger {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.28);
+  background: color-mix(in srgb, var(--error) 12%, transparent);
+  color: var(--error-text);
+  border-color: color-mix(in srgb, var(--error) 28%, transparent);
   backdrop-filter: var(--backdrop-blur-sm);
   -webkit-backdrop-filter: var(--backdrop-blur-sm);
 }
 
 .btn-danger:hover:not(:disabled) {
-  background: rgba(239, 68, 68, 0.22);
-  border-color: rgba(239, 68, 68, 0.45);
-  color: #ef4444;
-  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--error) 22%, transparent);
+  border-color: color-mix(in srgb, var(--error) 45%, transparent);
+  color: var(--error-text);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--error) 20%, transparent);
   transform: translateY(-1px);
 }
 
@@ -299,6 +299,11 @@ input[type="date"].input {
 
 .segmented-btn--wishlist.is-active {
   background: var(--accent-wishlist);
+  /*
+   * --foreground を継承すると、ダークでは白文字 on 緑で約 2.5:1 しか出ない。
+   * --accent-wishlist は両テーマ共通なので、暗色を固定して約 5.9:1 を確保する。
+   */
+  color: #04241a;
 }
 
 .rating-row {
@@ -355,6 +360,16 @@ input[type="date"].input {
   .input {
     padding: 0.75rem 1rem;
     font-size: 16px;
+  }
+
+  .preset-tag-chip,
+  .btn-quick-date {
+    min-height: 44px;
+  }
+
+  /* .btn-sm は 38px 固定の指定を持つため !important 側に合わせる */
+  .btn-sm {
+    min-height: 44px !important;
   }
 }
 
@@ -510,7 +525,7 @@ input[type="date"].input {
   padding: 0.75rem 1rem;
   font-size: 0.82rem;
   line-height: 1.5;
-  color: var(--error);
+  color: var(--error-text);
 }
 
 .location-search-error svg {

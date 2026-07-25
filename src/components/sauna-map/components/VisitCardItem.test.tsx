@@ -68,7 +68,7 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
         />
       );
 
-      const imgBtn = screen.getByRole("button", { name: "天空サウナの写真拡大表示" });
+      const imgBtn = screen.getByRole("button", { name: "天空サウナの写真を拡大表示" });
       expect(imgBtn).toBeInTheDocument();
 
       fireEvent.click(imgBtn);

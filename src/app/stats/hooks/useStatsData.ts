@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SaunaVisit } from "@/components/sauna-map/types";
 import {
   getInitialTheme,
@@ -6,6 +6,7 @@ import {
   getInitialVisits,
   calculateStats,
   applyThemeClass,
+  saveTheme,
 } from "@/components/sauna-map/utils";
 
 export function useStatsData() {
@@ -38,6 +39,15 @@ export function useStatsData() {
     applyThemeClass(theme);
   }, [theme, mounted]);
 
+  // 統計ページから直接開いた場合でもテーマを切り替えられるようにする
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      saveTheme(next);
+      return next;
+    });
+  }, []);
+
   const stats = useMemo(() => calculateStats(visits), [visits]);
 
   const visitDates = useMemo(() => {
@@ -59,5 +69,5 @@ export function useStatsData() {
     return dates;
   }, [visits]);
 
-  return { visits, theme, date, setDate, mounted, stats, visitDates };
+  return { visits, theme, toggleTheme, date, setDate, mounted, stats, visitDates };
 }

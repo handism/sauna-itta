@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { calculateStats } from "../utils";
+import { calculateStats, getVisitCount } from "../utils";
 import { SaunaVisit, VisitFilters } from "../types";
 
 const DEFAULT_FILTERS: VisitFilters = {
@@ -13,8 +13,21 @@ const DEFAULT_FILTERS: VisitFilters = {
   mapBounds: null,
 };
 
+/**
+ * 統計ページのタグから遷移してきた場合 (?tag=...) は、その絞り込みを適用した状態で開く。
+ * 地図は ssr: false で描画されるため、初期値の算出で window を参照して問題ない。
+ */
+export function getInitialFilters(): VisitFilters {
+  if (typeof window === "undefined") {
+    return DEFAULT_FILTERS;
+  }
+
+  const tag = new URLSearchParams(window.location.search).get("tag");
+  return tag ? { ...DEFAULT_FILTERS, selectedTag: tag } : DEFAULT_FILTERS;
+}
+
 export function useVisitFilters(visits: SaunaVisit[]) {
-  const [filters, setFilters] = useState<VisitFilters>(DEFAULT_FILTERS);
+  const [filters, setFilters] = useState<VisitFilters>(getInitialFilters);
 
   const filteredVisits = useMemo(() => {
     const keyword = filters.search.trim().toLowerCase();
@@ -65,7 +78,8 @@ export function useVisitFilters(visits: SaunaVisit[]) {
         case "ratingAsc":
           return (a.rating ?? 0) - (b.rating ?? 0) || b.date.localeCompare(a.date);
         case "visitCountDesc":
-          return (b.visitCount ?? 1) - (a.visitCount ?? 1) || b.date.localeCompare(a.date);
+          // history.length と visitCount の両方を考慮する必要があるため getVisitCount() を使う
+          return getVisitCount(b) - getVisitCount(a) || b.date.localeCompare(a.date);
         case "nameAsc":
           return a.name.localeCompare(b.name, "ja");
         case "recent":

@@ -26,6 +26,7 @@
 - **専用フックを直接使うこと**: 消費側は `useSaunaUI` / `useVisitsCRUD` / `useVisitFiltersContext` / `useSaunaEditor` / `useSaunaMapState` のうち、実際に必要なものだけを個別に呼びます。複数の Context を 1 オブジェクトに束ねるフック（旧 `useSaunaMap` / 旧 `useSaunaVisitsData`）は、どれか 1 つの状態変化で全消費側が再レンダリングされるため復活させないでください。
 - **Provider は `SaunaMapContext.tsx` に一本化**: `SaunaMapProvider` が `UIProvider` → `VisitsCRUDProvider` → `VisitFiltersProvider` → `EditorProvider` → `MapStateProvider` を直接入れ子にします。複数 Provider をまとめるだけの中間ファイルは作らないでください（旧 `VisitsDataContext.tsx` は削除済み）。
 - **訪問データとフィルターの分離**: 訪問データ本体・インポート/エクスポートは `useVisitsCRUD`、絞り込み結果・フィルター状態・統計は `useVisitFiltersContext` から取得します。CRUD しか使わない画面（`DesktopSidebar` など）がフィルターを購読すると、検索欄の 1 文字入力ごとに再レンダリングされます。
+- **タグ絞り込みの初期値は URL から**: 統計ページのタグクラウドは `/?tag=...` で地図へ遷移し、`useVisitFilters` の `getInitialFilters()` がこれを `selectedTag` の初期値として読みます。地図は `ssr: false` で描画されるため初期値算出で `window` を参照して構いません。
 - **モバイルのシート位置制御は Context 側に集約**: 編集の開始／終了に伴う `snapPosition` の切り替えは `MapStateContext` の `handleEditVisit` / `handleCancelEditing` が担います。画面コンポーネント側で `startEditing` + `setSnapPosition` を組み合わせて再実装しないでください。
 
 ### 2. ディレクトリ ＆ コンポーネント構造
@@ -35,7 +36,7 @@
 - **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` に抽出し、単体テストを記述すること。
 - **訪問回数の算出**: 訪問回数は必ず `utils/visitHistory.ts` の `getVisitCount()` を使うこと（`history.length` と `visitCount` の両方を考慮します）。地図側と統計ページで別々に導出すると、旧形式データで表示が食い違います。
 - **タグ集計**: タグの出現回数は `utils/visitHistory.ts` の `countTags()` に集約しています（`getPopularTags()` はその薄いラッパー）。コンポーネント内で `visit.tags` を数え直さないこと。
-- **写真プレビュー**: 訪問記録の写真ボタンは `components/common.tsx` の `VisitImagePreview` を使うこと。`sanitizeImageUrl()` は 1 レンダーにつき 1 回だけ呼びます（同一レンダー内で複数回呼ばない）。
+- **写真プレビュー**: 写真の拡大は必ず `components/common.tsx` の `VisitImagePreview` 経由にすること（素の `img` に `onClick` を付けるとキーボードから開けません）。同コンポーネントは sanitize 済みの `src` を受け取るため、`sanitizeImageUrl()` の呼び出しは各コンポーネントで 1 レンダーにつき 1 回だけにします。
 - **グラフ**: Recharts の配色・ツールチップは `components/charts/chartTheme.ts` の `getChartColors()` / `getTooltipStyle()` を、空データ表示は `ChartEmptyState` を使うこと。チャート側でテーマ別の色分岐を直書きしないでください。
 
 ### 3. CSS ＆ スタイリング
@@ -46,9 +47,10 @@
 - **色トークンは `:root` と `.light-theme` の両方に定義すること**: 片方だけに定義すると、ダーク前提の濃い色がライトテーマへそのまま漏れます（`--secondary` の濃紺がライトのサイドバーに乗る、`--star-color` が白地で 1.8:1 になる等）。意図的に共有する場合は `styles/tokens.test.ts` の `SHARED_ON_PURPOSE` に理由付きで追記します。グラデーションの 2 色目のようなペアの色も直書きせずトークン化すること（`--accent-water-deep` / `--accent-wishlist-deep`）。
 - **影は `--shadow-*` トークンを使うこと**: `box-shadow` に `rgba(0, 0, 0, ...)` を直書きすると、ライトテーマで明るい背景に濃い黒の影が落ちます。面の浮き上がりは `--shadow-sm` → `--shadow-md` → `--shadow-lg` → `--shadow-xl`、画面下端からせり上がる面（ボトムシート等）は `--shadow-up` を使います。**地図上のマーカー・クラスタだけは `--shadow-marker-sm` / `--shadow-marker` / `--shadow-marker-lifted`** を使うこと（これらは両テーマ共通です。ライトで弱めると地図タイルに溶けて位置が読めなくなります）。`--primary-glow` などの発光は影トークンの後ろに並べて追加します。
 - **クラス名の綴り**: CSS のクラス名がコンポーネント側に存在するかも `styles/tokens.test.ts` が検査します（`mobile-nav-icon-add` と `mobile-nav-icon--add` のような綴り違いは誰もエラーにしてくれず、スタイルが当たらないまま放置されるため）。テンプレートリテラルで修飾子を組み立てる場合は、同テストの `IGNORED_PREFIXES` に追記してください。
+- **要素セレクタで文字色を一括指定しないこと**: 既定の文字色は `html`/`body` の `color` から継承させます。`span` / `div` にまで色を固定すると、色付きの面の中の子要素が親の色を継承できなくなり、「button の中身は span で構成する」方針と衝突します（`base.css` 末尾のコメント参照）。
 - **トグルの活性クラス**は `is-active` に統一しています（`--active` 系の BEM 修飾子を新規に増やさないこと）。地図上のコントロールは `MapControlButton` の `active` prop に任せると `is-active` と `aria-pressed` が同時に付きます。
 - 上記の CSS 規約は `styles/tokens.test.ts` が静的検査しています。意図的な例外を追加する場合は、同テストの許可リストに理由付きで追記してください。
-- **タッチターゲット**: 操作要素は最低 24px、モバイル（`max-width: 768px`）では 44px 以上を確保してください。リスト系の 44px 保証は `visit-list.css` 末尾のメディアクエリに集約しています。新しい操作要素を追加したら、既定サイズが小さいもの（アイコンのみのボタン、チップ等）を必ずこのブロックに追記すること。
+- **タッチターゲット**: 操作要素は最低 24px、モバイル（`max-width: 768px`）では 44px 以上を確保してください。44px 保証は各 CSS ファイル末尾の `@media (max-width: 768px)` ブロックにまとまっています（`visit-list.css` = 検索・並び順・チップ、`visit-form.css` = 入力とボタン、`visit-card.css` = カードとタグ、`modal.css` = モーダルとトースト、統計ページは `stats.module.css` の `max-width: 720px`）。新しい操作要素を追加したら、既定サイズが小さいもの（アイコンのみのボタン、チップ等）を対応するブロックへ必ず追記すること。
 - **フォント**: `--font-main` は `layout.tsx` の `next/font` (Outfit) が注入する `--font-outfit` を参照します。CSS からの Web フォント `@import` は追加しないでください（PWA のオフライン動作を壊します）。
 
 ### 4. アクセシビリティ ＆ モーション

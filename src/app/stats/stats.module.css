@@ -109,6 +109,33 @@
   -webkit-text-fill-color: transparent;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.themeToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 999px;
+  color: var(--foreground);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.themeToggle:hover {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  transform: translateY(-1px);
+}
+
 .backLink {
   display: inline-flex;
   align-items: center;
@@ -590,6 +617,13 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--foreground);
   transition: all 0.2s ease;
+  /* 地図側のタグ絞り込みへのリンクなので、下線は消して見た目をピルのまま保つ */
+  text-decoration: none;
+}
+
+.tagPill:hover {
+  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+  background: var(--overlay-hover);
 }
 
 :global(.light-theme) .tagPill {
@@ -693,6 +727,16 @@
 
 /* Mobile responsive styles */
 @media (max-width: 720px) {
+  /* タップ操作のターゲットサイズを確保する */
+  .tagPill {
+    min-height: 44px;
+  }
+
+  .themeToggle {
+    width: 44px;
+    height: 44px;
+  }
+
   .main {
     padding: 1.25rem 1rem 3.5rem;
   }

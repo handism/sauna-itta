@@ -234,7 +234,7 @@
 }
 
 .image-remove-btn {
-  color: var(--error);
+  color: var(--error-text);
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -428,8 +428,8 @@
 
 .history-delete-btn:hover {
   opacity: 1;
-  border-color: color-mix(in srgb, #ef4444 55%, var(--glass-border));
-  color: #ef4444;
+  border-color: color-mix(in srgb, var(--error) 55%, var(--glass-border));
+  color: var(--error-text);
 }
 
 .history-rating {
@@ -563,5 +563,13 @@
 
   .segmented .btn {
     min-height: 44px;
+  }
+
+  /* タグは既定がインラインの小チップなので、当たり判定を明示的に広げる */
+  .sauna-tag-btn {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.35rem 0.7rem;
   }
 }

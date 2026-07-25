@@ -96,6 +96,19 @@ describe("CSS デザイントークンの規約", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("エラー色は直書きせず --error / --error-text を使うこと", () => {
+    // #ef4444 系を直書きすると、ライトテーマで文字色のコントラストが 4.5:1 を下回る
+    const offenders = styleFiles
+      .filter(({ file }) => file !== "base.css")
+      .flatMap(({ file, css }) =>
+        (css.match(/#ef4444|#f87171|#fca5a5|rgba\(239, *68, *68/gi) ?? []).map(
+          (match) => `${file}: ${match}`
+        )
+      );
+
+    expect([...new Set(offenders)]).toEqual([]);
+  });
+
   it("色を持つトークンが :root と .light-theme の両方に定義されていること", () => {
     const base = readFileSync(join(STYLE_DIR, "base.css"), "utf8");
     const blockOf = (selector: string) => {

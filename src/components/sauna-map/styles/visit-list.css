@@ -696,21 +696,21 @@
 
 
 .chip-reset-btn {
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  border-color: rgba(239, 68, 68, 0.3);
+  background: color-mix(in srgb, var(--error) 15%, transparent);
+  color: var(--error-text);
+  border-color: color-mix(in srgb, var(--error) 30%, transparent);
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
 }
 
 .chip-reset-btn:hover {
-  background: rgba(239, 68, 68, 0.25);
-  color: #ef4444;
+  background: color-mix(in srgb, var(--error) 25%, transparent);
 }
 
 .chip-badge {
-  background: #ef4444;
+  /* 白文字とのコントラストを 4.5:1 以上にするため、面は --error より暗くする */
+  background: color-mix(in srgb, var(--error) 80%, #000000);
   color: #ffffff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -761,6 +761,13 @@
   .search-clear-btn {
     right: 0.35rem;
     min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* 並び順ドロップダウンは開閉・選択ともに主要動線なので必ず 44px を確保する */
+  .quick-sort-trigger,
+  .quick-sort-option,
+  .filters-panel-close {
     min-height: 44px;
   }
 }

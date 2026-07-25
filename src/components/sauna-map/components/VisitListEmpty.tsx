@@ -1,4 +1,4 @@
-import { MapPinPlus } from "lucide-react";
+import { MapPinPlus, SearchX } from "lucide-react";
 
 interface VisitListEmptyProps {
   hasVisits: boolean;
@@ -41,12 +41,17 @@ export function VisitListEmpty({
     );
   }
 
+  // 初回起動時と同じ構造（アイコン＋見出し＋説明＋操作）に揃える
   return (
     <div className="empty-state">
-      <p>
+      <span className="empty-state-icon" aria-hidden="true">
+        <SearchX size={28} />
+      </span>
+      <p className="empty-state-title">該当するサウナがありません</p>
+      <p className="empty-state-body">
         {filterByBounds
-          ? "現在の地図エリア内に該当するサウナが見つかりませんでした。地図をスクロールするかフィルターを解除してください。"
-          : "条件に合うサウナが見つかりませんでした。"}
+          ? "現在の地図エリア内には見つかりませんでした。地図を動かすか、絞り込みを解除してください。"
+          : "条件を変えるか、絞り込みを解除してみてください。"}
       </p>
       {isFilterActive && (
         <button

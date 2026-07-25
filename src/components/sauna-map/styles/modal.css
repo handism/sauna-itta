@@ -357,7 +357,8 @@
 
 /* JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
 @media (max-width: 768px) {
-  .share-close {
+  .share-close,
+  .app-toast-close {
     width: 44px;
     height: 44px;
     min-width: 44px;
