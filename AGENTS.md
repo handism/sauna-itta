@@ -16,41 +16,20 @@
 
 「サウナイッタ (sauna-itta)」は、サウナ訪問記録や行きたいサウナを Leaflet マップ上に記録・視覚化するクライアントサイド専用 Next.js アプリです。すべてのデータはブラウザの `localStorage` に保存され、GitHub Pages に静的エクスポートされて運用されています。
 
-- **リポジトリ**: `sauna-itta`
-- **主要スタック**: Next.js 16 (App Router) / React 19 / TypeScript / Vitest / React Leaflet / Recharts / Zod / PWA (Web App Manifest + Service Worker)
-- **静的出力設定**: `output: "export"`, `basePath: "/sauna-itta"`
-
----
-
-## 🛠 開発コマンド一覧
-
-```bash
-npm run dev      # 開発サーバー起動 (http://localhost:3000)
-npm run build    # 静的エクスポートビルド (./out)
-npm run lint     # ESLint によるコード検証
-npm run test     # Vitest による全テスト実行 (100+ テストケース)
-```
-
 ---
 
 ## 📐 アーキテクチャ ＆ コーディング規範
 
 ### 1. 状態管理構造 (`SaunaMapContext`)
-状態管理は巨大な単一ステートを避け、以下の 4 つの専門 Provider にモジュール分割されています。コンポーネントやロジックを追加する際は適切な Context / Hook を利用・拡充してください。
-
-- **`VisitsDataContext`** (`useVisitsData`): `SaunaVisit[]` の CRUD 操作、`localStorage` 永続化
-- **`EditorContext`** (`useEditorState`): 登録/編集フォームのモード・入力状態 (`useReducer`)
-- **`UIContext`** (`useUIState`): モーダル・インラインパネル開閉、テーマ (`dark`/`light`)、トースト通知、削除確認
-- **`MapStateContext`** (`useMapState`): マップの座標・ズーム度、フィルター（検索、タグ、ステータス、満足度）
+状態管理は巨大な単一ステートを避け、責務ごとの専門 Provider にモジュール分割されています（`src/components/sauna-map/context/` 参照）。コンポーネントやロジックを追加する際は適切な Context / Hook を利用・拡充してください。
 
 ### 2. ディレクトリ ＆ コンポーネント構造
 - **コンポーネント分離**: View (プレゼンテーション) と Controller (ロジック・フック) を適切に分離してください。
 - **レスポンシブ設計**: PC表示 (`DesktopSidebar.tsx`) と モバイル表示 (`BottomSheet.tsx`, `MobileNavBar.tsx`) の責務を明確に分けること。
 - **型定義**: `src/components/sauna-map/types/` 内の `domain.ts` (ドメインモデル) と `ui.ts` (UI・フィルター型) に集約し、`any` 型や不必要なキャストを排除すること。
-- **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` (`geo.ts`, `form.ts`, `image.ts`, `visitHistory.ts`, `theme.ts`, `motion.ts` 等) に抽出し、単体テストを記述すること。
+- **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` に抽出し、単体テストを記述すること。
 
 ### 3. CSS ＆ スタイリング
-- スタイルは `src/components/sauna-map/styles/` 配下のコンポーネント別 CSS ファイルに分割・管理されています。
 - Z-Index や共通カラー変数等のレイアウト値は `styles/base.css` 内の CSS デザイントークンを必ず参照・利用してください。
 - **未定義トークンの禁止**: `var(--foo)` を書く際は `base.css` に定義があるか必ず確認すること（未定義変数は無言で無効化され、背景が透明になる等の不具合になります）。ダーク固定色をフォールバックに使わないこと。
 - **タッチターゲット**: 操作要素は最低 24px、モバイル（`max-width: 768px`）では 44px 以上を確保してください。
@@ -67,7 +46,6 @@ npm run test     # Vitest による全テスト実行 (100+ テストケース)
 - 訪問リスト（`VisitList.tsx`）は全件を一度に描画せず、`INITIAL_RENDER_COUNT` 件から `IntersectionObserver` で `CHUNK_SIZE` ずつ描画を伸ばす増分レンダリング方式です。描画件数は state ではなくレンダー中に導出しているため、`useEffect` 内で `setState` を呼ぶ実装（React Compiler / `react-hooks/set-state-in-effect` に抵触）へ戻さないでください。
 
 ### 6. テストとリファクタリング
-- テストフレームワークには **Vitest + React Testing Library + jsdom** を使用しています。
 - 新機能の追加、ロジック・フック・ユーティリティの修正を行った場合は、必ず対応する `*.test.ts` / `*.test.tsx` を作成または追記し、リグレッションを防止してください。
 
 ---
