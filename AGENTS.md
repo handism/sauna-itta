@@ -47,13 +47,22 @@ npm run test     # Vitest による全テスト実行 (100+ テストケース)
 - **コンポーネント分離**: View (プレゼンテーション) と Controller (ロジック・フック) を適切に分離してください。
 - **レスポンシブ設計**: PC表示 (`DesktopSidebar.tsx`) と モバイル表示 (`BottomSheet.tsx`, `MobileNavBar.tsx`) の責務を明確に分けること。
 - **型定義**: `src/components/sauna-map/types/` 内の `domain.ts` (ドメインモデル) と `ui.ts` (UI・フィルター型) に集約し、`any` 型や不必要なキャストを排除すること。
-- **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` (`geo.ts`, `form.ts`, `image.ts`, `visitHistory.ts` 等) に抽出し、単体テストを記述すること。
+- **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` (`geo.ts`, `form.ts`, `image.ts`, `visitHistory.ts`, `theme.ts`, `motion.ts` 等) に抽出し、単体テストを記述すること。
 
 ### 3. CSS ＆ スタイリング
 - スタイルは `src/components/sauna-map/styles/` 配下のコンポーネント別 CSS ファイルに分割・管理されています。
 - Z-Index や共通カラー変数等のレイアウト値は `styles/base.css` 内の CSS デザイントークンを必ず参照・利用してください。
+- **未定義トークンの禁止**: `var(--foo)` を書く際は `base.css` に定義があるか必ず確認すること（未定義変数は無言で無効化され、背景が透明になる等の不具合になります）。ダーク固定色をフォールバックに使わないこと。
+- **フォント**: `--font-main` は `layout.tsx` の `next/font` (Outfit) が注入する `--font-outfit` を参照します。CSS からの Web フォント `@import` は追加しないでください（PWA のオフライン動作を壊します）。
 
-### 4. テストとリファクタリング
+### 4. アクセシビリティ ＆ モーション
+- `base.css` のグローバル `:focus-visible` リングを維持してください。`outline: none` を書く際は代替の可視化を必ず用意すること。
+- クリック可能な要素は `div` ではなく `button` / `a` を使い、`aria-expanded` / `aria-pressed` / `aria-current` で状態を公開すること。
+- フォームの `label` は `htmlFor` と `id` で入力欄と紐づけること。ボタン群には `role="group"` + `aria-labelledby`（`.form-group-label`）を使用します。
+- アニメーションは `prefers-reduced-motion` を尊重すること。CSS は `base.css` の共通ブロックが担い、JS 由来のもの（Leaflet の `flyTo`、`scrollIntoView`）は `utils/motion.ts` の `prefersReducedMotion()` / `getScrollBehavior()` を経由させます。
+- テーマは初期描画前に `layout.tsx` のインラインスクリプトが `html` へ `light-theme` を付与します（ちらつき防止）。判定ロジックを変更する際は `utils/theme.ts` の `getInitialTheme()` と必ず揃えてください。保存値が無い場合は OS の `prefers-color-scheme` に従います。
+
+### 5. テストとリファクタリング
 - テストフレームワークには **Vitest + React Testing Library + jsdom** を使用しています。
 - 新機能の追加、ロジック・フック・ユーティリティの修正を行った場合は、必ず対応する `*.test.ts` / `*.test.tsx` を作成または追記し、リグレッションを防止してください。
 

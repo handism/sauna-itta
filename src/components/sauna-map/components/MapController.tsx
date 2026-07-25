@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
 import { LatLng } from "../types";
+import { prefersReducedMotion } from "../utils/motion";
 
 interface MapControllerProps {
   target: LatLng | null;
@@ -23,6 +24,7 @@ export function MapController({ target, isMobile = false }: MapControllerProps) 
     const targetCenter: [number, number] = [target.lat - latOffset, target.lng];
 
     map.flyTo(targetCenter, nextZoom, {
+      animate: !prefersReducedMotion(),
       duration: 1.2,
     });
   }, [target, isMobile, map]);

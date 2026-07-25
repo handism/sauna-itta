@@ -1,5 +1,16 @@
 import { THEME_STORAGE_KEY, MOBILE_BREAKPOINT } from "./constants";
 
+/**
+ * OS のカラースキーム設定。matchMedia が使えない環境では "dark" を返す。
+ * layout.tsx のちらつき防止スクリプトと同じ判定ロジックを保つこと。
+ */
+function getPreferredColorScheme(): "dark" | "light" {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return "dark";
+  }
+  return window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
 export function getInitialTheme(): "dark" | "light" {
   if (typeof window === "undefined") {
     return "dark";
@@ -7,11 +18,16 @@ export function getInitialTheme(): "dark" | "light" {
 
   try {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-    return savedTheme === "light" || savedTheme === "dark" ? savedTheme : "dark";
+    if (savedTheme === "light" || savedTheme === "dark") {
+      return savedTheme;
+    }
   } catch (error) {
     console.warn("Failed to read theme from localStorage:", error);
     return "dark";
   }
+
+  // 明示的な選択がない場合は OS 設定に従う
+  return getPreferredColorScheme();
 }
 
 export function getInitialIsMobile(): boolean {

@@ -7,7 +7,13 @@ import { VisitCardItem } from "./VisitCardItem";
 import { VisitListHeader, ViewMode } from "./VisitListHeader";
 import { VisitListSearch } from "./VisitListSearch";
 import { VisitListEmpty } from "./VisitListEmpty";
-import { useSaunaUI, useSaunaVisitsData, useSaunaMapState } from "../context";
+import { getScrollBehavior } from "../utils/motion";
+import {
+  useSaunaUI,
+  useSaunaVisitsData,
+  useSaunaMapState,
+  useSaunaEditor,
+} from "../context";
 
 const STORAGE_KEY = "sauna_itta_view_mode";
 
@@ -20,6 +26,7 @@ export interface VisitListViewProps {
   activeFilterCount: number;
   onClearFilters: () => void;
   onOpenFilters: () => void;
+  onStartNewVisit: () => void;
   onEdit: (visit: SaunaVisit) => void;
   selectedId: string | null;
   onSelectVisit: (visit: SaunaVisit) => void;
@@ -38,6 +45,7 @@ export function VisitListView({
   activeFilterCount,
   onClearFilters,
   onOpenFilters,
+  onStartNewVisit,
   onEdit,
   selectedId,
   onSelectVisit,
@@ -69,7 +77,7 @@ export function VisitListView({
       `[data-visit-id="${selectedId}"]`
     );
     if (targetEl) {
-      targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      targetEl.scrollIntoView({ behavior: getScrollBehavior(), block: "center" });
     }
   }, [selectedId]);
 
@@ -98,6 +106,7 @@ export function VisitListView({
           filterByBounds={filters.filterByBounds}
           isFilterActive={isFilterActive}
           onClearFilters={onClearFilters}
+          onStartNewVisit={onStartNewVisit}
         />
       ) : (
         filteredVisits.map((visit) => {
@@ -147,6 +156,7 @@ export function VisitList(props: Partial<VisitListViewProps>) {
   const ui = useSaunaUI();
   const visitsData = useSaunaVisitsData();
   const mapState = useSaunaMapState();
+  const editor = useSaunaEditor();
 
   return (
     <VisitListView
@@ -158,6 +168,7 @@ export function VisitList(props: Partial<VisitListViewProps>) {
       activeFilterCount={props.activeFilterCount ?? visitsData.activeFilterCount}
       onClearFilters={props.onClearFilters ?? visitsData.clearFilters}
       onOpenFilters={props.onOpenFilters ?? ui.openFilterModal}
+      onStartNewVisit={props.onStartNewVisit ?? editor.startNewVisit}
       onEdit={props.onEdit ?? mapState.handleListEdit}
       selectedId={props.selectedId ?? mapState.selectedId}
       onSelectVisit={props.onSelectVisit ?? mapState.handleListSelectVisit}
