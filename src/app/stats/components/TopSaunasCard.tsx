@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Trophy, Star, MapPin } from "lucide-react";
 import { SaunaVisit } from "@/components/sauna-map/types";
+import { getVisitCount } from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface TopSaunasCardProps {
@@ -11,15 +12,10 @@ export function TopSaunasCard({ visits }: TopSaunasCardProps) {
   const topSaunas = useMemo(() => {
     const visitedList = visits.filter((v) => v.status !== "wishlist");
 
-    const sorted = [...visitedList].map((sauna) => {
-      const count = (sauna.history && sauna.history.length > 0)
-        ? sauna.history.length
-        : (sauna.visitCount ?? 1);
-      return {
-        sauna,
-        count,
-      };
-    });
+    const sorted = visitedList.map((sauna) => ({
+      sauna,
+      count: getVisitCount(sauna),
+    }));
 
     sorted.sort((a, b) => b.count - a.count);
     return sorted.slice(0, 5);

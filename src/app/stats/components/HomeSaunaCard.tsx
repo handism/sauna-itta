@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Flame, Calendar, Award, MapPin } from "lucide-react";
 import { SaunaVisit } from "@/components/sauna-map/types";
-import { flattenVisitHistory } from "@/components/sauna-map/utils";
+import { getVisitCount, getVisitHistoryEntries } from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface HomeSaunaCardProps {
@@ -13,18 +13,14 @@ export function HomeSaunaCard({ visits }: HomeSaunaCardProps) {
     const visitedList = visits.filter((v) => v.status !== "wishlist");
     if (visitedList.length === 0) return null;
 
-    // Calculate total visits count across all entries
-    const allHistory = flattenVisitHistory(visits).filter((h) => h.status === "visited");
-    const totalVisitEntries = allHistory.length;
-
-    // Find sauna with max visit count
+    // 訪問回数は地図側と同じ getVisitCount を使い、分子・分母の基準を揃える
     let topSauna: SaunaVisit | null = null;
     let maxCount = 0;
+    let totalVisitEntries = 0;
 
     for (const sauna of visitedList) {
-      const count = (sauna.history && sauna.history.length > 0)
-        ? sauna.history.length
-        : (sauna.visitCount ?? 1);
+      const count = getVisitCount(sauna);
+      totalVisitEntries += count;
 
       if (count > maxCount) {
         maxCount = count;
@@ -37,13 +33,10 @@ export function HomeSaunaCard({ visits }: HomeSaunaCardProps) {
     const saunaObj = topSauna;
 
     // Dates for this sauna
-    const dates: string[] = [];
-    if (saunaObj.history && saunaObj.history.length > 0) {
-      saunaObj.history.forEach((h) => dates.push(h.date));
-    } else if (saunaObj.date) {
-      dates.push(saunaObj.date);
-    }
-    dates.sort();
+    const dates = getVisitHistoryEntries(saunaObj)
+      .map((entry) => entry.date)
+      .filter(Boolean)
+      .sort();
 
     const firstDate = dates[0] || saunaObj.date || "-";
     const lastDate = dates[dates.length - 1] || saunaObj.date || "-";

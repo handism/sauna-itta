@@ -223,7 +223,7 @@ export function VisitList(props: Partial<VisitListViewProps>) {
       onClearFilters={props.onClearFilters ?? visitsData.clearFilters}
       onOpenFilters={props.onOpenFilters ?? ui.openFilterModal}
       onStartNewVisit={props.onStartNewVisit ?? editor.startNewVisit}
-      onEdit={props.onEdit ?? mapState.handleListEdit}
+      onEdit={props.onEdit ?? mapState.handleEditVisit}
       selectedId={props.selectedId ?? mapState.selectedId}
       onSelectVisit={props.onSelectVisit ?? mapState.handleListSelectVisit}
       onDeselectVisit={props.onDeselectVisit ?? mapState.handleDeselectVisit}

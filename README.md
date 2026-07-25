@@ -79,7 +79,7 @@ src/
 │   └── sauna-map/            # メインマップ機能の設計単位
 │       ├── SaunaMap.tsx      # ルートエントリポイント
 │       ├── context/          # 状態管理 (モジュール化された Context)
-│       │   ├── SaunaMapContext.tsx      # 全体統合コンテキスト
+│       │   ├── SaunaMapContext.tsx      # Provider の合成と各 Hook の再エクスポート
 │       │   ├── VisitsDataContext.tsx    # 訪問データ CRUD 状態
 │       │   ├── EditorContext.tsx        # フォーム・編集状態ステートマシン
 │       │   ├── UIContext.tsx            # モーダル・テーマ・UI状態

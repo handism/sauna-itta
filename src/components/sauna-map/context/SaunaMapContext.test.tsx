@@ -3,7 +3,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ReactNode } from "react";
 import {
   SaunaMapProvider,
-  useSaunaMap,
   useSaunaUI,
   useSaunaUIState,
   useSaunaUIActions,
@@ -106,19 +105,33 @@ describe("SaunaMap Contexts", () => {
     expect(result.current.hoveredId).toBe("test-id");
   });
 
-  it("後方互換用 useSaunaMap が全状態を結合して正常に機能すること", () => {
-    const { result } = renderHook(() => useSaunaMap(), { wrapper });
+  it("handleEditVisit が選択状態と編集モードをまとめて開始すること", () => {
+    const { result } = renderHook(
+      () => ({
+        mapState: useSaunaMapState(),
+        editor: useSaunaEditor(),
+        visitsData: useSaunaVisitsData(),
+      }),
+      { wrapper },
+    );
 
-    expect(result.current.theme).toBeDefined();
-    expect(result.current.visits).toBeDefined();
-    expect(result.current.mode).toBe("list");
-    expect(result.current.hoveredId).toBeNull();
+    const target = result.current.visitsData.visits[0];
+    expect(target).toBeDefined();
 
     act(() => {
-      result.current.toggleTheme();
+      result.current.mapState.handleEditVisit(target);
     });
 
-    expect(result.current.theme).toBeDefined();
+    expect(result.current.mapState.selectedId).toBe(target.id);
+    expect(result.current.editor.mode).toBe("editing");
+    expect(result.current.editor.editingId).toBe(target.id);
+
+    act(() => {
+      result.current.mapState.handleCancelEditing();
+    });
+
+    expect(result.current.editor.mode).toBe("list");
+    expect(result.current.editor.editingId).toBeNull();
   });
 
   it("分離された UIState と UIActions フックがそれぞれ正常に動作すること", () => {
