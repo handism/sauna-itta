@@ -16,9 +16,20 @@ import { useVisitFiltersContext } from "./VisitFiltersContext";
 import { getVisitHistoryEntries } from "../utils";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 
-export interface EditorStateContextType {
+/**
+ * 入力中のフォーム値だけを載せる Context。
+ *
+ * これを EditorState 側に同居させると、1 文字入力するたびに編集状態を購読している
+ * 全消費側（SaunaMapContent / DesktopSidebar / VisitList）が再レンダリング対象になる。
+ * フォームの値が要るのは VisitForm だけなので、必ず分けておくこと。
+ */
+export interface EditorFormContextType {
   form: VisitFormState;
   setForm: React.Dispatch<React.SetStateAction<VisitFormState>>;
+  imageUploading: boolean;
+}
+
+export interface EditorStateContextType {
   editorState: ReturnType<typeof useEditorState>["state"];
   mode: ReturnType<typeof useEditorState>["state"]["mode"];
   editingId: string | null;
@@ -29,7 +40,6 @@ export interface EditorStateContextType {
   isCreating: boolean;
   editingVisit: SaunaVisit | null;
   historyEntries: ReturnType<typeof getVisitHistoryEntries>;
-  imageUploading: boolean;
 }
 
 export interface EditorActionsContextType {
@@ -50,6 +60,7 @@ export interface EditorActionsContextType {
 
 export type EditorContextType = EditorStateContextType & EditorActionsContextType;
 
+const EditorFormContext = createContext<EditorFormContextType | null>(null);
 const EditorStateContext = createContext<EditorStateContextType | null>(null);
 const EditorActionsContext = createContext<EditorActionsContextType | null>(null);
 
@@ -126,10 +137,14 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     showToast,
   });
 
+  // フォームの値は state 側に混ぜないこと（1 文字ごとに全消費側が再レンダリングされる）
+  const formValue = useMemo(
+    () => ({ form, setForm, imageUploading }),
+    [form, setForm, imageUploading],
+  );
+
   const stateValue = useMemo(
     () => ({
-      form,
-      setForm,
       editorState,
       mode,
       editingId,
@@ -140,11 +155,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       isCreating,
       editingVisit,
       historyEntries,
-      imageUploading,
     }),
     [
-      form,
-      setForm,
       editorState,
       mode,
       editingId,
@@ -155,7 +167,6 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       isCreating,
       editingVisit,
       historyEntries,
-      imageUploading,
     ],
   );
 
@@ -195,10 +206,21 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   return (
     <EditorStateContext.Provider value={stateValue}>
       <EditorActionsContext.Provider value={actionsValue}>
-        {children}
+        <EditorFormContext.Provider value={formValue}>
+          {children}
+        </EditorFormContext.Provider>
       </EditorActionsContext.Provider>
     </EditorStateContext.Provider>
   );
+}
+
+/** 入力中のフォーム値。VisitForm 以外から購読しないこと。 */
+export function useSaunaEditorForm() {
+  const context = useContext(EditorFormContext);
+  if (!context) {
+    throw new Error("useSaunaEditorForm must be used within an EditorProvider");
+  }
+  return context;
 }
 
 export function useSaunaEditorState() {
@@ -217,6 +239,10 @@ export function useSaunaEditorActions() {
   return context;
 }
 
+/**
+ * 編集状態と操作をまとめて受け取る。フォームの値は含まれないので、
+ * 入力値が必要な場合は `useSaunaEditorForm()` を併用すること。
+ */
 export function useSaunaEditor(): EditorContextType {
   const state = useSaunaEditorState();
   const actions = useSaunaEditorActions();

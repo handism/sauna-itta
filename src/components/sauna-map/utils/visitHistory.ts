@@ -228,6 +228,25 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
   };
 }
 
+export interface RankedVisit {
+  visit: SaunaVisit;
+  count: number;
+}
+
+/**
+ * 訪問済みの記録を訪問回数の多い順（同数なら施設名の五十音順）に並べて返す。
+ *
+ * 統計ページの「MY HOME SAUNA」と「よく行く施設 TOP 5」は同じ順位を指す必要があるため、
+ * 各カードで絞り込みと並べ替えを書かずにこれを使うこと（同数の場合の扱いがずれると、
+ * 1 位として表示される施設が 2 つのカードで食い違います）。
+ */
+export function rankVisitsByCount(visits: SaunaVisit[]): RankedVisit[] {
+  return visits
+    .filter((visit) => (visit.status ?? "visited") === "visited")
+    .map((visit) => ({ visit, count: getVisitCount(visit) }))
+    .sort((a, b) => b.count - a.count || a.visit.name.localeCompare(b.visit.name, "ja"));
+}
+
 export interface TagCount {
   name: string;
   count: number;

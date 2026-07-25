@@ -1,26 +1,23 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { SaunaVisit } from "@/components/sauna-map/types";
-import {
-  getInitialTheme,
-  flattenVisitHistory,
-  getInitialVisits,
-  calculateStats,
-  applyThemeClass,
-  saveTheme,
-} from "@/components/sauna-map/utils";
+import { flattenVisitHistory, getInitialVisits, calculateStats } from "@/components/sauna-map/utils";
+import { useTheme } from "@/components/sauna-map/hooks/useTheme";
 
 export function useStatsData() {
   const [visits, setVisits] = useState<SaunaVisit[]>([]);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [date, setDate] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // 統計ページは静的プリレンダリングされるため、保存値の読み取りはマウント後まで遅らせる。
+  // 切り替えロジック自体は地図側と共通の useTheme に集約している。
+  const { theme, toggleTheme, syncFromStorage } = useTheme({ deferred: true });
 
   useEffect(() => {
     // To satisfy react-hooks/set-state-in-effect and avoid synchronous cascading renders
     const timer = setTimeout(() => {
       setMounted(true);
       setVisits(getInitialVisits());
-      setTheme(getInitialTheme());
+      syncFromStorage();
       setDate(new Date());
     }, 0);
 
@@ -32,21 +29,7 @@ export function useStatsData() {
       document.documentElement.classList.remove("allow-page-scroll");
       document.body.classList.remove("allow-page-scroll");
     };
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    applyThemeClass(theme);
-  }, [theme, mounted]);
-
-  // 統計ページから直接開いた場合でもテーマを切り替えられるようにする
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      saveTheme(next);
-      return next;
-    });
-  }, []);
+  }, [syncFromStorage]);
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
 

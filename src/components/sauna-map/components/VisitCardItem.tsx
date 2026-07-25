@@ -1,7 +1,7 @@
-import { Dispatch, SetStateAction, memo } from "react";
+import { memo } from "react";
 import { Pencil, X } from "lucide-react";
-import { SaunaVisit, VisitFilters } from "../types";
 import { getVisitCount, sanitizeImageUrl } from "../utils";
+import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import {
   RatingStars,
   RouteLink,
@@ -10,18 +10,6 @@ import {
   VisitTagList,
   WishlistChip,
 } from "./common";
-
-interface VisitCardItemProps {
-  visit: SaunaVisit;
-  isHovered: boolean;
-  isSelected: boolean;
-  onHoverVisit?: (id: string | null) => void;
-  onSelectVisit?: (visit: SaunaVisit) => void;
-  onDeselectVisit?: () => void;
-  onEdit: (visit: SaunaVisit) => void;
-  setFilters: Dispatch<SetStateAction<VisitFilters>>;
-  onOpenImage: (src: string) => void;
-}
 
 function VisitCardItemComponent({
   visit,
@@ -33,7 +21,7 @@ function VisitCardItemComponent({
   onEdit,
   setFilters,
   onOpenImage,
-}: VisitCardItemProps) {
+}: VisitItemProps) {
   const visitCount = getVisitCount(visit);
   const imageSrc = sanitizeImageUrl(visit.image);
 
@@ -109,15 +97,4 @@ function VisitCardItemComponent({
   );
 }
 
-function areCardItemPropsEqual(
-  prevProps: VisitCardItemProps,
-  nextProps: VisitCardItemProps,
-): boolean {
-  return (
-    prevProps.isHovered === nextProps.isHovered &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.visit === nextProps.visit
-  );
-}
-
-export const VisitCardItem = memo(VisitCardItemComponent, areCardItemPropsEqual);
+export const VisitCardItem = memo(VisitCardItemComponent, areVisitItemPropsEqual);

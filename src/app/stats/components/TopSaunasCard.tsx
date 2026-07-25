@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Trophy, Star, MapPin } from "lucide-react";
 import { SaunaVisit } from "@/components/sauna-map/types";
-import { getVisitCount } from "@/components/sauna-map/utils";
+import { rankVisitsByCount } from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface TopSaunasCardProps {
@@ -9,17 +9,7 @@ interface TopSaunasCardProps {
 }
 
 export function TopSaunasCard({ visits }: TopSaunasCardProps) {
-  const topSaunas = useMemo(() => {
-    const visitedList = visits.filter((v) => v.status !== "wishlist");
-
-    const sorted = visitedList.map((sauna) => ({
-      sauna,
-      count: getVisitCount(sauna),
-    }));
-
-    sorted.sort((a, b) => b.count - a.count);
-    return sorted.slice(0, 5);
-  }, [visits]);
+  const topSaunas = useMemo(() => rankVisitsByCount(visits).slice(0, 5), [visits]);
 
   if (topSaunas.length === 0) return null;
 
@@ -43,7 +33,7 @@ export function TopSaunasCard({ visits }: TopSaunasCardProps) {
       </div>
 
       <div className={styles.topSaunasList}>
-        {topSaunas.map(({ sauna, count }, index) => {
+        {topSaunas.map(({ visit: sauna, count }, index) => {
           const percentage = Math.round((count / maxVisits) * 100);
 
           return (

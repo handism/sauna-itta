@@ -13,7 +13,7 @@ import {
   AreaField,
   DateField,
 } from "./VisitFormFields";
-import { useSaunaEditor } from "../context";
+import { useSaunaEditor, useSaunaEditorForm } from "../context";
 import { GeocodingResult } from "../utils/geocoding";
 
 export interface VisitFormViewProps {
@@ -203,6 +203,8 @@ export function VisitFormView({
 
 export function VisitForm(props: Partial<VisitFormViewProps>) {
   const editor = useSaunaEditor();
+  // 入力値は専用 Context から。ここだけが 1 文字ごとの更新を購読する
+  const { form, setForm, imageUploading } = useSaunaEditorForm();
 
   const editingId = props.editingId ?? editor.editingId;
   const onDeleteHistoryEntry =
@@ -210,8 +212,8 @@ export function VisitForm(props: Partial<VisitFormViewProps>) {
 
   return (
     <VisitFormView
-      form={props.form ?? editor.form}
-      setForm={props.setForm ?? editor.setForm}
+      form={props.form ?? form}
+      setForm={props.setForm ?? setForm}
       selectedLocation={props.selectedLocation ?? editor.selectedLocation}
       editingId={editingId}
       historyEntries={props.historyEntries ?? editor.historyEntries}
@@ -222,7 +224,7 @@ export function VisitForm(props: Partial<VisitFormViewProps>) {
       onCancel={props.onCancel ?? (() => editor.cancelEditing())}
       onDeleteHistoryEntry={onDeleteHistoryEntry}
       onLocationSelect={props.onLocationSelect ?? editor.handleLocationSelect}
-      imageUploading={props.imageUploading ?? editor.imageUploading}
+      imageUploading={props.imageUploading ?? imageUploading}
     />
   );
 }

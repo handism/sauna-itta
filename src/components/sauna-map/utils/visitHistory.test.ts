@@ -7,6 +7,7 @@ import {
   getPopularTags,
   getPopularAreas,
   countTags,
+  rankVisitsByCount,
 } from "./visitHistory";
 import { toNormalizedTags } from "./form";
 import { SaunaVisit } from "../types";
@@ -429,5 +430,73 @@ describe("countTags", () => {
 
   it("タグが無い場合は空配列を返すこと", () => {
     expect(countTags([])).toEqual([]);
+  });
+});
+
+describe("rankVisitsByCount", () => {
+  const makeVisit = (overrides: Partial<SaunaVisit> & { id: string; name: string }): SaunaVisit => ({
+    lat: 35.68,
+    lng: 139.76,
+    date: "2026-01-01",
+    comment: "",
+    rating: 4,
+    status: "visited",
+    ...overrides,
+  });
+
+  it("訪問回数の多い順に並べること", () => {
+    const visits = [
+      makeVisit({ id: "a", name: "少ない", visitCount: 1 }),
+      makeVisit({ id: "b", name: "多い", visitCount: 5 }),
+      makeVisit({ id: "c", name: "普通", visitCount: 3 }),
+    ];
+
+    expect(rankVisitsByCount(visits).map(({ visit, count }) => [visit.name, count])).toEqual([
+      ["多い", 5],
+      ["普通", 3],
+      ["少ない", 1],
+    ]);
+  });
+
+  it("「行きたい」の記録を除外すること", () => {
+    const visits = [
+      makeVisit({ id: "a", name: "行った", visitCount: 2 }),
+      makeVisit({ id: "b", name: "イキタイ", status: "wishlist", visitCount: 9 }),
+    ];
+
+    expect(rankVisitsByCount(visits).map(({ visit }) => visit.name)).toEqual(["行った"]);
+  });
+
+  it("visitCount が無い旧形式でも history.length を訪問回数として扱うこと", () => {
+    const visits = [
+      makeVisit({ id: "a", name: "新形式", visitCount: 2 }),
+      makeVisit({
+        id: "b",
+        name: "旧形式",
+        history: [
+          { date: "2026-01-01", comment: "", rating: 4 },
+          { date: "2026-02-01", comment: "", rating: 5 },
+          { date: "2026-03-01", comment: "", rating: 5 },
+        ],
+      }),
+    ];
+
+    expect(rankVisitsByCount(visits).map(({ visit, count }) => [visit.name, count])).toEqual([
+      ["旧形式", 3],
+      ["新形式", 2],
+    ]);
+  });
+
+  it("同数のときは施設名の五十音順で安定させること（2 つのカードで 1 位が食い違わないため）", () => {
+    const visits = [
+      makeVisit({ id: "a", name: "ん湯", visitCount: 3 }),
+      makeVisit({ id: "b", name: "あ湯", visitCount: 3 }),
+    ];
+
+    expect(rankVisitsByCount(visits).map(({ visit }) => visit.name)).toEqual(["あ湯", "ん湯"]);
+  });
+
+  it("訪問済みが無い場合は空配列を返すこと", () => {
+    expect(rankVisitsByCount([])).toEqual([]);
   });
 });
