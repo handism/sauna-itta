@@ -2,11 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles } from 'lucide-react';
 import styles from './stats.module.css';
 import 'react-calendar/dist/Calendar.css';
 import './calendar.css';
 import { useStatsData } from './hooks/useStatsData';
+import { StatsHeader } from './components/StatsHeader';
 import { SummaryGrid } from './components/SummaryGrid';
 import { PrefectureSection } from './components/PrefectureSection';
 import { HomeSaunaCard } from './components/HomeSaunaCard';
@@ -35,15 +35,7 @@ export default function StatsPage() {
     return (
       <div className={styles.page}>
         <main className={styles.main}>
-          <header className={styles.description}>
-            <div>
-              <p className={styles.eyebrow}>
-                <Sparkles size={14} className={styles.sparkleIcon} />
-                Sauna Itta Analytics
-              </p>
-              <h1>統計ダッシュボード</h1>
-            </div>
-          </header>
+          <StatsHeader showBackLink={false} />
           <div className={styles.summaryGrid} aria-hidden="true">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className={`${styles.statCard} ${styles.skeleton}`} />
@@ -63,19 +55,7 @@ export default function StatsPage() {
   return (
     <div className={`${styles.page} ${theme === 'light' ? 'light-theme' : ''}`}>
       <main className={styles.main}>
-        <header className={styles.description}>
-          <div>
-            <p className={styles.eyebrow}>
-              <Sparkles size={14} className={styles.sparkleIcon} />
-              Sauna Itta Analytics
-            </p>
-            <h1>統計ダッシュボード</h1>
-          </div>
-          <Link href="/" className={styles.backLink}>
-            <ArrowLeft size={16} />
-            <span>マップに戻る</span>
-          </Link>
-        </header>
+        <StatsHeader />
 
         {stats.total === 0 && (
           <div className={styles.emptyState}>

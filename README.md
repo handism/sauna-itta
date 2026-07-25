@@ -75,7 +75,9 @@ src/
 ├── components/
 │   ├── charts/               # 汎用グラフコンポーネント (Recharts)
 │   │   ├── MonthlyVisitsChart.tsx
-│   │   └── RatingDistributionChart.tsx
+│   │   ├── RatingDistributionChart.tsx
+│   │   ├── ChartEmptyState.tsx        # データ無し時の共通表示
+│   │   └── chartTheme.ts              # グラフ共通の配色・ツールチップ
 │   └── sauna-map/            # メインマップ機能の設計単位
 │       ├── SaunaMap.tsx      # ルートエントリポイント
 │       ├── context/          # 状態管理 (モジュール化された Context)

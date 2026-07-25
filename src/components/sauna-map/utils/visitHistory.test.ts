@@ -6,6 +6,7 @@ import {
   getInitialVisits,
   getPopularTags,
   getPopularAreas,
+  countTags,
 } from "./visitHistory";
 import { toNormalizedTags } from "./form";
 import { SaunaVisit } from "../types";
@@ -400,5 +401,33 @@ describe("getPopularTags & getPopularAreas", () => {
   it("should extract popular areas (prefectures) sorted by frequency", () => {
     const areas = getPopularAreas(dummyVisits, 2);
     expect(areas).toEqual(["東京都", "神奈川県"]);
+  });
+});
+
+describe("countTags", () => {
+  const dummyVisits: SaunaVisit[] = [
+    { id: "1", name: "S1", lat: 0, lng: 0, date: "2023-01-01", comment: "", tags: ["ロウリュ", " 水風呂 "] },
+    { id: "2", name: "S2", lat: 0, lng: 0, date: "2023-01-02", comment: "", tags: ["ロウリュ", "外気浴", "  "] },
+    { id: "3", name: "S3", lat: 0, lng: 0, date: "2023-01-03", comment: "", tags: ["水風呂"], status: "wishlist" },
+  ];
+
+  it("件数の多い順に集計し、前後の空白を除去すること", () => {
+    expect(countTags(dummyVisits)).toEqual([
+      { name: "ロウリュ", count: 2 },
+      { name: "水風呂", count: 2 },
+      { name: "外気浴", count: 1 },
+    ]);
+  });
+
+  it("excludeWishlist で「行きたい」の記録を除外すること", () => {
+    expect(countTags(dummyVisits, { excludeWishlist: true })).toEqual([
+      { name: "ロウリュ", count: 2 },
+      { name: "外気浴", count: 1 },
+      { name: "水風呂", count: 1 },
+    ]);
+  });
+
+  it("タグが無い場合は空配列を返すこと", () => {
+    expect(countTags([])).toEqual([]);
   });
 });

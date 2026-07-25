@@ -1,5 +1,5 @@
 import { Navigation, Star, Tag } from "lucide-react";
-import { getDirectionsUrl } from "../utils";
+import { getDirectionsUrl, sanitizeImageUrl } from "../utils";
 
 interface RatingStarsProps {
   rating: number;
@@ -72,6 +72,36 @@ export function VisitTagList({ tags, onSelectTag }: VisitTagListProps) {
         </button>
       ))}
     </div>
+  );
+}
+
+interface VisitImagePreviewProps {
+  image?: string;
+  visitName: string;
+  onOpenImage: (src: string) => void;
+}
+
+/**
+ * 訪問記録の写真プレビュー。画像が無い（またはサニタイズで弾かれた）場合は何も描画しない。
+ * sanitizeImageUrl の結果を 1 回だけ計算して使い回すこと。
+ */
+export function VisitImagePreview({ image, visitName, onOpenImage }: VisitImagePreviewProps) {
+  const src = sanitizeImageUrl(image);
+  if (!src) return null;
+
+  return (
+    <button
+      type="button"
+      className="sauna-img-preview-btn"
+      onClick={(e) => {
+        e.stopPropagation();
+        onOpenImage(src);
+      }}
+      aria-label={`${visitName}の写真拡大表示`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} className="sauna-img-preview" alt={`${visitName}の写真`} />
+    </button>
   );
 }
 

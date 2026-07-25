@@ -2,7 +2,14 @@ import { Dispatch, SetStateAction, memo } from "react";
 import { ChevronRight, Pencil, X } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getVisitCount, sanitizeImageUrl } from "../utils";
-import { RatingStars, RouteLink, VisitMetaInfo, VisitTagList, WishlistChip } from "./common";
+import {
+  RatingStars,
+  RouteLink,
+  VisitImagePreview,
+  VisitMetaInfo,
+  VisitTagList,
+  WishlistChip,
+} from "./common";
 
 interface VisitCompactItemProps {
   visit: SaunaVisit;
@@ -28,6 +35,7 @@ function VisitCompactItemComponent({
   onOpenImage,
 }: VisitCompactItemProps) {
   const visitCount = getVisitCount(visit);
+  const thumbSrc = sanitizeImageUrl(visit.image);
 
   return (
     <div
@@ -71,13 +79,9 @@ function VisitCompactItemComponent({
           {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
         </div>
         <div className="sauna-compact-side-info">
-          {sanitizeImageUrl(visit.image) && (
+          {thumbSrc && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={sanitizeImageUrl(visit.image)}
-              className="sauna-compact-thumb"
-              alt=""
-            />
+            <img src={thumbSrc} className="sauna-compact-thumb" alt="" />
           )}
           <RatingStars rating={visit.rating ?? 0} className="sauna-compact-rating" />
           <button
@@ -101,25 +105,11 @@ function VisitCompactItemComponent({
             onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
           />
           {visit.comment && <p className="sauna-card-comment">{visit.comment}</p>}
-          {sanitizeImageUrl(visit.image) && (
-            <button
-              type="button"
-              className="sauna-img-preview-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                const src = sanitizeImageUrl(visit.image);
-                if (src) onOpenImage(src);
-              }}
-              aria-label={`${visit.name}の写真拡大表示`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={sanitizeImageUrl(visit.image)}
-                className="sauna-img-preview"
-                alt={`${visit.name}の写真`}
-              />
-            </button>
-          )}
+          <VisitImagePreview
+            image={visit.image}
+            visitName={visit.name}
+            onOpenImage={onOpenImage}
+          />
           <VisitMetaInfo date={visit.date} visitCount={visitCount} />
           <div className="sauna-compact-footer-actions">
             <RouteLink lat={visit.lat} lng={visit.lng} />

@@ -221,23 +221,45 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
   };
 }
 
-export function getPopularTags(visits: SaunaVisit[], limit = 5): string[] {
+export interface TagCount {
+  name: string;
+  count: number;
+}
+
+/**
+ * タグごとの出現回数を、件数の多い順（同数ならタグ名の五十音順）で返す。
+ * @param excludeWishlist true の場合「行きたい」の記録を集計対象から外す
+ */
+export function countTags(
+  visits: SaunaVisit[],
+  { excludeWishlist = false }: { excludeWishlist?: boolean } = {},
+): TagCount[] {
   const tagCounts = new Map<string, number>();
+
   for (const visit of visits) {
-    if (Array.isArray(visit.tags)) {
-      for (const tag of visit.tags) {
-        const trimmed = tag.trim();
-        if (trimmed) {
-          tagCounts.set(trimmed, (tagCounts.get(trimmed) ?? 0) + 1);
-        }
+    if (excludeWishlist && (visit.status ?? "visited") === "wishlist") {
+      continue;
+    }
+    if (!Array.isArray(visit.tags)) {
+      continue;
+    }
+    for (const tag of visit.tags) {
+      const trimmed = tag.trim();
+      if (trimmed) {
+        tagCounts.set(trimmed, (tagCounts.get(trimmed) ?? 0) + 1);
       }
     }
   }
 
   return Array.from(tagCounts.entries())
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"))
+    .map(([name, count]) => ({ name, count }));
+}
+
+export function getPopularTags(visits: SaunaVisit[], limit = 5): string[] {
+  return countTags(visits)
     .slice(0, limit)
-    .map(([tag]) => tag);
+    .map(({ name }) => name);
 }
 
 export function getPopularAreas(visits: SaunaVisit[], limit = 4): string[] {
