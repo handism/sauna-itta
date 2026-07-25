@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { List, LayoutGrid, SlidersHorizontal } from "lucide-react";
+import { List, LayoutGrid } from "lucide-react";
 
 export type ViewMode = "card" | "compact";
 
@@ -7,8 +7,8 @@ interface VisitListHeaderProps {
   filteredCount: number;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
-  isFilterActive: boolean;
-  onOpenFilters: () => void;
+  isFilterActive?: boolean;
+  onOpenFilters?: () => void;
   isMobile?: boolean;
 }
 
@@ -16,9 +16,6 @@ function VisitListHeaderComponent({
   filteredCount,
   viewMode,
   onViewModeChange,
-  isFilterActive,
-  onOpenFilters,
-  isMobile,
 }: VisitListHeaderProps) {
   return (
     <div className="sauna-list-header">
@@ -47,16 +44,6 @@ function VisitListHeaderComponent({
             <LayoutGrid size={15} /> カード
           </button>
         </div>
-        {!isMobile && (
-          <button
-            type="button"
-            className={`filters-open-btn ${isFilterActive ? "is-active" : ""}`}
-            onClick={onOpenFilters}
-            title="詳細フィルター（並び順・最低評価・マップ内表示）"
-          >
-            <SlidersHorizontal size={16} /> {isFilterActive && <span className="filters-badge" />}
-          </button>
-        )}
       </div>
     </div>
   );

@@ -10,7 +10,6 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-import { FilterModal } from "./components/FilterModal";
 import { ShareModal } from "./components/ShareModal";
 import { VisitForm } from "./components/VisitForm";
 import { VisitList } from "./components/VisitList";
@@ -44,7 +43,7 @@ function SaunaMapContent() {
     mounted,
     theme,
     isDeleteConfirmOpen,
-    openFilterModal,
+    toggleFilterPanel,
     closeDeleteConfirm,
     toast,
     showToast,
@@ -92,6 +91,11 @@ function SaunaMapContent() {
     },
     [setSelectedId, editorStartEditing, isMobile, setSnapPosition],
   );
+
+  const handleMobileFilterClick = useCallback(() => {
+    setSnapPosition("half");
+    toggleFilterPanel();
+  }, [setSnapPosition, toggleFilterPanel]);
 
   const cancelEditing = useCallback(
     (completed = false) => {
@@ -196,12 +200,11 @@ function SaunaMapContent() {
           onSelectTab={handleSelectMobileTab}
           snapPosition={snapPosition}
           isAdding={isAdding}
-          onOpenFilter={openFilterModal}
+          onOpenFilter={handleMobileFilterClick}
           isFilterActive={isFilterActive}
         />
       )}
 
-      <FilterModal />
       <ShareModal />
 
       <ConfirmModal

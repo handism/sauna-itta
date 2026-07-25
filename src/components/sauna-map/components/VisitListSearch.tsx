@@ -1,8 +1,10 @@
 import { Dispatch, SetStateAction, memo } from "react";
-import { Search, X } from "lucide-react";
+import { Search, X, SlidersHorizontal } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { QuickFilterChips } from "./QuickFilterChips";
 import { SortSelect } from "./SortSelect";
+import { FilterPanel } from "./FilterPanel";
+import { useSaunaUI } from "../context";
 
 interface VisitListSearchProps {
   filters: VisitFilters;
@@ -10,15 +12,24 @@ interface VisitListSearchProps {
   visits: SaunaVisit[];
   activeFilterCount?: number;
   onClearFilters?: () => void;
+  onToggleFilterPanel?: () => void;
 }
 
 function VisitListSearchComponent({
   filters,
   setFilters,
   visits,
-  activeFilterCount,
+  activeFilterCount = 0,
   onClearFilters,
+  onToggleFilterPanel,
 }: VisitListSearchProps) {
+  const ui = useSaunaUI();
+
+  const isFilterPanelOpen = ui.isFilterPanelOpen;
+  const toggleFilterPanel = onToggleFilterPanel ?? ui.toggleFilterPanel;
+  const closeFilterPanel = ui.closeFilterPanel;
+  const isFilterActive = activeFilterCount > 0 || filters.minRating > 0 || filters.filterByBounds;
+
   return (
     <div className="sauna-search-box">
       <div className="search-row">
@@ -76,13 +87,36 @@ function VisitListSearchComponent({
             イキタイ
           </button>
         </div>
-        <SortSelect
-          value={filters.sort}
-          onChange={(newSort) =>
-            setFilters((prev) => ({ ...prev, sort: newSort }))
-          }
-        />
+
+        <div className="controls-actions">
+          <SortSelect
+            value={filters.sort}
+            onChange={(newSort) =>
+              setFilters((prev) => ({ ...prev, sort: newSort }))
+            }
+          />
+          <button
+            type="button"
+            className={`filters-open-btn ${isFilterPanelOpen || isFilterActive ? "is-active" : ""}`}
+            onClick={toggleFilterPanel}
+            title="詳細フィルター（最低満足度・マップ表示エリア）"
+            aria-expanded={isFilterPanelOpen}
+            aria-label="詳細フィルターの表示切り替え"
+          >
+            <SlidersHorizontal size={15} />
+            {isFilterActive && <span className="filters-badge" />}
+          </button>
+        </div>
       </div>
+
+      <FilterPanel
+        isOpen={isFilterPanelOpen}
+        filters={filters}
+        setFilters={setFilters}
+        isFilterActive={Boolean(isFilterActive && onClearFilters)}
+        onClearFilters={onClearFilters ?? (() => {})}
+        onClose={closeFilterPanel}
+      />
 
       <QuickFilterChips
         filters={filters}

@@ -25,6 +25,7 @@ export interface UIStateContextType {
   theme: "dark" | "light";
   isShareViewOpen: boolean;
   isMobileMenuOpen: boolean;
+  isFilterPanelOpen: boolean;
   isFilterModalOpen: boolean;
   isDeleteConfirmOpen: boolean;
   mobileMenuRef: RefObject<HTMLDivElement | null>;
@@ -37,6 +38,9 @@ export interface UIActionsContextType {
   closeShareView: () => void;
   toggleMobileMenu: () => void;
   closeMobileMenu: () => void;
+  toggleFilterPanel: () => void;
+  openFilterPanel: () => void;
+  closeFilterPanel: () => void;
   openFilterModal: () => void;
   closeFilterModal: () => void;
   openDeleteConfirm: () => void;
@@ -58,6 +62,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const {
     isShareViewOpen,
     isMobileMenuOpen,
+    isFilterPanelOpen,
     isFilterModalOpen,
     isDeleteConfirmOpen,
     mobileMenuRef,
@@ -65,6 +70,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
     closeShareView,
     toggleMobileMenu,
     closeMobileMenu,
+    toggleFilterPanel,
+    openFilterPanel,
+    closeFilterPanel,
     openFilterModal,
     closeFilterModal,
     openDeleteConfirm,
@@ -87,6 +95,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
       theme,
       isShareViewOpen,
       isMobileMenuOpen,
+      isFilterPanelOpen,
       isFilterModalOpen,
       isDeleteConfirmOpen,
       mobileMenuRef,
@@ -98,6 +107,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
       theme,
       isShareViewOpen,
       isMobileMenuOpen,
+      isFilterPanelOpen,
       isFilterModalOpen,
       isDeleteConfirmOpen,
       mobileMenuRef,
@@ -112,6 +122,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
       closeShareView,
       toggleMobileMenu,
       closeMobileMenu,
+      toggleFilterPanel,
+      openFilterPanel,
+      closeFilterPanel,
       openFilterModal,
       closeFilterModal,
       openDeleteConfirm,
@@ -125,6 +138,9 @@ export function UIProvider({ children }: { children: ReactNode }) {
       closeShareView,
       toggleMobileMenu,
       closeMobileMenu,
+      toggleFilterPanel,
+      openFilterPanel,
+      closeFilterPanel,
       openFilterModal,
       closeFilterModal,
       openDeleteConfirm,

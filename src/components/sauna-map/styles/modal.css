@@ -202,59 +202,6 @@
   background: var(--primary-glow);
 }
 
-/* モバイル: フィルターボタンでモーダル表示 */
-.filters-modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal-backdrop);
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.filters-modal-sheet {
-  width: 100%;
-  max-height: 70dvh;
-  background: var(--glass-heavy);
-  backdrop-filter: var(--backdrop-blur);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  padding: 1rem 1rem env(safe-area-inset-bottom, 1rem);
-  overflow-y: auto;
-  animation: slideUp var(--transition-smooth);
-}
-
-.filters-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--glass-border);
-}
-
-.filters-modal-header h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: var(--foreground);
-}
-
-.filters-modal-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--glass-border);
-  background: var(--glass);
-  color: var(--foreground);
-  cursor: pointer;
-}
-
 .bounds-toggle-btn--full {
   display: flex;
   align-items: center;
