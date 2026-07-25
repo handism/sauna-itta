@@ -699,9 +699,26 @@
   }
 
   .description {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.75rem;
+    align-items: flex-end;
+    gap: 0.5rem;
+  }
+
+  .eyebrow {
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .description h1 {
+    font-size: clamp(1.25rem, 5vw, 1.5rem);
+  }
+
+  .backLink {
+    height: 2.2rem;
+    padding: 0 0.8rem;
+    font-size: 0.8rem;
+    gap: 5px;
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .summaryGrid {
