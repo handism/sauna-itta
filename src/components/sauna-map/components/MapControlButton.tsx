@@ -8,6 +8,7 @@ export interface MapControlButtonProps {
   ariaLabel: string;
   className?: string;
   disabled?: boolean;
+  /** トグルボタンの場合のみ渡す。渡すと aria-pressed が付き .is-active が当たる */
   active?: boolean;
   children: ReactNode;
 }
@@ -18,16 +19,17 @@ export function MapControlButton({
   ariaLabel,
   className = "",
   disabled = false,
-  active = false,
+  active,
   children,
 }: MapControlButtonProps) {
-  const activeClass = active ? "map-control-btn--active" : "";
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`${activeClass} ${className}`.trim()}
+      className={`${className} ${active ? "is-active" : ""}`.trim()}
+      // ズームボタンなどトグルでないものには付けない
+      aria-pressed={active}
       aria-label={ariaLabel}
       title={title}
     >

@@ -454,12 +454,6 @@
   background: var(--overlay-hover);
 }
 
-.sauna-quick-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: 100%;
-}
 
 .status-tabs {
   display: flex;
@@ -629,20 +623,7 @@
   font-weight: 600;
 }
 
-.result-count-badge {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  background: var(--input-bg);
-  border: 1px solid var(--glass-border);
-  padding: 0.3rem 0.65rem;
-  border-radius: var(--radius-md);
-  white-space: nowrap;
-}
 
-.result-count-badge strong {
-  color: var(--primary);
-  font-weight: 700;
-}
 
 .reset-filter-btn {
   margin-top: 0.8rem;
@@ -699,12 +680,6 @@
   box-shadow: 0 2px 8px rgba(238, 143, 67, 0.2);
 }
 
-.chip-bounds-btn.is-active {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(37, 99, 235, 0.35));
-  color: #60a5fa;
-  border-color: #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
-}
 
 .chip-reset-btn {
   background: rgba(239, 68, 68, 0.15);
@@ -730,12 +705,6 @@
   line-height: 1;
 }
 
-.filter-result-count {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  padding: 0.1rem 0.25rem;
-  text-align: right;
-}
 
 /* Light Theme overrides for list controls */
 .light-theme .view-mode-btn:not(.is-active),

@@ -24,6 +24,7 @@
 状態管理は巨大な単一ステートを避け、責務ごとの専門 Provider にモジュール分割されています（`src/components/sauna-map/context/` 参照）。コンポーネントやロジックを追加する際は適切な Context / Hook を利用・拡充してください。
 
 - **専用フックを直接使うこと**: 消費側は `useSaunaUI` / `useVisitsCRUD` / `useVisitFiltersContext` / `useSaunaEditor` / `useSaunaMapState` のうち、実際に必要なものだけを個別に呼びます。複数の Context を 1 オブジェクトに束ねるフック（旧 `useSaunaMap` / 旧 `useSaunaVisitsData`）は、どれか 1 つの状態変化で全消費側が再レンダリングされるため復活させないでください。
+- **Provider は `SaunaMapContext.tsx` に一本化**: `SaunaMapProvider` が `UIProvider` → `VisitsCRUDProvider` → `VisitFiltersProvider` → `EditorProvider` → `MapStateProvider` を直接入れ子にします。複数 Provider をまとめるだけの中間ファイルは作らないでください（旧 `VisitsDataContext.tsx` は削除済み）。
 - **訪問データとフィルターの分離**: 訪問データ本体・インポート/エクスポートは `useVisitsCRUD`、絞り込み結果・フィルター状態・統計は `useVisitFiltersContext` から取得します。CRUD しか使わない画面（`DesktopSidebar` など）がフィルターを購読すると、検索欄の 1 文字入力ごとに再レンダリングされます。
 - **モバイルのシート位置制御は Context 側に集約**: 編集の開始／終了に伴う `snapPosition` の切り替えは `MapStateContext` の `handleEditVisit` / `handleCancelEditing` が担います。画面コンポーネント側で `startEditing` + `setSnapPosition` を組み合わせて再実装しないでください。
 
@@ -42,6 +43,8 @@
 - **未定義トークンの禁止**: `var(--foo)` を書く際は `base.css` に定義があるか必ず確認すること（未定義変数は無言で無効化され、背景が透明になる等の不具合になります）。`var(--foo, #hex)` のようなフォールバックは書かないこと（未定義を隠すうえ、ダーク固定色がライトテーマに漏れます）。
 - **重ね色は必ずトークン経由**: 面の上に薄く重ねる色（カード背景・ホバー等）に `rgba(255, 255, 255, ...)` を直書きすると、ライトテーマで白地に白が乗って消えます。`--overlay-subtle` / `--overlay-hover` を使うこと。同様に、`--glass-hover` はライトテーマでほぼ白になるため、その上に `color: #fff` を固定しないこと。
 - **エラー色**: 面には `--error`、文字色には `--error-text` を使うこと（`--error` をそのまま小さな文字に使うとライトテーマでコントラスト比 4.5:1 を下回ります）。
+- **クラス名の綴り**: CSS のクラス名がコンポーネント側に存在するかも `styles/tokens.test.ts` が検査します（`mobile-nav-icon-add` と `mobile-nav-icon--add` のような綴り違いは誰もエラーにしてくれず、スタイルが当たらないまま放置されるため）。テンプレートリテラルで修飾子を組み立てる場合は、同テストの `IGNORED_PREFIXES` に追記してください。
+- **トグルの活性クラス**は `is-active` に統一しています（`--active` 系の BEM 修飾子を新規に増やさないこと）。地図上のコントロールは `MapControlButton` の `active` prop に任せると `is-active` と `aria-pressed` が同時に付きます。
 - 上記の CSS 規約は `styles/tokens.test.ts` が静的検査しています。意図的な例外を追加する場合は、同テストの許可リストに理由付きで追記してください。
 - **タッチターゲット**: 操作要素は最低 24px、モバイル（`max-width: 768px`）では 44px 以上を確保してください。リスト系の 44px 保証は `visit-list.css` 末尾のメディアクエリに集約しています。新しい操作要素を追加したら、既定サイズが小さいもの（アイコンのみのボタン、チップ等）を必ずこのブロックに追記すること。
 - **フォント**: `--font-main` は `layout.tsx` の `next/font` (Outfit) が注入する `--font-outfit` を参照します。CSS からの Web フォント `@import` は追加しないでください（PWA のオフライン動作を壊します）。

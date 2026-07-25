@@ -161,10 +161,6 @@
   box-shadow: 0 0 16px var(--primary-glow);
 }
 
-.input-file {
-  font-size: 0.84rem;
-  padding: 0.55rem;
-}
 
 .select-input {
   width: 100%;

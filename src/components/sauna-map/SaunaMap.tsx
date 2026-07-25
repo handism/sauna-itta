@@ -148,8 +148,14 @@ function SaunaMapContent() {
             <strong>地図をタップして場所を選択</strong>
             <span>サウナの場所をタップしてね</span>
           </div>
-          <button className="pin-hint-cancel" onClick={() => handleCancelEditing()}>
-            <X size={16} />
+          <button
+            type="button"
+            className="pin-hint-cancel"
+            onClick={() => handleCancelEditing()}
+            aria-label="場所の選択をやめる"
+            title="場所の選択をやめる"
+          >
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
       )}

@@ -57,64 +57,70 @@ export default function StatsPage() {
       <main className={styles.main}>
         <StatsHeader />
 
-        {stats.total === 0 && (
+        {/*
+          記録が 0 件のときは、0 が並ぶサマリーや空のグラフを出さずに
+          登録への導線だけを見せる
+        */}
+        {stats.total === 0 ? (
           <div className={styles.emptyState}>
             <p>まだ訪問記録がありません。地図からサウナを登録すると、ここにグラフィカルな統計が表示されます。</p>
             <Link href="/" className={styles.backLink}>
               マップでサウナを登録する
             </Link>
           </div>
+        ) : (
+          <>
+            {/* 1. Key Statistics Summary */}
+            <SummaryGrid stats={stats} />
+
+            {/* 2. Featured Home Sauna & Top 5 Ranking Section */}
+            <div className={styles.featuredGrid}>
+              <HomeSaunaCard visits={visits} />
+              <TopSaunasCard visits={visits} />
+            </div>
+
+            {/* 3. Charts Section */}
+            <div className={styles.chartsWrap}>
+              <div className={styles.chartGrid}>
+                <section className={`${styles.glassCard} ${styles.chartCard}`}>
+                  <div className={styles.cardHeader}>
+                    <h2>月別訪問数</h2>
+                    <span className={styles.cardSubtitle}>過去の訪問ペース推移</span>
+                  </div>
+                  <MonthlyVisitsChart visits={visits} theme={theme} />
+                </section>
+
+                <section className={`${styles.glassCard} ${styles.chartCard}`}>
+                  <div className={styles.cardHeader}>
+                    <h2>満足度分布</h2>
+                    <span className={styles.cardSubtitle}>ととのい度評価の内訳</span>
+                  </div>
+                  <RatingDistributionChart visits={visits} theme={theme} />
+                </section>
+              </div>
+            </div>
+
+            {/* 4. Tags & Features Cloud */}
+            <div className={styles.sectionWrap}>
+              <TagCloudCard visits={visits} />
+            </div>
+
+            {/* 5. Prefecture Conquest */}
+            <div className={styles.sectionWrap}>
+              <PrefectureSection prefectures={stats.prefectures} count={stats.prefectureCount} />
+            </div>
+
+            {/* 6. Calendar View */}
+            <div className={styles.sectionWrap}>
+              <VisitCalendar
+                theme={theme}
+                date={date}
+                setDate={setDate}
+                visitDates={visitDates}
+              />
+            </div>
+          </>
         )}
-
-        {/* 1. Key Statistics Summary */}
-        <SummaryGrid stats={stats} />
-
-        {/* 2. Featured Home Sauna & Top 5 Ranking Section */}
-        <div className={styles.featuredGrid}>
-          <HomeSaunaCard visits={visits} />
-          <TopSaunasCard visits={visits} />
-        </div>
-
-        {/* 3. Charts Section */}
-        <div className={styles.chartsWrap}>
-          <div className={styles.chartGrid}>
-            <section className={`${styles.glassCard} ${styles.chartCard}`}>
-              <div className={styles.cardHeader}>
-                <h2>月別訪問数</h2>
-                <span className={styles.cardSubtitle}>過去の訪問ペース推移</span>
-              </div>
-              <MonthlyVisitsChart visits={visits} theme={theme} />
-            </section>
-
-            <section className={`${styles.glassCard} ${styles.chartCard}`}>
-              <div className={styles.cardHeader}>
-                <h2>満足度分布</h2>
-                <span className={styles.cardSubtitle}>ととのい度評価の内訳</span>
-              </div>
-              <RatingDistributionChart visits={visits} theme={theme} />
-            </section>
-          </div>
-        </div>
-
-        {/* 4. Tags & Features Cloud */}
-        <div className={styles.sectionWrap}>
-          <TagCloudCard visits={visits} />
-        </div>
-
-        {/* 5. Prefecture Conquest */}
-        <div className={styles.sectionWrap}>
-          <PrefectureSection prefectures={stats.prefectures} count={stats.prefectureCount} />
-        </div>
-
-        {/* 6. Calendar View */}
-        <div className={styles.sectionWrap}>
-          <VisitCalendar
-            theme={theme}
-            date={date}
-            setDate={setDate}
-            visitDates={visitDates}
-          />
-        </div>
       </main>
     </div>
   );

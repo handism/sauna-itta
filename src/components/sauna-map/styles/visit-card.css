@@ -174,12 +174,6 @@
   display: block;
 }
 
-.sauna-card:focus-visible,
-.sauna-compact-header:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-
 .visually-hidden-file-input {
   position: absolute;
   width: 1px;
@@ -481,11 +475,6 @@
   margin-bottom: 1.3rem;
 }
 
-.cta-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
 
 .filters {
   display: flex;
@@ -499,11 +488,6 @@
   opacity: 0.8;
 }
 
-.filters-reset {
-  width: auto;
-  padding: 0.55rem 0.75rem;
-  font-size: 0.78rem;
-}
 
 .empty-state {
   opacity: 0.56;
@@ -577,17 +561,7 @@
     font-size: 1.1rem;
   }
 
-  .cta-group .btn {
-    min-height: 48px;
-    font-size: 1rem;
-  }
-
   .segmented .btn {
-    min-height: 44px;
-  }
-
-  .filters-reset {
-    width: 100%;
     min-height: 44px;
   }
 }

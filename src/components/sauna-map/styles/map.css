@@ -609,7 +609,7 @@
   box-shadow: 0 0 16px var(--primary-glow) !important;
 }
 
-.map-cluster-control-btn--active {
+.map-cluster-control-btn.is-active {
   border-color: var(--primary);
   color: var(--primary);
   background: color-mix(in srgb, var(--glass-heavy) 80%, var(--primary) 20%);

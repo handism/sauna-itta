@@ -2,18 +2,26 @@
 
 import { ReactNode } from "react";
 import { UIProvider } from "./UIContext";
-import { VisitsDataProvider } from "./VisitsDataContext";
+import { VisitsCRUDProvider } from "./VisitsCRUDContext";
+import { VisitFiltersProvider } from "./VisitFiltersContext";
 import { EditorProvider } from "./EditorContext";
 import { MapStateProvider } from "./MapStateContext";
 
+/**
+ * 訪問データは CRUD とフィルターで Provider を分けている。
+ * 両者を 1 オブジェクトに束ねるフックを用意すると、CRUD しか使わない画面まで
+ * フィルター変更（検索の 1 文字入力など）のたびに再レンダリングされる。
+ */
 export function SaunaMapProvider({ children }: { children: ReactNode }) {
   return (
     <UIProvider>
-      <VisitsDataProvider>
-        <EditorProvider>
-          <MapStateProvider>{children}</MapStateProvider>
-        </EditorProvider>
-      </VisitsDataProvider>
+      <VisitsCRUDProvider>
+        <VisitFiltersProvider>
+          <EditorProvider>
+            <MapStateProvider>{children}</MapStateProvider>
+          </EditorProvider>
+        </VisitFiltersProvider>
+      </VisitsCRUDProvider>
     </UIProvider>
   );
 }
@@ -29,11 +37,8 @@ export {
   useSaunaUIActions,
   UIProvider,
 } from "./UIContext";
-export {
-  useVisitsCRUD,
-  useVisitFiltersContext,
-  VisitsDataProvider,
-} from "./VisitsDataContext";
+export { useVisitsCRUD, VisitsCRUDProvider } from "./VisitsCRUDContext";
+export { useVisitFiltersContext, VisitFiltersProvider } from "./VisitFiltersContext";
 export {
   useSaunaEditor,
   useSaunaEditorState,
