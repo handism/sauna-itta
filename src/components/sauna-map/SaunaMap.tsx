@@ -33,7 +33,7 @@ import {
   useSaunaEditor,
   useSaunaMapState,
 } from "./context";
-import { SaunaVisit, CurrentLocation } from "./types";
+import { CurrentLocation } from "./types";
 
 function SaunaMapContent() {
   const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
@@ -61,14 +61,11 @@ function SaunaMapContent() {
     confirmDelete,
     handleLocationSelect,
     handleBoundsChange,
-    cancelEditing: editorCancelEditing,
-    startEditing: editorStartEditing,
   } = useSaunaEditor();
 
   const {
     hoveredId,
     selectedId,
-    setSelectedId,
     activeMapTarget,
     snapPosition,
     setSnapPosition,
@@ -78,34 +75,15 @@ function SaunaMapContent() {
     showBadges,
     selectedVisit,
     handleSelectVisit,
+    handleEditVisit,
+    handleCancelEditing,
     handleSelectMobileTab,
   } = useSaunaMapState();
-
-  const startEditing = useCallback(
-    (visit: SaunaVisit) => {
-      setSelectedId(visit.id);
-      editorStartEditing(visit);
-      if (isMobile) {
-        setSnapPosition("full");
-      }
-    },
-    [setSelectedId, editorStartEditing, isMobile, setSnapPosition],
-  );
 
   const handleMobileFilterClick = useCallback(() => {
     setSnapPosition("half");
     toggleFilterPanel();
   }, [setSnapPosition, toggleFilterPanel]);
-
-  const cancelEditing = useCallback(
-    (completed = false) => {
-      editorCancelEditing(completed);
-      if (isMobile) {
-        setSnapPosition("min");
-      }
-    },
-    [editorCancelEditing, isMobile, setSnapPosition],
-  );
 
   if (!mounted) {
     return <div className="map-container" style={{ background: "var(--background)", height: "100%", width: "100%" }} />;
@@ -144,7 +122,7 @@ function SaunaMapContent() {
             hoveredId={hoveredId}
             showBadges={showBadges}
             enableClustering={enableClustering}
-            onEdit={startEditing}
+            onEdit={handleEditVisit}
             onSelectVisit={handleSelectVisit}
           />
 
@@ -170,7 +148,7 @@ function SaunaMapContent() {
             <strong>地図をタップして場所を選択</strong>
             <span>サウナの場所をタップしてね</span>
           </div>
-          <button className="pin-hint-cancel" onClick={() => cancelEditing()}>
+          <button className="pin-hint-cancel" onClick={() => handleCancelEditing()}>
             <X size={16} />
           </button>
         </div>

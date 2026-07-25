@@ -28,7 +28,8 @@ interface MapStateContextType {
   selectedVisit: SaunaVisit | null;
   handleSelectVisit: (visit: SaunaVisit) => void;
   handleDeselectVisit: () => void;
-  handleListEdit: (visit: SaunaVisit) => void;
+  handleEditVisit: (visit: SaunaVisit) => void;
+  handleCancelEditing: (completed?: boolean) => void;
   handleListSelectVisit: (visit: SaunaVisit) => void;
   handleSelectMobileTab: (tab: MobileTab) => void;
 }
@@ -59,13 +60,23 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
 
   const activeMapTarget = mapTargetOverride;
 
-  const handleListEdit = useCallback(
+  // 編集の開始／終了はモバイルのシート位置と連動するため、呼び出し側で個別に
+  // setSnapPosition せずここへ集約する（リスト・マーカー・ピンヒントで共通）
+  const handleEditVisit = useCallback(
     (visit: SaunaVisit) => {
       setSelectedId(visit.id);
       startEditing(visit);
       if (isMobile) setSnapPosition("full");
     },
     [setSelectedId, startEditing, isMobile, setSnapPosition],
+  );
+
+  const handleCancelEditing = useCallback(
+    (completed = false) => {
+      cancelEditing(completed);
+      if (isMobile) setSnapPosition("min");
+    },
+    [cancelEditing, isMobile, setSnapPosition],
   );
 
   const handleListSelectVisit = useCallback(
@@ -108,7 +119,8 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
       selectedVisit: selectedVisit ?? null,
       handleSelectVisit,
       handleDeselectVisit,
-      handleListEdit,
+      handleEditVisit,
+      handleCancelEditing,
       handleListSelectVisit,
       handleSelectMobileTab,
     }),
@@ -127,7 +139,8 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
       selectedVisit,
       handleSelectVisit,
       handleDeselectVisit,
-      handleListEdit,
+      handleEditVisit,
+      handleCancelEditing,
       handleListSelectVisit,
       handleSelectMobileTab,
     ],
