@@ -74,6 +74,71 @@ describe("CSS デザイントークンの規約", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("影は rgba(0, 0, 0, ...) の直書きではなくトークンを使うこと", () => {
+    /*
+     * --shadow-* はライトテーマで弱い値へ差し替わる。直書きするとその切り替えから
+     * 漏れ、明るい背景に濃い黒の影が落ちる。統計ページの CSS Modules も対象に含める。
+     */
+    const targets = [
+      ...styleFiles.filter(({ file }) => file !== "base.css"),
+      {
+        file: "app/stats/stats.module.css",
+        css: readFileSync(resolve(STYLE_DIR, "../../../app/stats/stats.module.css"), "utf8"),
+      },
+    ];
+
+    const offenders = targets.flatMap(({ file, css }) =>
+      (css.match(/box-shadow:[^;]*rgba\(0, *0, *0[^;]*;/g) ?? []).map(
+        (match) => `${file}: ${match.replace(/\s+/g, " ")}`
+      )
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("色を持つトークンが :root と .light-theme の両方に定義されていること", () => {
+    const base = readFileSync(join(STYLE_DIR, "base.css"), "utf8");
+    const blockOf = (selector: string) => {
+      const match = base.match(new RegExp(`${selector}\\s*\\{([^{}]*)\\}`));
+      if (!match) throw new Error(`${selector} ブロックが見つかりません`);
+      return match[1];
+    };
+    const tokensIn = (block: string) =>
+      new Map(
+        [...block.matchAll(/^\s*(--[a-z0-9-]+):\s*([^;]+);/gm)].map(([, name, value]) => [
+          name,
+          value,
+        ])
+      );
+
+    const rootTokens = tokensIn(blockOf(":root"));
+    const lightTokens = tokensIn(blockOf("\\.light-theme"));
+
+    /*
+     * ライトテーマで意図的に共有するトークン。増やす場合は必ず理由を添えること。
+     * --shadow-marker 系: 地図タイル上のマーカー用。弱めるとタイルに溶けて位置が読めない。
+     * --error:            面の色として両テーマで成立する（文字色には --error-text を使う）。
+     */
+    const SHARED_ON_PURPOSE = new Set([
+      "--shadow-marker-sm",
+      "--shadow-marker",
+      "--shadow-marker-lifted",
+      "--error",
+    ]);
+
+    const hasLiteralColor = (value: string) => /#[0-9a-f]{3,8}|rgba?\(/i.test(value);
+
+    const offenders = [...rootTokens]
+      .filter(
+        ([name, value]) =>
+          hasLiteralColor(value) && !lightTokens.has(name) && !SHARED_ON_PURPOSE.has(name)
+      )
+      .map(([name]) => name);
+
+    // 未上書きのままだと、ダーク前提の濃い色がライトテーマへそのまま漏れる
+    expect(offenders).toEqual([]);
+  });
+
   it("CSS のクラス名がコンポーネント側に存在すること", () => {
     /*
      * `.mobile-nav-icon-add` と `mobile-nav-icon--add` のような綴り違いは

@@ -125,12 +125,12 @@
 .sauna-compact-item.is-hovered {
   border-color: var(--primary-glow);
   background: var(--glass-heavy);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-sm);
 }
 
 .sauna-compact-item.is-selected {
   border-color: var(--primary);
-  box-shadow: 0 0 16px var(--primary-glow), 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 0 16px var(--primary-glow), var(--shadow-sm);
   background: color-mix(in srgb, var(--primary-glow) 8%, var(--glass-heavy));
 }
 
@@ -323,7 +323,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-sm);
   animation: slideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: var(--backdrop-blur);
 }

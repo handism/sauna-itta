@@ -17,7 +17,7 @@
     border-top: 1px solid var(--glass-border);
     border-top-left-radius: var(--radius-xl);
     border-top-right-radius: var(--radius-xl);
-    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.45), 0 0 24px var(--primary-glow);
+    box-shadow: var(--shadow-up), 0 0 24px var(--primary-glow);
     transition: transform var(--transition-smooth);
     will-change: transform;
     contain: content;
