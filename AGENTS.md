@@ -54,6 +54,7 @@
 - クリック可能な要素は `div` ではなく `button` / `a` を使い、`aria-expanded` / `aria-pressed` / `aria-current` で状態を公開すること。
 - **対話要素を入れ子にしないこと**: 訪問リストの各行は、編集ボタン・タグ・経路リンクを内包するため行全体を `role="button"` にできません。開閉／選択のトグルは見出しの中のボタン（`<h3><button aria-expanded>`＝WAI-ARIA のアコーディオンパターン）とし、編集ボタンは必ずその**兄弟要素**に置きます（`VisitCompactItem` / `VisitCardItem` 参照）。`button` の子は phrasing content に限られるため、中身は `span` で構成してください。
 - **`tablist` を絞り込みトグルに使わないこと**: 対応する `tabpanel` と矢印キーによる roving tabindex が無い状態で `role="tab"` を使うのは誤用です。ステータス絞り込み（`VisitListSearch`）のような排他トグル群は `role="group"` + `aria-pressed` で公開します。
+- **`listbox` を名乗るならキーボード操作を必ず実装すること**: 並び順ドロップダウン（`SortSelect`）は WAI-ARIA の Listbox パターンで実装しています。展開時はフォーカスを `ul[role="listbox"]`（`tabIndex={-1}`）へ移し、ハイライト位置は `aria-activedescendant` で公開します（個々の `li` はフォーカスを持ちません）。↑↓（端で循環）・Home・End で移動、Enter / Space で確定、Escape で確定せず閉じてトリガーへフォーカスを戻す、Tab で確定せず閉じる、までが最低要件です。`role="option"` を `onClick` だけで実装するとマウス専用の UI になります。ハイライトの見た目は `.quick-sort-option.is-active`（選択中の `.is-selected` と重なるため枠線で区別）が担当します。
 - フォームの `label` は `htmlFor` と `id` で入力欄と紐づけること。ボタン群には `role="group"` + `aria-labelledby`（`.form-group-label`）を使用します。placeholder はラベルの代わりになりません（検索欄は `.sr-only` のラベルを付ける）。
 - 絞り込み結果の件数など、操作の結果として変わる情報は `role="status"` + `aria-live="polite"` のライブリージョンで伝えること（`VisitListHeader` の `.sr-only` 要素）。見た目の数字だけを更新しても支援技術には伝わりません。
 - アニメーションは `prefers-reduced-motion` を尊重すること。CSS は `base.css` の共通ブロックが担い、JS 由来のもの（Leaflet の `flyTo`、`scrollIntoView`）は `utils/motion.ts` の `prefersReducedMotion()` / `getScrollBehavior()` を経由させます。

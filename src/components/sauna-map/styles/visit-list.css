@@ -623,6 +623,20 @@
   font-weight: 600;
 }
 
+/*
+ * キーボードでハイライト中の項目。フォーカスは listbox 本体にあるため
+ * :focus-visible では表現できず、aria-activedescendant の位置を自前で可視化する。
+ * 選択中 (.is-selected) と重なっても分かるよう枠線で示す。
+ */
+.quick-sort-option.is-active {
+  background: var(--glass-hover);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.quick-sort-option.is-active.is-selected {
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
 
 
 .reset-filter-btn {
