@@ -17,7 +17,7 @@ describe("VisitFormView", () => {
     rating: 5,
     tagsText: "サウナ,水風呂",
     comment: "良かったです",
-    image: null,
+    image: "",
     appendHistory: true,
   };
 
