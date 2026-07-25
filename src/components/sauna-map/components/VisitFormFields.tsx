@@ -34,8 +34,11 @@ export function LocationSearchField({
 }) {
   return (
     <div className="form-group">
-      <label>場所・施設名を検索（任意）</label>
-      <LocationSearchInput onSelectLocation={onSelectLocation} />
+      <label htmlFor="visit-location-search">場所・施設名を検索（任意）</label>
+      <LocationSearchInput
+        inputId="visit-location-search"
+        onSelectLocation={onSelectLocation}
+      />
     </div>
   );
 }
@@ -49,8 +52,11 @@ export function StatusField({
 }) {
   return (
     <div className="form-group">
-      <label>ステータス</label>
-      <div className="segmented">
+      {/* ボタン群のため label ではなくグループラベルとして関連付ける */}
+      <span className="form-group-label" id="visit-status-label">
+        ステータス
+      </span>
+      <div className="segmented" role="group" aria-labelledby="visit-status-label">
         <button
           type="button"
           className={`btn segmented-btn segmented-btn--visited ${
@@ -85,8 +91,10 @@ export function RatingField({
 }) {
   return (
     <div className="form-group">
-      <label>満足度（1〜5）</label>
-      <div className="rating-row">
+      <span className="form-group-label" id="visit-rating-label">
+        満足度（1〜5）
+      </span>
+      <div className="rating-row" role="group" aria-labelledby="visit-rating-label">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
@@ -125,8 +133,9 @@ export function NameField({
 }) {
   return (
     <div className="form-group">
-      <label>サウナ名</label>
+      <label htmlFor="visit-name">サウナ名</label>
       <input
+        id="visit-name"
         className="input"
         value={name}
         onChange={(e) => onChange(e.target.value)}
@@ -146,8 +155,9 @@ export function AreaField({
 }) {
   return (
     <div className="form-group">
-      <label>エリア（任意）</label>
+      <label htmlFor="visit-area">エリア（任意）</label>
       <input
+        id="visit-area"
         className="input"
         value={area}
         onChange={(e) => onChange(e.target.value)}
@@ -176,7 +186,7 @@ export function DateField({
   return (
     <div className="form-group">
       <div className="label-row-with-actions">
-        <label>行った日</label>
+        <label htmlFor="visit-date">行った日</label>
         <div className="quick-date-actions">
           <button
             type="button"
@@ -195,6 +205,7 @@ export function DateField({
         </div>
       </div>
       <input
+        id="visit-date"
         type="date"
         className="input"
         value={date}

@@ -29,6 +29,32 @@ describe("getInitialTheme", () => {
     expect(getInitialTheme()).toBe("dark");
   });
 
+  it("should fall back to the OS color scheme when nothing is saved", () => {
+    const matchMedia = vi.fn((query: string) => ({
+      matches: query === "(prefers-color-scheme: light)",
+    }));
+    vi.stubGlobal("matchMedia", matchMedia);
+
+    expect(getInitialTheme()).toBe("light");
+    expect(matchMedia).toHaveBeenCalledWith("(prefers-color-scheme: light)");
+
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false })));
+    expect(getInitialTheme()).toBe("dark");
+
+    vi.unstubAllGlobals();
+    vi.stubGlobal("localStorage", mockLocalStorage);
+  });
+
+  it("should prefer the saved theme over the OS color scheme", () => {
+    vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: true })));
+    mockLocalStorage.setItem(THEME_STORAGE_KEY, "dark");
+
+    expect(getInitialTheme()).toBe("dark");
+
+    vi.unstubAllGlobals();
+    vi.stubGlobal("localStorage", mockLocalStorage);
+  });
+
   it("should catch localStorage errors and log warning, returning 'dark'", () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(mockLocalStorage, "getItem").mockImplementation(() => {

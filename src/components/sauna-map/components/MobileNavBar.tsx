@@ -27,6 +27,7 @@ export function MobileNavBar({
       <button
         type="button"
         className={`mobile-nav-item ${isMapActive ? "is-active" : ""}`}
+        aria-current={isMapActive ? "true" : undefined}
         onClick={() => onSelectTab("map")}
       >
         <span className="mobile-nav-icon"><Map size={19} /></span>
@@ -36,6 +37,7 @@ export function MobileNavBar({
       <button
         type="button"
         className={`mobile-nav-item ${isListActive ? "is-active" : ""}`}
+        aria-current={isListActive ? "true" : undefined}
         onClick={() => onSelectTab("list")}
       >
         <span className="mobile-nav-icon"><List size={19} /></span>
@@ -45,6 +47,7 @@ export function MobileNavBar({
       <button
         type="button"
         className={`mobile-nav-item mobile-nav-item--add ${isAdding ? "is-active" : ""}`}
+        aria-current={isAdding ? "true" : undefined}
         onClick={() => onSelectTab("add")}
         aria-label="サウナ追加"
       >
@@ -55,6 +58,7 @@ export function MobileNavBar({
       <button
         type="button"
         className={`mobile-nav-item ${isFilterActive ? "is-active" : ""}`}
+        aria-pressed={isFilterActive}
         onClick={onOpenFilter}
       >
         <span className="mobile-nav-icon">

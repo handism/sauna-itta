@@ -7,6 +7,8 @@ import { searchLocation, GeocodingResult } from "../utils/geocoding";
 interface LocationSearchInputProps {
   onSelectLocation: (result: GeocodingResult) => void;
   placeholder?: string;
+  /** 外側の label と htmlFor で紐づけるための id */
+  inputId?: string;
 }
 
 const OPTION_ID_PREFIX = "location-search-option-";
@@ -14,6 +16,7 @@ const OPTION_ID_PREFIX = "location-search-option-";
 export function LocationSearchInput({
   onSelectLocation,
   placeholder = "施設名や住所で場所を検索...",
+  inputId,
 }: LocationSearchInputProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GeocodingResult[]>([]);
@@ -146,6 +149,7 @@ export function LocationSearchInput({
         <Search className="location-search-icon" size={16} aria-hidden="true" />
         <input
           type="text"
+          id={inputId}
           className="location-search-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

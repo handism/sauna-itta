@@ -1,2 +1,2 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap");
+/* Outfit は layout.tsx の next/font でセルフホスト読み込みしている */
 @import "../components/sauna-map/styles/index.css";

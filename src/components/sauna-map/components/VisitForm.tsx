@@ -1,5 +1,5 @@
 import { Dispatch, FormEvent, SetStateAction } from "react";
-import { Check, Save, X, Trash2 } from "lucide-react";
+import { Check, Save, X, Trash2, Info } from "lucide-react";
 import { VisitFormState, VisitHistoryEntry } from "../types";
 import { VisitHistorySection } from "./VisitHistorySection";
 import { VisitTagsField } from "./VisitTagsField";
@@ -48,6 +48,15 @@ export function VisitFormView({
   imageUploading,
 }: VisitFormViewProps) {
   const historyCount = editingId ? Math.max(1, historyEntries.length) : 0;
+
+  // 保存できない理由を明示し、無反応なボタンに見えないようにする
+  const submitBlockedReason = !selectedLocation
+    ? "地図上をクリックして場所を選択してください"
+    : !form.name.trim()
+      ? "サウナ名を入力してください"
+      : imageUploading
+        ? "画像の処理が終わるまでお待ちください"
+        : null;
 
   const handleGeocodingSelect = (result: GeocodingResult) => {
     if (onLocationSelect) {
@@ -128,8 +137,11 @@ export function VisitFormView({
       />
 
       <div className="form-group">
-        <label>{form.status === "wishlist" ? "メモ" : "感想・メモ"}</label>
+        <label htmlFor="visit-comment">
+          {form.status === "wishlist" ? "メモ" : "感想・メモ"}
+        </label>
         <textarea
+          id="visit-comment"
           className="input textarea"
           rows={3}
           value={form.comment}
@@ -155,11 +167,19 @@ export function VisitFormView({
         <button
           type="submit"
           className="btn btn-primary"
-          disabled={!selectedLocation || !form.name || imageUploading}
+          disabled={submitBlockedReason !== null}
+          title={submitBlockedReason ?? undefined}
+          aria-describedby={submitBlockedReason ? "submit-blocked-reason" : undefined}
         >
           {editingId ? <Check size={18} /> : <Save size={18} />}
           <span>{editingId ? "更新する" : "保存する"}</span>
         </button>
+        {submitBlockedReason && (
+          <p className="form-hint form-hint--blocked" id="submit-blocked-reason" role="status">
+            <Info size={13} aria-hidden="true" />
+            {submitBlockedReason}
+          </p>
+        )}
         <div className={`form-actions-secondary ${!editingId ? "form-actions-secondary--single" : ""}`}>
           {editingId && (
             <button

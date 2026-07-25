@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// base.css の --font-main が参照するフォント。
+// next/font でセルフホストし、外部リクエスト（PWA オフライン時に失敗する）を無くす
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  weight: ["300", "400", "600"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -36,8 +35,17 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#0f172a",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f6fc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
 };
+
+/**
+ * 初期描画前に html へ light-theme クラスを付けてダーク→ライトのちらつきを防ぐ。
+ * 判定は utils/theme.ts の getInitialTheme() と揃えること。
+ */
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("sauna-itta_theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}if(t==="light"){document.documentElement.classList.add("light-theme");}}catch(e){}})();`;
 
 export default function RootLayout({
   children,
@@ -46,9 +54,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
-      </body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
+      <body className={outfit.variable}>{children}</body>
     </html>
   );
 }

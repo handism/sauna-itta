@@ -6,6 +6,7 @@ import { LocateFixed, Loader2 } from "lucide-react";
 import { MapControlButton } from "./MapControlButton";
 
 import { CurrentLocation } from "../types";
+import { prefersReducedMotion } from "../utils/motion";
 
 interface LocationControlProps {
   onLocationFound?: (location: CurrentLocation) => void;
@@ -28,7 +29,7 @@ export function LocationControl({ onLocationFound, onNotify }: LocationControlPr
       (pos) => {
         const { latitude, longitude, accuracy } = pos.coords;
         onLocationFound?.({ lat: latitude, lng: longitude, accuracy });
-        map.flyTo([latitude, longitude], 14);
+        map.flyTo([latitude, longitude], 14, { animate: !prefersReducedMotion() });
         setLocating(false);
       },
       () => {

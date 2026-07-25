@@ -9,13 +9,13 @@ function MapLoadingPlaceholder() {
     <div
       className="map-container"
       style={{
-        background: "#0d0d0d",
+        background: "var(--background)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         gap: "0.75rem",
-        color: "#f0f5fc",
+        color: "var(--foreground)",
       }}
     >
       <Loader2 size={28} className="spin-icon" />

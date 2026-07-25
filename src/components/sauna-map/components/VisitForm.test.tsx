@@ -59,4 +59,52 @@ describe("VisitFormView", () => {
 
     expect(setFormMock).toHaveBeenCalled();
   });
+
+  it("associates every text field label with its input", () => {
+    render(<VisitFormView {...defaultProps} />);
+
+    expect(screen.getByLabelText("サウナ名")).toHaveValue("テストサウナ");
+    expect(screen.getByLabelText("エリア（任意）")).toHaveValue("東京");
+    expect(screen.getByLabelText("行った日")).toHaveValue("2026-07-25");
+    expect(screen.getByLabelText("タグ（カンマ区切り）")).toHaveValue("サウナ,水風呂");
+    expect(screen.getByLabelText("感想・メモ")).toHaveValue("良かったです");
+  });
+
+  it("enables the submit button when the form is complete", () => {
+    render(<VisitFormView {...defaultProps} />);
+
+    expect(screen.getByRole("button", { name: /更新する/ })).toBeEnabled();
+    expect(document.getElementById("submit-blocked-reason")).toBeNull();
+  });
+
+  it("explains why the submit button is disabled when no location is selected", () => {
+    render(<VisitFormView {...defaultProps} selectedLocation={null} />);
+
+    const submit = screen.getByRole("button", { name: /更新する/ });
+    expect(submit).toBeDisabled();
+    expect(submit).toHaveAttribute("aria-describedby", "submit-blocked-reason");
+    expect(document.getElementById("submit-blocked-reason")).toHaveTextContent(
+      "地図上をクリックして場所を選択してください"
+    );
+  });
+
+  it("explains why the submit button is disabled when the name is blank", () => {
+    render(
+      <VisitFormView {...defaultProps} form={{ ...defaultForm, name: "   " }} />
+    );
+
+    expect(screen.getByRole("button", { name: /更新する/ })).toBeDisabled();
+    expect(document.getElementById("submit-blocked-reason")).toHaveTextContent(
+      "サウナ名を入力してください"
+    );
+  });
+
+  it("explains why the submit button is disabled while an image is uploading", () => {
+    render(<VisitFormView {...defaultProps} imageUploading />);
+
+    expect(screen.getByRole("button", { name: /更新する/ })).toBeDisabled();
+    expect(document.getElementById("submit-blocked-reason")).toHaveTextContent(
+      "画像の処理が終わるまでお待ちください"
+    );
+  });
 });

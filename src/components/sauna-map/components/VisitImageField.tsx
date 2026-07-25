@@ -36,9 +36,10 @@ export function VisitImageField({
 
   return (
     <div className="form-group">
-      <label>写真を追加</label>
+      <label htmlFor="visit-image">写真を追加</label>
       <input
         ref={inputRef}
+        id="visit-image"
         type="file"
         className="visually-hidden-file-input"
         accept="image/*"

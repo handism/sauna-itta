@@ -29,14 +29,15 @@ export function VisitTagsField({ tagsText, onChange }: VisitTagsFieldProps) {
 
   return (
     <div className="form-group">
-      <label>タグ（カンマ区切り）</label>
+      <label htmlFor="visit-tags">タグ（カンマ区切り）</label>
       <input
+        id="visit-tags"
         className="input"
         value={tagsText}
         onChange={(e) => onChange(e.target.value)}
         placeholder="例: 外気浴最高, 水風呂キンキン, ソロ向き"
       />
-      <div className="preset-tags">
+      <div className="preset-tags" role="group" aria-label="タグのプリセット">
         {PRESET_TAGS.map((tag) => {
           const isSelected = currentTags.includes(tag);
           return (
@@ -44,6 +45,7 @@ export function VisitTagsField({ tagsText, onChange }: VisitTagsFieldProps) {
               key={tag}
               type="button"
               className={`preset-tag-chip ${isSelected ? "is-selected" : ""}`}
+              aria-pressed={isSelected}
               onClick={() => toggleTag(tag)}
             >
               {isSelected ? <Check size={12} /> : "+"} {tag}
