@@ -186,10 +186,12 @@
     justify-content: center;
     line-height: 1;
     margin-bottom: 2px;
+    /* .filter-active-dot の位置基準 */
+    position: relative;
   }
 
   /* 追加ボタンの特記スタイル */
-  .mobile-nav-item--add .mobile-nav-icon-add {
+  .mobile-nav-item--add .mobile-nav-icon--add {
     width: 32px;
     height: 32px;
     background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
@@ -205,16 +207,15 @@
     transition: transform 0.2s;
   }
 
-  .mobile-nav-item--add:active .mobile-nav-icon-add {
+  .mobile-nav-item--add:active .mobile-nav-icon--add {
     transform: scale(0.92);
   }
 
-  /* フィルターバッジ */
-  .mobile-nav-item.has-badge::after {
-    content: "";
+  /* フィルターが有効なときに MobileNavBar が出すバッジ */
+  .filter-active-dot {
     position: absolute;
-    top: 6px;
-    right: 28%;
+    top: -2px;
+    right: -6px;
     width: 7px;
     height: 7px;
     background-color: var(--primary);

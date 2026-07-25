@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 /**
  * CSS は jsdom 上で評価されないため、デザイントークンの規約
@@ -69,6 +69,43 @@ describe("CSS デザイントークンの規約", () => {
             !ALLOWED_SELECTORS.some((allowed) => selector.includes(allowed))
         )
         .map(({ selector }) => `${file}: ${selector}`)
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("CSS のクラス名がコンポーネント側に存在すること", () => {
+    /*
+     * `.mobile-nav-icon-add` と `mobile-nav-icon--add` のような綴り違いは
+     * 誰もエラーにしてくれず、スタイルが当たらないまま放置される。
+     */
+    const srcDir = resolve(STYLE_DIR, "../../..");
+    const codeTokens = new Set<string>();
+    const collect = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) {
+          collect(full);
+        } else if (/\.tsx?$/.test(entry.name)) {
+          for (const token of readFileSync(full, "utf8").match(/[A-Za-z0-9_-]+/g) ?? []) {
+            codeTokens.add(token);
+          }
+        }
+      }
+    };
+    collect(srcDir);
+
+    // Leaflet 由来のクラスと、テンプレートリテラルで組み立てる修飾子は対象外
+    const IGNORED_PREFIXES = ["leaflet-", "app-toast--", "bottom-sheet--"];
+
+    const offenders = styleFiles.flatMap(({ file, css }) =>
+      [...new Set((css.match(/\.(-?[A-Za-z_][A-Za-z0-9_-]*)/g) ?? []).map((m) => m.slice(1)))]
+        .filter(
+          (cls) =>
+            !codeTokens.has(cls) &&
+            !IGNORED_PREFIXES.some((prefix) => cls.startsWith(prefix))
+        )
+        .map((cls) => `${file}: .${cls}`)
     );
 
     expect(offenders).toEqual([]);

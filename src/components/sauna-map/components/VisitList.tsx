@@ -9,7 +9,6 @@ import { VisitListSearch } from "./VisitListSearch";
 import { VisitListEmpty } from "./VisitListEmpty";
 import { getScrollBehavior } from "../utils/motion";
 import {
-  useSaunaUI,
   useVisitsCRUD,
   useVisitFiltersContext,
   useSaunaMapState,
@@ -33,7 +32,6 @@ export interface VisitListViewProps {
   isFilterActive: boolean;
   activeFilterCount: number;
   onClearFilters: () => void;
-  onOpenFilters: () => void;
   onStartNewVisit: () => void;
   onEdit: (visit: SaunaVisit) => void;
   selectedId: string | null;
@@ -41,7 +39,6 @@ export interface VisitListViewProps {
   onDeselectVisit: () => void;
   hoveredId: string | null;
   onHoverVisit: (id: string | null) => void;
-  isMobile: boolean;
 }
 
 export function VisitListView({
@@ -52,7 +49,6 @@ export function VisitListView({
   isFilterActive,
   activeFilterCount,
   onClearFilters,
-  onOpenFilters,
   onStartNewVisit,
   onEdit,
   selectedId,
@@ -60,7 +56,6 @@ export function VisitListView({
   onDeselectVisit,
   hoveredId,
   onHoverVisit,
-  isMobile,
 }: VisitListViewProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -130,9 +125,6 @@ export function VisitListView({
         filteredCount={filteredVisits.length}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
-        isFilterActive={isFilterActive}
-        onOpenFilters={onOpenFilters}
-        isMobile={isMobile}
       />
 
       <VisitListSearch
@@ -208,7 +200,6 @@ export function VisitListView({
 }
 
 export function VisitList(props: Partial<VisitListViewProps>) {
-  const ui = useSaunaUI();
   const crud = useVisitsCRUD();
   const filtersData = useVisitFiltersContext();
   const mapState = useSaunaMapState();
@@ -223,7 +214,6 @@ export function VisitList(props: Partial<VisitListViewProps>) {
       isFilterActive={props.isFilterActive ?? filtersData.isFilterActive}
       activeFilterCount={props.activeFilterCount ?? filtersData.activeFilterCount}
       onClearFilters={props.onClearFilters ?? filtersData.clearFilters}
-      onOpenFilters={props.onOpenFilters ?? ui.openFilterModal}
       onStartNewVisit={props.onStartNewVisit ?? editor.startNewVisit}
       onEdit={props.onEdit ?? mapState.handleEditVisit}
       selectedId={props.selectedId ?? mapState.selectedId}
@@ -231,7 +221,6 @@ export function VisitList(props: Partial<VisitListViewProps>) {
       onDeselectVisit={props.onDeselectVisit ?? mapState.handleDeselectVisit}
       hoveredId={props.hoveredId ?? mapState.hoveredId}
       onHoverVisit={props.onHoverVisit ?? mapState.setHoveredId}
-      isMobile={props.isMobile ?? ui.isMobile}
     />
   );
 }

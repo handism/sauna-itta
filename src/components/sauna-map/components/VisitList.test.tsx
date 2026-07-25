@@ -40,7 +40,6 @@ describe("VisitListView の増分レンダリング", () => {
     isFilterActive: false,
     activeFilterCount: 0,
     onClearFilters: vi.fn(),
-    onOpenFilters: vi.fn(),
     onStartNewVisit: vi.fn(),
     onEdit: vi.fn(),
     selectedId: null,
@@ -48,7 +47,6 @@ describe("VisitListView の増分レンダリング", () => {
     onDeselectVisit: vi.fn(),
     hoveredId: null,
     onHoverVisit: vi.fn(),
-    isMobile: false,
   };
 
   beforeEach(() => {

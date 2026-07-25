@@ -7,9 +7,6 @@ interface VisitListHeaderProps {
   filteredCount: number;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
-  isFilterActive?: boolean;
-  onOpenFilters?: () => void;
-  isMobile?: boolean;
 }
 
 function VisitListHeaderComponent({
