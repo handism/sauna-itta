@@ -4,17 +4,26 @@
   --text-muted: #94a3b8;
   --text-subtle: #cbd5e1;
   
+  /*
+   * アクセント色。ここに追加したものは .light-theme にも必ず対応する定義を置くこと
+   * （未定義のまま放置すると、ダーク前提の濃い色がライトテーマへそのまま漏れます）。
+   * styles/tokens.test.ts が両テーマの定義漏れを検査します。
+   */
+
   /* サウナ・アンバー (熱・木・蒸気) */
   --primary: #ff8c38;
   --primary-hover: #ffa056;
   --primary-glow: rgba(255, 140, 56, 0.38);
   --accent-sauna: #ff5e36;
-  
+
   /* 水風呂・ディープアクア (水・冷気・ととのい) */
   --secondary: #1a293d;
   --accent-water: #00d2ff;
+  /* グラデーションの濃い側。単色で使わないこと */
+  --accent-water-deep: #0088ff;
   --water-glow: rgba(0, 210, 255, 0.38);
   --accent-wishlist: #10b981;
+  --accent-wishlist-deep: #34d399;
   --wishlist-glow: rgba(16, 185, 129, 0.35);
   --star-color: #fbbf24;
 
@@ -65,8 +74,25 @@
   --error: #ef4444;
   --map-filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(92%);
   --input-bg: rgba(15, 23, 42, 0.75);
+
+  /*
+   * 面（パネル・カード・モーダル）の影。ライトテーマでは弱い値に差し替わるため、
+   * box-shadow に rgba(0, 0, 0, ...) を直書きしないこと（ライトで影が黒く落ちます）。
+   * sm → md → lg → xl の順に「浮いている高さ」が上がる。
+   */
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.38);
   --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.45);
+  --shadow-xl: 0 24px 56px rgba(0, 0, 0, 0.55);
+  /* 画面下端からせり上がる面（ボトムシート・モバイル時のサイドバー）用 */
+  --shadow-up: 0 -8px 32px rgba(0, 0, 0, 0.45);
+  /*
+   * 地図上に浮くマーカー・クラスタ用。地図タイルの上に乗るため、
+   * ライトテーマでも弱めない（弱めるとタイルに溶けて位置が読めなくなる）。
+   */
+  --shadow-marker-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-marker: 0 6px 18px rgba(0, 0, 0, 0.4);
+  --shadow-marker-lifted: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-glow: 0 0 20px var(--primary-glow);
   /* --error は面の色、--error-text は文字色（各テーマでコントラスト比 4.5:1 以上） */
   --error-text: #fca5a5;
@@ -80,6 +106,21 @@
   --primary: #e06c1b;
   --primary-hover: #c95d12;
   --primary-glow: rgba(224, 108, 27, 0.25);
+  /* 明るい背景の上でも沈むよう、アクセントはダーク時より濃い値にする */
+  --accent-sauna: #d1441c;
+  --secondary: #dbe4f2;
+  --accent-water: #0284c7;
+  --accent-water-deep: #0369a1;
+  --water-glow: rgba(2, 132, 199, 0.3);
+  /*
+   * wishlist 系は両テーマ共通。ライトでは .segmented-btn--wishlist.is-active の
+   * 面としてダーク文字を載せるため（#10b981 上で約 7:1）、ここを濃くすると逆に読めなくなる。
+   */
+  --accent-wishlist: #10b981;
+  --accent-wishlist-deep: #34d399;
+  --wishlist-glow: rgba(16, 185, 129, 0.35);
+  /* #fbbf24 は白地でコントラスト約 1.8:1 しかなく、星の塗り分けが読めない */
+  --star-color: #d97706;
   --glass: rgba(255, 255, 255, 0.88);
   --glass-hover: rgba(255, 255, 255, 0.95);
   --glass-heavy: rgba(255, 255, 255, 0.96);
@@ -88,7 +129,11 @@
   --map-filter: none;
   --input-bg: rgba(255, 255, 255, 0.92);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.1);
   --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 24px 56px rgba(0, 0, 0, 0.18);
+  --shadow-up: 0 -8px 32px rgba(0, 0, 0, 0.12);
+  /* --shadow-marker 系はライトでも据え置き（地図タイル上での視認性を優先） */
   --overlay-subtle: rgba(15, 24, 38, 0.04);
   --overlay-hover: rgba(15, 24, 38, 0.08);
   --error-text: #b91c1c;

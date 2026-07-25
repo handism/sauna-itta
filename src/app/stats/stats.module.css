@@ -41,7 +41,7 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 30px 0 rgba(0, 0, 0, 0.22);
+  box-shadow: var(--shadow-lg);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
@@ -49,7 +49,7 @@
 .glassCard:hover {
   border-color: rgba(255, 255, 255, 0.22);
   transform: translateY(-2px);
-  box-shadow: 0 18px 36px 0 rgba(0, 0, 0, 0.28);
+  box-shadow: var(--shadow-xl);
 }
 
 :global(.light-theme) .glassCard {
@@ -59,12 +59,11 @@
     rgba(255, 255, 255, 0.65) 100%
   );
   border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 10px 25px 0 rgba(0, 0, 0, 0.05);
+  /* box-shadow は --shadow-lg / --shadow-xl がテーマごとに切り替わるため上書き不要 */
 }
 
 :global(.light-theme) .glassCard:hover {
-  border-color: rgba(249, 115, 22, 0.3);
-  box-shadow: 0 16px 32px 0 rgba(0, 0, 0, 0.08);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 /* Header Section */

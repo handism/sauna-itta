@@ -30,7 +30,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4), 0 0 14px var(--primary-glow);
+  box-shadow: var(--shadow-marker), 0 0 14px var(--primary-glow);
   transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.28s ease;
   cursor: pointer;
   position: relative;
@@ -48,12 +48,12 @@
 }
 
 .sauna-marker--selected {
-  background: linear-gradient(135deg, var(--accent-water) 0%, #0088ff 100%);
+  background: linear-gradient(135deg, var(--accent-water) 0%, var(--accent-water-deep) 100%);
   box-shadow: 0 6px 20px var(--water-glow), 0 0 16px var(--accent-water);
 }
 
 .sauna-marker--wishlist {
-  background: linear-gradient(135deg, var(--accent-wishlist) 0%, #34d399 100%);
+  background: linear-gradient(135deg, var(--accent-wishlist) 0%, var(--accent-wishlist-deep) 100%);
   box-shadow: 0 6px 18px var(--wishlist-glow);
 }
 
@@ -71,25 +71,27 @@
 
 @keyframes pulseRing {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 140, 56, 0.75), 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 75%, transparent),
+      var(--shadow-marker-lifted);
   }
   70% {
-    box-shadow: 0 0 0 16px rgba(255, 140, 56, 0), 0 12px 28px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 16px transparent, var(--shadow-marker-lifted);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 140, 56, 0), 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 0 transparent, var(--shadow-marker-lifted);
   }
 }
 
 @keyframes pulseRingWishlist {
   0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.75), 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-wishlist) 75%, transparent),
+      var(--shadow-marker-lifted);
   }
   70% {
-    box-shadow: 0 0 0 16px rgba(16, 185, 129, 0), 0 12px 28px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 16px transparent, var(--shadow-marker-lifted);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0), 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 0 0 transparent, var(--shadow-marker-lifted);
   }
 }
 
@@ -117,7 +119,7 @@
   font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-marker-sm);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -160,7 +162,7 @@
   color: var(--foreground) !important;
   border-radius: var(--radius-lg) !important;
   border: 1px solid var(--glass-border) !important;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 24px var(--primary-glow) !important;
+  box-shadow: var(--shadow-lg), 0 0 24px var(--primary-glow) !important;
 }
 
 .leaflet-popup-tip {
@@ -225,7 +227,7 @@
   -webkit-backdrop-filter: blur(16px);
   border-radius: 50% !important;
   text-indent: 0 !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 
 .leaflet-control-zoom a,
@@ -262,7 +264,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-md);
   box-sizing: border-box;
   transition:
     background 0.25s,
@@ -402,7 +404,7 @@
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 0.9rem 1.2rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-lg);
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   width: calc(100% - 2rem);
   max-width: 420px;
@@ -534,7 +536,7 @@
   gap: 2px;
   background: linear-gradient(135deg, var(--accent-sauna) 0%, var(--primary) 100%);
   border: 2.5px solid #ffffff;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 16px var(--primary-glow);
+  box-shadow: var(--shadow-marker), 0 0 16px var(--primary-glow);
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -544,7 +546,7 @@
 
 .sauna-cluster:hover {
   transform: scale(1.18);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px var(--primary-glow);
+  box-shadow: var(--shadow-marker-lifted), 0 0 20px var(--primary-glow);
 }
 
 .sauna-cluster--medium {
@@ -590,7 +592,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-md);
   box-sizing: border-box;
   transition:
     background 0.25s,
@@ -640,7 +642,7 @@
   background-color: #2563eb;
   border: 3px solid #ffffff;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 12px rgba(37, 99, 235, 0.8);
+  box-shadow: var(--shadow-marker-sm), 0 0 12px rgba(37, 99, 235, 0.8);
   z-index: 3;
   position: relative;
 }
