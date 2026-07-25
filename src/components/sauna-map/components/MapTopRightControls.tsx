@@ -1,16 +1,19 @@
 import { MapClusterControl } from "./MapClusterControl";
 import { MapZoomControl } from "./MapZoomControl";
 import { LocationControl } from "./LocationControl";
+import { CurrentLocation } from "../types";
 
 interface MapTopRightControlsProps {
   enableClustering: boolean;
   onToggleClustering: () => void;
+  onLocationFound?: (location: CurrentLocation) => void;
   onNotify?: (message: string, tone?: "info" | "success" | "error") => void;
 }
 
 export function MapTopRightControls({
   enableClustering,
   onToggleClustering,
+  onLocationFound,
   onNotify,
 }: MapTopRightControlsProps) {
   return (
@@ -20,7 +23,7 @@ export function MapTopRightControls({
         onToggleClustering={onToggleClustering}
       />
       <MapZoomControl />
-      <LocationControl onNotify={onNotify} />
+      <LocationControl onLocationFound={onLocationFound} onNotify={onNotify} />
     </div>
   );
 }

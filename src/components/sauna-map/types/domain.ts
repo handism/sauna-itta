@@ -6,6 +6,11 @@ export interface LatLng {
   lng: number;
 }
 
+export interface CurrentLocation extends LatLng {
+  accuracy?: number;
+}
+
+
 // --- ドメイン型基本定義 ---
 export type VisitStatus = "visited" | "wishlist";
 

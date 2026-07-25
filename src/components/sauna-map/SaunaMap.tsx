@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { MapPin, X } from "lucide-react";
 import {
   MapContainer,
@@ -15,6 +15,7 @@ import { ShareModal } from "./components/ShareModal";
 import { VisitForm } from "./components/VisitForm";
 import { VisitList } from "./components/VisitList";
 import { VisitMarkers } from "./components/VisitMarkers";
+import { CurrentLocationMarker } from "./components/CurrentLocationMarker";
 import { ConfirmModal } from "./components/ConfirmModal";
 import { LocationPicker } from "./components/LocationPicker";
 import { MapController } from "./components/MapController";
@@ -33,9 +34,11 @@ import {
   useSaunaEditor,
   useSaunaMapState,
 } from "./context";
-import { SaunaVisit } from "./types";
+import { SaunaVisit, CurrentLocation } from "./types";
 
 function SaunaMapContent() {
+  const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
+
   const {
     isMobile,
     mounted,
@@ -117,6 +120,7 @@ function SaunaMapContent() {
           <MapTopRightControls
             enableClustering={enableClustering}
             onToggleClustering={toggleClustering}
+            onLocationFound={setCurrentLocation}
             onNotify={showToast}
           />
           <TileLayer
@@ -128,6 +132,7 @@ function SaunaMapContent() {
           <MapController target={activeMapTarget} isMobile={isMobile} />
           <ZoomObserver onZoomChange={handleZoomChange} />
           <MapBoundsObserver onBoundsChange={handleBoundsChange} />
+          <CurrentLocationMarker location={currentLocation} />
           <VisitMarkers
             visits={filteredVisits}
             editingId={editingId}

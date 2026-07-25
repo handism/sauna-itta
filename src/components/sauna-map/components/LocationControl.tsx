@@ -5,11 +5,14 @@ import { useMap } from "react-leaflet";
 import { LocateFixed, Loader2 } from "lucide-react";
 import { MapControlButton } from "./MapControlButton";
 
+import { CurrentLocation } from "../types";
+
 interface LocationControlProps {
+  onLocationFound?: (location: CurrentLocation) => void;
   onNotify?: (message: string, tone: "info" | "success" | "error") => void;
 }
 
-export function LocationControl({ onNotify }: LocationControlProps) {
+export function LocationControl({ onLocationFound, onNotify }: LocationControlProps) {
   const map = useMap();
   const [locating, setLocating] = useState(false);
 
@@ -23,7 +26,8 @@ export function LocationControl({ onNotify }: LocationControlProps) {
 
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const { latitude, longitude } = pos.coords;
+        const { latitude, longitude, accuracy } = pos.coords;
+        onLocationFound?.({ lat: latitude, lng: longitude, accuracy });
         map.flyTo([latitude, longitude], 14);
         setLocating(false);
       },
@@ -33,7 +37,7 @@ export function LocationControl({ onNotify }: LocationControlProps) {
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
     );
-  }, [map, onNotify]);
+  }, [map, onLocationFound, onNotify]);
 
   return (
     <div className="location-control">
