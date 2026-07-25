@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Flame, Calendar, Award, MapPin } from "lucide-react";
 import { SaunaVisit } from "@/components/sauna-map/types";
-import { getVisitCount, getVisitHistoryEntries } from "@/components/sauna-map/utils";
+import { getVisitHistoryEntries, rankVisitsByCount } from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface HomeSaunaCardProps {
@@ -10,27 +10,14 @@ interface HomeSaunaCardProps {
 
 export function HomeSaunaCard({ visits }: HomeSaunaCardProps) {
   const homeSaunaInfo = useMemo(() => {
-    const visitedList = visits.filter((v) => v.status !== "wishlist");
-    if (visitedList.length === 0) return null;
+    // 「TOP 5」カードと 1 位が食い違わないよう、順位付けは共通の rankVisitsByCount に任せる
+    const ranked = rankVisitsByCount(visits);
+    if (ranked.length === 0) return null;
 
-    // 訪問回数は地図側と同じ getVisitCount を使い、分子・分母の基準を揃える
-    let topSauna: SaunaVisit | null = null;
-    let maxCount = 0;
-    let totalVisitEntries = 0;
+    const [{ visit: saunaObj, count: maxCount }] = ranked;
+    if (maxCount === 0) return null;
 
-    for (const sauna of visitedList) {
-      const count = getVisitCount(sauna);
-      totalVisitEntries += count;
-
-      if (count > maxCount) {
-        maxCount = count;
-        topSauna = sauna;
-      }
-    }
-
-    if (!topSauna || maxCount === 0) return null;
-
-    const saunaObj = topSauna;
+    const totalVisitEntries = ranked.reduce((sum, entry) => sum + entry.count, 0);
 
     // Dates for this sauna
     const dates = getVisitHistoryEntries(saunaObj)

@@ -11,6 +11,7 @@ import {
   useSaunaEditor,
   useSaunaEditorState,
   useSaunaEditorActions,
+  useSaunaEditorForm,
   useSaunaMapState,
 } from "./SaunaMapContext";
 
@@ -194,5 +195,29 @@ describe("SaunaMap Contexts", () => {
     });
 
     expect(result.current.state.mode).toBe("creating:pick");
+  });
+
+  it("フォーム入力で EditorState / EditorActions の参照が変わらないこと", () => {
+    const { result } = renderHook(
+      () => ({
+        form: useSaunaEditorForm(),
+        state: useSaunaEditorState(),
+        actions: useSaunaEditorActions(),
+      }),
+      { wrapper },
+    );
+
+    const stateBefore = result.current.state;
+    const actionsBefore = result.current.actions;
+
+    act(() => {
+      result.current.form.setForm((prev) => ({ ...prev, name: "サウナしきじ" }));
+    });
+
+    expect(result.current.form.form.name).toBe("サウナしきじ");
+    // フォームを EditorState に戻すと、1 文字入力ごとに
+    // SaunaMapContent / DesktopSidebar / VisitList まで再レンダリング対象になる
+    expect(result.current.state).toBe(stateBefore);
+    expect(result.current.actions).toBe(actionsBefore);
   });
 });

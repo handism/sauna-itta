@@ -1,4 +1,4 @@
-import { useState, useCallback, FormEvent } from "react";
+import { useState, useCallback, useEffect, useRef, FormEvent } from "react";
 import { SaunaVisit, VisitFormState, LatLng, VisitHistoryEntry } from "../types";
 import {
   getDefaultForm,
@@ -44,6 +44,19 @@ export function useVisitForm({
 }: UseVisitFormOptions) {
   const [form, setForm] = useState<VisitFormState>(getDefaultForm());
   const [imageUploading, setImageUploading] = useState(false);
+
+  /**
+   * 送信時点の入力値を読むための ref。
+   *
+   * handleSubmit の依存配列に form を入れると、1 文字入力するたびに関数の参照が変わり、
+   * EditorActions Context 経由で SaunaMapContent / DesktopSidebar / VisitList まで
+   * 再レンダリング対象になる。送信はユーザー操作起点なので、その時点では effect が
+   * 反映済みであり、ref から読んでも常に画面と同じ値になる。
+   */
+  const formRef = useRef(form);
+  useEffect(() => {
+    formRef.current = form;
+  }, [form]);
 
   const cancelEditing = useCallback(
     (completed = false) => {
@@ -91,7 +104,8 @@ export function useVisitForm({
         return;
       }
 
-      const validation = validateVisitForm(form);
+      const currentForm = formRef.current;
+      const validation = validateVisitForm(currentForm);
       if (!validation.success) {
         showToast(validation.errors[0] ?? "入力内容に不備があります。", "error");
         return;
@@ -99,10 +113,10 @@ export function useVisitForm({
 
       let success = false;
       if (editingId) {
-        const result = editVisit(editingId, selectedLocation, form);
+        const result = editVisit(editingId, selectedLocation, currentForm);
         success = result.success;
       } else {
-        const result = addVisit(selectedLocation, form);
+        const result = addVisit(selectedLocation, currentForm);
         success = result.success;
       }
 
@@ -113,7 +127,7 @@ export function useVisitForm({
 
       cancelEditing(true);
     },
-    [selectedLocation, form, editingId, editVisit, addVisit, showToast, cancelEditing],
+    [selectedLocation, editingId, editVisit, addVisit, showToast, cancelEditing],
   );
 
   const handleImageFile = useCallback(

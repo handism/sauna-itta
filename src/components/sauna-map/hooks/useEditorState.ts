@@ -1,4 +1,4 @@
-import { useReducer } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import { LatLng, SaunaVisit } from "../types";
 
 type EditorMode = "list" | "creating:pick" | "creating:form" | "editing";
@@ -76,14 +76,33 @@ export function useEditorState(isMobile: boolean) {
     mapTarget: null,
   });
 
-  return {
-    state,
-    startCreate: () => dispatch({ type: "start_create", isMobile }),
-    startEdit: (visit: SaunaVisit) => dispatch({ type: "start_edit", visit }),
-    selectLocation: (location: LatLng) =>
-      dispatch({ type: "select_location", location, isMobile }),
-    cancelEdit: (completed = false) =>
-      dispatch({ type: "cancel_edit", completed, isMobile }),
-    toggleSidebar: () => dispatch({ type: "toggle_sidebar" }),
-  };
+  // ここで毎回新しい関数を返すと、EditorActions Context の値が毎レンダー変わり、
+  // 編集操作を購読している全消費側が再レンダリング対象になる（React Compiler が
+  // 効かないテスト環境では特に顕著）。参照を安定させておくこと。
+  const startCreate = useCallback(
+    () => dispatch({ type: "start_create", isMobile }),
+    [isMobile],
+  );
+
+  const startEdit = useCallback(
+    (visit: SaunaVisit) => dispatch({ type: "start_edit", visit }),
+    [],
+  );
+
+  const selectLocation = useCallback(
+    (location: LatLng) => dispatch({ type: "select_location", location, isMobile }),
+    [isMobile],
+  );
+
+  const cancelEdit = useCallback(
+    (completed = false) => dispatch({ type: "cancel_edit", completed, isMobile }),
+    [isMobile],
+  );
+
+  const toggleSidebar = useCallback(() => dispatch({ type: "toggle_sidebar" }), []);
+
+  return useMemo(
+    () => ({ state, startCreate, startEdit, selectLocation, cancelEdit, toggleSidebar }),
+    [state, startCreate, startEdit, selectLocation, cancelEdit, toggleSidebar],
+  );
 }

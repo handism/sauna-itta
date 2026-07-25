@@ -1,7 +1,7 @@
-import { Dispatch, SetStateAction, memo } from "react";
+import { memo } from "react";
 import { ChevronRight, Pencil, X } from "lucide-react";
-import { SaunaVisit, VisitFilters } from "../types";
 import { getVisitCount, sanitizeImageUrl } from "../utils";
+import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import {
   RatingStars,
   RouteLink,
@@ -10,18 +10,6 @@ import {
   VisitTagList,
   WishlistChip,
 } from "./common";
-
-interface VisitCompactItemProps {
-  visit: SaunaVisit;
-  isHovered: boolean;
-  isSelected: boolean;
-  onHoverVisit?: (id: string | null) => void;
-  onSelectVisit?: (visit: SaunaVisit) => void;
-  onDeselectVisit?: () => void;
-  onEdit: (visit: SaunaVisit) => void;
-  setFilters: Dispatch<SetStateAction<VisitFilters>>;
-  onOpenImage: (src: string) => void;
-}
 
 function VisitCompactItemComponent({
   visit,
@@ -33,7 +21,7 @@ function VisitCompactItemComponent({
   onEdit,
   setFilters,
   onOpenImage,
-}: VisitCompactItemProps) {
+}: VisitItemProps) {
   const visitCount = getVisitCount(visit);
   const thumbSrc = sanitizeImageUrl(visit.image);
 
@@ -131,15 +119,4 @@ function VisitCompactItemComponent({
   );
 }
 
-function areCompactItemPropsEqual(
-  prevProps: VisitCompactItemProps,
-  nextProps: VisitCompactItemProps,
-): boolean {
-  return (
-    prevProps.isHovered === nextProps.isHovered &&
-    prevProps.isSelected === nextProps.isSelected &&
-    prevProps.visit === nextProps.visit
-  );
-}
-
-export const VisitCompactItem = memo(VisitCompactItemComponent, areCompactItemPropsEqual);
+export const VisitCompactItem = memo(VisitCompactItemComponent, areVisitItemPropsEqual);

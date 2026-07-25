@@ -45,4 +45,49 @@ describe("useTheme", () => {
     expect(result.current.theme).toBe("light");
     expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
   });
+
+  describe("deferred モード", () => {
+    it("syncFromStorage を呼ぶまで保存値を読まないこと", () => {
+      window.localStorage.setItem(THEME_STORAGE_KEY, "light");
+
+      const { result } = renderHook(() => useTheme({ deferred: true }));
+
+      // 静的プリレンダリング時と同じ既定値のまま
+      expect(result.current.theme).toBe("dark");
+
+      act(() => {
+        result.current.syncFromStorage();
+      });
+
+      expect(result.current.theme).toBe("light");
+    });
+
+    it("syncFromStorage を呼ぶまで html のクラスを触らないこと", () => {
+      // layout.tsx のインラインスクリプトが付けたクラスを剥がしてはいけない
+      document.documentElement.classList.add("light-theme");
+      window.localStorage.setItem(THEME_STORAGE_KEY, "light");
+
+      const { result } = renderHook(() => useTheme({ deferred: true }));
+
+      expect(document.documentElement.classList.contains("light-theme")).toBe(true);
+
+      act(() => {
+        result.current.syncFromStorage();
+      });
+
+      expect(document.documentElement.classList.contains("light-theme")).toBe(true);
+    });
+
+    it("syncFromStorage を経ずに toggleTheme しても反映されること", () => {
+      const { result } = renderHook(() => useTheme({ deferred: true }));
+
+      act(() => {
+        result.current.toggleTheme();
+      });
+
+      expect(result.current.theme).toBe("light");
+      expect(document.documentElement.classList.contains("light-theme")).toBe(true);
+      expect(window.localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+    });
+  });
 });
