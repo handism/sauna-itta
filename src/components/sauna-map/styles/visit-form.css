@@ -365,7 +365,7 @@ input[type="date"].input {
 .location-search-icon {
   position: absolute;
   left: 0.75rem;
-  color: var(--muted);
+  color: var(--text-muted);
   pointer-events: none;
 }
 
@@ -389,7 +389,7 @@ input[type="date"].input {
 .location-search-spinner {
   position: absolute;
   right: 0.75rem;
-  color: var(--muted);
+  color: var(--text-muted);
   animation: spin 1s linear infinite;
 }
 
@@ -407,7 +407,7 @@ input[type="date"].input {
   right: 0.75rem;
   background: none;
   border: none;
-  color: var(--muted);
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -428,10 +428,11 @@ input[type="date"].input {
   margin-top: 0.25rem;
   padding: 0.35rem 0;
   list-style: none;
-  background: var(--surface);
+  background: var(--glass-heavy);
+  backdrop-filter: var(--backdrop-blur);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-lg);
   max-height: 220px;
   overflow-y: auto;
 }
@@ -445,7 +446,8 @@ input[type="date"].input {
   transition: background 0.15s ease;
 }
 
-.location-search-item:hover {
+.location-search-item:hover,
+.location-search-item.is-active {
   background: color-mix(in srgb, var(--primary) 15%, transparent);
 }
 
@@ -473,7 +475,7 @@ input[type="date"].input {
 
 .location-search-item-address {
   font-size: 0.78rem;
-  color: var(--muted);
+  color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -482,7 +484,22 @@ input[type="date"].input {
 .location-search-no-results {
   padding: 0.75rem 1rem;
   font-size: 0.82rem;
-  color: var(--muted);
+  color: var(--text-muted);
   text-align: center;
+}
+
+.location-search-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--error);
+}
+
+.location-search-error svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
 }
 

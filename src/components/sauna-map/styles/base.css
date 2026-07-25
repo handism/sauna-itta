@@ -115,6 +115,17 @@ body.allow-page-scroll {
   overflow-y: auto;
 }
 
+/*
+ * キーボード操作時のフォーカス可視化。
+ * :where() で詳細度 0 にしているため、個別コンポーネント側の
+ * :focus-visible 指定があればそちらが優先される。
+ */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-xs);
+}
+
 .rating-stars {
   display: inline-flex;
   align-items: center;

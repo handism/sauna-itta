@@ -558,11 +558,11 @@
   margin: 0;
   padding: 0.35rem;
   list-style: none;
-  background: var(--card-bg, #1a1a24);
+  background: var(--glass-heavy);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: var(--backdrop-blur);
 }
 
 .quick-sort-option {

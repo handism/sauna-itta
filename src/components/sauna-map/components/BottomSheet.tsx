@@ -1,4 +1,9 @@
-import { ReactNode, useRef, TouchEvent } from "react";
+import {
+  ReactNode,
+  useRef,
+  TouchEvent,
+  KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 import { MapPin } from "lucide-react";
 import type { SheetSnapPosition } from "../types";
 
@@ -21,7 +26,7 @@ export function BottomSheet({
   const startYRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
 
-  const handleTouchStart = (e: TouchEvent<HTMLDivElement>) => {
+  const handleTouchStart = (e: TouchEvent<HTMLButtonElement>) => {
     startYRef.current = e.touches[0].clientY;
     startTimeRef.current = Date.now();
     if (sheetRef.current) {
@@ -29,7 +34,7 @@ export function BottomSheet({
     }
   };
 
-  const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
+  const handleTouchMove = (e: TouchEvent<HTMLButtonElement>) => {
     if (startYRef.current === null) return;
     const currentY = e.touches[0].clientY;
     let diffY = currentY - startYRef.current; // 正: 下へ, 負: 上へ
@@ -46,7 +51,7 @@ export function BottomSheet({
     }
   };
 
-  const handleTouchEnd = (e: TouchEvent<HTMLDivElement>) => {
+  const handleTouchEnd = (e: TouchEvent<HTMLButtonElement>) => {
     if (startYRef.current === null) return;
     const endY = e.changedTouches[0].clientY;
     const diffY = startYRef.current - endY; // 正: 上へスワイプ, 負: 下へスワイプ
@@ -84,6 +89,26 @@ export function BottomSheet({
     else onSnapChange("min");
   };
 
+  // キーボード操作でも 3 段階のスナップを行き来できるようにする
+  const handleHandleKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      if (snapPosition === "min") onSnapChange("half");
+      else if (snapPosition === "half") onSnapChange("full");
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      if (snapPosition === "full") onSnapChange("half");
+      else if (snapPosition === "half") onSnapChange("min");
+    }
+  };
+
+  const handleLabel =
+    snapPosition === "min"
+      ? "パネルを開く"
+      : snapPosition === "half"
+        ? "パネルを最大化する"
+        : "パネルを閉じる";
+
   return (
     <div
       ref={sheetRef}
@@ -91,17 +116,23 @@ export function BottomSheet({
       role="region"
       aria-label="ボトムシートパネル"
     >
-      <div
+      <button
+        type="button"
         className="bottom-sheet-handle-wrapper"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleHandleClick}
+        onKeyDown={handleHandleKeyDown}
+        aria-label={handleLabel}
+        aria-expanded={snapPosition !== "min"}
+        aria-controls="bottom-sheet-content"
         title="タップまたはスワイプでパネルを開閉"
       >
-        <div className="bottom-sheet-handle-bar-container">
-          <div className="bottom-sheet-handle" />
-          <div className="bottom-sheet-summary-badge">
+        {/* button の子要素は phrasing content に限られるため span で構成する */}
+        <span className="bottom-sheet-handle-bar-container">
+          <span className="bottom-sheet-handle" />
+          <span className="bottom-sheet-summary-badge">
             <span className="summary-count">
               <MapPin size={13} /> {filteredCount ?? 0}件表示中
             </span>
@@ -110,10 +141,12 @@ export function BottomSheet({
                 選択中: {selectedVisitName}
               </span>
             )}
-          </div>
-        </div>
+          </span>
+        </span>
+      </button>
+      <div className="bottom-sheet-content" id="bottom-sheet-content">
+        {children}
       </div>
-      <div className="bottom-sheet-content">{children}</div>
     </div>
   );
 }
