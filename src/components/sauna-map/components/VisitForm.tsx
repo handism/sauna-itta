@@ -82,7 +82,7 @@ export function VisitFormView({
 
       {editingId && form.status === "visited" && (
         <div className="form-group form-group--checkbox">
-          <label className="checkbox-label">
+          <label className="checkbox-row">
             <input
               type="checkbox"
               checked={form.appendHistory}

@@ -89,12 +89,16 @@
   gap: 0.6rem;
   font-size: 0.9rem;
   cursor: pointer;
+  margin-bottom: 0;
+  user-select: none;
 }
 
 .checkbox-row input {
   width: 18px;
   height: 18px;
   accent-color: var(--primary);
+  flex-shrink: 0;
+  margin: 0;
 }
 
 .form-hint {
