@@ -44,58 +44,57 @@ function VisitCompactItemComponent({
       onMouseEnter={() => onHoverVisit?.(visit.id)}
       onMouseLeave={() => onHoverVisit?.(null)}
     >
-      <div
-        className="sauna-compact-header"
-        role="button"
-        tabIndex={0}
-        aria-expanded={isSelected}
-        aria-label={`${visit.name}の情報を${isSelected ? "折りたたむ" : "展開する"}`}
-        onClick={() => {
-          if (isSelected) {
-            onDeselectVisit?.();
-          } else {
-            onSelectVisit?.(visit);
-          }
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            if (isSelected) {
-              onDeselectVisit?.();
-            } else {
-              onSelectVisit?.(visit);
-            }
-          }
-        }}
-      >
-        <div className="sauna-compact-main-info">
-          <span className={`sauna-compact-chevron ${isSelected ? "is-expanded" : ""}`}>
-            <ChevronRight size={14} />
-          </span>
-          <h3 className="sauna-compact-title">
-            {visit.name}
-            {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
-          </h3>
-          {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
-        </div>
-        <div className="sauna-compact-side-info">
-          {thumbSrc && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={thumbSrc} className="sauna-compact-thumb" alt="" />
-          )}
-          <RatingStars rating={visit.rating ?? 0} className="sauna-compact-rating" />
+      <div className="sauna-compact-header">
+        {/*
+          開閉トグルは見出しの中のボタンとして持たせる（WAI-ARIA のアコーディオンパターン）。
+          編集ボタンをトグルの内側に置くとボタンの入れ子になるため、必ず兄弟要素にすること。
+          button の子は phrasing content に限られるので中身は span で構成する。
+        */}
+        <h3 className="sauna-compact-heading">
           <button
             type="button"
-            className="sauna-card-edit-btn compact-edit-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(visit);
+            className="sauna-compact-toggle"
+            aria-expanded={isSelected}
+            aria-label={`${visit.name}の情報を${isSelected ? "折りたたむ" : "展開する"}`}
+            onClick={() => {
+              if (isSelected) {
+                onDeselectVisit?.();
+              } else {
+                onSelectVisit?.(visit);
+              }
             }}
-            title="記録を編集"
           >
-            <Pencil size={14} />
+            <span className="sauna-compact-main-info">
+              <span
+                className={`sauna-compact-chevron ${isSelected ? "is-expanded" : ""}`}
+                aria-hidden="true"
+              >
+                <ChevronRight size={14} />
+              </span>
+              <span className="sauna-compact-title">
+                {visit.name}
+                {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
+              </span>
+              {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
+            </span>
+            <span className="sauna-compact-side-info">
+              {thumbSrc && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={thumbSrc} className="sauna-compact-thumb" alt="" />
+              )}
+              <RatingStars rating={visit.rating ?? 0} className="sauna-compact-rating" />
+            </span>
           </button>
-        </div>
+        </h3>
+        <button
+          type="button"
+          className="sauna-card-edit-btn compact-edit-btn"
+          onClick={() => onEdit(visit)}
+          aria-label={`${visit.name}の記録を編集`}
+          title="記録を編集"
+        >
+          <Pencil size={14} aria-hidden="true" />
+        </button>
       </div>
 
       {isSelected && (

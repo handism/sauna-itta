@@ -37,27 +37,30 @@ function VisitCardItemComponent({
   const visitCount = getVisitCount(visit);
 
   return (
+    // カードは編集ボタン・タグ・経路リンクを内包するため、カード自体を role="button" に
+    // すると対話要素の入れ子になる。キーボード／支援技術からの選択は見出し内のボタンが担い、
+    // ここでのクリックはポインタ操作の利便性のための補助に留める。
     <div
       data-visit-id={visit.id}
       className={`sauna-card ${isHovered ? "is-hovered" : ""} ${isSelected ? "is-selected" : ""}`}
-      role="button"
-      tabIndex={0}
-      aria-pressed={isSelected}
-      aria-label={`${visit.name}を選択`}
       onClick={() => onSelectVisit?.(visit)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelectVisit?.(visit);
-        }
-      }}
       onMouseEnter={() => onHoverVisit?.(visit.id)}
       onMouseLeave={() => onHoverVisit?.(null)}
     >
       <div className="sauna-card-header">
         <h3 className="sauna-card-title">
-          {visit.name}
-          {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
+          <button
+            type="button"
+            className="sauna-card-select-btn"
+            aria-pressed={isSelected}
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelectVisit?.(visit);
+            }}
+          >
+            {visit.name}
+            {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
+          </button>
         </h3>
         <div className="sauna-card-actions">
           {isSelected && onDeselectVisit && (

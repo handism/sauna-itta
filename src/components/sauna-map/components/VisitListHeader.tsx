@@ -23,6 +23,14 @@ function VisitListHeaderComponent({
         訪れたサウナ <span className="panel-title-count">({filteredCount}件)</span>
       </h2>
 
+      {/*
+        検索・フィルター操作で件数が変わったことを支援技術へ伝える。
+        見出し内の数字だけを読み上げても文脈が伝わらないため、文として持つ。
+      */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {filteredCount}件のサウナを表示中
+      </p>
+
       <div className="sauna-header-actions">
         <div className="view-mode-toggle" role="group" aria-label="表示形式切り替え">
           <button
@@ -31,8 +39,9 @@ function VisitListHeaderComponent({
             onClick={() => onViewModeChange("compact")}
             title="リスト（コンパクト）表示"
             aria-label="リスト表示"
+            aria-pressed={viewMode === "compact"}
           >
-            <List size={15} /> リスト
+            <List size={15} aria-hidden="true" /> リスト
           </button>
           <button
             type="button"
@@ -40,8 +49,9 @@ function VisitListHeaderComponent({
             onClick={() => onViewModeChange("card")}
             title="カード表示"
             aria-label="カード表示"
+            aria-pressed={viewMode === "card"}
           >
-            <LayoutGrid size={15} /> カード
+            <LayoutGrid size={15} aria-hidden="true" /> カード
           </button>
         </div>
       </div>

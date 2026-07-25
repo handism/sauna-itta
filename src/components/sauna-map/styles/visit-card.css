@@ -7,7 +7,7 @@
 }
 
 .sauna-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  background: linear-gradient(135deg, var(--overlay-subtle) 0%, transparent 100%);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
   padding: 1.1rem 1.1rem 1.1rem 1.25rem;
@@ -37,7 +37,7 @@
   background: var(--glass-heavy);
   border-color: var(--primary-glow);
   transform: translateY(-3px);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.4), 0 0 20px var(--primary-glow);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
 }
 
 @keyframes selectedPulse {
@@ -53,7 +53,11 @@
 }
 
 .sauna-card.is-selected {
-  background: linear-gradient(135deg, rgba(255, 120, 0, 0.15) 0%, rgba(255, 255, 255, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 15%, transparent) 0%,
+    var(--overlay-subtle) 100%
+  );
   border-color: var(--primary);
   transform: translateY(-2px);
   animation: selectedPulse 2.5s infinite cubic-bezier(0.4, 0, 0.6, 1);
@@ -84,10 +88,10 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: rgba(255, 80, 80, 0.18);
-  border: 1px solid rgba(255, 100, 100, 0.4);
+  background: color-mix(in srgb, var(--error) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
   border-radius: var(--radius-sm);
-  color: #ff8888;
+  color: var(--error-text);
   padding: 0.25rem 0.6rem;
   font-size: 0.8rem;
   font-weight: 500;
@@ -97,17 +101,18 @@
 }
 
 .sauna-card-deselect-btn:hover {
-  background: rgba(255, 60, 60, 0.8);
-  color: #fff;
-  border-color: rgba(255, 60, 60, 1);
-  box-shadow: 0 0 10px rgba(255, 60, 60, 0.5);
+  /* 白文字とのコントラストを 4.5:1 以上にするため、面は --error より暗くする */
+  background: color-mix(in srgb, var(--error) 80%, #000000);
+  color: #ffffff;
+  border-color: var(--error);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--error) 50%, transparent);
 }
 
 .sauna-card-edit-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--overlay-subtle);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
   color: var(--foreground);
@@ -244,6 +249,22 @@
 .sauna-card-title {
   color: var(--foreground);
   margin-bottom: 0.25rem;
+}
+
+/* 見出し内の選択ボタン。見た目は見出しのまま、操作だけをボタンに委ねる */
+.sauna-card-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  padding: 0;
+  min-height: 24px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 .sauna-card-area {
@@ -544,6 +565,12 @@
 
   .sauna-card-title {
     font-size: 1.05rem;
+  }
+
+  .sauna-card-select-btn,
+  .sauna-card-edit-btn,
+  .sauna-card-deselect-btn {
+    min-height: 44px;
   }
 
   .panel-title {

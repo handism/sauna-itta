@@ -532,9 +532,9 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  background: linear-gradient(135deg, var(--accent-sauna, #ff8c38) 0%, var(--primary, #ff5722) 100%);
+  background: linear-gradient(135deg, var(--accent-sauna) 0%, var(--primary) 100%);
   border: 2.5px solid #ffffff;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 16px var(--primary-glow, rgba(255, 87, 34, 0.4));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45), 0 0 16px var(--primary-glow);
   color: #ffffff;
   font-weight: 700;
   font-size: 0.85rem;
@@ -544,7 +544,7 @@
 
 .sauna-cluster:hover {
   transform: scale(1.18);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px var(--primary-glow, rgba(255, 87, 34, 0.6));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 20px var(--primary-glow);
 }
 
 .sauna-cluster--medium {

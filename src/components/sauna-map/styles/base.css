@@ -18,6 +18,13 @@
   --wishlist-glow: rgba(16, 185, 129, 0.35);
   --star-color: #fbbf24;
 
+  /*
+   * ホバー等の重ね色。白の半透明を直書きするとライトテーマで消えるため、
+   * 面の上に薄く重ねる色は必ずこのトークンを使うこと。
+   */
+  --overlay-subtle: rgba(255, 255, 255, 0.06);
+  --overlay-hover: rgba(255, 255, 255, 0.12);
+
   /* スチームグラスモフィズム */
   --glass: rgba(30, 41, 59, 0.65);
   --glass-hover: rgba(51, 65, 85, 0.75);
@@ -61,6 +68,8 @@
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.45);
   --shadow-glow: 0 0 20px var(--primary-glow);
+  /* --error は面の色、--error-text は文字色（各テーマでコントラスト比 4.5:1 以上） */
+  --error-text: #fca5a5;
 }
 
 .light-theme {
@@ -80,6 +89,9 @@
   --input-bg: rgba(255, 255, 255, 0.92);
   --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.15);
+  --overlay-subtle: rgba(15, 24, 38, 0.04);
+  --overlay-hover: rgba(15, 24, 38, 0.08);
+  --error-text: #b91c1c;
 }
 
 * {

@@ -257,9 +257,10 @@ input[type="date"].input {
 
 .btn-ghost:hover:not(:disabled) {
   background: var(--glass-hover);
-  border-color: rgba(255, 255, 255, 0.28);
+  border-color: var(--glass-border);
   opacity: 1;
-  color: #ffffff;
+  /* ライトテーマでは --glass-hover がほぼ白なので、白文字を固定すると文字が消える */
+  color: var(--foreground);
 }
 
 .btn-danger {
@@ -301,7 +302,7 @@ input[type="date"].input {
 }
 
 .segmented-btn--wishlist.is-active {
-  background: var(--accent-wishlist, #10b981);
+  background: var(--accent-wishlist);
 }
 
 .rating-row {

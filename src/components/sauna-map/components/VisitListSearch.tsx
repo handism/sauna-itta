@@ -34,8 +34,13 @@ function VisitListSearchComponent({
     <div className="sauna-search-box">
       <div className="search-row">
         <div className="search-input-wrapper">
-          <span className="search-icon"><Search size={15} /></span>
+          {/* placeholder は支援技術で読み上げられないため、視覚的に隠したラベルを持たせる */}
+          <label className="sr-only" htmlFor="visit-list-search">
+            サウナ名・エリア・タグで検索
+          </label>
+          <span className="search-icon" aria-hidden="true"><Search size={15} /></span>
           <input
+            id="visit-list-search"
             type="text"
             className="input search-input"
             placeholder="サウナ名・エリア・タグで即検索..."
@@ -58,11 +63,14 @@ function VisitListSearchComponent({
       </div>
 
       <div className="controls-row">
-        <div className="status-tabs" role="tablist" aria-label="ステータスフィルター">
+        {/*
+          対応する tabpanel が無いため tablist ではなくトグルボタン群として公開する。
+          押下状態は aria-pressed で伝える。
+        */}
+        <div className="status-tabs" role="group" aria-label="ステータスフィルター">
           <button
             type="button"
-            role="tab"
-            aria-selected={filters.status === "all"}
+            aria-pressed={filters.status === "all"}
             className={`status-tab ${filters.status === "all" ? "is-active" : ""}`}
             onClick={() => setFilters((prev) => ({ ...prev, status: "all" }))}
           >
@@ -70,8 +78,7 @@ function VisitListSearchComponent({
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={filters.status === "visited"}
+            aria-pressed={filters.status === "visited"}
             className={`status-tab ${filters.status === "visited" ? "is-active" : ""}`}
             onClick={() => setFilters((prev) => ({ ...prev, status: "visited" }))}
           >
@@ -79,8 +86,7 @@ function VisitListSearchComponent({
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={filters.status === "wishlist"}
+            aria-pressed={filters.status === "wishlist"}
             className={`status-tab ${filters.status === "wishlist" ? "is-active" : ""}`}
             onClick={() => setFilters((prev) => ({ ...prev, status: "wishlist" }))}
           >
