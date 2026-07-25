@@ -54,9 +54,19 @@
     cursor: grab;
     user-select: none;
     background: inherit;
+    /* button 要素のためデフォルトスタイルを打ち消す */
+    border: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
     border-top-left-radius: var(--radius-xl);
     border-top-right-radius: var(--radius-xl);
     touch-action: none;
+  }
+
+  .bottom-sheet-handle-wrapper:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: -3px;
   }
 
   .bottom-sheet-handle-bar-container {

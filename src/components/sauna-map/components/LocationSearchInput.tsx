@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Search, Loader2, X, MapPin } from "lucide-react";
+import { useState, useEffect, useRef, KeyboardEvent } from "react";
+import { Search, Loader2, X, MapPin, AlertCircle } from "lucide-react";
 import { searchLocation, GeocodingResult } from "../utils/geocoding";
 
 interface LocationSearchInputProps {
   onSelectLocation: (result: GeocodingResult) => void;
   placeholder?: string;
 }
+
+const OPTION_ID_PREFIX = "location-search-option-";
 
 export function LocationSearchInput({
   onSelectLocation,
@@ -18,7 +20,10 @@ export function LocationSearchInput({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
 
   // Debounce search API call
   useEffect(() => {
@@ -28,6 +33,8 @@ export function LocationSearchInput({
       setIsOpen(false);
       setHasSearched(false);
       setIsLoading(false);
+      setErrorMessage(null);
+      setActiveIndex(-1);
       return;
     }
 
@@ -38,12 +45,23 @@ export function LocationSearchInput({
       try {
         const data = await searchLocation(trimmed, controller.signal);
         setResults(data);
+        setErrorMessage(null);
         setIsOpen(true);
         setHasSearched(true);
+        setActiveIndex(-1);
       } catch (error) {
+        // 入力継続によるキャンセルはエラー表示しない
+        if (controller.signal.aborted) return;
         console.error("Search failed:", error);
+        setResults([]);
+        setErrorMessage("場所を検索できませんでした。通信環境を確認して再度お試しください。");
+        setIsOpen(true);
+        setHasSearched(true);
+        setActiveIndex(-1);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }, 400);
 
@@ -58,23 +76,68 @@ export function LocationSearchInput({
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsOpen(false);
+        setActiveIndex(-1);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // アクティブな候補を可視範囲へスクロール
+  useEffect(() => {
+    if (activeIndex < 0 || !listRef.current) return;
+    const activeEl = listRef.current.querySelector<HTMLElement>(
+      `#${OPTION_ID_PREFIX}${activeIndex}`
+    );
+    // jsdom など scrollIntoView 未実装の環境を考慮して optional call にする
+    activeEl?.scrollIntoView?.({ block: "nearest" });
+  }, [activeIndex]);
+
   const handleSelect = (result: GeocodingResult) => {
     onSelectLocation(result);
     setQuery("");
     setResults([]);
     setIsOpen(false);
+    setActiveIndex(-1);
+    setErrorMessage(null);
   };
 
   const handleClear = () => {
     setQuery("");
     setResults([]);
     setIsOpen(false);
+    setActiveIndex(-1);
+    setErrorMessage(null);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      setIsOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+
+    if (results.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((prev) => (prev + 1) % results.length);
+      return;
+    }
+
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setIsOpen(true);
+      setActiveIndex((prev) => (prev <= 0 ? results.length - 1 : prev - 1));
+      return;
+    }
+
+    if (e.key === "Enter" && isOpen && activeIndex >= 0) {
+      // フォーム全体の submit を防いで候補選択に充てる
+      e.preventDefault();
+      handleSelect(results[activeIndex]);
+    }
   };
 
   return (
@@ -86,6 +149,7 @@ export function LocationSearchInput({
           className="location-search-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
           }}
@@ -95,6 +159,9 @@ export function LocationSearchInput({
           aria-expanded={isOpen}
           aria-controls="location-search-listbox"
           aria-autocomplete="list"
+          aria-activedescendant={
+            isOpen && activeIndex >= 0 ? `${OPTION_ID_PREFIX}${activeIndex}` : undefined
+          }
         />
         {isLoading && <Loader2 className="location-search-spinner spin" size={16} />}
         {!isLoading && query && (
@@ -110,15 +177,29 @@ export function LocationSearchInput({
       </div>
 
       {isOpen && (
-        <ul className="location-search-results" id="location-search-listbox" role="listbox">
-          {results.length > 0 ? (
-            results.map((result) => (
+        <ul
+          className="location-search-results"
+          id="location-search-listbox"
+          role="listbox"
+          ref={listRef}
+        >
+          {errorMessage ? (
+            <li className="location-search-error">
+              <AlertCircle size={14} aria-hidden="true" />
+              {errorMessage}
+            </li>
+          ) : results.length > 0 ? (
+            results.map((result, index) => (
               <li
                 key={result.placeId}
-                className="location-search-item"
+                id={`${OPTION_ID_PREFIX}${index}`}
+                className={`location-search-item ${
+                  index === activeIndex ? "is-active" : ""
+                }`}
                 role="option"
-                aria-selected="false"
+                aria-selected={index === activeIndex}
                 onClick={() => handleSelect(result)}
+                onMouseEnter={() => setActiveIndex(index)}
               >
                 <MapPin className="location-search-item-icon" size={16} />
                 <div className="location-search-item-details">
@@ -136,6 +217,14 @@ export function LocationSearchInput({
           )}
         </ul>
       )}
+
+      <span className="sr-only" role="status" aria-live="polite">
+        {errorMessage
+          ? errorMessage
+          : isOpen && hasSearched
+            ? `${results.length}件の候補が見つかりました`
+            : ""}
+      </span>
     </div>
   );
 }
