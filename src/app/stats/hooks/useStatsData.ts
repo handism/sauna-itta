@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { SaunaVisit } from "@/components/sauna-map/types";
-import { flattenVisitHistory, getInitialVisits, calculateStats } from "@/components/sauna-map/utils";
+import {
+  flattenVisitHistory,
+  getInitialVisits,
+  calculateStats,
+  rankVisitsByCount,
+} from "@/components/sauna-map/utils";
 import { useTheme } from "@/components/sauna-map/hooks/useTheme";
 
 export function useStatsData() {
@@ -42,6 +47,14 @@ export function useStatsData() {
     [visits],
   );
 
+  /**
+   * 訪問回数の多い順に並べた訪問済みの記録。
+   * 「MY HOME SAUNA」と「よく行く施設 TOP 5」は同じ順位を指す必要があるうえ、
+   * カードごとに rankVisitsByCount() を呼ぶと同じ絞り込みと並べ替えを繰り返すため、
+   * ここで一度だけ算出して各カードへ渡す。
+   */
+  const rankedVisits = useMemo(() => rankVisitsByCount(visits), [visits]);
+
   const visitDates = useMemo(() => {
     const dates = new Map<string, number>();
     const dateCache = new Map<string, string>();
@@ -68,6 +81,7 @@ export function useStatsData() {
     mounted,
     stats,
     visitedEntries,
+    rankedVisits,
     visitDates,
   };
 }

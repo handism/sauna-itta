@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { calculateStats, getVisitCount } from "../utils";
+import { calculateStats, getVisitCount, getVisitStatus } from "../utils";
 import { SaunaVisit, VisitFilters } from "../types";
 
 const DEFAULT_FILTERS: VisitFilters = {
@@ -33,7 +33,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
     const keyword = filters.search.trim().toLowerCase();
 
     const result = visits.filter((v) => {
-      if (filters.status !== "all" && (v.status ?? "visited") !== filters.status) {
+      if (filters.status !== "all" && getVisitStatus(v) !== filters.status) {
         return false;
       }
 

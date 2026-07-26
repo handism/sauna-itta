@@ -383,7 +383,10 @@ describe("getInitialVisits", () => {
     const visits = getInitialVisits();
     expect(Array.isArray(visits)).toBe(true);
     expect(visits.length).toBeGreaterThan(0);
-    expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to read visits from localStorage:", expect.any(Error));
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      'Failed to read "sauna-itta_visits" from localStorage:',
+      expect.any(Error),
+    );
   });
 });
 

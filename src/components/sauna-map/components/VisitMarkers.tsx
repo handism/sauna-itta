@@ -3,7 +3,7 @@ import { Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { SaunaVisit } from "../types";
-import { getVisitCount } from "../utils";
+import { getVisitCount, isWishlist } from "../utils";
 import { getSaunaIcon } from "./markerIcon";
 import { flameIconSvg } from "./iconSvg";
 import { SaunaMarkerPopup } from "./SaunaMarkerPopup";
@@ -63,18 +63,18 @@ function VisitMarkersComponent({
       const visitCount = getVisitCount(visit);
       const isHovered = visit.id === hoveredId;
       const isSelected = visit.id === selectedId;
-      const isWishlist = (visit.status ?? "visited") === "wishlist";
+      const wishlist = isWishlist(visit);
 
       return (
         <Marker
           key={visit.id}
           position={[visit.lat, visit.lng]}
           zIndexOffset={
-            isSelected ? 1000 : isHovered ? 500 : isWishlist ? 100 : undefined
+            isSelected ? 1000 : isHovered ? 500 : wishlist ? 100 : undefined
           }
           icon={getSaunaIcon({
             selected: visit.id === editingId || isSelected,
-            wishlist: isWishlist,
+            wishlist,
             hovered: isHovered,
             rating: visit.rating,
             visitCount,
@@ -87,7 +87,7 @@ function VisitMarkersComponent({
           <Popup autoPan={false}>
             <SaunaMarkerPopup
               visit={visit}
-              isWishlist={isWishlist}
+              isWishlist={wishlist}
               onEdit={onEdit}
             />
           </Popup>
@@ -106,8 +106,7 @@ function VisitMarkersComponent({
 
   visits.forEach((visit) => {
     const isSelected = visit.id === selectedId || visit.id === editingId;
-    const isWishlist = (visit.status ?? "visited") === "wishlist";
-    if (isSelected || isWishlist) {
+    if (isSelected || isWishlist(visit)) {
       priorityVisits.push(visit);
     } else {
       normalVisits.push(visit);

@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useMemo } from "react";
+import { Dispatch, ReactNode, SetStateAction, useMemo } from "react";
 import { X, Star, MapPin, Tag } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getPopularAreas, getPopularTags } from "../utils";
@@ -22,26 +22,42 @@ export function QuickFilterChips({
   const popularAreas = useMemo(() => getPopularAreas(visits, 4), [visits]);
   const popularTags = useMemo(() => getPopularTags(visits, 5), [visits]);
 
-  const handleRatingToggle = (minRating: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      minRating: prev.minRating === minRating ? 0 : minRating,
-    }));
-  };
-
-  const handleAreaToggle = (area: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      selectedArea: prev.selectedArea === area ? "" : area,
-    }));
-  };
-
-  const handleTagToggle = (tag: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      selectedTag: prev.selectedTag === tag ? "" : tag,
-    }));
-  };
+  /*
+   * チップはどれも「押すと絞り込みが入り、もう一度押すと外れる」同じ振る舞いなので、
+   * 種類ごとに JSX とハンドラを複製せず、宣言的に並べて 1 箇所で描画する。
+   */
+  const chips: { key: string; icon: ReactNode; label: string; isActive: boolean; onToggle: () => void }[] = [
+    {
+      key: "rating-4",
+      icon: <Star size={13} />,
+      label: "4.0以上",
+      isActive: filters.minRating === 4,
+      onToggle: () =>
+        setFilters((prev) => ({ ...prev, minRating: prev.minRating === 4 ? 0 : 4 })),
+    },
+    ...popularAreas.map((area) => ({
+      key: `area-${area}`,
+      icon: <MapPin size={13} />,
+      label: area,
+      isActive: filters.selectedArea === area,
+      onToggle: () =>
+        setFilters((prev) => ({
+          ...prev,
+          selectedArea: prev.selectedArea === area ? "" : area,
+        })),
+    })),
+    ...popularTags.map((tag) => ({
+      key: `tag-${tag}`,
+      icon: <Tag size={13} />,
+      label: tag,
+      isActive: filters.selectedTag === tag,
+      onToggle: () =>
+        setFilters((prev) => ({
+          ...prev,
+          selectedTag: prev.selectedTag === tag ? "" : tag,
+        })),
+    })),
+  ];
 
   const isFilterActive = activeFilterCount > 0;
 
@@ -62,46 +78,18 @@ export function QuickFilterChips({
           </button>
         )}
 
-        <button
-          type="button"
-          className={`chip-btn ${filters.minRating === 4 ? "is-active" : ""}`}
-          aria-pressed={filters.minRating === 4}
-          onClick={() => handleRatingToggle(4)}
-        >
-          <Star size={13} /> 4.0以上
-        </button>
-
-        {/* 動的エリアチップ */}
-        {popularAreas.map((area) => {
-          const isActive = filters.selectedArea === area;
-          return (
-            <button
-              key={`area-${area}`}
-              type="button"
-              className={`chip-btn ${isActive ? "is-active" : ""}`}
-              aria-pressed={isActive}
-              onClick={() => handleAreaToggle(area)}
-            >
-              <MapPin size={13} /> {area}
-            </button>
-          );
-        })}
-
-        {/* 動的タグチップ */}
-        {popularTags.map((tag) => {
-          const isActive = filters.selectedTag === tag;
-          return (
-            <button
-              key={`tag-${tag}`}
-              type="button"
-              className={`chip-btn ${isActive ? "is-active" : ""}`}
-              aria-pressed={isActive}
-              onClick={() => handleTagToggle(tag)}
-            >
-              <Tag size={13} /> {tag}
-            </button>
-          );
-        })}
+        {/* ★4以上 → 人気エリア → 人気タグの順に並ぶ */}
+        {chips.map(({ key, icon, label, isActive, onToggle }) => (
+          <button
+            key={key}
+            type="button"
+            className={`chip-btn ${isActive ? "is-active" : ""}`}
+            aria-pressed={isActive}
+            onClick={onToggle}
+          >
+            {icon} {label}
+          </button>
+        ))}
       </div>
     </div>
   );

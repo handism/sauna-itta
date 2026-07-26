@@ -10,7 +10,7 @@ import {
 import { useMapViewState } from "../hooks/useMapViewState";
 import { useSaunaUI } from "./UIContext";
 import { useVisitsCRUD } from "./VisitsCRUDContext";
-import { useSaunaEditor } from "./EditorContext";
+import { useSaunaEditorActions } from "./EditorContext";
 import { SheetSnapPosition, SaunaVisit, LatLng, MobileTab } from "../types";
 
 interface MapStateContextType {
@@ -30,6 +30,8 @@ interface MapStateContextType {
   handleDeselectVisit: () => void;
   handleEditVisit: (visit: SaunaVisit) => void;
   handleCancelEditing: (completed?: boolean) => void;
+  /** 編集を閉じ終えたときのシート位置の後始末。保存完了時に VisitForm から呼ばれる */
+  handleEditingFinished: () => void;
   handleListSelectVisit: (visit: SaunaVisit) => void;
   handleSelectMobileTab: (tab: MobileTab) => void;
 }
@@ -39,7 +41,9 @@ const MapStateContext = createContext<MapStateContextType | null>(null);
 export function MapStateProvider({ children }: { children: ReactNode }) {
   const { isMobile } = useSaunaUI();
   const { visits } = useVisitsCRUD();
-  const { startEditing, cancelEditing, startCreate } = useSaunaEditor();
+  // 必要なのは操作関数だけ。useSaunaEditor()（state + actions）を購読すると
+  // サイドバーの開閉や場所選択のたびに Provider ごと再レンダリングされる
+  const { startEditing, cancelEditing, startCreate } = useSaunaEditorActions();
 
   const {
     hoveredId,
@@ -71,12 +75,17 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
     [setSelectedId, startEditing, isMobile, setSnapPosition],
   );
 
+  // 保存でもキャンセルでも、編集を閉じたらシートは最小化して地図を見せる
+  const handleEditingFinished = useCallback(() => {
+    if (isMobile) setSnapPosition("min");
+  }, [isMobile, setSnapPosition]);
+
   const handleCancelEditing = useCallback(
     (completed = false) => {
       cancelEditing(completed);
-      if (isMobile) setSnapPosition("min");
+      handleEditingFinished();
     },
-    [cancelEditing, isMobile, setSnapPosition],
+    [cancelEditing, handleEditingFinished],
   );
 
   const handleListSelectVisit = useCallback(
@@ -121,6 +130,7 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
       handleDeselectVisit,
       handleEditVisit,
       handleCancelEditing,
+      handleEditingFinished,
       handleListSelectVisit,
       handleSelectMobileTab,
     }),
@@ -141,6 +151,7 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
       handleDeselectVisit,
       handleEditVisit,
       handleCancelEditing,
+      handleEditingFinished,
       handleListSelectVisit,
       handleSelectMobileTab,
     ],

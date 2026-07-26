@@ -96,8 +96,13 @@ export function useVisitForm({
     cancelEditing(true);
   }, [editingId, deleteVisit, showToast, closeDeleteConfirm, cancelEditing]);
 
+  /**
+   * @param onCompleted 保存が成功して編集を閉じた後に呼ばれる。モバイルのシート位置を
+   *   戻すために使う（EditorProvider は MapStateProvider の親なのでシート位置を
+   *   直接触れない。呼び出し側が MapStateContext の関数を渡す）。
+   */
   const handleSubmit = useCallback(
-    (e: FormEvent) => {
+    (e: FormEvent, onCompleted?: () => void) => {
       e.preventDefault();
       if (!selectedLocation) {
         showToast("サウナの場所が選択されていません。", "error");
@@ -126,6 +131,7 @@ export function useVisitForm({
       }
 
       cancelEditing(true);
+      onCompleted?.();
     },
     [selectedLocation, editingId, editVisit, addVisit, showToast, cancelEditing],
   );
