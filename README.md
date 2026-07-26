@@ -82,7 +82,6 @@ src/
 │       ├── SaunaMap.tsx      # ルートエントリポイント
 │       ├── context/          # 状態管理 (モジュール化された Context)
 │       │   ├── SaunaMapContext.tsx      # Provider の合成と各 Hook の再エクスポート
-│       │   ├── VisitsDataContext.tsx    # 訪問データ系 Provider の合成
 │       │   ├── VisitsCRUDContext.tsx    # 訪問データ本体・インポート/エクスポート
 │       │   ├── VisitFiltersContext.tsx  # フィルター・絞り込み結果・統計
 │       │   ├── EditorContext.tsx        # フォーム・編集状態ステートマシン
@@ -102,7 +101,9 @@ src/
 │       │   └── Toast.tsx, etc.
 │       ├── hooks/            # ドメイン・UIのカスタムフック群
 │       ├── types/            # 型定義 (domain.ts / ui.ts)
-│       ├── utils/            # ユーティリティ (geo.ts, form.ts, image.ts, theme.ts, motion.ts, etc.)
+│       ├── utils/            # ユーティリティ (geo.ts, form.ts, image.ts, theme.ts, motion.ts,
+│       │                     #   storage.ts = localStorage の安全な読み書き,
+│       │                     #   visitStatus.ts = 記録ステータスの判定, date.ts, etc.)
 │       └── styles/           # 構成要素ごとに分離された CSS スタイル
 └── data/
     └── sauna-visits.json     # 初期ロード用シードデータ

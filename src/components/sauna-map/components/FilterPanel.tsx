@@ -2,6 +2,15 @@ import { Dispatch, SetStateAction } from "react";
 import { Map, ChevronUp, RotateCcw } from "lucide-react";
 import { VisitFilters } from "../types";
 
+const MIN_RATING_OPTIONS = [
+  { value: 0, label: "指定なし" },
+  { value: 1, label: "★1以上" },
+  { value: 2, label: "★2以上" },
+  { value: 3, label: "★3以上" },
+  { value: 4, label: "★4以上" },
+  { value: 5, label: "★5のみ" },
+];
+
 interface FilterPanelProps {
   isOpen: boolean;
   filters: VisitFilters;
@@ -54,12 +63,11 @@ export function FilterPanel({
               }))
             }
           >
-            <option value={0}>指定なし</option>
-            <option value={1}>★1以上</option>
-            <option value={2}>★2以上</option>
-            <option value={3}>★3以上</option>
-            <option value={4}>★4以上</option>
-            <option value={5}>★5のみ</option>
+            {MIN_RATING_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
           </select>
         </div>
 

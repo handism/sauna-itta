@@ -120,6 +120,25 @@ describe("useStatsData", () => {
     expect(result.current.visitedEntries).toBe(first);
   });
 
+  it("rankedVisits が訪問回数順に並び、行きたい記録を除外すること", () => {
+    const { result } = renderMounted();
+
+    // しきじは履歴 2 件で 2 回、北欧は 1 回。wishlist は順位付けの対象外
+    expect(result.current.rankedVisits.map(({ visit, count }) => [visit.id, count])).toEqual([
+      ["visited-1", 2],
+      ["visited-2", 1],
+    ]);
+  });
+
+  it("rankedVisits が同一参照で安定し、再レンダリングで並べ替え直されないこと", () => {
+    const { result, rerender } = renderMounted();
+
+    const first = result.current.rankedVisits;
+    rerender();
+
+    expect(result.current.rankedVisits).toBe(first);
+  });
+
   it("visitDates が訪問済みの日付ごとの件数を返すこと", () => {
     const { result } = renderMounted();
 

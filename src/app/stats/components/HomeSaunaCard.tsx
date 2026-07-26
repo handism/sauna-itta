@@ -1,17 +1,15 @@
 import { useMemo } from "react";
 import { Flame, Calendar, Award, MapPin } from "lucide-react";
-import { SaunaVisit } from "@/components/sauna-map/types";
-import { getVisitHistoryEntries, rankVisitsByCount } from "@/components/sauna-map/utils";
+import { getVisitHistoryEntries, RankedVisit } from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface HomeSaunaCardProps {
-  visits: SaunaVisit[];
+  /** 訪問回数順に並んだ訪問済みの記録。useStatsData が算出したものを渡すこと */
+  ranked: RankedVisit[];
 }
 
-export function HomeSaunaCard({ visits }: HomeSaunaCardProps) {
+export function HomeSaunaCard({ ranked }: HomeSaunaCardProps) {
   const homeSaunaInfo = useMemo(() => {
-    // 「TOP 5」カードと 1 位が食い違わないよう、順位付けは共通の rankVisitsByCount に任せる
-    const ranked = rankVisitsByCount(visits);
     if (ranked.length === 0) return null;
 
     const [{ visit: saunaObj, count: maxCount }] = ranked;
@@ -38,7 +36,7 @@ export function HomeSaunaCard({ visits }: HomeSaunaCardProps) {
       lastDate,
       sharePercentage,
     };
-  }, [visits]);
+  }, [ranked]);
 
   if (!homeSaunaInfo) {
     return null;

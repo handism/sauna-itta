@@ -7,6 +7,17 @@ import {
 import { MapPin } from "lucide-react";
 import type { SheetSnapPosition } from "../types";
 
+/**
+ * スナップ位置の並び（下 → 上）。1 段ずつの移動はクリック・キー操作・フリックの
+ * 3 経路から起きるため、遷移表はここに 1 つだけ持つ。
+ */
+const SNAP_ORDER: SheetSnapPosition[] = ["min", "half", "full"];
+
+/** 端に達している場合は null を返す（そのとき呼び出し側は何もしないこと） */
+function stepSnap(current: SheetSnapPosition, direction: 1 | -1): SheetSnapPosition | null {
+  return SNAP_ORDER[SNAP_ORDER.indexOf(current) + direction] ?? null;
+}
+
 interface BottomSheetProps {
   snapPosition: SheetSnapPosition;
   onSnapChange: (snap: SheetSnapPosition) => void;
@@ -25,6 +36,12 @@ export function BottomSheet({
   const sheetRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
+
+  /** 端では onSnapChange を呼ばない（同じ位置への通知で再レンダリングさせないため） */
+  const step = (direction: 1 | -1) => {
+    const next = stepSnap(snapPosition, direction);
+    if (next) onSnapChange(next);
+  };
 
   const handleTouchStart = (e: TouchEvent<HTMLButtonElement>) => {
     startYRef.current = e.touches[0].clientY;
@@ -75,30 +92,29 @@ export function BottomSheet({
     } else if (isStrongFlickDown) {
       onSnapChange("min");
     } else if (isFlickUp) {
-      if (snapPosition === "min") onSnapChange("half");
-      else if (snapPosition === "half") onSnapChange("full");
+      step(1);
     } else if (isFlickDown) {
-      if (snapPosition === "full") onSnapChange("half");
-      else if (snapPosition === "half") onSnapChange("min");
+      step(-1);
     }
   };
 
+  // タップは 1 段ずつ上げ、最上段まで来たら最小へ戻す
   const handleHandleClick = () => {
-    if (snapPosition === "min") onSnapChange("half");
-    else if (snapPosition === "half") onSnapChange("full");
-    else onSnapChange("min");
+    if (snapPosition === "full") {
+      onSnapChange("min");
+    } else {
+      step(1);
+    }
   };
 
   // キーボード操作でも 3 段階のスナップを行き来できるようにする
   const handleHandleKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
     if (e.key === "ArrowUp") {
       e.preventDefault();
-      if (snapPosition === "min") onSnapChange("half");
-      else if (snapPosition === "half") onSnapChange("full");
+      step(1);
     } else if (e.key === "ArrowDown") {
       e.preventDefault();
-      if (snapPosition === "full") onSnapChange("half");
-      else if (snapPosition === "half") onSnapChange("min");
+      step(-1);
     }
   };
 

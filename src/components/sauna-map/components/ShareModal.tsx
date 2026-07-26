@@ -1,6 +1,7 @@
 import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
 import { RatingStars, WishlistChip } from "./common";
+import { isWishlist } from "../utils";
 import { useModalBehavior } from "../hooks/useModalBehavior";
 import { useSaunaUI, useVisitFiltersContext } from "../context";
 
@@ -62,7 +63,7 @@ export function ShareModalView({
               <div className="share-item-top">
                 <div>
                   <strong>{visit.name}</strong>
-                  {(visit.status ?? "visited") === "wishlist" && <WishlistChip compact />}
+                  {isWishlist(visit) && <WishlistChip compact />}
                   {visit.area && <span className="share-area">{visit.area}</span>}
                 </div>
                 <span>{visit.date}</span>
@@ -87,16 +88,17 @@ export function ShareModalView({
   );
 }
 
-export function ShareModal(props: Partial<ShareModalViewProps>) {
-  const ui = useSaunaUI();
-  const filtersData = useVisitFiltersContext();
+/** Context から値を集めて View へ渡すだけのコンテナ（テストは ShareModalView を描画する） */
+export function ShareModal() {
+  const { isShareViewOpen, closeShareView } = useSaunaUI();
+  const { stats, filteredVisits } = useVisitFiltersContext();
 
   return (
     <ShareModalView
-      isOpen={props.isOpen ?? ui.isShareViewOpen}
-      stats={props.stats ?? filtersData.stats}
-      filteredVisits={props.filteredVisits ?? filtersData.filteredVisits}
-      onClose={props.onClose ?? ui.closeShareView}
+      isOpen={isShareViewOpen}
+      stats={stats}
+      filteredVisits={filteredVisits}
+      onClose={closeShareView}
     />
   );
 }

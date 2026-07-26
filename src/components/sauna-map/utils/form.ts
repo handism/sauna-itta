@@ -1,9 +1,6 @@
 import { SaunaVisit, VisitFormState, VisitFormInputSchema } from "../types";
 import { getVisitHistoryEntries } from "./visitHistory";
-
-export function getTodayDate(): string {
-  return new Date().toISOString().split("T")[0];
-}
+import { getVisitStatus } from "./visitStatus";
 
 export function getDefaultForm(date = ""): VisitFormState {
   return {
@@ -29,7 +26,7 @@ export function toFormState(visit: SaunaVisit): VisitFormState {
     date: latest?.date ?? visit.date,
     rating: latest?.rating ?? visit.rating ?? 0,
     tagsText: (visit.tags ?? []).join(", "),
-    status: visit.status ?? "visited",
+    status: getVisitStatus(visit),
     area: visit.area ?? "",
     appendHistory: false,
   };

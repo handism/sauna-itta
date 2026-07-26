@@ -2,7 +2,10 @@ import { z } from "zod";
 import initialVisits from "@/data/sauna-visits.json";
 import { SaunaVisit, VisitHistoryEntry, VisitStats, SaunaVisitSchema } from "../types";
 import { VISITS_STORAGE_KEY } from "./constants";
+import { getTodayDate } from "./date";
 import { extractPrefecture } from "./geo";
+import { readStorage } from "./storage";
+import { getVisitStatus, isVisited, isWishlist } from "./visitStatus";
 
 export function getVisitHistoryEntries(visit: SaunaVisit): VisitHistoryEntry[] {
   if (Array.isArray(visit.history) && visit.history.length > 0) {
@@ -38,7 +41,7 @@ export function flattenVisitHistory(visits: SaunaVisit[]): FlatVisitHistoryEntry
   const entries: FlatVisitHistoryEntry[] = [];
 
   for (const visit of visits) {
-    const status = visit.status ?? "visited";
+    const status = getVisitStatus(visit);
     const visitId = visit.id;
     for (const entry of getVisitHistoryEntries(visit)) {
       entries.push({
@@ -59,7 +62,7 @@ export function buildHistoryUpdate(
   v: SaunaVisit,
   form: { date?: string; comment: string; rating?: number; image?: string; appendHistory?: boolean },
 ): Pick<SaunaVisit, "history" | "comment" | "image" | "date" | "rating" | "visitCount"> {
-  const entryDate = form.date || new Date().toISOString().split("T")[0];
+  const entryDate = form.date || getTodayDate();
   const nextEntry = {
     date: entryDate,
     comment: form.comment,
@@ -103,7 +106,7 @@ export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
     ...v,
     ...applyHistoryNormalization(v),
     tags: v.tags ?? [],
-    status: v.status ?? "visited",
+    status: getVisitStatus(v),
     area: v.area ?? "",
   }));
 }
@@ -121,14 +124,7 @@ export function getInitialVisits(): SaunaVisit[] {
     return baseVisits;
   }
 
-  let savedVisits: string | null = null;
-  try {
-    savedVisits = localStorage.getItem(VISITS_STORAGE_KEY);
-  } catch (error) {
-    console.warn("Failed to read visits from localStorage:", error);
-    return baseVisits;
-  }
-
+  const savedVisits = readStorage(VISITS_STORAGE_KEY);
   if (!savedVisits) {
     return baseVisits;
   }
@@ -185,8 +181,7 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
       areasSet.add(area);
     }
 
-    const isVisited = (visit.status ?? "visited") === "visited";
-    if (isVisited) {
+    if (isVisited(visit)) {
       visitedCount++;
 
       const pref = extractPrefecture(visit.area);
@@ -242,7 +237,7 @@ export interface RankedVisit {
  */
 export function rankVisitsByCount(visits: SaunaVisit[]): RankedVisit[] {
   return visits
-    .filter((visit) => (visit.status ?? "visited") === "visited")
+    .filter(isVisited)
     .map((visit) => ({ visit, count: getVisitCount(visit) }))
     .sort((a, b) => b.count - a.count || a.visit.name.localeCompare(b.visit.name, "ja"));
 }
@@ -263,7 +258,7 @@ export function countTags(
   const tagCounts = new Map<string, number>();
 
   for (const visit of visits) {
-    if (excludeWishlist && (visit.status ?? "visited") === "wishlist") {
+    if (excludeWishlist && isWishlist(visit)) {
       continue;
     }
     if (!Array.isArray(visit.tags)) {

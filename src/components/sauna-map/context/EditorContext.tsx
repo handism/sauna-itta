@@ -49,7 +49,8 @@ export interface EditorActionsContextType {
   confirmDelete: () => void;
   handleLocationSelect: (lat: number, lng: number) => void;
   handleBoundsChange: (bounds: { northEast: LatLng; southWest: LatLng }) => void;
-  handleSubmit: (e: FormEvent) => void;
+  /** onCompleted は保存成功後に呼ばれる（モバイルのシート位置を戻すために使う） */
+  handleSubmit: (e: FormEvent, onCompleted?: () => void) => void;
   handleImageFile: (file: File) => Promise<void>;
   handleRemoveImage: () => void;
   handleDeleteHistoryEntry: (index: number) => void;

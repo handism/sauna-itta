@@ -156,4 +156,33 @@ describe("sanitizeImageUrl", () => {
     expect(sanitizeImageUrl("javascript:alert(1)")).toBeUndefined();
     expect(sanitizeImageUrl("ftp://example.com/image.png")).toBeUndefined();
   });
+
+  it("should treat the data: scheme case-insensitively", () => {
+    expect(sanitizeImageUrl("DATA:IMAGE/PNG;base64,iVBORw0KGgo=")).toBe(
+      "DATA:IMAGE/PNG;base64,iVBORw0KGgo=",
+    );
+    // スキームだけ大文字でも MIME の判定は緩めないこと
+    expect(sanitizeImageUrl("Data:text/html,<script>")).toBeUndefined();
+  });
+
+  it("should not run the URL parser over data URLs", () => {
+    /*
+     * 1MB 級の Base64 を new URL() に通すと、一覧の 1 行を描画するたびに
+     * 文字列全体の走査費用を払うことになる。URL を使ったら失敗するようにして検知する。
+     */
+    const big = `data:image/jpeg;base64,${"A".repeat(200_000)}`;
+    vi.stubGlobal(
+      "URL",
+      class {
+        constructor() {
+          throw new Error("data URL の判定に URL パーサを使わないこと");
+        }
+      },
+    );
+
+    expect(sanitizeImageUrl(big)).toBe(big);
+    expect(sanitizeImageUrl("data:text/html,<script>")).toBeUndefined();
+
+    vi.unstubAllGlobals();
+  });
 });

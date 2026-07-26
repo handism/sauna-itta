@@ -6,6 +6,12 @@ import { SortSelect } from "./SortSelect";
 import { FilterPanel } from "./FilterPanel";
 import { useSaunaUI } from "../context";
 
+const STATUS_OPTIONS: { value: VisitFilters["status"]; label: string }[] = [
+  { value: "all", label: "すべて" },
+  { value: "visited", label: "行った" },
+  { value: "wishlist", label: "イキタイ" },
+];
+
 interface VisitListSearchProps {
   filters: VisitFilters;
   setFilters: Dispatch<SetStateAction<VisitFilters>>;
@@ -28,7 +34,8 @@ function VisitListSearchComponent({
   const isFilterPanelOpen = ui.isFilterPanelOpen;
   const toggleFilterPanel = onToggleFilterPanel ?? ui.toggleFilterPanel;
   const closeFilterPanel = ui.closeFilterPanel;
-  const isFilterActive = activeFilterCount > 0 || filters.minRating > 0 || filters.filterByBounds;
+  // activeFilterCount は minRating / filterByBounds も数えているため、これだけで足りる
+  const isFilterActive = activeFilterCount > 0;
 
   return (
     <div className="sauna-search-box">
@@ -68,30 +75,17 @@ function VisitListSearchComponent({
           押下状態は aria-pressed で伝える。
         */}
         <div className="status-tabs" role="group" aria-label="ステータスフィルター">
-          <button
-            type="button"
-            aria-pressed={filters.status === "all"}
-            className={`status-tab ${filters.status === "all" ? "is-active" : ""}`}
-            onClick={() => setFilters((prev) => ({ ...prev, status: "all" }))}
-          >
-            すべて
-          </button>
-          <button
-            type="button"
-            aria-pressed={filters.status === "visited"}
-            className={`status-tab ${filters.status === "visited" ? "is-active" : ""}`}
-            onClick={() => setFilters((prev) => ({ ...prev, status: "visited" }))}
-          >
-            行った
-          </button>
-          <button
-            type="button"
-            aria-pressed={filters.status === "wishlist"}
-            className={`status-tab ${filters.status === "wishlist" ? "is-active" : ""}`}
-            onClick={() => setFilters((prev) => ({ ...prev, status: "wishlist" }))}
-          >
-            イキタイ
-          </button>
+          {STATUS_OPTIONS.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={filters.status === value}
+              className={`status-tab ${filters.status === value ? "is-active" : ""}`}
+              onClick={() => setFilters((prev) => ({ ...prev, status: value }))}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
         <div className="controls-actions">

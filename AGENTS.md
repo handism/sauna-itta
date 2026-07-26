@@ -24,24 +24,33 @@
 状態管理は巨大な単一ステートを避け、責務ごとの専門 Provider にモジュール分割されています（`src/components/sauna-map/context/` 参照）。コンポーネントやロジックを追加する際は適切な Context / Hook を利用・拡充してください。
 
 - **専用フックを直接使うこと**: 消費側は `useSaunaUI` / `useVisitsCRUD` / `useVisitFiltersContext` / `useSaunaEditor` / `useSaunaMapState` のうち、実際に必要なものだけを個別に呼びます。複数の Context を 1 オブジェクトに束ねるフック（旧 `useSaunaMap` / 旧 `useSaunaVisitsData`）は、どれか 1 つの状態変化で全消費側が再レンダリングされるため復活させないでください。
+- **操作関数しか要らない消費側は `useSaunaEditorActions` を使うこと**: `useSaunaEditor()` は state と actions を束ねるため、これを購読すると `mode` / `editingId` / `selectedLocation` / `isSidebarExpanded` の変化でも再レンダリング対象になります。`MapStateProvider`（`startEditing` / `cancelEditing` / `startCreate` のみ）と `VisitList`（`startNewVisit` のみ）は `useSaunaEditorActions()` を使うこと。ここを `useSaunaEditor()` に戻すと、サイドバーを開閉するだけで一覧全体が再レンダリングされます。
 - **Provider は `SaunaMapContext.tsx` に一本化**: `SaunaMapProvider` が `UIProvider` → `VisitsCRUDProvider` → `VisitFiltersProvider` → `EditorProvider` → `MapStateProvider` を直接入れ子にします。複数 Provider をまとめるだけの中間ファイルは作らないでください（旧 `VisitsDataContext.tsx` は削除済み）。
 - **訪問データとフィルターの分離**: 訪問データ本体・インポート/エクスポートは `useVisitsCRUD`、絞り込み結果・フィルター状態・統計は `useVisitFiltersContext` から取得します。CRUD しか使わない画面（`DesktopSidebar` など）がフィルターを購読すると、検索欄の 1 文字入力ごとに再レンダリングされます。
 - **入力中のフォーム値は `useSaunaEditorForm` から**: 編集フォームの `form` / `setForm` / `imageUploading` は専用の `EditorFormContext` に分離しています（`useSaunaEditor` には含まれません）。これを EditorState 側へ戻すと、1 文字入力するたびに `SaunaMapContent` / `DesktopSidebar` / `VisitList` まで再レンダリング対象になります。同じ理由で、`useVisitForm` の `handleSubmit` は依存配列に `form` を入れず `formRef` から最新値を読み、`useEditorState` が返す操作関数は必ず `useCallback` で参照を安定させること（`SaunaMapContext.test.tsx` の「フォーム入力で EditorState / EditorActions の参照が変わらないこと」が検査しています）。
 - **タグ絞り込みの初期値は URL から**: 統計ページのタグクラウドは `/?tag=...` で地図へ遷移し、`useVisitFilters` の `getInitialFilters()` がこれを `selectedTag` の初期値として読みます。地図は `ssr: false` で描画されるため初期値算出で `window` を参照して構いません。
-- **モバイルのシート位置制御は Context 側に集約**: 編集の開始／終了に伴う `snapPosition` の切り替えは `MapStateContext` の `handleEditVisit` / `handleCancelEditing` が担います。画面コンポーネント側で `startEditing` + `setSnapPosition` を組み合わせて再実装しないでください。
+- **モバイルのシート位置制御は Context 側に集約**: 編集の開始／終了に伴う `snapPosition` の切り替えは `MapStateContext` の `handleEditVisit` / `handleCancelEditing` / `handleEditingFinished` が担います。画面コンポーネント側で `startEditing` + `setSnapPosition` を組み合わせて再実装しないでください。
+- **編集の終了は必ず `MapStateContext` 経由にすること**: `VisitForm` のキャンセルは `EditorContext` の `cancelEditing` ではなく `handleCancelEditing()` を呼びます。保存の完了は `handleSubmit(e, handleEditingFinished)` のように完了コールバックを渡して伝えること（`EditorProvider` は `MapStateProvider` の親でシート位置を直接触れないため、`useVisitForm` の `handleSubmit` は保存成功時だけ `onCompleted` を呼ぶ設計にしてあります）。ここを `editor.cancelEditing()` の直接呼び出しに戻すと、モバイルで保存・キャンセルしてもシートが `full` のまま地図が隠れます。
 
 ### 2. ディレクトリ ＆ コンポーネント構造
 - **コンポーネント分離**: View (プレゼンテーション) と Controller (ロジック・フック) を適切に分離してください。
-- **レスポンシブ設計**: PC表示 (`DesktopSidebar.tsx`) と モバイル表示 (`BottomSheet.tsx`, `MobileNavBar.tsx`) の責務を明確に分けること。
+- **コンテナは props の上書き機構を持たないこと**: `VisitList` / `VisitForm` / `DesktopSidebar` / `ShareModal` は Context から値を集めて `*View` へ渡すだけのコンテナです。`Partial<...ViewProps>` を受け取って `props.x ?? ctx.x` と書く方式は復活させないでください（誰も props を渡しておらず、型エラーも握り潰します）。テストは props を直接渡せる `VisitListView` などの `*View` を描画すること。
+- **レスポンシブ設計**: PC表示 (`DesktopSidebar.tsx`) と モバイル表示 (`BottomSheet.tsx`, `MobileNavBar.tsx`) の責務を明確に分けること。ボトムシートの 1 段移動（タップ・↑↓キー・フリックの 3 経路）は `SNAP_ORDER` / `stepSnap()` に集約しており、端では `onSnapChange` を呼びません（`min` / `full` の分岐を各ハンドラへ書き戻さないこと）。
 - **型定義**: `src/components/sauna-map/types/` 内の `domain.ts` (ドメインモデル) と `ui.ts` (UI・フィルター型) に集約し、`any` 型や不必要なキャストを排除すること。
 - **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` に抽出し、単体テストを記述すること。
+- **記録のステータス判定**: `visit.status ?? "visited"` を直書きせず、`utils/visitStatus.ts` の `getVisitStatus()` / `isVisited()` / `isWishlist()` を使うこと（旧形式データの既定値の解釈が地図・一覧・統計でずれるのを防ぎます）。
+- **`localStorage` は必ず `utils/storage.ts` 経由**: 読み書きは `readStorage()` / `writeStorage()` を使うこと。Safari のプライベートモードや容量超過では例外が飛ぶため、直接触ると 1 箇所の try/catch 漏れで画面が落ちます。`writeStorage()` の戻り値は「保存できたか」で、容量超過の通知（`useSaunaVisits`）に使っています。読めなかったときだけ既定値へ倒したい場合は `readStorage(key, onErrorValue)` の第 2 引数を使うこと（テーマ判定がこれに依存しています）。
+- **今日の日付**: `new Date().toISOString().split("T")[0]` を書かず `utils/date.ts` の `getTodayDate()` を使うこと（`form.ts` は `visitHistory.ts` に依存しているため、両方から使うこの関数だけ別モジュールに置いています）。
 - **訪問回数の算出**: 訪問回数は必ず `utils/visitHistory.ts` の `getVisitCount()` を使うこと（`history.length` と `visitCount` の両方を考慮します）。地図側と統計ページで別々に導出すると、旧形式データで表示が食い違います。訪問回数による順位付けは `rankVisitsByCount()` に集約しています（同数のときの並びまで揃わないと、「MY HOME SAUNA」と「よく行く施設 TOP 5」で 1 位が食い違います）。
 - **訪問リストの行コンポーネント**: `VisitCompactItem` / `VisitCardItem` は表示密度が違うだけなので、props 型と `memo` の比較関数は `components/visitItem.ts` の `VisitItemProps` / `areVisitItemPropsEqual` を共有します。片方にだけ props を足すと比較関数の更新漏れで表示が古いまま残るため、個別に再定義しないこと。
 - **テーマフックは 1 本**: 地図側・統計ページとも `hooks/useTheme.ts` を使います。統計ページのように静的プリレンダリングされる画面は `useTheme({ deferred: true })` で開始し、他のクライアント専用初期化と同じタイミングで `syncFromStorage()` を呼ぶこと（マウント直後に既定値でクラスを適用すると、`layout.tsx` のインラインスクリプトが付けた `light-theme` を剥がしてちらつきます）。
 - **タグ集計**: タグの出現回数は `utils/visitHistory.ts` の `countTags()` に集約しています（`getPopularTags()` はその薄いラッパー）。コンポーネント内で `visit.tags` を数え直さないこと。
 - **写真プレビュー**: 写真の拡大は必ず `components/common.tsx` の `VisitImagePreview` 経由にすること（素の `img` に `onClick` を付けるとキーボードから開けません）。同コンポーネントは sanitize 済みの `src` を受け取るため、`sanitizeImageUrl()` の呼び出しは各コンポーネントで 1 レンダーにつき 1 回だけにします。
+- **`data:` URL を URL パーサへ通さないこと**: 画像は最大 1MB の Base64 として保持されるため、`sanitizeImageUrl()` は `data:` を先頭の正規表現だけで判定し、`new URL()` は http(s)・相対パスの検証にのみ使います（40 件 × 1MB で 23ms → 0.01ms）。一覧の各行がレンダーのたびに呼ぶ関数なので、ここに文字列全体を走査する処理を足さないこと。許可する MIME は `SAFE_DATA_IMAGE` に列挙しており、SVG はスクリプトを埋め込めるため意図的に除外しています。
 - **グラフ**: Recharts の配色・ツールチップは `components/charts/chartTheme.ts` の `getChartColors()` / `getTooltipStyle()` を、空データ表示は `ChartEmptyState` を使うこと。チャート側でテーマ別の色分岐を直書きしないでください。
 - **統計ページの履歴平坦化は 1 回だけ**: 訪問履歴の平坦化（`flattenVisitHistory()`）と `status === "visited"` の絞り込みは `useStatsData` の `visitedEntries` に集約しています。グラフやカレンダーは `visits` ではなく `FlatVisitHistoryEntry[]` を props で受け取ること。コンポーネントごとに `flattenVisitHistory(visits)` を呼ぶと、同じ走査を記録件数 × グラフ数だけ繰り返します。
+- **統計ページの順位付けも 1 回だけ**: `rankVisitsByCount()` の呼び出しは `useStatsData` の `rankedVisits` に集約しています。`HomeSaunaCard` / `TopSaunasCard` は `visits` ではなく `RankedVisit[]` を props で受け取ること（カードごとに呼ぶと同じ絞り込みと並べ替えを繰り返します）。
+- **同じ数字を 2 か所で計算しないこと**: 平均満足度は `calculateStats()` の `stats.avgRating` が唯一の出所で、`RatingDistributionChart` は `avgRating` を props で受け取って表示します（グラフ側で再計算すると、サマリーと中央表示の数字がいずれ食い違います）。
 
 ### 3. CSS ＆ スタイリング
 - Z-Index や共通カラー変数等のレイアウト値は `styles/base.css` 内の CSS デザイントークンを必ず参照・利用してください。

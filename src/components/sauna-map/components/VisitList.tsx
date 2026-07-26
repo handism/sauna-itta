@@ -8,11 +8,12 @@ import { VisitListHeader, ViewMode } from "./VisitListHeader";
 import { VisitListSearch } from "./VisitListSearch";
 import { VisitListEmpty } from "./VisitListEmpty";
 import { getScrollBehavior } from "../utils/motion";
+import { readStorage, writeStorage } from "../utils/storage";
 import {
   useVisitsCRUD,
   useVisitFiltersContext,
   useSaunaMapState,
-  useSaunaEditor,
+  useSaunaEditorActions,
 } from "../context";
 
 const STORAGE_KEY = "sauna_itta_view_mode";
@@ -63,18 +64,13 @@ export function VisitListView({
   const [extraCount, setExtraCount] = useState(0);
   const { lightboxSrc, openImage, closeImage } = useImageLightbox();
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === "compact" || saved === "card") return saved;
-    }
-    return "compact";
+    const saved = readStorage(STORAGE_KEY);
+    return saved === "compact" || saved === "card" ? saved : "compact";
   });
 
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY, mode);
-    }
+    writeStorage(STORAGE_KEY, mode);
   };
 
   // 選択された記録が初期ウィンドウの外にある場合はそこまで描画を伸ばす。
@@ -199,28 +195,36 @@ export function VisitListView({
   );
 }
 
-export function VisitList(props: Partial<VisitListViewProps>) {
-  const crud = useVisitsCRUD();
-  const filtersData = useVisitFiltersContext();
-  const mapState = useSaunaMapState();
-  const editor = useSaunaEditor();
+/**
+ * Context から値を集めて View へ渡すだけのコンテナ。
+ * テストは props を直接渡せる `VisitListView` を描画すること。
+ */
+export function VisitList() {
+  const { visits } = useVisitsCRUD();
+  const { filteredVisits, filters, setFilters, isFilterActive, activeFilterCount, clearFilters } =
+    useVisitFiltersContext();
+  const { selectedId, hoveredId, setHoveredId, handleEditVisit, handleListSelectVisit, handleDeselectVisit } =
+    useSaunaMapState();
+  // 一覧が要るのは操作関数だけ。編集状態を購読すると、サイドバーの開閉で
+  // 一覧全体が再レンダリング対象になる
+  const { startNewVisit } = useSaunaEditorActions();
 
   return (
     <VisitListView
-      visits={props.visits ?? crud.visits}
-      filteredVisits={props.filteredVisits ?? filtersData.filteredVisits}
-      filters={props.filters ?? filtersData.filters}
-      setFilters={props.setFilters ?? filtersData.setFilters}
-      isFilterActive={props.isFilterActive ?? filtersData.isFilterActive}
-      activeFilterCount={props.activeFilterCount ?? filtersData.activeFilterCount}
-      onClearFilters={props.onClearFilters ?? filtersData.clearFilters}
-      onStartNewVisit={props.onStartNewVisit ?? editor.startNewVisit}
-      onEdit={props.onEdit ?? mapState.handleEditVisit}
-      selectedId={props.selectedId ?? mapState.selectedId}
-      onSelectVisit={props.onSelectVisit ?? mapState.handleListSelectVisit}
-      onDeselectVisit={props.onDeselectVisit ?? mapState.handleDeselectVisit}
-      hoveredId={props.hoveredId ?? mapState.hoveredId}
-      onHoverVisit={props.onHoverVisit ?? mapState.setHoveredId}
+      visits={visits}
+      filteredVisits={filteredVisits}
+      filters={filters}
+      setFilters={setFilters}
+      isFilterActive={isFilterActive}
+      activeFilterCount={activeFilterCount}
+      onClearFilters={clearFilters}
+      onStartNewVisit={startNewVisit}
+      onEdit={handleEditVisit}
+      selectedId={selectedId}
+      onSelectVisit={handleListSelectVisit}
+      onDeselectVisit={handleDeselectVisit}
+      hoveredId={hoveredId}
+      onHoverVisit={setHoveredId}
     />
   );
 }

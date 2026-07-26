@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { ChevronRight, Pencil, X } from "lucide-react";
-import { getVisitCount, sanitizeImageUrl } from "../utils";
+import { getVisitCount, isWishlist, sanitizeImageUrl } from "../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import {
   RatingStars,
@@ -61,7 +61,7 @@ function VisitCompactItemComponent({
               </span>
               <span className="sauna-compact-title">
                 {visit.name}
-                {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
+                {isWishlist(visit) && <WishlistChip />}
               </span>
               {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
             </span>

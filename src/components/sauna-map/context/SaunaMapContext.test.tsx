@@ -161,6 +161,40 @@ describe("SaunaMap Contexts", () => {
     expect(result.current.editor.editingId).toBeNull();
   });
 
+  it("モバイルでは編集の開始でシートを最大化し、終了で最小化すること", () => {
+    // isMobile の初期値は innerWidth から決まる（MOBILE_BREAKPOINT = 768）
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { value: 500, configurable: true });
+
+    try {
+      const { result } = renderHook(
+        () => ({ mapState: useSaunaMapState(), crud: useVisitsCRUD() }),
+        { wrapper },
+      );
+
+      const target = result.current.crud.visits[0];
+
+      act(() => {
+        result.current.mapState.handleEditVisit(target);
+      });
+      expect(result.current.mapState.snapPosition).toBe("full");
+
+      /*
+       * 保存完了時は VisitForm がこれを呼ぶ。キャンセル (handleCancelEditing) と
+       * 同じくシートを最小化して地図を見せること。
+       */
+      act(() => {
+        result.current.mapState.handleEditingFinished();
+      });
+      expect(result.current.mapState.snapPosition).toBe("min");
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        value: originalWidth,
+        configurable: true,
+      });
+    }
+  });
+
   it("分離された UIState と UIActions フックがそれぞれ正常に動作すること", () => {
     const { result } = renderHook(
       () => ({

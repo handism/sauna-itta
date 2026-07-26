@@ -212,33 +212,40 @@ export function DesktopSidebarView({
   );
 }
 
-export function DesktopSidebar(props: Partial<DesktopSidebarViewProps> & { children: ReactNode }) {
-  const ui = useSaunaUI();
-  const visitsData = useVisitsCRUD();
-  const editor = useSaunaEditor();
-
-  const importInputRef = props.importInputRef ?? visitsData.importInputRef;
+/** Context から値を集めて View へ渡すだけのコンテナ（テストは DesktopSidebarView を描画する） */
+export function DesktopSidebar({ children }: { children: ReactNode }) {
+  const {
+    isMobileMenuOpen,
+    mobileMenuRef,
+    toggleMobileMenu,
+    closeMobileMenu,
+    theme,
+    toggleTheme,
+    openShareView,
+  } = useSaunaUI();
+  const { importInputRef, exportVisits, importing, handleImportData } = useVisitsCRUD();
+  const { isSidebarExpanded, isAdding, toggleSidebar, startNewVisit } = useSaunaEditor();
 
   return (
     <DesktopSidebarView
-      isSidebarExpanded={props.isSidebarExpanded ?? editor.isSidebarExpanded}
-      onToggleSidebar={props.onToggleSidebar ?? editor.toggleSidebar}
-      isMobileMenuOpen={props.isMobileMenuOpen ?? ui.isMobileMenuOpen}
-      mobileMenuRef={props.mobileMenuRef ?? ui.mobileMenuRef}
-      onToggleMobileMenu={props.onToggleMobileMenu ?? ui.toggleMobileMenu}
-      onCloseMobileMenu={props.onCloseMobileMenu ?? ui.closeMobileMenu}
-      isAdding={props.isAdding ?? editor.isAdding}
-      onStartNewVisit={props.onStartNewVisit ?? editor.startNewVisit}
-      theme={props.theme ?? ui.theme}
-      onToggleTheme={props.onToggleTheme ?? ui.toggleTheme}
-      onOpenShareView={props.onOpenShareView ?? ui.openShareView}
-      onExportVisits={props.onExportVisits ?? visitsData.exportVisits}
-      importing={props.importing ?? visitsData.importing}
+      isSidebarExpanded={isSidebarExpanded}
+      onToggleSidebar={toggleSidebar}
+      isMobileMenuOpen={isMobileMenuOpen}
+      mobileMenuRef={mobileMenuRef}
+      onToggleMobileMenu={toggleMobileMenu}
+      onCloseMobileMenu={closeMobileMenu}
+      isAdding={isAdding}
+      onStartNewVisit={startNewVisit}
+      theme={theme}
+      onToggleTheme={toggleTheme}
+      onOpenShareView={openShareView}
+      onExportVisits={exportVisits}
+      importing={importing}
       importInputRef={importInputRef}
-      onImportClick={props.onImportClick ?? (() => importInputRef.current?.click())}
-      onImportChange={props.onImportChange ?? visitsData.handleImportData}
+      onImportClick={() => importInputRef.current?.click()}
+      onImportChange={handleImportData}
     >
-      {props.children}
+      {children}
     </DesktopSidebarView>
   );
 }

@@ -82,6 +82,46 @@ describe("useVisitForm", () => {
     expect(defaultOptions.cancelEdit).toHaveBeenCalledWith(true);
   });
 
+  it("handleSubmit の onCompleted が保存成功時のみ呼ばれること（モバイルのシート位置を戻すため）", () => {
+    const { result } = renderHook(() => useVisitForm(defaultOptions));
+    const onCompleted = vi.fn();
+    const submit = () => {
+      const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      result.current.handleSubmit(e, onCompleted);
+    };
+
+    // 名前が未入力のうちはバリデーションで止まるため呼ばれない
+    act(submit);
+    expect(onCompleted).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.setForm((prev) => ({ ...prev, name: "サウナ北欧" }));
+    });
+    act(submit);
+
+    expect(onCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  it("handleSubmit で保存に失敗したときは onCompleted を呼ばないこと", () => {
+    const options = {
+      ...defaultOptions,
+      addVisit: vi.fn().mockReturnValue({ success: false }),
+    };
+    const { result } = renderHook(() => useVisitForm(options));
+    const onCompleted = vi.fn();
+
+    act(() => {
+      result.current.setForm((prev) => ({ ...prev, name: "サウナ北欧" }));
+    });
+    act(() => {
+      const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      result.current.handleSubmit(e, onCompleted);
+    });
+
+    expect(onCompleted).not.toHaveBeenCalled();
+    expect(options.cancelEdit).not.toHaveBeenCalled();
+  });
+
   it("confirmDelete で削除成功時に deleteVisit, showToast, closeDeleteConfirm が呼ばれること", () => {
     const options = { ...defaultOptions, editingId: "v1" };
     const { result } = renderHook(() => useVisitForm(options));

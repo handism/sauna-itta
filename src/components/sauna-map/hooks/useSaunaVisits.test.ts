@@ -131,7 +131,7 @@ describe("useSaunaVisits", () => {
 
     expect(success).toBe(false);
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Failed to persist visits to localStorage:",
+      'Failed to save "sauna-itta_visits" to localStorage:',
       expect.any(Error)
     );
 

@@ -29,8 +29,18 @@ const VisitCalendar = dynamic(() => import('./components/VisitCalendar').then((m
 });
 
 export default function StatsPage() {
-  const { visits, theme, toggleTheme, date, setDate, mounted, stats, visitedEntries, visitDates } =
-    useStatsData();
+  const {
+    visits,
+    theme,
+    toggleTheme,
+    date,
+    setDate,
+    mounted,
+    stats,
+    visitedEntries,
+    rankedVisits,
+    visitDates,
+  } = useStatsData();
 
   if (!mounted) {
     return (
@@ -76,8 +86,8 @@ export default function StatsPage() {
 
             {/* 2. Featured Home Sauna & Top 5 Ranking Section */}
             <div className={styles.featuredGrid}>
-              <HomeSaunaCard visits={visits} />
-              <TopSaunasCard visits={visits} />
+              <HomeSaunaCard ranked={rankedVisits} />
+              <TopSaunasCard ranked={rankedVisits} />
             </div>
 
             {/* 3. Charts Section */}
@@ -96,7 +106,11 @@ export default function StatsPage() {
                     <h2>満足度分布</h2>
                     <span className={styles.cardSubtitle}>ととのい度評価の内訳</span>
                   </div>
-                  <RatingDistributionChart entries={visitedEntries} theme={theme} />
+                  <RatingDistributionChart
+                    entries={visitedEntries}
+                    avgRating={stats.avgRating}
+                    theme={theme}
+                  />
                 </section>
               </div>
             </div>

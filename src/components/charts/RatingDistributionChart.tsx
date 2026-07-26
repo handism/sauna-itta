@@ -10,6 +10,11 @@ import { ChartEmptyState } from './ChartEmptyState';
 interface RatingDistributionChartProps {
   /** 訪問済みの履歴エントリ。平坦化と status の絞り込みは useStatsData で済ませてある */
   entries: FlatVisitHistoryEntry[];
+  /**
+   * 平均満足度。サマリーと同じ値を表示する必要があるため、ここで再計算せず
+   * calculateStats() の結果（stats.avgRating）を受け取る。
+   */
+  avgRating: number;
   theme: ChartTheme;
 }
 
@@ -29,17 +34,19 @@ const RATING_LABELS: { [key: number]: string } = {
   1: '★1 (うーん)',
 };
 
-export default function RatingDistributionChart({ entries, theme }: RatingDistributionChartProps) {
-  const { data, avgRating, totalRated } = useMemo(() => {
+export default function RatingDistributionChart({
+  entries,
+  avgRating,
+  theme,
+}: RatingDistributionChartProps) {
+  const { data, totalRated } = useMemo(() => {
     const ratingCounts: { [key: number]: number } = {};
-    let totalScore = 0;
     let totalCount = 0;
 
     entries.forEach((entry) => {
       if (entry.rating && entry.rating > 0) {
         const rating = entry.rating;
         ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
-        totalScore += rating;
         totalCount += 1;
       }
     });
@@ -52,10 +59,10 @@ export default function RatingDistributionChart({ entries, theme }: RatingDistri
         value: ratingCounts[r],
       }));
 
-    const avg = totalCount > 0 ? (totalScore / totalCount).toFixed(1) : "0.0";
-
-    return { data: chartData, avgRating: avg, totalRated: totalCount };
+    return { data: chartData, totalRated: totalCount };
   }, [entries]);
+
+  const avgLabel = avgRating.toFixed(1);
 
   const { text: textColor } = getChartColors(theme);
 
@@ -68,7 +75,7 @@ export default function RatingDistributionChart({ entries, theme }: RatingDistri
     );
   }
 
-  const chartSummary = `満足度分布のドーナツグラフ。平均満足度${avgRating}。`;
+  const chartSummary = `満足度分布のドーナツグラフ。平均満足度${avgLabel}。`;
 
   return (
     <div role="img" aria-label={chartSummary} style={{ width: '100%', height: 260, position: 'relative' }}>
@@ -85,7 +92,7 @@ export default function RatingDistributionChart({ entries, theme }: RatingDistri
         }}
       >
         <div style={{ fontSize: '1.75rem', fontWeight: 800, color: textColor, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-          <span>{avgRating}</span>
+          <span>{avgLabel}</span>
           <Star size={18} fill="#f59e0b" color="#f59e0b" style={{ marginTop: -2 }} />
         </div>
         <div style={{ fontSize: '0.72rem', opacity: 0.65, marginTop: '2px', letterSpacing: '0.05em' }}>

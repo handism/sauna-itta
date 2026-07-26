@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { toFormState, getTodayDate, validateVisitForm } from "./form";
+import { toFormState, validateVisitForm } from "./form";
+import { getTodayDate } from "./date";
 import { buildHistoryUpdate } from "./visitHistory";
 import { SaunaVisit, VisitFormState } from "../types";
 

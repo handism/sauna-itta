@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Pencil, X } from "lucide-react";
-import { getVisitCount, sanitizeImageUrl } from "../utils";
+import { getVisitCount, isWishlist, sanitizeImageUrl } from "../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import {
   RatingStars,
@@ -48,7 +48,7 @@ function VisitCardItemComponent({
             }}
           >
             {visit.name}
-            {(visit.status ?? "visited") === "wishlist" && <WishlistChip />}
+            {isWishlist(visit) && <WishlistChip />}
           </button>
         </h3>
         <div className="sauna-card-actions">

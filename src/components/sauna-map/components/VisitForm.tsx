@@ -13,7 +13,7 @@ import {
   AreaField,
   DateField,
 } from "./VisitFormFields";
-import { useSaunaEditor, useSaunaEditorForm } from "../context";
+import { useSaunaEditor, useSaunaEditorForm, useSaunaMapState } from "../context";
 import { GeocodingResult } from "../utils/geocoding";
 
 export interface VisitFormViewProps {
@@ -201,30 +201,33 @@ export function VisitFormView({
   );
 }
 
-export function VisitForm(props: Partial<VisitFormViewProps>) {
+/** Context から値を集めて View へ渡すだけのコンテナ（テストは VisitFormView を描画する） */
+export function VisitForm() {
   const editor = useSaunaEditor();
   // 入力値は専用 Context から。ここだけが 1 文字ごとの更新を購読する
   const { form, setForm, imageUploading } = useSaunaEditorForm();
-
-  const editingId = props.editingId ?? editor.editingId;
-  const onDeleteHistoryEntry =
-    props.onDeleteHistoryEntry ?? (editingId ? editor.handleDeleteHistoryEntry : undefined);
+  /*
+   * 保存・キャンセルはモバイルのシート位置と連動するため、EditorContext の
+   * cancelEditing を直接呼ばず MapStateContext 経由にする（シート位置の知識を
+   * 画面側へ漏らさないこと）。
+   */
+  const { handleCancelEditing, handleEditingFinished } = useSaunaMapState();
 
   return (
     <VisitFormView
-      form={props.form ?? form}
-      setForm={props.setForm ?? setForm}
-      selectedLocation={props.selectedLocation ?? editor.selectedLocation}
-      editingId={editingId}
-      historyEntries={props.historyEntries ?? editor.historyEntries}
-      onSubmit={props.onSubmit ?? editor.handleSubmit}
-      onImageFile={props.onImageFile ?? editor.handleImageFile}
-      onRemoveImage={props.onRemoveImage ?? editor.handleRemoveImage}
-      onDelete={props.onDelete ?? editor.handleDelete}
-      onCancel={props.onCancel ?? (() => editor.cancelEditing())}
-      onDeleteHistoryEntry={onDeleteHistoryEntry}
-      onLocationSelect={props.onLocationSelect ?? editor.handleLocationSelect}
-      imageUploading={props.imageUploading ?? imageUploading}
+      form={form}
+      setForm={setForm}
+      selectedLocation={editor.selectedLocation}
+      editingId={editor.editingId}
+      historyEntries={editor.historyEntries}
+      onSubmit={(e) => editor.handleSubmit(e, handleEditingFinished)}
+      onImageFile={editor.handleImageFile}
+      onRemoveImage={editor.handleRemoveImage}
+      onDelete={editor.handleDelete}
+      onCancel={() => handleCancelEditing()}
+      onDeleteHistoryEntry={editor.editingId ? editor.handleDeleteHistoryEntry : undefined}
+      onLocationSelect={editor.handleLocationSelect}
+      imageUploading={imageUploading}
     />
   );
 }

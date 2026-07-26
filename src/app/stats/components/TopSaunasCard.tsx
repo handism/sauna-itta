@@ -1,15 +1,15 @@
 import { useMemo } from "react";
 import { Trophy, Star, MapPin } from "lucide-react";
-import { SaunaVisit } from "@/components/sauna-map/types";
-import { rankVisitsByCount } from "@/components/sauna-map/utils";
+import { RankedVisit } from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface TopSaunasCardProps {
-  visits: SaunaVisit[];
+  /** 訪問回数順に並んだ訪問済みの記録。useStatsData が算出したものを渡すこと */
+  ranked: RankedVisit[];
 }
 
-export function TopSaunasCard({ visits }: TopSaunasCardProps) {
-  const topSaunas = useMemo(() => rankVisitsByCount(visits).slice(0, 5), [visits]);
+export function TopSaunasCard({ ranked }: TopSaunasCardProps) {
+  const topSaunas = useMemo(() => ranked.slice(0, 5), [ranked]);
 
   if (topSaunas.length === 0) return null;
 

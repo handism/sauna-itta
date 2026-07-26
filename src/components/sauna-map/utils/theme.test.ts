@@ -62,6 +62,9 @@ describe("getInitialTheme", () => {
     });
 
     expect(getInitialTheme()).toBe("dark");
-    expect(consoleWarnSpy).toHaveBeenCalledWith("Failed to read theme from localStorage:", expect.any(Error));
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      `Failed to read "${THEME_STORAGE_KEY}" from localStorage:`,
+      expect.any(Error),
+    );
   });
 });
