@@ -22,12 +22,12 @@ describe("TopSaunasCard", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders top 5 saunas correctly", () => {
+  it("renders top 5 saunas correctly with details and progress bar percentages", () => {
     const ranked: RankedVisit[] = [
       { visit: createVisit({ id: "1", name: "Sauna 1", area: "Tokyo", rating: 5 }), count: 10 },
-      { visit: createVisit({ id: "2", name: "Sauna 2", area: "Osaka", rating: 4 }), count: 8 },
+      { visit: createVisit({ id: "2", name: "Sauna 2", area: "Osaka", rating: 4 }), count: 5 },
     ];
-    render(<TopSaunasCard ranked={ranked} />);
+    const { container } = render(<TopSaunasCard ranked={ranked} />);
 
     expect(screen.getByText("よく行く施設 TOP 5")).toBeInTheDocument();
     expect(screen.getByText("Sauna 1")).toBeInTheDocument();
@@ -36,28 +36,42 @@ describe("TopSaunasCard", () => {
     expect(screen.getByText("5")).toBeInTheDocument(); // Rating
 
     expect(screen.getByText("Sauna 2")).toBeInTheDocument();
-    expect(screen.getByText("8 回")).toBeInTheDocument();
+    expect(screen.getByText("5 回")).toBeInTheDocument();
+
+    // Verify progress bar widths (Sauna 1: 10/10 = 100%, Sauna 2: 5/10 = 50%)
+    const barFills = container.querySelectorAll('[class*="topSaunaBarFill"]');
+    expect(barFills).toHaveLength(2);
+    expect(barFills[0]).toHaveStyle({ width: "100%" });
+    expect(barFills[1]).toHaveStyle({ width: "50%" });
   });
 
-  it("truncates list to a maximum of 5 items", () => {
+  it("truncates list to a maximum of 5 items and renders rank badges 1-5", () => {
     const ranked: RankedVisit[] = Array.from({ length: 6 }).map((_, i) => ({
       visit: createVisit({ id: String(i), name: `Sauna ${i}` }),
       count: 10 - i,
     }));
 
-    render(<TopSaunasCard ranked={ranked} />);
+    const { container } = render(<TopSaunasCard ranked={ranked} />);
 
     expect(screen.getByText("Sauna 0")).toBeInTheDocument();
     expect(screen.getByText("Sauna 4")).toBeInTheDocument();
     expect(screen.queryByText("Sauna 5")).not.toBeInTheDocument();
+
+    // Verify rank badges from 1 to 5 exist in rankBadge elements
+    const rankBadges = Array.from(container.querySelectorAll('[class*="rankBadge"]')).map(
+      (el) => el.textContent?.trim()
+    );
+    expect(rankBadges).toEqual(["1", "2", "3", "4", "5"]);
   });
 
-  it("handles visits without area or rating", () => {
+  it("handles visits without area or with rating equal to 0", () => {
     const ranked: RankedVisit[] = [
-      { visit: createVisit({ id: "1", name: "No Meta Sauna" }), count: 5 },
+      { visit: createVisit({ id: "1", name: "Zero Rating Sauna", rating: 0 }), count: 5 },
     ];
-    render(<TopSaunasCard ranked={ranked} />);
+    const { container } = render(<TopSaunasCard ranked={ranked} />);
 
-    expect(screen.getByText("No Meta Sauna")).toBeInTheDocument();
+    expect(screen.getByText("Zero Rating Sauna")).toBeInTheDocument();
+    // Rating 0 should not render rating span
+    expect(container.querySelector('[class*="topSaunaRating"]')).toBeNull();
   });
 });
