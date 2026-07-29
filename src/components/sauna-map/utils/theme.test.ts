@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getInitialTheme } from "./theme";
-import { THEME_STORAGE_KEY } from "./constants";
+import { getInitialTheme, getInitialIsMobile } from "./theme";
+import { THEME_STORAGE_KEY, MOBILE_BREAKPOINT } from "./constants";
 
 describe("getInitialTheme", () => {
   const store: Record<string, string> = {};
@@ -66,5 +66,38 @@ describe("getInitialTheme", () => {
       `Failed to read "${THEME_STORAGE_KEY}" from localStorage:`,
       expect.any(Error),
     );
+  });
+});
+
+
+describe("getInitialIsMobile", () => {
+  it("should return false when window is undefined", () => {
+    const origWindow = globalThis.window;
+    // @ts-expect-error - allow modifying global window object for testing SSR
+    delete globalThis.window;
+
+    expect(getInitialIsMobile()).toBe(false);
+
+    globalThis.window = origWindow;
+  });
+
+  it("should return false when window.innerWidth is greater than or equal to MOBILE_BREAKPOINT", () => {
+    vi.stubGlobal("innerWidth", MOBILE_BREAKPOINT);
+    expect(getInitialIsMobile()).toBe(false);
+
+    vi.stubGlobal("innerWidth", MOBILE_BREAKPOINT + 100);
+    expect(getInitialIsMobile()).toBe(false);
+
+    vi.unstubAllGlobals();
+  });
+
+  it("should return true when window.innerWidth is less than MOBILE_BREAKPOINT", () => {
+    vi.stubGlobal("innerWidth", MOBILE_BREAKPOINT - 1);
+    expect(getInitialIsMobile()).toBe(true);
+
+    vi.stubGlobal("innerWidth", 320);
+    expect(getInitialIsMobile()).toBe(true);
+
+    vi.unstubAllGlobals();
   });
 });
