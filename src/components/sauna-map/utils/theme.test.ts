@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getInitialTheme } from "./theme";
+import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
+import { getInitialTheme, applyThemeClass } from "./theme";
 import { THEME_STORAGE_KEY } from "./constants";
 
 describe("getInitialTheme", () => {
@@ -66,5 +66,28 @@ describe("getInitialTheme", () => {
       `Failed to read "${THEME_STORAGE_KEY}" from localStorage:`,
       expect.any(Error),
     );
+  });
+});
+
+describe("applyThemeClass", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    document.documentElement.className = "";
+  });
+
+  it("should add 'light-theme' class when theme is 'light'", () => {
+    applyThemeClass("light");
+    expect(document.documentElement.classList.contains("light-theme")).toBe(true);
+  });
+
+  it("should remove 'light-theme' class when theme is 'dark'", () => {
+    document.documentElement.classList.add("light-theme");
+    applyThemeClass("dark");
+    expect(document.documentElement.classList.contains("light-theme")).toBe(false);
+  });
+
+  it("should do nothing if document is undefined", () => {
+    vi.stubGlobal("document", undefined);
+    expect(() => applyThemeClass("light")).not.toThrow();
   });
 });
