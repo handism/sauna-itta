@@ -7,51 +7,44 @@ import { MapController } from "./MapController";
 import { MapTopRightControls } from "./MapTopRightControls";
 import { VisitMarkers } from "./VisitMarkers";
 import { ZoomObserver } from "./ZoomObserver";
-import { CurrentLocation, Visit, Location } from "../types";
+import { CurrentLocation } from "../types";
+import {
+  useSaunaUI,
+  useVisitFiltersContext,
+  useSaunaEditor,
+  useSaunaMapState,
+} from "../context";
 
 interface SaunaMapLayerProps {
   currentLocation: CurrentLocation | null;
   setCurrentLocation: (loc: CurrentLocation | null) => void;
-  enableClustering: boolean;
-  toggleClustering: () => void;
-  showToast: (message: string) => void;
-  activeMapTarget: { lat: number; lng: number; zoom: number } | null;
-  isMobile: boolean;
-  handleZoomChange: (zoom: number) => void;
-  handleBoundsChange: (bounds: import("leaflet").LatLngBounds) => void;
-  filteredVisits: Visit[];
-  editingId: string | null;
-  selectedId: string | null;
-  hoveredId: string | null;
-  showBadges: boolean;
-  handleEditVisit: (id: string) => void;
-  handleSelectVisit: (id: string) => void;
-  isCreating: boolean;
-  handleLocationSelect: (latlng: Location) => void;
-  selectedLocation: Location | null;
 }
 
 export function SaunaMapLayer({
   currentLocation,
   setCurrentLocation,
-  enableClustering,
-  toggleClustering,
-  showToast,
-  activeMapTarget,
-  isMobile,
-  handleZoomChange,
-  handleBoundsChange,
-  filteredVisits,
-  editingId,
-  selectedId,
-  hoveredId,
-  showBadges,
-  handleEditVisit,
-  handleSelectVisit,
-  isCreating,
-  handleLocationSelect,
-  selectedLocation,
 }: SaunaMapLayerProps) {
+  const { isMobile, showToast } = useSaunaUI();
+  const { filteredVisits } = useVisitFiltersContext();
+  const {
+    editingId,
+    selectedLocation,
+    isCreating,
+    handleLocationSelect,
+    handleBoundsChange,
+  } = useSaunaEditor();
+  const {
+    hoveredId,
+    selectedId,
+    activeMapTarget,
+    handleZoomChange,
+    enableClustering,
+    toggleClustering,
+    showBadges,
+    handleSelectVisit,
+    handleEditVisit,
+  } = useSaunaMapState();
+
   return (
     <div className="map-container" style={{ background: "var(--background)", color: "var(--foreground)" }}>
       <MapContainer

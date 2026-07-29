@@ -33,36 +33,21 @@ function SaunaMapContent() {
     toggleFilterPanel,
     closeDeleteConfirm,
     toast,
-    showToast,
     clearToast,
   } = useSaunaUI();
 
   const { filteredVisits, isFilterActive } = useVisitFiltersContext();
 
   const {
-    editingId,
-    selectedLocation,
     isAdding,
     isMobilePickingLocation,
-    isCreating,
     confirmDelete,
-    handleLocationSelect,
-    handleBoundsChange,
   } = useSaunaEditor();
 
   const {
-    hoveredId,
-    selectedId,
-    activeMapTarget,
     snapPosition,
     setSnapPosition,
-    handleZoomChange,
-    enableClustering,
-    toggleClustering,
-    showBadges,
     selectedVisit,
-    handleSelectVisit,
-    handleEditVisit,
     handleCancelEditing,
     handleSelectMobileTab,
   } = useSaunaMapState();
@@ -81,23 +66,6 @@ function SaunaMapContent() {
       <SaunaMapLayer
         currentLocation={currentLocation}
         setCurrentLocation={setCurrentLocation}
-        enableClustering={enableClustering}
-        toggleClustering={toggleClustering}
-        showToast={showToast}
-        activeMapTarget={activeMapTarget}
-        isMobile={isMobile}
-        handleZoomChange={handleZoomChange}
-        handleBoundsChange={handleBoundsChange}
-        filteredVisits={filteredVisits}
-        editingId={editingId}
-        selectedId={selectedId}
-        hoveredId={hoveredId}
-        showBadges={showBadges}
-        handleEditVisit={handleEditVisit}
-        handleSelectVisit={handleSelectVisit}
-        isCreating={isCreating}
-        handleLocationSelect={handleLocationSelect}
-        selectedLocation={selectedLocation}
       />
 
       {isMobilePickingLocation && (
