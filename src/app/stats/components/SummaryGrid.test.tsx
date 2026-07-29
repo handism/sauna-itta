@@ -70,10 +70,24 @@ describe("SummaryGrid", () => {
     };
     render(<SummaryGrid stats={emptyStats} />);
 
+    const totalArticle = screen.getByRole("listitem", { name: "登録サウナ総数" });
+    expect(totalArticle).toHaveTextContent("0");
+
+    const visitedArticle = screen.getByRole("listitem", { name: "行った / イキタイ" });
+    expect(visitedArticle).toHaveTextContent("0");
+    expect(visitedArticle).toHaveTextContent("/ 0 行きたい");
+
+    const areasArticle = screen.getByRole("listitem", { name: "訪問エリア数" });
+    expect(areasArticle).toHaveTextContent("0");
+
     // Average rating should display '-' when 0
     const ratingArticle = screen.getByRole("listitem", { name: "平均満足度" });
     expect(ratingArticle).toHaveTextContent("-");
     expect(ratingArticle).not.toHaveTextContent("/ 5.0"); // ensure suffix isn't rendered
+
+    const prefecturesArticle = screen.getByRole("listitem", { name: "都道府県制覇" });
+    expect(prefecturesArticle).toHaveTextContent("0");
+    expect(prefecturesArticle).toHaveTextContent("/ 47 都道府県");
 
     const periodArticle = screen.getByRole("listitem", { name: "記録期間" });
     expect(periodArticle).toHaveTextContent("-");
