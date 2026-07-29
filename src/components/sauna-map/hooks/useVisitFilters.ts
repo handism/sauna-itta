@@ -30,7 +30,9 @@ export function useVisitFilters(visits: SaunaVisit[]) {
   const [filters, setFilters] = useState<VisitFilters>(getInitialFilters);
 
   const filteredVisits = useMemo(() => {
-    const keyword = filters.search.trim().toLowerCase();
+    const keyword = filters.search.trim();
+    // Escape special regex characters in keyword for safe case-insensitive matching
+    const searchRegex = keyword ? new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : null;
 
     const result = visits.filter((v) => {
       if (filters.status !== "all" && getVisitStatus(v) !== filters.status) {
@@ -58,11 +60,11 @@ export function useVisitFilters(visits: SaunaVisit[]) {
         if (!inLat || !inLng) return false;
       }
 
-      if (keyword) {
-        if (v.name.toLowerCase().includes(keyword)) return true;
-        if (v.comment && v.comment.toLowerCase().includes(keyword)) return true;
-        if (v.area && v.area.toLowerCase().includes(keyword)) return true;
-        if (v.tags && v.tags.some((tag) => tag.toLowerCase().includes(keyword))) return true;
+      if (searchRegex) {
+        if (searchRegex.test(v.name)) return true;
+        if (v.comment && searchRegex.test(v.comment)) return true;
+        if (v.area && searchRegex.test(v.area)) return true;
+        if (v.tags && v.tags.some((tag) => searchRegex.test(tag))) return true;
         return false;
       }
 
