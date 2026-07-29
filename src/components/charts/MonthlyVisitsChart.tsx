@@ -58,56 +58,75 @@ export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChar
   const chartSummary = `月別訪問数の棒グラフ。${data[0].month}から${data[data.length - 1].month}まで、合計${totalVisits}件の訪問。`;
 
   return (
-    <div role="img" aria-label={chartSummary} style={{ width: '100%', height: 260 }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data}
-          margin={{ top: 15, right: 15, left: -20, bottom: 5 }}
-        >
-          <defs>
-            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#ff7e40" stopOpacity={1} />
-              <stop offset="100%" stopColor="#e34d26" stopOpacity={0.8} />
-            </linearGradient>
-          </defs>
+    <>
+      <div role="img" aria-label={chartSummary} style={{ width: '100%', height: 260 }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={data}
+            margin={{ top: 15, right: 15, left: -20, bottom: 5 }}
+          >
+            <defs>
+              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#ff7e40" stopOpacity={1} />
+                <stop offset="100%" stopColor="#e34d26" stopOpacity={0.8} />
+              </linearGradient>
+            </defs>
 
-          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-          <XAxis
-            dataKey="month"
-            tick={{ fill: tickColor, fontSize: 11 }}
-            axisLine={{ stroke: gridColor }}
-            tickLine={false}
-          />
-          <YAxis
-            allowDecimals={false}
-            tick={{ fill: tickColor, fontSize: 11 }}
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip
-            cursor={{ fill: cursorFill }}
-            contentStyle={getTooltipStyle(theme)}
-            formatter={(value: number | string | undefined) => [`${value ?? 0} 回`, '訪問数']}
-          />
-          <Bar
-            dataKey="visits"
-            fill="url(#barGradient)"
-            name="訪問数"
-            radius={[6, 6, 0, 0]}
-            maxBarSize={40}
-          />
-          {yearBoundaries.length > 1 &&
-            yearBoundaries.map(({ month, year }) => (
-              <ReferenceLine
-                key={year}
-                x={month}
-                stroke={gridColor}
-                strokeDasharray="2 2"
-                label={{ value: year, position: 'insideTopLeft', fill: tickColor, fontSize: 10, opacity: 0.7 }}
-              />
-            ))}
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
+            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+            <XAxis
+              dataKey="month"
+              tick={{ fill: tickColor, fontSize: 11 }}
+              axisLine={{ stroke: gridColor }}
+              tickLine={false}
+            />
+            <YAxis
+              allowDecimals={false}
+              tick={{ fill: tickColor, fontSize: 11 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              cursor={{ fill: cursorFill }}
+              contentStyle={getTooltipStyle(theme)}
+              formatter={(value: number | string | undefined) => [`${value ?? 0} 回`, '訪問数']}
+            />
+            <Bar
+              dataKey="visits"
+              fill="url(#barGradient)"
+              name="訪問数"
+              radius={[6, 6, 0, 0]}
+              maxBarSize={40}
+            />
+            {yearBoundaries.length > 1 &&
+              yearBoundaries.map(({ month, year }) => (
+                <ReferenceLine
+                  key={year}
+                  x={month}
+                  stroke={gridColor}
+                  strokeDasharray="2 2"
+                  label={{ value: year, position: 'insideTopLeft', fill: tickColor, fontSize: 10, opacity: 0.7 }}
+                />
+              ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <table className="sr-only">
+        <caption>月別訪問数の詳細</caption>
+        <thead>
+          <tr>
+            <th scope="col">年月</th>
+            <th scope="col">訪問数</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map(({ month, visits }) => (
+            <tr key={month}>
+              <th scope="row">{month}</th>
+              <td>{visits}回</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
   );
 }

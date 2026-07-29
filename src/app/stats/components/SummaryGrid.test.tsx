@@ -33,7 +33,7 @@ describe("SummaryGrid", () => {
     expect(totalArticle).toHaveTextContent("10");
 
     // Check visited / wishlist
-    const visitedArticle = screen.getByRole("listitem", { name: "行った / イキタイ" });
+    const visitedArticle = screen.getByRole("listitem", { name: "行った / 行きたい" });
     expect(visitedArticle).toHaveTextContent("6");
     expect(visitedArticle).toHaveTextContent("/ 4 行きたい");
 
@@ -73,7 +73,7 @@ describe("SummaryGrid", () => {
     const totalArticle = screen.getByRole("listitem", { name: "登録サウナ総数" });
     expect(totalArticle).toHaveTextContent("0");
 
-    const visitedArticle = screen.getByRole("listitem", { name: "行った / イキタイ" });
+    const visitedArticle = screen.getByRole("listitem", { name: "行った / 行きたい" });
     expect(visitedArticle).toHaveTextContent("0");
     expect(visitedArticle).toHaveTextContent("/ 0 行きたい");
 

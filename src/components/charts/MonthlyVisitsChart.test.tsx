@@ -40,6 +40,10 @@ describe('MonthlyVisitsChart', () => {
 
     expect(chart.getAttribute('aria-label')).toContain('2023-01から2024-01まで');
     expect(chart.getAttribute('aria-label')).toContain('合計4件の訪問');
+    const table = screen.getByRole('table', { name: '月別訪問数の詳細' });
+    expect(table).toHaveTextContent('2023-01');
+    expect(table).toHaveTextContent('2回');
+    expect(table).toHaveTextContent('2024-01');
   });
 
   it('renders correctly with single year entries', () => {
@@ -61,4 +65,3 @@ describe('MonthlyVisitsChart', () => {
     expect(chart).toBeInTheDocument();
   });
 });
-

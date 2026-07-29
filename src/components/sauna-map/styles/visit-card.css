@@ -416,8 +416,8 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: var(--radius-xs);
   border: 1px solid var(--glass-border);
   background: transparent;
@@ -533,7 +533,7 @@
   min-height: 44px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .route-link {
     width: 100%;
     min-height: 44px;
@@ -553,8 +553,14 @@
 
   .sauna-card-select-btn,
   .sauna-card-edit-btn,
-  .sauna-card-deselect-btn {
+  .sauna-card-deselect-btn,
+  .history-delete-btn {
     min-height: 44px;
+  }
+
+  .history-delete-btn {
+    width: 44px;
+    min-width: 44px;
   }
 
   .panel-title {

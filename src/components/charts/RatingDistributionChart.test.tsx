@@ -1,4 +1,4 @@
-import { render, cleanup } from "@testing-library/react";
+import { render, cleanup, screen } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import RatingDistributionChart from "./RatingDistributionChart";
@@ -74,6 +74,12 @@ describe("RatingDistributionChart", () => {
     expect(rating4).toBeDefined();
     expect(rating4?.value).toBe(1);
     expect(rating4?.name).toBe("★4 (満足)");
+
+    const table = screen.getByRole("table", { name: "満足度分布の詳細" });
+    expect(table).toHaveTextContent("★5");
+    expect(table).toHaveTextContent("2件");
+    expect(table).toHaveTextContent("★1");
+    expect(table).toHaveTextContent("0件");
   });
 
   it("renders correctly in dark theme", () => {

@@ -17,7 +17,7 @@ function VisitListHeaderComponent({
   return (
     <div className="sauna-list-header">
       <h2 className="panel-title">
-        訪れたサウナ <span className="panel-title-count">({filteredCount}件)</span>
+        サウナ一覧 <span className="panel-title-count">({filteredCount}件)</span>
       </h2>
 
       {/*

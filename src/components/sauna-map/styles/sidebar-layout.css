@@ -124,7 +124,7 @@
 }
 
 /* JS側の MOBILE_BREAKPOINT と値を揃える */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .desktop-sidebar-open-btn,
   .desktop-sidebar-close-btn {
     display: none !important;
@@ -180,7 +180,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .sidebar-content {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;

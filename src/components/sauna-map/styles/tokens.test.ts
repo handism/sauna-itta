@@ -188,4 +188,34 @@ describe("CSS デザイントークンの規約", () => {
 
     expect(offenders).toEqual([]);
   });
+
+  it("モバイル境界が JS の「768px 未満」と一致していること", () => {
+    const offenders = styleFiles
+      .filter(({ css }) => css.includes("@media (max-width: 768px)"))
+      .map(({ file }) => file);
+    const bottomSheet = readFileSync(join(STYLE_DIR, "bottom-sheet.css"), "utf8");
+
+    expect(offenders).toEqual([]);
+    expect(bottomSheet).toContain("@media (max-width: 767px)");
+    expect(bottomSheet).toContain("@media (min-width: 768px)");
+  });
+
+  it("見落としやすいモバイル操作にも 44px のターゲットが定義されていること", () => {
+    const bottomSheet = readFileSync(join(STYLE_DIR, "bottom-sheet.css"), "utf8");
+    const visitCard = readFileSync(join(STYLE_DIR, "visit-card.css"), "utf8");
+    const stats = readFileSync(
+      resolve(STYLE_DIR, "../../../app/stats/stats.module.css"),
+      "utf8"
+    );
+
+    expect(bottomSheet).toMatch(
+      /\.mobile-nav-item\s*\{[^}]*min-height:\s*44px;[^}]*height:\s*100%;/
+    );
+    expect(visitCard).toMatch(
+      /@media \(max-width: 767px\)[\s\S]*\.history-delete-btn\s*\{[^}]*width:\s*44px;/
+    );
+    expect(stats).toMatch(
+      /@media \(max-width: 720px\)[\s\S]*\.backLink\s*\{[^}]*height:\s*44px;/
+    );
+  });
 });
