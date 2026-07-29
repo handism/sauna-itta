@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { render, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import RatingDistributionChart from "./RatingDistributionChart";
 import { FlatVisitHistoryEntry } from "@/components/sauna-map/utils";
@@ -18,27 +18,46 @@ vi.mock("recharts", async (importOriginal) => {
 });
 
 describe("RatingDistributionChart", () => {
+  afterEach(() => {
+    cleanup();
+  });
   it("renders empty state when no entries", () => {
-    render(<RatingDistributionChart entries={[]} avgRating={0} theme="light" />);
-    expect(screen.getByText(/評価付きの訪問記録がありません/)).toBeInTheDocument();
+    const { getByText } = render(<RatingDistributionChart entries={[]} avgRating={0} theme="light" />);
+    expect(getByText(/評価付きの訪問記録がありません/)).toBeInTheDocument();
+  });
+
+  it("renders empty state when entries have no valid ratings (rating <= 0 or undefined)", () => {
+    const unratedEntries = [
+      { visitId: "1", status: "visited", rating: 0 },
+      { visitId: "2", status: "visited" },
+    ] as FlatVisitHistoryEntry[];
+
+    const { getByText } = render(<RatingDistributionChart entries={unratedEntries} avgRating={0} theme="light" />);
+    expect(getByText(/評価付きの訪問記録がありません/)).toBeInTheDocument();
   });
 
   it("renders chart correctly with valid entries", () => {
     const mockEntries = [
-      { id: "1", visitId: "1", status: "visited", rating: 5 },
-      { id: "2", visitId: "2", status: "visited", rating: 4 },
-      { id: "3", visitId: "3", status: "visited", rating: 5 },
-      { id: "4", visitId: "4", status: "visited", rating: 0 }, // Should be ignored
+      { visitId: "1", status: "visited", rating: 5 },
+      { visitId: "2", status: "visited", rating: 4 },
+      { visitId: "3", status: "visited", rating: 5 },
+      { visitId: "4", status: "visited", rating: 0 }, // Should be ignored
     ] as FlatVisitHistoryEntry[];
 
-    render(<RatingDistributionChart entries={mockEntries} avgRating={4.5} theme="light" />);
+    const { getByRole, getByText, getByTestId } = render(
+      <RatingDistributionChart entries={mockEntries} avgRating={4.5} theme="light" />
+    );
+
+    // Check role and accessibility summary
+    const chartRegion = getByRole("img");
+    expect(chartRegion).toHaveAttribute("aria-label", "満足度分布のドーナツグラフ。平均満足度4.5。");
 
     // Check if average rating and total are displayed
-    expect(screen.getByText("4.5")).toBeInTheDocument();
-    expect(screen.getByText(/平均 \(3件\)/)).toBeInTheDocument();
+    expect(getByText("4.5")).toBeInTheDocument();
+    expect(getByText(/平均 \(3件\)/)).toBeInTheDocument();
 
     // Check if Pie component receives correct aggregated data
-    const pieElement = screen.getByTestId("pie");
+    const pieElement = getByTestId("pie");
     const pieData = JSON.parse(pieElement.getAttribute("data-pie-data") || "[]") as Array<{rating: number, name: string, value: number}>;
 
     expect(pieData).toHaveLength(2); // 5 and 4 ratings
@@ -54,5 +73,17 @@ describe("RatingDistributionChart", () => {
     expect(rating4).toBeDefined();
     expect(rating4?.value).toBe(1);
     expect(rating4?.name).toBe("★4 (満足)");
+  });
+
+  it("renders correctly in dark theme", () => {
+    const mockEntries = [
+      { visitId: "1", status: "visited", rating: 3 },
+    ] as FlatVisitHistoryEntry[];
+
+    const { getByText, getByRole } = render(
+      <RatingDistributionChart entries={mockEntries} avgRating={3.0} theme="dark" />
+    );
+    expect(getByText("3.0")).toBeInTheDocument();
+    expect(getByRole("img")).toBeInTheDocument();
   });
 });
