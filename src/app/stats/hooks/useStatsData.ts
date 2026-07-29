@@ -5,6 +5,7 @@ import {
   getInitialVisits,
   calculateStats,
   rankVisitsByCount,
+  toDateString,
 } from "@/components/sauna-map/utils";
 import { useTheme } from "@/components/sauna-map/hooks/useTheme";
 
@@ -62,9 +63,7 @@ export function useStatsData() {
     visitedEntries.forEach((entry) => {
       let dateStr = dateCache.get(entry.date);
       if (!dateStr) {
-        // Replace hyphens with slashes to ensure consistent local timezone parsing across browsers
-        const dateToParse = typeof entry.date === 'string' ? entry.date.replace(/-/g, '/') : entry.date;
-        dateStr = new Date(dateToParse).toDateString();
+        dateStr = toDateString(entry.date);
         dateCache.set(entry.date, dateStr);
       }
       dates.set(dateStr, (dates.get(dateStr) ?? 0) + 1);
