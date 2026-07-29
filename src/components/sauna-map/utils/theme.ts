@@ -41,6 +41,7 @@ export function saveTheme(theme: "dark" | "light"): void {
 }
 
 export function applyThemeClass(theme: "dark" | "light"): void {
+  if (typeof document === "undefined") return;
   if (theme === "light") {
     document.documentElement.classList.add("light-theme");
   } else {
