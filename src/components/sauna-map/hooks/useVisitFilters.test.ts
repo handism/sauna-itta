@@ -100,6 +100,50 @@ describe("useVisitFilters", () => {
     expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["かるまる"]);
   });
 
+  it("正規表現のメタ文字を含む検索キーワードでも安全かつ大文字小文字を区別せず検索できること", () => {
+    const specialVisits: SaunaVisit[] = [
+      {
+        id: "1",
+        name: "Sauna [Lab] (Nagoya)",
+        lat: 35.1,
+        lng: 136.9,
+        comment: "Great sauna *star*",
+        date: "2026-01-01",
+        status: "visited",
+      },
+      {
+        id: "2",
+        name: "Sauna Town",
+        lat: 35.6,
+        lng: 139.7,
+        comment: "Normal comment",
+        date: "2026-01-02",
+        status: "visited",
+      },
+    ];
+
+    const { result } = renderHook(() => useVisitFilters(specialVisits));
+
+    // [Lab] で検索
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, search: "[Lab]" }));
+    });
+    expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["Sauna [Lab] (Nagoya)"]);
+
+    // 大文字小文字不区別の確認 (sauna)
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, search: "sauna" }));
+    });
+    expect(result.current.filteredVisits.length).toBe(2);
+
+    // *star* で検索
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, search: "*star*" }));
+    });
+    expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["Sauna [Lab] (Nagoya)"]);
+  });
+
+
   it("history のみを持つ記録も visitCountDesc で正しく並ぶこと", () => {
     // visitCount を持たない旧形式は history.length が訪問回数になる
     const visits: SaunaVisit[] = [
