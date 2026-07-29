@@ -62,9 +62,16 @@ export function useStatsData() {
     visitedEntries.forEach((entry) => {
       let dateStr = dateCache.get(entry.date);
       if (!dateStr) {
-        // Replace hyphens with slashes to ensure consistent local timezone parsing across browsers
-        const dateToParse = typeof entry.date === 'string' ? entry.date.replace(/-/g, '/') : entry.date;
-        dateStr = new Date(dateToParse).toDateString();
+        if (typeof entry.date === 'string' && entry.date.length === 10 && entry.date[4] === '-' && entry.date[7] === '-') {
+          const y = parseInt(entry.date.substring(0, 4), 10);
+          const m = parseInt(entry.date.substring(5, 7), 10) - 1;
+          const d = parseInt(entry.date.substring(8, 10), 10);
+          dateStr = new Date(y, m, d).toDateString();
+        } else {
+          // Replace hyphens with slashes to ensure consistent local timezone parsing across browsers
+          const dateToParse = typeof entry.date === 'string' ? entry.date.replace(/-/g, '/') : entry.date;
+          dateStr = new Date(dateToParse).toDateString();
+        }
         dateCache.set(entry.date, dateStr);
       }
       dates.set(dateStr, (dates.get(dateStr) ?? 0) + 1);
