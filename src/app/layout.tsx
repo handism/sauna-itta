@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 // base.css の --font-main が参照するフォント。
@@ -55,7 +56,7 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <Script id="theme-init" strategy="beforeInteractive">{THEME_INIT_SCRIPT}</Script>
       </head>
       <body className={outfit.variable}>{children}</body>
     </html>
