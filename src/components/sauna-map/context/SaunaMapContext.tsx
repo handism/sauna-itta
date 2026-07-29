@@ -35,10 +35,16 @@ export {
   useSaunaUI,
   useSaunaUIState,
   useSaunaUIActions,
+  useSaunaViewport,
   UIProvider,
 } from "./UIContext";
 export { useVisitsCRUD, VisitsCRUDProvider } from "./VisitsCRUDContext";
-export { useVisitFiltersContext, VisitFiltersProvider } from "./VisitFiltersContext";
+export {
+  useVisitFiltersContext,
+  useVisitFiltersState,
+  useVisitFilterActions,
+  VisitFiltersProvider,
+} from "./VisitFiltersContext";
 export {
   useSaunaEditor,
   useSaunaEditorState,

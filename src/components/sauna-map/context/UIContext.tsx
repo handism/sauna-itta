@@ -51,6 +51,12 @@ export interface UIActionsContextType {
 
 export type UIContextType = UIStateContextType & UIActionsContextType;
 
+export interface UIViewportContextType {
+  isMobile: boolean;
+  mounted: boolean;
+}
+
+const UIViewportContext = createContext<UIViewportContextType | null>(null);
 const UIStateContext = createContext<UIStateContextType | null>(null);
 const UIActionsContext = createContext<UIActionsContextType | null>(null);
 
@@ -87,6 +93,11 @@ export function UIProvider({ children }: { children: ReactNode }) {
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
+
+  const viewportValue = useMemo(
+    () => ({ isMobile, mounted }),
+    [isMobile, mounted],
+  );
 
   const stateValue = useMemo(
     () => ({
@@ -151,12 +162,22 @@ export function UIProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <UIStateContext.Provider value={stateValue}>
-      <UIActionsContext.Provider value={actionsValue}>
-        {children}
-      </UIActionsContext.Provider>
-    </UIStateContext.Provider>
+    <UIViewportContext.Provider value={viewportValue}>
+      <UIStateContext.Provider value={stateValue}>
+        <UIActionsContext.Provider value={actionsValue}>
+          {children}
+        </UIActionsContext.Provider>
+      </UIStateContext.Provider>
+    </UIViewportContext.Provider>
   );
+}
+
+export function useSaunaViewport() {
+  const context = useContext(UIViewportContext);
+  if (!context) {
+    throw new Error("useSaunaViewport must be used within a UIProvider");
+  }
+  return context;
 }
 
 export function useSaunaUIState() {

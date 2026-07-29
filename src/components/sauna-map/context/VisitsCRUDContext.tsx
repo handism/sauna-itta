@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, ReactNode } from "react";
 import { useSaunaVisits } from "../hooks/useSaunaVisits";
-import { useSaunaUI } from "./UIContext";
+import { useSaunaUIActions } from "./UIContext";
 
 interface VisitsCRUDContextType {
   visits: import("../types").SaunaVisit[];
@@ -19,7 +19,7 @@ interface VisitsCRUDContextType {
 const VisitsCRUDContext = createContext<VisitsCRUDContextType | null>(null);
 
 export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
-  const { showToast } = useSaunaUI();
+  const { showToast } = useSaunaUIActions();
 
   const {
     visits,
