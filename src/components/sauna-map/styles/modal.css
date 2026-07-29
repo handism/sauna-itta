@@ -226,6 +226,8 @@
 }
 
 .image-lightbox-img {
+  width: auto;
+  height: auto;
   max-width: 92vw;
   max-height: 88vh;
   object-fit: contain;

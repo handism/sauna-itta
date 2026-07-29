@@ -1,4 +1,5 @@
 import { Navigation, Star, Tag } from "lucide-react";
+import Image from "next/image";
 import { getDirectionsUrl } from "../utils";
 
 interface RatingStarsProps {
@@ -103,8 +104,7 @@ export function VisitImagePreview({ src, alt, onOpenImage }: VisitImagePreviewPr
       }}
       aria-label={`${alt}を拡大表示`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} className="sauna-img-preview" alt={alt} />
+      <Image src={src} className="sauna-img-preview" alt={alt} width={300} height={120} unoptimized />
     </button>
   );
 }
