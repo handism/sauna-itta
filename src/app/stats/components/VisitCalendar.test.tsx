@@ -112,4 +112,19 @@ describe('VisitCalendar', () => {
     const tilesWithVisit = container.querySelectorAll('.react-calendar__tile--has-visit');
     expect(tilesWithVisit.length).toBe(0);
   });
+
+  it('renders correctly when date prop is null', () => {
+    const { container } = render(
+      <VisitCalendar
+        theme="light"
+        date={null}
+        setDate={mockSetDate}
+        visitDates={mockVisitDates}
+      />
+    );
+
+    const calendarElement = container.querySelector('.react-calendar');
+    expect(calendarElement).toBeInTheDocument();
+  });
 });
+
