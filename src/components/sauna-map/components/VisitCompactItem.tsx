@@ -68,8 +68,7 @@ function VisitCompactItemComponent({
             </span>
             <span className="sauna-compact-side-info">
               {thumbSrc && (
-
-                <Image src={thumbSrc} className="sauna-compact-thumb" alt="" width={28} height={28} />
+                <Image src={thumbSrc} className="sauna-compact-thumb" alt="" width={28} height={28} unoptimized />
               )}
               <RatingStars rating={visit.rating ?? 0} className="sauna-compact-rating" />
             </span>

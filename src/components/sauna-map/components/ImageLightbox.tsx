@@ -29,10 +29,13 @@ export function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
         onClick={(e) => e.stopPropagation()}
         style={{ display: "contents" }}
       >
-        <Image width={800} height={600}
+        <Image
+          width={800}
+          height={600}
           src={src}
           alt={alt ?? "拡大画像"}
           className="image-lightbox-img"
+          unoptimized
         />
         <button
           type="button"
