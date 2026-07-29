@@ -150,7 +150,7 @@ function SortSelectTrigger({
   closeMenu,
   handleTriggerKeyDown,
 }: {
-  triggerRef: React.RefObject<HTMLButtonElement>;
+  triggerRef: React.RefObject<HTMLButtonElement | null>;
   isOpen: boolean;
   listboxId: string;
   currentOption: SortOption;
@@ -191,7 +191,7 @@ function SortSelectMenu({
   handleSelect,
   setActiveIndex,
 }: {
-  listRef: React.RefObject<HTMLUListElement>;
+  listRef: React.RefObject<HTMLUListElement | null>;
   listboxId: string;
   activeIndex: number;
   optionId: (index: number) => string;

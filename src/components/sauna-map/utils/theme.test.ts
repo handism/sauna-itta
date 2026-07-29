@@ -139,6 +139,7 @@ describe("saveTheme", () => {
 
 describe("applyThemeClass", () => {
   afterEach(() => {
+    vi.unstubAllGlobals();
     document.documentElement.className = "";
   });
 
@@ -151,5 +152,10 @@ describe("applyThemeClass", () => {
     document.documentElement.classList.add("light-theme");
     applyThemeClass("dark");
     expect(document.documentElement.classList.contains("light-theme")).toBe(false);
+  });
+
+  it("should do nothing if document is undefined", () => {
+    vi.stubGlobal("document", undefined);
+    expect(() => applyThemeClass("light")).not.toThrow();
   });
 });
