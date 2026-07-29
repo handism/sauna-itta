@@ -20,7 +20,7 @@ export function SummaryGrid({ stats }: SummaryGridProps) {
       <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-visited">
         <div className={styles.statCardHeader}>
           <CheckCircle size={18} className={styles.statIconSuccess} />
-          <h3 id="stat-visited">行った / イキタイ</h3>
+          <h3 id="stat-visited">行った / 行きたい</h3>
         </div>
         <p className={styles.statValue}>
           {stats.visitedCount} <span className={styles.statUnit}>行った</span>

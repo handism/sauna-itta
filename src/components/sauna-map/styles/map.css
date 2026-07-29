@@ -478,7 +478,7 @@
 }
 
 /* JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .popup-link,
   .popup-edit-btn,
   .pin-hint-cancel {
@@ -677,7 +677,6 @@
     opacity: 0;
   }
 }
-
 
 
 

@@ -85,7 +85,7 @@ describe("VisitListSearch のアクセシビリティ", () => {
       "aria-pressed",
       "false"
     );
-    expect(screen.getByRole("button", { name: "イキタイ" })).toHaveAttribute(
+    expect(screen.getByRole("button", { name: "行きたい" })).toHaveAttribute(
       "aria-pressed",
       "false"
     );

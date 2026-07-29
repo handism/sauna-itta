@@ -26,6 +26,7 @@ const RATING_COLORS: { [key: number]: string } = {
   1: '#ef4444', // Red
 };
 const FALLBACK_COLOR = '#8b5cf6';
+const RATING_VALUES = [5, 4, 3, 2, 1] as const;
 const RATING_LABELS: { [key: number]: string } = {
   5: '★5 (最高)',
   4: '★4 (満足)',
@@ -39,7 +40,7 @@ export default function RatingDistributionChart({
   avgRating,
   theme,
 }: RatingDistributionChartProps) {
-  const { data, totalRated } = useMemo(() => {
+  const { data, totalRated, ratingCounts } = useMemo(() => {
     const ratingCounts: { [key: number]: number } = {};
     let totalCount = 0;
 
@@ -51,7 +52,7 @@ export default function RatingDistributionChart({
       }
     });
 
-    const chartData = [5, 4, 3, 2, 1].reduce<{ rating: number; name: string; value: number }[]>((acc, r) => {
+    const chartData = RATING_VALUES.reduce<{ rating: number; name: string; value: number }[]>((acc, r) => {
       if (ratingCounts[r]) {
         acc.push({
           rating: r,
@@ -62,7 +63,7 @@ export default function RatingDistributionChart({
       return acc;
     }, []);
 
-    return { data: chartData, totalRated: totalCount };
+    return { data: chartData, totalRated: totalCount, ratingCounts };
   }, [entries]);
 
   const avgLabel = avgRating.toFixed(1);
@@ -81,55 +82,74 @@ export default function RatingDistributionChart({
   const chartSummary = `満足度分布のドーナツグラフ。平均満足度${avgLabel}。`;
 
   return (
-    <div role="img" aria-label={chartSummary} style={{ width: '100%', height: 260, position: 'relative' }}>
-      {/* Center avg rating indicator */}
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -60%)',
-          textAlign: 'center',
-          pointerEvents: 'none',
-          zIndex: 2,
-        }}
-      >
-        <div style={{ fontSize: '1.75rem', fontWeight: 800, color: textColor, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-          <span>{avgLabel}</span>
-          <Star size={18} fill="#f59e0b" color="#f59e0b" style={{ marginTop: -2 }} />
+    <>
+      <div role="img" aria-label={chartSummary} style={{ width: '100%', height: 260, position: 'relative' }}>
+        {/* Center avg rating indicator */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -60%)',
+            textAlign: 'center',
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+        >
+          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: textColor, lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+            <span>{avgLabel}</span>
+            <Star size={18} fill="#f59e0b" color="#f59e0b" style={{ marginTop: -2 }} />
+          </div>
+          <div style={{ fontSize: '0.72rem', opacity: 0.65, marginTop: '2px', letterSpacing: '0.05em' }}>
+            平均 ({totalRated}件)
+          </div>
         </div>
-        <div style={{ fontSize: '0.72rem', opacity: 0.65, marginTop: '2px', letterSpacing: '0.05em' }}>
-          平均 ({totalRated}件)
-        </div>
-      </div>
 
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={62}
-            outerRadius={90}
-            paddingAngle={4}
-            dataKey="value"
-            nameKey="name"
-            stroke="none"
-          >
-            {data.map((entry) => (
-              <Cell
-                key={`cell-${entry.rating}`}
-                fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR}
-                style={{ outline: 'none', filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.15))' }}
-              />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={getTooltipStyle(theme)}
-            formatter={(value: number | string | undefined) => [`${value ?? 0} 件`, '訪問数']}
-          />
-        </PieChart>
-      </ResponsiveContainer>
-    </div>
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={62}
+              outerRadius={90}
+              paddingAngle={4}
+              dataKey="value"
+              nameKey="name"
+              stroke="none"
+            >
+              {data.map((entry) => (
+                <Cell
+                  key={`cell-${entry.rating}`}
+                  fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR}
+                  style={{ outline: 'none', filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.15))' }}
+                />
+              ))}
+            </Pie>
+            <Tooltip
+              contentStyle={getTooltipStyle(theme)}
+              formatter={(value: number | string | undefined) => [`${value ?? 0} 件`, '訪問数']}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+      <table className="sr-only">
+        <caption>満足度分布の詳細</caption>
+        <thead>
+          <tr>
+            <th scope="col">満足度</th>
+            <th scope="col">訪問数</th>
+          </tr>
+        </thead>
+        <tbody>
+          {RATING_VALUES.map((rating) => (
+            <tr key={rating}>
+              <th scope="row">★{rating}</th>
+              <td>{ratingCounts[rating] ?? 0}件</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
   );
 }

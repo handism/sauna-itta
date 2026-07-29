@@ -8,6 +8,14 @@ afterEach(() => {
 });
 
 describe("VisitListHeader", () => {
+  it("行きたい記録も含む一覧として汎用的な見出しを表示すること", () => {
+    render(
+      <VisitListHeader filteredCount={3} viewMode="compact" onViewModeChange={vi.fn()} />
+    );
+
+    expect(screen.getByRole("heading", { name: "サウナ一覧 (3件)" })).toBeInTheDocument();
+  });
+
   it("表示形式トグルが aria-pressed で選択状態を公開すること", () => {
     render(
       <VisitListHeader

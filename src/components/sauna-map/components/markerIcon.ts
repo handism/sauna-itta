@@ -52,7 +52,7 @@ export function getSaunaIcon(options: SaunaIconOptions = {}): L.DivIcon {
     if (visitCount && visitCount > 1) {
       pills.push(`<span class="sauna-marker-pill sauna-marker-pill--count">${visitCount}回</span>`);
     } else if (wishlist) {
-      pills.push(`<span class="sauna-marker-pill sauna-marker-pill--wishlist">イキタイ</span>`);
+      pills.push(`<span class="sauna-marker-pill sauna-marker-pill--wishlist">行きたい</span>`);
     }
 
     if (pills.length > 0) {

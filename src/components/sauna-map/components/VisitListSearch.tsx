@@ -9,7 +9,7 @@ import { useSaunaUI } from "../context";
 const STATUS_OPTIONS: { value: VisitFilters["status"]; label: string }[] = [
   { value: "all", label: "すべて" },
   { value: "visited", label: "行った" },
-  { value: "wishlist", label: "イキタイ" },
+  { value: "wishlist", label: "行きたい" },
 ];
 
 interface VisitListSearchProps {

@@ -647,7 +647,12 @@
 
 /* クイックフィルターチップ */
 .quick-filter-container {
+  position: relative;
   margin-bottom: 0.5rem;
+}
+
+.quick-filter-scroll-hint {
+  display: none;
 }
 
 .quick-filter-chips {
@@ -656,12 +661,8 @@
   overflow-x: auto;
   padding: 0.3rem 0.2rem;
   margin-bottom: 0.5rem;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-}
-
-.quick-filter-chips::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
 }
 
 .chip-btn {
@@ -730,7 +731,15 @@
 }
 
 /* タッチ操作時のターゲットサイズ確保 (44px) */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
+  .quick-filter-scroll-hint {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0.2rem 0.1rem;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+  }
+
   .status-tab,
   .bounds-toggle-btn,
   .view-mode-btn,

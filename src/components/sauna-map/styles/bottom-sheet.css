@@ -1,7 +1,7 @@
 /* モバイル専用 ボトムシート & 下部固定ナビゲーションバー */
 
 /* JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   /* ボトムシートコンテナ */
   .bottom-sheet {
     position: fixed;
@@ -157,6 +157,9 @@
 
   .mobile-nav-item {
     flex: 1;
+    min-width: 44px;
+    min-height: 44px;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -224,7 +227,7 @@
   }
 }
 
-/* デスクトップ非表示。JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
+/* 768px 以上はデスクトップ。JS の isMobile（幅 < MOBILE_BREAKPOINT）と境界を揃える */
 @media (min-width: 768px) {
   .bottom-sheet,
   .mobile-nav-bar {

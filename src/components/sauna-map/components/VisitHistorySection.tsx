@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Star, X } from "lucide-react";
 import { VisitHistoryEntry } from "../types";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface VisitHistorySectionProps {
   historyCount: number;
@@ -16,10 +17,19 @@ export function VisitHistorySection({
   onDeleteEntry,
 }: VisitHistorySectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(null);
   const recentEntries = historyEntries
     .map((entry, index) => ({ entry, index }))
     .reverse()
     .slice(0, 5);
+  const pendingDeleteEntry =
+    pendingDeleteIndex === null ? null : historyEntries[pendingDeleteIndex];
+
+  const handleConfirmDelete = () => {
+    if (pendingDeleteIndex === null) return;
+    onDeleteEntry?.(pendingDeleteIndex);
+    setPendingDeleteIndex(null);
+  };
 
   return (
     <div className="form-group">
@@ -56,7 +66,7 @@ export function VisitHistorySection({
                       <button
                         type="button"
                         className="history-delete-btn"
-                        onClick={() => onDeleteEntry(index)}
+                        onClick={() => setPendingDeleteIndex(index)}
                         aria-label="この履歴を削除"
                         title="この履歴を削除"
                       >
@@ -76,6 +86,17 @@ export function VisitHistorySection({
           )}
         </>
       )}
+
+      <ConfirmModal
+        isOpen={pendingDeleteEntry !== null}
+        title="訪問履歴を削除しますか？"
+        message={`${pendingDeleteEntry?.date ?? "選択した日"}の訪問履歴を削除します。この操作は元に戻せません。`}
+        confirmLabel="履歴を削除する"
+        cancelLabel="キャンセル"
+        destructive
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDeleteIndex(null)}
+      />
     </div>
   );
 }

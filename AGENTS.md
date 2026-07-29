@@ -31,11 +31,12 @@
 - **タグ絞り込みの初期値は URL から**: 統計ページのタグクラウドは `/?tag=...` で地図へ遷移し、`useVisitFilters` の `getInitialFilters()` がこれを `selectedTag` の初期値として読みます。地図は `ssr: false` で描画されるため初期値算出で `window` を参照して構いません。
 - **モバイルのシート位置制御は Context 側に集約**: 編集の開始／終了に伴う `snapPosition` の切り替えは `MapStateContext` の `handleEditVisit` / `handleCancelEditing` / `handleEditingFinished` が担います。画面コンポーネント側で `startEditing` + `setSnapPosition` を組み合わせて再実装しないでください。
 - **編集の終了は必ず `MapStateContext` 経由にすること**: `VisitForm` のキャンセルは `EditorContext` の `cancelEditing` ではなく `handleCancelEditing()` を呼びます。保存の完了は `handleSubmit(e, handleEditingFinished)` のように完了コールバックを渡して伝えること（`EditorProvider` は `MapStateProvider` の親でシート位置を直接触れないため、`useVisitForm` の `handleSubmit` は保存成功時だけ `onCompleted` を呼ぶ設計にしてあります）。ここを `editor.cancelEditing()` の直接呼び出しに戻すと、モバイルで保存・キャンセルしてもシートが `full` のまま地図が隠れます。
+- **訪問履歴の削除は確認後だけ実行すること**: `VisitHistorySection` は削除候補の index をローカル state に保持し、`ConfirmModal` で対象日を確認してから `onDeleteEntry` を呼びます。削除ボタンから `removeHistoryEntry()` を直接呼ぶ実装へ戻すと、スクロール中の誤タップで履歴が即時消去されます。
 
 ### 2. ディレクトリ ＆ コンポーネント構造
 - **コンポーネント分離**: View (プレゼンテーション) と Controller (ロジック・フック) を適切に分離してください。
 - **コンテナは props の上書き機構を持たないこと**: `VisitList` / `VisitForm` / `DesktopSidebar` / `ShareModal` は Context から値を集めて `*View` へ渡すだけのコンテナです。`Partial<...ViewProps>` を受け取って `props.x ?? ctx.x` と書く方式は復活させないでください（誰も props を渡しておらず、型エラーも握り潰します）。テストは props を直接渡せる `VisitListView` などの `*View` を描画すること。
-- **レスポンシブ設計**: PC表示 (`DesktopSidebar.tsx`) と モバイル表示 (`BottomSheet.tsx`, `MobileNavBar.tsx`) の責務を明確に分けること。ボトムシートの 1 段移動（タップ・↑↓キー・フリックの 3 経路）は `SNAP_ORDER` / `stepSnap()` に集約しており、端では `onSnapChange` を呼びません（`min` / `full` の分岐を各ハンドラへ書き戻さないこと）。
+- **レスポンシブ設計**: PC表示 (`DesktopSidebar.tsx`) と モバイル表示 (`BottomSheet.tsx`, `MobileNavBar.tsx`) の責務を明確に分けること。`MOBILE_BREAKPOINT = 768` は「768px 未満がモバイル」を意味するため、CSS はモバイル側を `@media (max-width: 767px)`、デスクトップ側を `@media (min-width: 768px)` にします（768px の両方へモバイルCSSを当てないこと）。ボトムシートの 1 段移動（タップ・↑↓キー・フリックの 3 経路）は `SNAP_ORDER` / `stepSnap()` に集約しており、端では `onSnapChange` を呼びません（`min` / `full` の分岐を各ハンドラへ書き戻さないこと）。
 - **型定義**: `src/components/sauna-map/types/` 内の `domain.ts` (ドメインモデル) と `ui.ts` (UI・フィルター型) に集約し、`any` 型や不必要なキャストを排除すること。
 - **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` に抽出し、単体テストを記述すること。
 - **記録のステータス判定**: `visit.status ?? "visited"` を直書きせず、`utils/visitStatus.ts` の `getVisitStatus()` / `isVisited()` / `isWishlist()` を使うこと（旧形式データの既定値の解釈が地図・一覧・統計でずれるのを防ぎます）。
@@ -47,7 +48,7 @@
 - **タグ集計**: タグの出現回数は `utils/visitHistory.ts` の `countTags()` に集約しています（`getPopularTags()` はその薄いラッパー）。コンポーネント内で `visit.tags` を数え直さないこと。
 - **写真プレビュー**: 写真の拡大は必ず `components/common.tsx` の `VisitImagePreview` 経由にすること（素の `img` に `onClick` を付けるとキーボードから開けません）。同コンポーネントは sanitize 済みの `src` を受け取るため、`sanitizeImageUrl()` の呼び出しは各コンポーネントで 1 レンダーにつき 1 回だけにします。
 - **`data:` URL を URL パーサへ通さないこと**: 画像は最大 1MB の Base64 として保持されるため、`sanitizeImageUrl()` は `data:` を先頭の正規表現だけで判定し、`new URL()` は http(s)・相対パスの検証にのみ使います（40 件 × 1MB で 23ms → 0.01ms）。一覧の各行がレンダーのたびに呼ぶ関数なので、ここに文字列全体を走査する処理を足さないこと。許可する MIME は `SAFE_DATA_IMAGE` に列挙しており、SVG はスクリプトを埋め込めるため意図的に除外しています。
-- **グラフ**: Recharts の配色・ツールチップは `components/charts/chartTheme.ts` の `getChartColors()` / `getTooltipStyle()` を、空データ表示は `ChartEmptyState` を使うこと。チャート側でテーマ別の色分岐を直書きしないでください。
+- **グラフ**: Recharts の配色・ツールチップは `components/charts/chartTheme.ts` の `getChartColors()` / `getTooltipStyle()` を、空データ表示は `ChartEmptyState` を使うこと。チャート側でテーマ別の色分岐を直書きしないでください。ツールチップだけに具体値を置かず、チャートと兄弟の `.sr-only` テーブルにも全データを出し、キーボード・支援技術から月別件数や評価別件数を取得できる状態を保つこと（`role="img"` の内側へ表を置くと子要素が読み上げ対象から外れます）。
 - **統計ページの履歴平坦化は 1 回だけ**: 訪問履歴の平坦化（`flattenVisitHistory()`）と `status === "visited"` の絞り込みは `useStatsData` の `visitedEntries` に集約しています。グラフやカレンダーは `visits` ではなく `FlatVisitHistoryEntry[]` を props で受け取ること。コンポーネントごとに `flattenVisitHistory(visits)` を呼ぶと、同じ走査を記録件数 × グラフ数だけ繰り返します。
 - **統計ページの順位付けも 1 回だけ**: `rankVisitsByCount()` の呼び出しは `useStatsData` の `rankedVisits` に集約しています。`HomeSaunaCard` / `TopSaunasCard` は `visits` ではなく `RankedVisit[]` を props で受け取ること（カードごとに呼ぶと同じ絞り込みと並べ替えを繰り返します）。
 - **同じ数字を 2 か所で計算しないこと**: 平均満足度は `calculateStats()` の `stats.avgRating` が唯一の出所で、`RatingDistributionChart` は `avgRating` を props で受け取って表示します（グラフ側で再計算すると、サマリーと中央表示の数字がいずれ食い違います）。
@@ -63,7 +64,9 @@
 - **要素セレクタで文字色を一括指定しないこと**: 既定の文字色は `html`/`body` の `color` から継承させます。`span` / `div` にまで色を固定すると、色付きの面の中の子要素が親の色を継承できなくなり、「button の中身は span で構成する」方針と衝突します（`base.css` 末尾のコメント参照）。
 - **トグルの活性クラス**は `is-active` に統一しています（`--active` 系の BEM 修飾子を新規に増やさないこと）。地図上のコントロールは `MapControlButton` の `active` prop に任せると `is-active` と `aria-pressed` が同時に付きます。
 - 上記の CSS 規約は `styles/tokens.test.ts` が静的検査しています。意図的な例外を追加する場合は、同テストの許可リストに理由付きで追記してください。
-- **タッチターゲット**: 操作要素は最低 24px、モバイル（`max-width: 768px`）では 44px 以上を確保してください。44px 保証は各 CSS ファイル末尾の `@media (max-width: 768px)` ブロックにまとまっています（`visit-list.css` = 検索・並び順・チップ、`visit-form.css` = 入力とボタン、`visit-card.css` = カードとタグ、`modal.css` = モーダルとトースト、統計ページは `stats.module.css` の `max-width: 720px`）。新しい操作要素を追加したら、既定サイズが小さいもの（アイコンのみのボタン、チップ等）を対応するブロックへ必ず追記すること。
+- **タッチターゲット**: 操作要素は最低 24px、モバイル（`max-width: 767px`）では 44px 以上を確保してください。44px 保証は各 CSS ファイル末尾の `@media (max-width: 767px)` ブロックにまとまっています（`bottom-sheet.css` = モバイルナビ、`visit-list.css` = 検索・並び順・チップ、`visit-form.css` = 入力とボタン、`visit-card.css` = カード・タグ・履歴削除、`modal.css` = モーダルとトースト、統計ページは `stats.module.css` の `max-width: 720px`）。新しい操作要素を追加したら、既定サイズが小さいもの（アイコンのみのボタン、チップ等）を対応するブロックへ必ず追記すること。
+- **静的カードにクリックの見た目を付けないこと**: 統計ページの `.glassCard` は情報表示用の共通面であり、カード自体には hover の浮上・強調を付けません。リンクやボタンを持つ場合は、その対話要素だけに hover / focus の反応を付け、カード全体がクリックできるように誤認させないでください。
+- **横スクロールを隠さないこと**: クイックフィルターは横方向に項目が続くため、スクロールバーを完全に非表示にせず `scrollbar-width: thin` を維持します。候補が多い場合はモバイルで `.quick-filter-scroll-hint` を表示し、横スワイプ可能であることを視覚的に伝えてください。
 - **フォント**: `--font-main` は `layout.tsx` の `next/font` (Outfit) が注入する `--font-outfit` を参照します。CSS からの Web フォント `@import` は追加しないでください（PWA のオフライン動作を壊します）。
 
 ### 4. アクセシビリティ ＆ モーション

@@ -349,7 +349,7 @@ input[type="date"].input {
   color: var(--foreground);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .input,
   .btn,
   .rating-star-btn,
@@ -532,4 +532,3 @@ input[type="date"].input {
   flex-shrink: 0;
   margin-top: 0.15rem;
 }
-
