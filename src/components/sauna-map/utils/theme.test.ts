@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getInitialTheme } from "./theme";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { getInitialTheme, applyThemeClass, saveTheme } from "./theme";
 import { THEME_STORAGE_KEY } from "./constants";
 
 describe("getInitialTheme", () => {
@@ -66,5 +66,47 @@ describe("getInitialTheme", () => {
       `Failed to read "${THEME_STORAGE_KEY}" from localStorage:`,
       expect.any(Error),
     );
+  });
+});
+
+describe("applyThemeClass", () => {
+  beforeEach(() => {
+    document.documentElement.className = "";
+  });
+
+  it("should add 'light-theme' class when theme is 'light'", () => {
+    applyThemeClass("light");
+    expect(document.documentElement.classList.contains("light-theme")).toBe(true);
+  });
+
+  it("should remove 'light-theme' class when theme is 'dark'", () => {
+    document.documentElement.classList.add("light-theme");
+    applyThemeClass("dark");
+    expect(document.documentElement.classList.contains("light-theme")).toBe(false);
+  });
+});
+
+describe("saveTheme", () => {
+  const store: Record<string, string> = {};
+  const mockLocalStorage = {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    clear: vi.fn(() => { for (const key in store) delete store[key]; }),
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", mockLocalStorage);
+    mockLocalStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("should save theme to localStorage", () => {
+    saveTheme("light");
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, "light");
+    expect(store[THEME_STORAGE_KEY]).toBe("light");
   });
 });
