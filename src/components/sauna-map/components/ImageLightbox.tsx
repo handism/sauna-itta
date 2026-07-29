@@ -1,4 +1,5 @@
 import { X } from "lucide-react";
+import Image from "next/image";
 import { useModalBehavior } from "../hooks/useModalBehavior";
 
 export interface ImageLightboxProps {
@@ -28,8 +29,7 @@ export function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
         onClick={(e) => e.stopPropagation()}
         style={{ display: "contents" }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Image width={800} height={600}
           src={src}
           alt={alt ?? "拡大画像"}
           className="image-lightbox-img"

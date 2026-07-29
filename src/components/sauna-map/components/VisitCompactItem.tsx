@@ -1,4 +1,5 @@
 import { memo } from "react";
+import Image from "next/image";
 import { ChevronRight, Pencil, X } from "lucide-react";
 import { getVisitCount, isWishlist, sanitizeImageUrl } from "../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
@@ -67,8 +68,8 @@ function VisitCompactItemComponent({
             </span>
             <span className="sauna-compact-side-info">
               {thumbSrc && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={thumbSrc} className="sauna-compact-thumb" alt="" />
+
+                <Image src={thumbSrc} className="sauna-compact-thumb" alt="" width={28} height={28} />
               )}
               <RatingStars rating={visit.rating ?? 0} className="sauna-compact-rating" />
             </span>

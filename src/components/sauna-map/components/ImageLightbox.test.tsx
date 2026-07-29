@@ -21,7 +21,7 @@ describe("ImageLightbox", () => {
     expect(dialog).toBeInTheDocument();
 
     const img = screen.getByAltText("サウナ画像");
-    expect(img).toHaveAttribute("src", "https://example.com/sauna.jpg");
+    expect(img.getAttribute("src")).toContain(encodeURIComponent("https://example.com/sauna.jpg"));
 
     const closeBtn = screen.getByRole("button", { name: "閉じる" });
     fireEvent.click(closeBtn);
