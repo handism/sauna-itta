@@ -1,5 +1,5 @@
-import { X } from "lucide-react";
 import Image from "next/image";
+import { X } from "lucide-react";
 import { useModalBehavior } from "../hooks/useModalBehavior";
 
 export interface ImageLightboxProps {
@@ -33,8 +33,9 @@ export function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
           src={src}
           alt={alt ?? "拡大画像"}
           className="image-lightbox-img"
-          width={1200}
-          height={800}
+          width={0}
+          height={0}
+          sizes="100vw"
           unoptimized
         />
         <button
