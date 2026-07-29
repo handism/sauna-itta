@@ -1,9 +1,10 @@
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import '@testing-library/jest-dom/vitest';
 import { StatsHeader } from './StatsHeader';
 
 vi.mock('next/link', () => ({
-  default: ({ children, href, className }: { children: React.ReactNode, href: string, className?: string }) => (
+  default: ({ children, href, className }: { children: React.ReactNode; href: string; className?: string }) => (
     <a href={href} className={className} data-testid="mock-next-link">{children}</a>
   )
 }));
@@ -14,44 +15,46 @@ describe('StatsHeader', () => {
     vi.clearAllMocks();
   });
 
-  it('renders the header title correctly', () => {
+  it('ヘッダータイトルとサブタイトルが正しく表示されること', () => {
     render(<StatsHeader />);
-    expect(screen.getByText('Sauna Itta Analytics')).toBeDefined();
-    expect(screen.getByText('統計ダッシュボード')).toBeDefined();
+    expect(screen.getByText('Sauna Itta Analytics')).toBeInTheDocument();
+    expect(screen.getByText('統計ダッシュボード')).toBeInTheDocument();
   });
 
-  it('renders the back link by default', () => {
+  it('既定でマップへの戻るリンクが表示されること', () => {
     render(<StatsHeader />);
-    expect(screen.getByText('マップに戻る')).toBeDefined();
-    const link = screen.getByTestId('mock-next-link') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toBe('/');
+    expect(screen.getByText('マップに戻る')).toBeInTheDocument();
+    const link = screen.getByTestId('mock-next-link');
+    expect(link).toHaveAttribute('href', '/');
   });
 
-  it('does not render the back link when showBackLink is false', () => {
-    render(<StatsHeader showBackLink={false} />);
-    expect(screen.queryByText('マップに戻る')).toBeNull();
+  it('showBackLink が false の場合、戻るリンクおよびテーマ切り替えボタンが表示されないこと', () => {
+    render(<StatsHeader showBackLink={false} theme="dark" onToggleTheme={vi.fn()} />);
+    expect(screen.queryByText('マップに戻る')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('renders the theme toggle button when theme and onToggleTheme are provided', () => {
+  it('theme と onToggleTheme が渡された場合、テーマ切り替えボタンが表示されクリック時にコールバックが呼ばれること', () => {
     const onToggleTheme = vi.fn();
     render(<StatsHeader theme="light" onToggleTheme={onToggleTheme} />);
 
     const toggleButton = screen.getByRole('button', { name: 'ダークモードに切り替え' });
-    expect(toggleButton).toBeDefined();
+    expect(toggleButton).toBeInTheDocument();
 
     fireEvent.click(toggleButton);
     expect(onToggleTheme).toHaveBeenCalledTimes(1);
   });
 
-  it('renders correct label for dark theme', () => {
+  it('dark テーマ時はライトモード切り替えのラベルが表示されること', () => {
     render(<StatsHeader theme="dark" onToggleTheme={vi.fn()} />);
 
     const toggleButton = screen.getByRole('button', { name: 'ライトモードに切り替え' });
-    expect(toggleButton).toBeDefined();
+    expect(toggleButton).toBeInTheDocument();
   });
 
-  it('does not render theme toggle if onToggleTheme is not provided', () => {
+  it('onToggleTheme が渡されない場合、テーマ切り替えボタンが表示されないこと', () => {
     render(<StatsHeader theme="dark" />);
-    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });
+
