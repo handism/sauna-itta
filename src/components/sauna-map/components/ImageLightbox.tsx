@@ -30,11 +30,11 @@ export function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
         style={{ display: "contents" }}
       >
         <Image
-          width={800}
-          height={600}
           src={src}
           alt={alt ?? "拡大画像"}
           className="image-lightbox-img"
+          width={1200}
+          height={800}
           unoptimized
         />
         <button

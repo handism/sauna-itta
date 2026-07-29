@@ -104,7 +104,7 @@ export function VisitImagePreview({ src, alt, onOpenImage }: VisitImagePreviewPr
       }}
       aria-label={`${alt}を拡大表示`}
     >
-      <Image src={src} className="sauna-img-preview" alt={alt} width={400} height={120} unoptimized />
+      <Image src={src} className="sauna-img-preview" alt={alt} width={300} height={120} unoptimized />
     </button>
   );
 }
