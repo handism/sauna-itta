@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { getInitialTheme } from "./theme";
+import { getInitialTheme, saveTheme } from "./theme";
+import * as storage from "./storage";
 import { THEME_STORAGE_KEY } from "./constants";
 
 describe("getInitialTheme", () => {
@@ -66,5 +67,19 @@ describe("getInitialTheme", () => {
       `Failed to read "${THEME_STORAGE_KEY}" from localStorage:`,
       expect.any(Error),
     );
+  });
+});
+
+describe("saveTheme", () => {
+  it("should call writeStorage with THEME_STORAGE_KEY and the provided theme", () => {
+    const writeStorageSpy = vi.spyOn(storage, "writeStorage").mockImplementation(() => true);
+
+    saveTheme("light");
+    expect(writeStorageSpy).toHaveBeenCalledWith(THEME_STORAGE_KEY, "light");
+
+    saveTheme("dark");
+    expect(writeStorageSpy).toHaveBeenCalledWith(THEME_STORAGE_KEY, "dark");
+
+    writeStorageSpy.mockRestore();
   });
 });
