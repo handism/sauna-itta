@@ -51,13 +51,16 @@ export default function RatingDistributionChart({
       }
     });
 
-    const chartData = [5, 4, 3, 2, 1]
-      .filter((r) => ratingCounts[r])
-      .map((r) => ({
-        rating: r,
-        name: RATING_LABELS[r] || `★${r}`,
-        value: ratingCounts[r],
-      }));
+    const chartData = [5, 4, 3, 2, 1].reduce<{ rating: number; name: string; value: number }[]>((acc, r) => {
+      if (ratingCounts[r]) {
+        acc.push({
+          rating: r,
+          name: RATING_LABELS[r] || `★${r}`,
+          value: ratingCounts[r],
+        });
+      }
+      return acc;
+    }, []);
 
     return { data: chartData, totalRated: totalCount };
   }, [entries]);

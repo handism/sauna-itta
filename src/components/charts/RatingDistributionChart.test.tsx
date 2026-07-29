@@ -21,6 +21,7 @@ describe("RatingDistributionChart", () => {
   afterEach(() => {
     cleanup();
   });
+
   it("renders empty state when no entries", () => {
     const { getByText } = render(<RatingDistributionChart entries={[]} avgRating={0} theme="light" />);
     expect(getByText(/評価付きの訪問記録がありません/)).toBeInTheDocument();
