@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { getInitialTheme, applyThemeClass } from "./theme";
-import { THEME_STORAGE_KEY } from "./constants";
+import { getInitialTheme, getInitialIsMobile, saveTheme, applyThemeClass } from "./theme";
+import { THEME_STORAGE_KEY, MOBILE_BREAKPOINT } from "./constants";
 
 describe("getInitialTheme", () => {
   const store: Record<string, string> = {};
@@ -66,6 +66,61 @@ describe("getInitialTheme", () => {
       `Failed to read "${THEME_STORAGE_KEY}" from localStorage:`,
       expect.any(Error),
     );
+  });
+});
+
+describe("getInitialIsMobile", () => {
+  it("should return false when window is undefined", () => {
+    const origWindow = globalThis.window;
+    // @ts-expect-error - allow modifying global window object for testing SSR
+    delete globalThis.window;
+
+    expect(getInitialIsMobile()).toBe(false);
+
+    globalThis.window = origWindow;
+  });
+
+  it("should return false when window.innerWidth is greater than or equal to MOBILE_BREAKPOINT", () => {
+    vi.stubGlobal("innerWidth", MOBILE_BREAKPOINT);
+    expect(getInitialIsMobile()).toBe(false);
+
+    vi.stubGlobal("innerWidth", MOBILE_BREAKPOINT + 100);
+    expect(getInitialIsMobile()).toBe(false);
+
+    vi.unstubAllGlobals();
+  });
+
+  it("should return true when window.innerWidth is less than MOBILE_BREAKPOINT", () => {
+    vi.stubGlobal("innerWidth", MOBILE_BREAKPOINT - 1);
+    expect(getInitialIsMobile()).toBe(true);
+
+    vi.stubGlobal("innerWidth", 320);
+    expect(getInitialIsMobile()).toBe(true);
+
+    vi.unstubAllGlobals();
+  });
+});
+
+describe("saveTheme", () => {
+  const store: Record<string, string> = {};
+  const mockLocalStorage = {
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    setItem: vi.fn((key: string, value: string) => { store[key] = value; }),
+    clear: vi.fn(() => { for (const key in store) delete store[key]; }),
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", mockLocalStorage);
+    mockLocalStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it("should save specified theme to localStorage", () => {
+    saveTheme("light");
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, "light");
+
+    saveTheme("dark");
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, "dark");
   });
 });
 
