@@ -190,14 +190,23 @@ describe("CSS デザイントークンの規約", () => {
   });
 
   it("モバイル境界が JS の「768px 未満」と一致していること", () => {
-    const offenders = styleFiles
+    const mobileOffenders = styleFiles
       .filter(({ css }) => css.includes("@media (max-width: 768px)"))
       .map(({ file }) => file);
+    const desktopOffenders = styleFiles
+      .filter(({ css }) => css.includes("@media (min-width: 769px)"))
+      .map(({ file }) => file);
     const bottomSheet = readFileSync(join(STYLE_DIR, "bottom-sheet.css"), "utf8");
+    const sidebarLayout = readFileSync(
+      join(STYLE_DIR, "sidebar-layout.css"),
+      "utf8",
+    );
 
-    expect(offenders).toEqual([]);
+    expect(mobileOffenders).toEqual([]);
+    expect(desktopOffenders).toEqual([]);
     expect(bottomSheet).toContain("@media (max-width: 767px)");
     expect(bottomSheet).toContain("@media (min-width: 768px)");
+    expect(sidebarLayout).toContain("@media (min-width: 768px)");
   });
 
   it("見落としやすいモバイル操作にも 44px のターゲットが定義されていること", () => {

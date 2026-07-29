@@ -5,7 +5,11 @@
  * どちらにも置けない（循環参照になる）。専用モジュールに切り出してある。
  */
 export function getTodayDate(): string {
-  return new Date().toISOString().split("T")[0];
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -40,4 +44,3 @@ export function parseLocalDate(dateInput: string | Date): Date {
 export function toDateString(dateInput: string | Date): string {
   return parseLocalDate(dateInput).toDateString();
 }
-

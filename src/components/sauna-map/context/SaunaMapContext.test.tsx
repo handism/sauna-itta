@@ -6,8 +6,10 @@ import {
   useSaunaUI,
   useSaunaUIState,
   useSaunaUIActions,
+  useSaunaViewport,
   useVisitsCRUD,
   useVisitFiltersContext,
+  useVisitFilterActions,
   useSaunaEditor,
   useSaunaEditorState,
   useSaunaEditorActions,
@@ -211,6 +213,54 @@ describe("SaunaMap Contexts", () => {
     });
 
     expect(result.current.state.isShareViewOpen).toBe(true);
+  });
+
+  it("モーダル変更で画面幅 Context の参照が変わらないこと", () => {
+    const { result } = renderHook(
+      () => ({
+        viewport: useSaunaViewport(),
+        uiState: useSaunaUIState(),
+        uiActions: useSaunaUIActions(),
+      }),
+      { wrapper },
+    );
+
+    const viewportBefore = result.current.viewport;
+
+    act(() => {
+      result.current.uiActions.openShareView();
+    });
+
+    expect(result.current.uiState.isShareViewOpen).toBe(true);
+    expect(result.current.viewport).toBe(viewportBefore);
+  });
+
+  it("フィルター変更で FilterActions と Editor Context の参照が変わらないこと", () => {
+    const { result } = renderHook(
+      () => ({
+        filters: useVisitFiltersContext(),
+        filterActions: useVisitFilterActions(),
+        editorState: useSaunaEditorState(),
+        editorActions: useSaunaEditorActions(),
+      }),
+      { wrapper },
+    );
+
+    const filterActionsBefore = result.current.filterActions;
+    const editorStateBefore = result.current.editorState;
+    const editorActionsBefore = result.current.editorActions;
+
+    act(() => {
+      result.current.filterActions.setFilters((prev) => ({
+        ...prev,
+        search: "サウナ",
+      }));
+    });
+
+    expect(result.current.filters.filters.search).toBe("サウナ");
+    expect(result.current.filterActions).toBe(filterActionsBefore);
+    expect(result.current.editorState).toBe(editorStateBefore);
+    expect(result.current.editorActions).toBe(editorActionsBefore);
   });
 
   it("分離された EditorState と EditorActions フックがそれぞれ正常に動作すること", () => {

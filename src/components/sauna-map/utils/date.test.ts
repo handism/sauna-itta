@@ -1,11 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getTodayDate, parseLocalDate, toDateString } from "./date";
 
 describe("date utils", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   describe("getTodayDate", () => {
     it("YYYY-MM-DD 形式の文字列を返す", () => {
       const today = getTodayDate();
       expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it("UTC では前日でもローカル日付を返す", () => {
+      vi.spyOn(Date.prototype, "getFullYear").mockReturnValue(2026);
+      vi.spyOn(Date.prototype, "getMonth").mockReturnValue(6);
+      vi.spyOn(Date.prototype, "getDate").mockReturnValue(30);
+      vi.spyOn(Date.prototype, "toISOString").mockReturnValue(
+        "2026-07-29T15:30:00.000Z",
+      );
+
+      expect(getTodayDate()).toBe("2026-07-30");
     });
   });
 

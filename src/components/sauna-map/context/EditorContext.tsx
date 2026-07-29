@@ -10,9 +10,9 @@ import {
 } from "react";
 import { useEditorState } from "../hooks/useEditorState";
 import { useVisitForm } from "../hooks/useVisitForm";
-import { useSaunaUI } from "./UIContext";
+import { useSaunaUIActions, useSaunaViewport } from "./UIContext";
 import { useVisitsCRUD } from "./VisitsCRUDContext";
-import { useVisitFiltersContext } from "./VisitFiltersContext";
+import { useVisitFilterActions } from "./VisitFiltersContext";
 import { getVisitHistoryEntries } from "../utils";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 
@@ -66,10 +66,12 @@ const EditorStateContext = createContext<EditorStateContextType | null>(null);
 const EditorActionsContext = createContext<EditorActionsContextType | null>(null);
 
 export function EditorProvider({ children }: { children: ReactNode }) {
-  const { isMobile, showToast, openDeleteConfirm, closeDeleteConfirm } = useSaunaUI();
+  const { isMobile } = useSaunaViewport();
+  const { showToast, openDeleteConfirm, closeDeleteConfirm } =
+    useSaunaUIActions();
   const { visits, addVisit, editVisit, deleteVisit, removeHistoryEntry } = useVisitsCRUD();
   // 地図の表示範囲フィルターを更新するために setFilters のみ利用する
-  const { setFilters } = useVisitFiltersContext();
+  const { setFilters } = useVisitFilterActions();
 
   const {
     state: editorState,

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { calculateStats, getVisitCount, getVisitStatus } from "../utils";
 import { SaunaVisit, VisitFilters } from "../types";
 
@@ -107,7 +107,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
 
   const isFilterActive = activeFilterCount > 0;
 
-  const clearFilters = () => setFilters(DEFAULT_FILTERS);
+  const clearFilters = useCallback(() => setFilters(DEFAULT_FILTERS), []);
 
   return {
     filters,
