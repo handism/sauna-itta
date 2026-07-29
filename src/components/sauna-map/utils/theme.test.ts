@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { getInitialTheme, getInitialIsMobile, saveTheme, applyThemeClass } from "./theme";
+import * as storage from "./storage";
 import { THEME_STORAGE_KEY, MOBILE_BREAKPOINT } from "./constants";
 
 describe("getInitialTheme", () => {
@@ -115,7 +116,19 @@ describe("saveTheme", () => {
     vi.restoreAllMocks();
   });
 
-  it("should save specified theme to localStorage", () => {
+  it("should call writeStorage with THEME_STORAGE_KEY and the provided theme", () => {
+    const writeStorageSpy = vi.spyOn(storage, "writeStorage").mockImplementation(() => true);
+
+    saveTheme("light");
+    expect(writeStorageSpy).toHaveBeenCalledWith(THEME_STORAGE_KEY, "light");
+
+    saveTheme("dark");
+    expect(writeStorageSpy).toHaveBeenCalledWith(THEME_STORAGE_KEY, "dark");
+
+    writeStorageSpy.mockRestore();
+  });
+
+  it("should save specified theme to localStorage via writeStorage", () => {
     saveTheme("light");
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith(THEME_STORAGE_KEY, "light");
 
