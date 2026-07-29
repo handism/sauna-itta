@@ -1,31 +1,16 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { MapPin, X } from "lucide-react";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
 import { ShareModal } from "./components/ShareModal";
 import { VisitForm } from "./components/VisitForm";
 import { VisitList } from "./components/VisitList";
-import { VisitMarkers } from "./components/VisitMarkers";
-import { CurrentLocationMarker } from "./components/CurrentLocationMarker";
 import { ConfirmModal } from "./components/ConfirmModal";
-import { LocationPicker } from "./components/LocationPicker";
-import { MapController } from "./components/MapController";
-import { MapTopRightControls } from "./components/MapTopRightControls";
-import { MapBoundsObserver } from "./components/MapBoundsObserver";
-import { ZoomObserver } from "./components/ZoomObserver";
 import { Toast } from "./components/Toast";
 import { BottomSheet } from "./components/BottomSheet";
 import { MobileNavBar } from "./components/MobileNavBar";
 import { DesktopSidebar } from "./components/DesktopSidebar";
-import { getSaunaIcon } from "./components/markerIcon";
 import {
   SaunaMapProvider,
   useSaunaUI,
@@ -34,6 +19,8 @@ import {
   useSaunaMapState,
 } from "./context";
 import { CurrentLocation } from "./types";
+import { MobilePinHint } from "./components/MobilePinHint";
+import { SaunaMapLayer } from "./components/SaunaMapLayer";
 
 function SaunaMapContent() {
   const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
@@ -46,36 +33,21 @@ function SaunaMapContent() {
     toggleFilterPanel,
     closeDeleteConfirm,
     toast,
-    showToast,
     clearToast,
   } = useSaunaUI();
 
   const { filteredVisits, isFilterActive } = useVisitFiltersContext();
 
   const {
-    editingId,
-    selectedLocation,
     isAdding,
     isMobilePickingLocation,
-    isCreating,
     confirmDelete,
-    handleLocationSelect,
-    handleBoundsChange,
   } = useSaunaEditor();
 
   const {
-    hoveredId,
-    selectedId,
-    activeMapTarget,
     snapPosition,
     setSnapPosition,
-    handleZoomChange,
-    enableClustering,
-    toggleClustering,
-    showBadges,
     selectedVisit,
-    handleSelectVisit,
-    handleEditVisit,
     handleCancelEditing,
     handleSelectMobileTab,
   } = useSaunaMapState();
@@ -91,73 +63,13 @@ function SaunaMapContent() {
 
   return (
     <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
-      <div className="map-container" style={{ background: "var(--background)", color: "var(--foreground)" }}>
-        <MapContainer
-          center={[36.0, 138.0]}
-          zoom={6}
-          scrollWheelZoom
-          zoomControl={false}
-          style={{ height: "100%", width: "100%" }}
-        >
-          <MapTopRightControls
-            enableClustering={enableClustering}
-            onToggleClustering={toggleClustering}
-            onLocationFound={setCurrentLocation}
-            onNotify={showToast}
-          />
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            className="dark-map-tiles"
-          />
-
-          <MapController target={activeMapTarget} isMobile={isMobile} />
-          <ZoomObserver onZoomChange={handleZoomChange} />
-          <MapBoundsObserver onBoundsChange={handleBoundsChange} />
-          <CurrentLocationMarker location={currentLocation} />
-          <VisitMarkers
-            visits={filteredVisits}
-            editingId={editingId}
-            selectedId={selectedId}
-            hoveredId={hoveredId}
-            showBadges={showBadges}
-            enableClustering={enableClustering}
-            onEdit={handleEditVisit}
-            onSelectVisit={handleSelectVisit}
-          />
-
-          {isCreating && <LocationPicker onLocationSelect={handleLocationSelect} />}
-
-          {selectedLocation && !editingId && (
-            <Marker
-              position={[selectedLocation.lat, selectedLocation.lng]}
-              icon={getSaunaIcon({ selected: true })}
-            >
-              <Popup autoPan={false}>ここにピンを立てますか？</Popup>
-            </Marker>
-          )}
-        </MapContainer>
-      </div>
+      <SaunaMapLayer
+        currentLocation={currentLocation}
+        setCurrentLocation={setCurrentLocation}
+      />
 
       {isMobilePickingLocation && (
-        <div className="pin-hint">
-          <div className="pin-hint-icon">
-            <MapPin size={20} />
-          </div>
-          <div className="pin-hint-text">
-            <strong>地図をタップして場所を選択</strong>
-            <span>サウナの場所をタップしてね</span>
-          </div>
-          <button
-            type="button"
-            className="pin-hint-cancel"
-            onClick={() => handleCancelEditing()}
-            aria-label="場所の選択をやめる"
-            title="場所の選択をやめる"
-          >
-            <X size={16} aria-hidden="true" />
-          </button>
-        </div>
+        <MobilePinHint onCancel={handleCancelEditing} />
       )}
 
       {!isMobilePickingLocation && !isMobile && (
