@@ -128,7 +128,7 @@ export default function RatingDistributionChart({
             </Pie>
             <Tooltip
               contentStyle={getTooltipStyle(theme)}
-              formatter={(value: number | string | undefined) => [`${value ?? 0} 件`, '訪問数']}
+              formatter={(value) => [`${value ?? 0} 件`, '訪問数'] as const}
             />
           </PieChart>
         </ResponsiveContainer>
