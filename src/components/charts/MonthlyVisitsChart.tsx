@@ -88,7 +88,7 @@ export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChar
             <Tooltip
               cursor={{ fill: cursorFill }}
               contentStyle={getTooltipStyle(theme)}
-              formatter={(value: number | string | undefined) => [`${value ?? 0} 回`, '訪問数']}
+              formatter={(value) => [`${value ?? 0} 回`, '訪問数'] as const}
             />
             <Bar
               dataKey="visits"
