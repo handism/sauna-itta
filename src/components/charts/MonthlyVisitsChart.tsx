@@ -1,11 +1,20 @@
 "use client";
 
-import { useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { BarChart3 } from 'lucide-react';
-import { FlatVisitHistoryEntry } from '@/components/sauna-map/utils';
-import { ChartTheme, getChartColors, getTooltipStyle } from './chartTheme';
-import { ChartEmptyState } from './ChartEmptyState';
+import { useMemo } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
+import { BarChart3 } from "lucide-react";
+import { FlatVisitHistoryEntry } from "@/components/sauna-map/utils";
+import { ChartTheme, getChartColors, getTooltipStyle } from "./chartTheme";
+import { ChartEmptyState } from "./ChartEmptyState";
 
 interface MonthlyVisitsChartProps {
   /** 訪問済みの履歴エントリ。平坦化と status の絞り込みは useStatsData で済ませてある */
@@ -13,7 +22,10 @@ interface MonthlyVisitsChartProps {
   theme: ChartTheme;
 }
 
-export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChartProps) {
+export default function MonthlyVisitsChart({
+  entries,
+  theme,
+}: MonthlyVisitsChartProps) {
   const data = useMemo(() => {
     const monthlyCounts: { [key: string]: number } = {};
 
@@ -22,7 +34,7 @@ export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChar
       monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
     });
 
-    const chartData = Object.keys(monthlyCounts).map(month => ({
+    const chartData = Object.keys(monthlyCounts).map((month) => ({
       month,
       visits: monthlyCounts[month],
     }));
@@ -43,7 +55,11 @@ export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChar
       .map((d) => ({ month: d.month, year: d.month.slice(0, 4) }));
   }, [data]);
 
-  const { tick: tickColor, grid: gridColor, cursorFill } = getChartColors(theme);
+  const {
+    tick: tickColor,
+    grid: gridColor,
+    cursorFill,
+  } = getChartColors(theme);
 
   if (data.length === 0) {
     return (
@@ -59,7 +75,11 @@ export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChar
 
   return (
     <>
-      <div role="img" aria-label={chartSummary} style={{ width: '100%', height: 260 }}>
+      <div
+        role="img"
+        aria-label={chartSummary}
+        style={{ width: "100%", height: 260 }}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={data}
@@ -72,7 +92,11 @@ export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChar
               </linearGradient>
             </defs>
 
-            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke={gridColor}
+              vertical={false}
+            />
             <XAxis
               dataKey="month"
               tick={{ fill: tickColor, fontSize: 11 }}
@@ -88,7 +112,7 @@ export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChar
             <Tooltip
               cursor={{ fill: cursorFill }}
               contentStyle={getTooltipStyle(theme)}
-              formatter={(value) => [`${value ?? 0} 回`, '訪問数'] as const}
+              formatter={(value) => [`${value ?? 0} 回`, "訪問数"] as const}
             />
             <Bar
               dataKey="visits"
@@ -104,7 +128,13 @@ export default function MonthlyVisitsChart({ entries, theme }: MonthlyVisitsChar
                   x={month}
                   stroke={gridColor}
                   strokeDasharray="2 2"
-                  label={{ value: year, position: 'insideTopLeft', fill: tickColor, fontSize: 10, opacity: 0.7 }}
+                  label={{
+                    value: year,
+                    position: "insideTopLeft",
+                    fill: tickColor,
+                    fontSize: 10,
+                    opacity: 0.7,
+                  }}
                 />
               ))}
           </BarChart>
