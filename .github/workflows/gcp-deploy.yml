@@ -1,0 +1,55 @@
+name: GCPへデプロイ
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - src/**
+      - public/**
+      - Dockerfile
+      - package*.json
+      - next.config.ts
+      - .github/workflows/gcp-deploy.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: gcp-production
+  cancel-in-progress: false
+
+env:
+  REGION: asia-northeast1
+  SERVICE: sauna-itta
+  REPOSITORY: sauna-itta
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: gcp-production
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+      - name: イメージを一度だけビルドしてpush
+        id: image
+        run: |
+          image="${REGION}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${REPOSITORY}/app:${GITHUB_SHA}"
+          docker build -t "${image}" .
+          docker push "${image}"
+          digest=$(gcloud artifacts docker images describe "${image}" --format='value(image_summary.digest)')
+          echo "uri=${REGION}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${REPOSITORY}/app@${digest}" >> "$GITHUB_OUTPUT"
+      - name: migration jobを同一digestへ更新
+        run: gcloud run jobs update "${SERVICE}-migrate" --region "${REGION}" --image "${{ steps.image.outputs.uri }}" --quiet
+      - name: migrationを実行
+        run: gcloud run jobs execute "${SERVICE}-migrate" --region "${REGION}" --wait
+      - name: 同一digestをCloud Runへ反映
+        run: gcloud run services update "${SERVICE}" --region "${REGION}" --image "${{ steps.image.outputs.uri }}" --quiet

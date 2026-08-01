@@ -27,6 +27,7 @@ export interface EditorFormContextType {
   form: VisitFormState;
   setForm: React.Dispatch<React.SetStateAction<VisitFormState>>;
   imageUploading: boolean;
+  saving: boolean;
 }
 
 export interface EditorStateContextType {
@@ -50,10 +51,10 @@ export interface EditorActionsContextType {
   handleLocationSelect: (lat: number, lng: number) => void;
   handleBoundsChange: (bounds: { northEast: LatLng; southWest: LatLng }) => void;
   /** onCompleted は保存成功後に呼ばれる（モバイルのシート位置を戻すために使う） */
-  handleSubmit: (e: FormEvent, onCompleted?: () => void) => void;
+  handleSubmit: (e: FormEvent, onCompleted?: () => void) => Promise<void>;
   handleImageFile: (file: File) => Promise<void>;
   handleRemoveImage: () => void;
-  handleDeleteHistoryEntry: (index: number) => void;
+  handleDeleteHistoryEntry: (index: number) => Promise<void>;
   cancelEditing: (completed?: boolean) => void;
   toggleSidebar: () => void;
   startCreate: ReturnType<typeof useEditorState>["startCreate"];
@@ -69,7 +70,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { isMobile } = useSaunaViewport();
   const { showToast, openDeleteConfirm, closeDeleteConfirm } =
     useSaunaUIActions();
-  const { visits, addVisit, editVisit, deleteVisit, removeHistoryEntry } = useVisitsCRUD();
+  const { visits, saving, addVisit, editVisit, deleteVisit, removeHistoryEntry } = useVisitsCRUD();
   // 地図の表示範囲フィルターを更新するために setFilters のみ利用する
   const { setFilters } = useVisitFilterActions();
 
@@ -142,8 +143,8 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 
   // フォームの値は state 側に混ぜないこと（1 文字ごとに全消費側が再レンダリングされる）
   const formValue = useMemo(
-    () => ({ form, setForm, imageUploading }),
-    [form, setForm, imageUploading],
+    () => ({ form, setForm, imageUploading, saving }),
+    [form, setForm, imageUploading, saving],
   );
 
   const stateValue = useMemo(

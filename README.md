@@ -1,149 +1,171 @@
 # サウナイッタ (sauna-itta)
 
-「サウナイッタ」は、訪れたサウナや行きたいサウナを地図上に記録し、あとから振り返るためのマイととのいマップです。  
-Next.js 16 (App Router) + React Leaflet で構築されており、データはすべてブラウザの `localStorage` に保存されます。
+サウナ訪問記録と行きたい施設をLeafletマップ上で管理する、Next.js 16＋Rails 8のモノレポです。配布先に応じて、オフライン対応デモと個人用クラウド版を同じフロントエンドから生成します。
 
----
+## 2つの実行モード
 
-## 🌟 主な機能
+| モード | `NEXT_PUBLIC_DATA_SOURCE` | データ | 配信 |
+|---|---|---|---|
+| GitHub Pagesデモ | `local`（既定） | 同梱JSON＋`localStorage` | `/sauna-itta`、PWA／Service Worker有効 |
+| GCP個人版 | `api` | Rails API＋PostgreSQL＋非公開GCS | basePathなし、オンライン必須、Service Worker無効 |
 
-- **インタラクティブなサウナマップ**
-  - OpenStreetMap ＆ Leaflet による地図表示
-  - マーカーの自動クラスタリング機能（ズーム度合いに応じた集約表示）
-  - 現在地移動およびマップ上への現在地インジケーター（パルス波紋アニメーション・精度円）表示
-  - 選択中のサウナマーカーに対するパルス発光アニメーション
-  - マップ範囲連動フィルタリング
-- **充実した訪問記録・編集機能**
-  - サウナ情報の登録（訪問済み / 行きたい）
-  - Nominatim API を用いた地点・施設名検索（キーワード入力で位置・住所・施設名を自動補完＆マップ移動）
-  - 基本情報（サウナ名、エリア、住所、ピン位置、満足度 ★1〜5、写真添付）
-  - 複数回の訪問履歴管理（日付、水風呂温度、サウナ室温度、ととのい度、メモ）
-  - 訪問履歴の削除前確認（対象日を表示して誤操作を防止）
-  - 画像の自動クライアントサイド圧縮（最大1MB / 1024px）
-- **高度な検索・フィルタリング**
-  - キーワード検索、訪問ステータス（訪問済み/行きたい）、最低満足度、タグ絞り込み
-  - アクティブな絞り込み条件の個別チップ表示（ワンタップで項目別解除・全解除が可能）
-  - マップ表示範囲内のサウナのみ抽出表示する連動機能
-  - 記録が増えても軽快に動く増分レンダリング（スクロールに応じて描画を拡張）
-  - モバイルで横スクロール可能なクイックフィルターに操作ヒントを表示
-- **レスポンシブ UI / デザイン**
-  - デスク: デスク用サイドバーレイアウト
-  - モバイル: スワイプ操作対応ボトムシート ＆ ボトムナビゲーション（選択中の施設バッジからワンタップでシート最小化＆地図確認が可能）
-  - 768px 未満をモバイルとしてJS・CSSのレイアウト境界を統一
-  - ダークモード / ライトテーマ切り替え（初回は OS の `prefers-color-scheme` に追従、初期描画前に適用してちらつきを防止）
-  - デザイントークンに基づく統一感のあるUIスタイル
-- **アクセシビリティ**
-  - 全操作要素へのキーボードフォーカスリング、モーダルのフォーカストラップ
-  - 地点検索サジェストの矢印キー操作、ボトムシートのキーボード開閉
-  - モバイル操作要素の44pxタッチターゲット、グラフ数値のスクリーンリーダー向けデータ表
-  - `prefers-reduced-motion` に応じたアニメーション抑制
-- **統計ダッシュボード (`/stats`)**
-  - 訪問サウナ数、行きたい数、平均満足度、エリア制覇率
-  - 月別訪問数グラフ（Recharts）、満足度分布グラフ
-  - 訪問カレンダー（React Calendar）、タグクラウド、ホームサウナカード、トップサウナ
-  - MY HOME SAUNA ＆ よく行くサウナ TOP 5 からの「📍 地図で見る」対話リンク（`?id=xxx` を介した地図側での初期選択・カメラ移動・モバイルシート最小化連携）
-- **PWA (Progressive Web App) 対応**
-  - Web App Manifest ＆ インストール可能アイコンアセット対応
-  - Service Worker (`sw.js`) による静的アセットおよびマップタイルのオフラインキャッシュ対応（サウナ室内や地下でも動作）
-- **データ管理・バックアップ**
-  - JSON エクスポート / インポート（ID重複除外マージ）
-  - データ永続化（`localStorage`）
+APIモードは許可したGoogleアカウント1件だけが利用できます。オフライン編集キュー、競合マージ、公開共有、管理画面、サーバー側統計集計は対象外です。JSONエクスポートは両モードで利用でき、APIインポートは10件ずつ送信して既存IDを除外するため再実行できます。
 
----
+## 主な機能
 
-## 🛠 技術スタック
+- 訪問済み／行きたいサウナの地図登録、検索、タグ・エリア・評価フィルター
+- 複数回の訪問履歴、評価、コメント、クライアント側で1MB／1024px以下へ圧縮する写真
+- レスポンシブなデスクトップサイドバー／モバイルボトムシート
+- 月別件数、評価分布、訪問カレンダー、タグ、ホームサウナ等の統計画面
+- ダーク／ライトテーマ、キーボード操作、ライブリージョン、モーション低減対応
+- JSONバックアップ／インポート
 
-- **Framework**: Next.js 16 (App Router, Static Export)
-- **Core UI**: React 19 + TypeScript (React Compiler 有効)
-- **Map / Geospatial**: React Leaflet 5 / Leaflet 1.9 / React Leaflet Cluster / OpenStreetMap
-- **Icons**: Lucide React
-- **Validation**: Zod 4
-- **Visualization**: Recharts 3, React Calendar 6
-- **Styling**: Vanilla CSS Modules + CSS Design Tokens
-- **Testing**: Vitest 4 + React Testing Library + jsdom
-- **Linting**: ESLint 9
-
----
-
-## 📁 ディレクトリ構成
+## アーキテクチャ
 
 ```text
-src/
-├── app/                      # Next.js App Router ページ構成
-│   ├── layout.tsx            # 全体レイアウト
-│   ├── page.tsx              # メインマップ画面 (/)
-│   ├── globals.css           # グローバルCSS
-│   └── stats/                # 統計ダッシュボード (/stats)
-│       ├── page.tsx
-│       ├── stats.module.css
-│       ├── calendar.css
-│       ├── components/       # 統計用コンポーネント
-│       └── hooks/            # 統計データ集計フック
-├── components/
-│   ├── charts/               # 汎用グラフコンポーネント (Recharts)
-│   │   ├── MonthlyVisitsChart.tsx
-│   │   ├── RatingDistributionChart.tsx
-│   │   ├── ChartEmptyState.tsx        # データ無し時の共通表示
-│   │   └── chartTheme.ts              # グラフ共通の配色・ツールチップ
-│   └── sauna-map/            # メインマップ機能の設計単位
-│       ├── SaunaMap.tsx      # ルートエントリポイント
-│       ├── context/          # 状態管理 (モジュール化された Context)
-│       │   ├── SaunaMapContext.tsx      # Provider の合成と各 Hook の再エクスポート
-│       │   ├── VisitsCRUDContext.tsx    # 訪問データ本体・インポート/エクスポート
-│       │   ├── VisitFiltersContext.tsx  # フィルター状態/操作・絞り込み結果・統計
-│       │   ├── EditorContext.tsx        # フォーム・編集状態ステートマシン
-│       │   ├── UIContext.tsx            # モーダル・テーマ・画面幅・UI状態/操作
-│       │   └── MapStateContext.tsx      # マップ表示・選択/ホバー状態 (State / Actions 二層化)
-│       ├── components/       # 分割された UI コンポーネント群
-│       │   ├── DesktopSidebar.tsx       # デスクトップ用サイドバー
-│       │   ├── BottomSheet.tsx          # モバイル用ボトムシート
-│       │   ├── MobileNavBar.tsx         # モバイル用ボトムナビ
-│       │   ├── VisitForm.tsx            # 登録/編集フォーム
-│       │   ├── VisitList.tsx            # サウナ一覧
-│       │   ├── SaunaMarkerPopup.tsx     # マーカーポップアップ
-│       │   ├── CurrentLocationMarker.tsx # 現在地マーカーインジケーター
-│       │   ├── MapClusterControl.tsx    # クラスタリング制御
-│       │   ├── MapZoomControl.tsx       # ズームコントロール
-│       │   ├── FilterPanel.tsx          # インライン詳細フィルターパネル
-│       │   └── Toast.tsx, etc.
-│       ├── hooks/            # ドメイン・UIのカスタムフック群
-│       ├── types/            # 型定義 (domain.ts / ui.ts)
-│       ├── utils/            # ユーティリティ (geo.ts, search.ts, form.ts, image.ts, theme.ts, motion.ts,
-│       │                     #   storage.ts = localStorage の安全な読み書き,
-│       │                     #   visitStatus.ts = 記録ステータスの判定, date.ts, etc.)
-│       └── styles/           # 構成要素ごとに分離された CSS スタイル
-└── data/
-    └── sauna-visits.json     # 初期ロード用シードデータ
+GitHub Pages (local)                 Cloud Run (api)
+┌──────────────────────┐            ┌────────────────────────────┐
+│ Next.js static export│            │ Rails / Puma               │
+│ demo JSON            │            │ ├─ Next.js static export   │
+│ localStorage + PWA   │            │ └─ /api, /auth, /images    │
+└──────────────────────┘            └──────────┬─────────┬───────┘
+                                               │         │
+                                  ┌────────────▼─┐  ┌────▼──────────┐
+                                  │ Cloud SQL 17 │  │ private GCS   │
+                                  │ PostgreSQL   │  │ Active Storage│
+                                  └──────────────┘  └───────────────┘
 ```
 
-Context は状態と操作を分離しており、操作だけを使う箇所は `useSaunaUIActions` / `useVisitFilterActions` / `useSaunaEditorActions` / `useSaunaMapActions`、状態だけを使う箇所は `useSaunaMapStateValue`、画面幅だけを使う箇所は `useSaunaViewport` を購読します。これにより、検索入力やモーダル開閉が無関係な Provider へ連鎖する再レンダリングを抑えています。
+フロントの `VisitRepository` がlocalStorage実装とAPI実装を分離します。既存のContextはUI、CRUD、フィルター、編集、地図状態の責務分割を維持し、CRUDはサーバー成功後だけクライアント状態を更新します。APIはcamelCase JSONと `{ "error": { "code", "message", "details?" } }` の共通エラー形式を返します。
 
----
+Railsは `User`、`SaunaVisit`、`VisitHistoryEntry` を `user_id` で分離します。任意の既存IDは `external_id` に保持し、新規IDにはUUIDを使います。写真はdata URLを復号・検証してActive Storageへ保存し、ログインユーザーで所有権を確認する画像エンドポイントだけから配信します。
 
-## 🚀 セットアップ ＆ 開発
+## ディレクトリ
 
-### インストール
+```text
+src/                 Next.jsフロントエンド
+backend/             Rails 8.1.3 API／セッション／静的成果物配信
+infra/               GCP Terraform
+scripts/             Terraform state bootstrap等
+.github/workflows/   PR CI、Pages、GCP継続デプロイ
+Dockerfile           APIモードNext.js＋Railsの本番イメージ
+docker-compose.yml   frontend／api／PostgreSQL 17
+```
+
+## フロントエンド開発
+
+Node.js 22を使用します。
 
 ```bash
-git clone <repository_url>
-cd sauna-itta
-npm install
+npm ci
+npm run dev
+npm run test
+npm run lint
+npm run typecheck
+npm run build:local
+npm run build:api
 ```
 
-### スクリプト一覧
+`npm run build` は環境変数未指定時にlocalモードを生成します。
+
+## Docker Composeでローカル起動
+
+DockerとDocker Composeを用意し、必要に応じて `.env.example` を `.env` へコピーしてOAuth値を設定します。
 
 ```bash
-npm run dev      # 開発サーバー起動 (http://localhost:3000)
-npm run build    # 本番ビルド (./out 配下へ静的エクスポート)
-npm run start    # ビルド結果の起動確認
-npm run lint      # ESLint による静的解析
-npm run typecheck # tsc --noEmit による型検査（テストファイルを含む）
-npm run test      # Vitest による単体テスト・フックテスト実行
+docker compose build
+docker compose run --rm api bin/rails db:prepare
+docker compose up
 ```
 
----
+- フロント: `http://localhost:3000`
+- Rails: `http://localhost:3001`
+- 開発ログイン: `ENABLE_DEV_LOGIN=true` の場合だけ `POST http://localhost:3000/dev/login`
 
-## 💾 データ保存 ＆ 静的デプロイ
+開発ログインはdevelopment環境でしかルーティングされず、本番には存在しません。写真は `backend_storage`、DBは `postgres_data` Dockerボリュームに残ります。
 
-- **データ保存**: すべてのデータはブラウザの `localStorage`（キー: `sauna-itta_visits`, `sauna-itta_theme`）に保存されます。
-- **GitHub Pages デプロイ**: `.github/workflows/deploy.yml` により、`main` ブランチへ Push された際に GitHub Pages へ自動デプロイされます (`basePath: "/sauna-itta"` 設定済み)。
+## Google OAuth設定
+
+Google Cloud ConsoleでOAuth 2.0ウェブクライアントを作り、承認済みリダイレクトURIを設定します。
+
+- ローカル: `http://localhost:3000/auth/google_oauth2/callback`
+- 本番: `https://SERVICE_HASH.asia-northeast1.run.app/auth/google_oauth2/callback`
+
+`ALLOWED_GOOGLE_EMAIL` は大文字小文字を正規化した完全一致で検査されます。OAuthクライアントID／秘密鍵はローカルでは環境変数、本番ではSecret Managerから渡します。
+
+## Rails API
+
+主要エンドポイントは以下です。変更系はセッションCookieと `GET /api/v1/session` が返すCSRFトークンを必要とします。
+
+- `GET /api/v1/session`、`DELETE /api/v1/session`
+- `GET|POST /api/v1/sauna_visits`
+- `PATCH|DELETE /api/v1/sauna_visits/:id`
+- `DELETE /api/v1/sauna_visits/:id/history_entries/:history_id`
+- `POST /api/v1/sauna_visits/imports`（最大10件）
+- `GET /api/v1/images/:signed_id`
+
+他ユーザーの外部ID／履歴／写真は404になります。更新は `lock_version` による楽観ロックを使い、競合時は409を返します。座標、ステータス、評価0〜5、写真MIME（JPEG／PNG／WebP／GIF。SVG不可）と復号後1MB上限を検証します。
+
+Rails単体の検証:
+
+```bash
+cd backend
+bundle install
+bin/rails db:prepare
+bin/rails test
+bundle exec rubocop
+bundle exec brakeman --no-pager
+```
+
+## GCP構築
+
+Terraformは `asia-northeast1` に次を作成します。
+
+- Cloud Run: 1 vCPU、512MiB、min 0／max 2、concurrency 10
+- Cloud SQL PostgreSQL 17: `db-f1-micro`、単一ゾーン、SSD 10GB、日次バックアップ、PITRなし
+- Public Access Prevention付き非公開GCS、Artifact Registry、Secret Manager
+- 実行／デプロイ用サービスアカウント、GitHub Actions WIF
+- 初期値月3,000円の50%／90%／100%予算通知
+
+### 1. stateバケットのbootstrap
+
+```bash
+./scripts/bootstrap-terraform-state.sh PROJECT_ID UNIQUE_STATE_BUCKET
+terraform -chdir=infra init -backend-config="bucket=UNIQUE_STATE_BUCKET" -backend-config="prefix=sauna-itta"
+```
+
+stateバケットだけをbootstrapし、以後の基盤変更はTerraformへ集約します。
+
+### 2. Secret値とDBパスワード
+
+TerraformはSecretコンテナだけを作り、値をstateへ保存しません。`terraform apply` 後に値を手動登録します。
+
+```bash
+printf '%s' "$DATABASE_PASSWORD" | gcloud secrets versions add sauna-itta-database-password --data-file=-
+printf '%s' "$GOOGLE_CLIENT_ID" | gcloud secrets versions add sauna-itta-google-client-id --data-file=-
+printf '%s' "$GOOGLE_CLIENT_SECRET" | gcloud secrets versions add sauna-itta-google-client-secret --data-file=-
+bundle exec rails secret | gcloud secrets versions add sauna-itta-rails-secret-key-base --data-file=-
+gcloud sql users set-password postgres --instance=sauna-itta-postgres --password="$DATABASE_PASSWORD"
+```
+
+`terraform.tfvars.example` を参考に実値入り `terraform.tfvars` を作成します（Git管理対象外）。初回用イメージをArtifact Registryへpushしてから `terraform apply` してください。
+
+Cloud RunはCloud SQLのUnix socketを使うためVPC Connectorは不要です。本番DBへデモseedは投入しません。local版からエクスポートしたJSONを画面で一度インポートします。
+
+## 継続デプロイとロールバック
+
+- `ci.yml`: npm検証、Rails test／RuboCop／Brakeman、Terraform format／validate、本番Docker build
+- `pages.yml`: mainからlocalモードをGitHub Pagesへ配信
+- `gcp-deploy.yml`: WIF/OIDCで認証し、イメージを一度だけbuild・push。同一digestでmigration job成功後にCloud Runを更新
+
+GitHub Environment `gcp-production` に `GCP_PROJECT_ID`、`GCP_WORKLOAD_IDENTITY_PROVIDER`、`GCP_DEPLOYER_SERVICE_ACCOUNT` をVariablesとして登録します。長期鍵はGitHub Secretsへ保存しません。
+
+アプリのロールバックはCloud Runコンソールまたは `gcloud run services update-traffic` で直前revisionへトラフィックを戻します。migrationは先に追加変更、後のリリースで削除するexpand/contract方式を守ります。
+
+## バックアップ・復旧・費用
+
+Cloud SQLは日次バックアップを有効にしますがPITRは無効です。復旧時はバックアップから新インスタンスへリストアし、接続先を切り替えて画像との整合性を確認します。GCSはオブジェクトバージョニングを有効にし、誤削除時は旧世代から復元します。定期的なJSONエクスポートも利用者側バックアップとして保管してください。
+
+Cloud Runはscale-to-zeroしますがCloud SQLは停止しないため、アクセスがなくても固定費が残ります。Google Cloud無料トライアルは現在90日・$300ですが、Cloud SQLは無料枠対象外です。利用前に公式の[Google Cloud無料プログラム](https://docs.cloud.google.com/free/docs/free-cloud-features)と[Cloud SQL料金](https://cloud.google.com/sql/pricing)を確認し、不要になった試用基盤は削除してください。
+
+Rails／Active Storageの仕様は[Railsリリース](https://www.rubyonrails.org/releases)と[Active Storageガイド](https://guides.rubyonrails.org/active_storage_overview.html)を参照してください。

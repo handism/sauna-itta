@@ -219,6 +219,39 @@ body.allow-page-scroll {
   opacity: 0.7;
 }
 
+.api-access-gate {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: var(--background);
+}
+
+.api-access-card {
+  width: min(100%, 430px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  background: var(--glass-heavy);
+  box-shadow: var(--shadow-xl);
+  text-align: center;
+}
+
+.api-access-card .btn {
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.api-access-error {
+  color: var(--error-text);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

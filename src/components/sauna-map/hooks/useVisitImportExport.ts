@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, ChangeEvent } from "react";
 import { z } from "zod";
 import { SaunaVisit, SaunaVisitSchema } from "../types";
 import { normalizeVisits } from "../utils";
+import type { ImportResult } from "../repositories";
 
 const STORAGE_ERROR_MSG =
   "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
@@ -17,8 +18,10 @@ function readFileAsText(file: File): Promise<string> {
 
 export function useVisitImportExport(
   visits: SaunaVisit[],
-  saveVisits: (visits: SaunaVisit[]) => boolean,
-  showToast?: (message: string, type: "success" | "error" | "info") => void
+  saveVisits: ((visits: SaunaVisit[]) => boolean) | undefined,
+  showToast?: (message: string, type: "success" | "error" | "info") => void,
+  importBatch?: (visits: SaunaVisit[]) => Promise<ImportResult>,
+  reload?: () => Promise<void>,
 ) {
   const [importing, setImporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -46,11 +49,22 @@ export function useVisitImportExport(
         return { added: 0, success: true };
       }
 
+      if (importBatch) {
+        let added = 0;
+        for (let offset = 0; offset < normalizedImported.length; offset += 10) {
+          const result = await importBatch(normalizedImported.slice(offset, offset + 10));
+          added += result.added;
+          showToast?.(`${added}件の取り込みが完了しました。`, "info");
+        }
+        await reload?.();
+        return { added, success: true };
+      }
+
       const nextVisits = [...normalizedImported, ...visits];
-      const success = saveVisits(nextVisits);
+      const success = saveVisits?.(nextVisits) ?? false;
       return { added: normalizedImported.length, success };
     },
-    [visits, saveVisits],
+    [visits, saveVisits, importBatch, reload, showToast],
   );
 
   const handleImportData = useCallback(

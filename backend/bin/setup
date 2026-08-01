@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+require "fileutils"
+APP_ROOT = File.expand_path("..", __dir__)
+Dir.chdir(APP_ROOT) do
+  system("bundle check") || system("bundle install") || abort("bundle installに失敗しました")
+  system("bin/rails db:prepare") || abort("データベース準備に失敗しました")
+end

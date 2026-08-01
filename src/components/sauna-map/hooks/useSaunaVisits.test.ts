@@ -1,140 +1,71 @@
-import { renderHook, act } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { SaunaVisit } from "../types";
+import type { VisitRepository } from "../repositories";
+import { RepositoryError } from "../repositories";
 import { useSaunaVisits } from "./useSaunaVisits";
-import * as utils from "../utils";
-import * as useVisitCRUD from "./useVisitCRUD";
-import * as useVisitImportExport from "./useVisitImportExport";
-import { SaunaVisit } from "../types";
 
-// Mock dependencies
-vi.mock("../utils", async () => {
-  const actual = await vi.importActual("../utils");
+const initialVisits: SaunaVisit[] = [
+  { id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2026-01-01" },
+];
+
+function repository(overrides: Partial<VisitRepository> = {}): VisitRepository {
   return {
-    ...actual,
-    getInitialVisits: vi.fn(),
-    VISITS_STORAGE_KEY: "sauna-itta_visits",
+    dataSource: "api",
+    getSession: vi.fn().mockResolvedValue({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "token" }),
+    logout: vi.fn().mockResolvedValue(undefined),
+    list: vi.fn().mockResolvedValue(initialVisits),
+    create: vi.fn().mockResolvedValue({ ...initialVisits[0], id: "2" }),
+    update: vi.fn().mockResolvedValue({ ...initialVisits[0], name: "更新済み" }),
+    delete: vi.fn().mockResolvedValue(undefined),
+    deleteHistoryEntry: vi.fn().mockResolvedValue(initialVisits[0]),
+    importBatch: vi.fn().mockResolvedValue({ added: 0, skipped: 0 }),
+    ...overrides,
   };
-});
-
-vi.mock("./useVisitCRUD", () => ({
-  useVisitCRUD: vi.fn(),
-}));
-
-vi.mock("./useVisitImportExport", () => ({
-  useVisitImportExport: vi.fn(),
-}));
+}
 
 describe("useSaunaVisits", () => {
-  const mockInitialVisits: SaunaVisit[] = [
-    { id: "1", name: "Sauna A", lat: 0, lng: 0, comment: "", date: "2023-01-01" },
-  ];
+  beforeEach(() => vi.clearAllMocks());
 
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it("セッション確認後にAPIから記録を読み込む", async () => {
+    const source = repository();
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
 
-    // Setup localStorage mock
-    const store: Record<string, string> = {};
-    const mockLocalStorage = {
-      getItem: vi.fn((key: string) => store[key] || null),
-      setItem: vi.fn((key: string, value: string) => {
-        store[key] = value.toString();
-      }),
-      removeItem: vi.fn((key: string) => {
-        delete store[key];
-      }),
-      clear: vi.fn(() => {
-        for (const key in store) {
-          delete store[key];
-        }
-      }),
-    };
-
-    Object.defineProperty(window, "localStorage", {
-      value: mockLocalStorage,
-      writable: true,
-    });
-
-    vi.mocked(utils.getInitialVisits).mockReturnValue(mockInitialVisits);
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.visits).toEqual(initialVisits);
+    expect(source.list).toHaveBeenCalledOnce();
   });
 
-  it("should initialize with initial visits and return child hook methods", () => {
-    const mockCRUDMethods = {
-      addVisit: vi.fn(),
-      editVisit: vi.fn(),
-      deleteVisit: vi.fn(),
-      removeHistoryEntry: vi.fn(),
-    };
+  it("作成成功後だけ画面状態へ反映する", async () => {
+    const source = repository();
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-    const mockImportExportMethods = {
-      importing: false,
-      importInputRef: { current: null },
-      handleImportData: vi.fn(),
-      importVisitsFromFile: vi.fn(),
-      exportVisits: vi.fn(),
-    };
-
-    vi.mocked(useVisitCRUD.useVisitCRUD).mockReturnValue(mockCRUDMethods);
-    vi.mocked(useVisitImportExport.useVisitImportExport).mockReturnValue(mockImportExportMethods);
-
-    const { result } = renderHook(() => useSaunaVisits());
-
-    // Verify initial state
-    expect(result.current.visits).toEqual(mockInitialVisits);
-
-    // Verify child hooks were called correctly
-    expect(useVisitCRUD.useVisitCRUD).toHaveBeenCalledWith(mockInitialVisits, expect.any(Function));
-    expect(useVisitImportExport.useVisitImportExport).toHaveBeenCalledWith(mockInitialVisits, expect.any(Function), undefined);
-
-    // Verify all methods are exposed
-    expect(result.current.addVisit).toBe(mockCRUDMethods.addVisit);
-    expect(result.current.importVisitsFromFile).toBe(mockImportExportMethods.importVisitsFromFile);
+    await act(async () => {
+      await result.current.addVisit({ lat: 35, lng: 139 }, {
+        name: "新規", comment: "", image: "", date: "2026-08-02", rating: 4,
+        tagsText: "", status: "visited", area: "東京", appendHistory: false,
+      });
+    });
+    expect(result.current.visits[0].id).toBe("2");
   });
 
-  it("should update state and save to localStorage on successful save", () => {
-    const { result } = renderHook(() => useSaunaVisits());
-
-    // Extract the saveVisits callback that was passed to a child hook
-    const saveVisits = vi.mocked(useVisitCRUD.useVisitCRUD).mock.calls[0][1];
-
-    const newVisits: SaunaVisit[] = [
-      { id: "1", name: "Sauna A", lat: 0, lng: 0, comment: "", date: "2023-01-01" },
-      { id: "2", name: "Sauna B", lat: 0, lng: 0, comment: "", date: "2023-01-02" },
-    ];
-
-    let success = false;
-    act(() => {
-      success = saveVisits(newVisits);
+  it("409競合時は再読み込みを案内して状態を変更しない", async () => {
+    const showToast = vi.fn();
+    const source = repository({
+      update: vi.fn().mockRejectedValue(new RepositoryError("競合", "conflict", 409)),
     });
+    const { result } = renderHook(() => useSaunaVisits(showToast, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
 
-    expect(success).toBe(true);
-    expect(result.current.visits).toEqual(newVisits);
-    expect(localStorage.setItem).toHaveBeenCalledWith(
-      "sauna-itta_visits",
-      JSON.stringify(newVisits)
-    );
-  });
-
-  it("should return false and log error if localStorage throws", () => {
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.mocked(localStorage.setItem).mockImplementation(() => {
-      throw new Error("QuotaExceeded");
+    await act(async () => {
+      await result.current.editVisit("1", { lat: 35, lng: 139 }, {
+        name: "更新", comment: "", image: "", date: "2026-08-02", rating: 4,
+        tagsText: "", status: "visited", area: "東京", appendHistory: false,
+      });
     });
-
-    renderHook(() => useSaunaVisits());
-
-    const saveVisits = vi.mocked(useVisitCRUD.useVisitCRUD).mock.calls[0][1];
-
-    let success = true;
-    act(() => {
-      success = saveVisits(mockInitialVisits);
-    });
-
-    expect(success).toBe(false);
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Failed to save "sauna-itta_visits" to localStorage:',
-      expect.any(Error)
-    );
-
-    consoleSpy.mockRestore();
+    expect(result.current.visits).toEqual(initialVisits);
+    expect(showToast).toHaveBeenCalledWith(expect.stringContaining("再読み込み"), "error");
   });
 });

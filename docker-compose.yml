@@ -1,0 +1,71 @@
+services:
+  frontend:
+    image: node:22-bookworm-slim
+    working_dir: /app
+    command: npm run dev
+    environment:
+      NEXT_PUBLIC_DATA_SOURCE: api
+      API_PROXY_TARGET: http://api:3001
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - frontend_node_modules:/app/node_modules
+    depends_on:
+      api:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    command: bundle exec rails server -b 0.0.0.0 -p 3001
+    environment:
+      RAILS_ENV: development
+      SECRET_KEY_BASE: local-development-secret-key-base-change-me
+      DB_HOST: postgres
+      POSTGRES_DB: sauna_itta_development
+      POSTGRES_USER: sauna_itta
+      POSTGRES_PASSWORD: sauna_itta
+      ACTIVE_STORAGE_ROOT: /app/storage
+      ALLOWED_GOOGLE_EMAIL: ${ALLOWED_GOOGLE_EMAIL:-developer@example.com}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-development-client-id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-development-client-secret}
+      ENABLE_DEV_LOGIN: ${ENABLE_DEV_LOGIN:-true}
+      DEV_LOGIN_EMAIL: ${DEV_LOGIN_EMAIL:-developer@example.com}
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - backend_bundle:/usr/local/bundle
+      - backend_storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3001/up"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  postgres:
+    image: postgres:17-bookworm
+    environment:
+      POSTGRES_DB: sauna_itta_development
+      POSTGRES_USER: sauna_itta
+      POSTGRES_PASSWORD: sauna_itta
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sauna_itta -d sauna_itta_development"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  frontend_node_modules:
+  backend_bundle:
+  backend_storage:
+  postgres_data:

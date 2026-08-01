@@ -2,17 +2,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { SaunaVisit } from "@/components/sauna-map/types";
 import {
   flattenVisitHistory,
-  getInitialVisits,
   calculateStats,
   rankVisitsByCount,
   toDateString,
 } from "@/components/sauna-map/utils";
 import { useTheme } from "@/components/sauna-map/hooks/useTheme";
+import { getVisitRepository } from "@/components/sauna-map/repositories";
 
 export function useStatsData() {
   const [visits, setVisits] = useState<SaunaVisit[]>([]);
   const [date, setDate] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const repository = useMemo(() => getVisitRepository(), []);
 
   // 統計ページは静的プリレンダリングされるため、保存値の読み取りはマウント後まで遅らせる。
   // 切り替えロジック自体は地図側と共通の useTheme に集約している。
@@ -20,11 +23,18 @@ export function useStatsData() {
 
   useEffect(() => {
     // To satisfy react-hooks/set-state-in-effect and avoid synchronous cascading renders
-    const timer = setTimeout(() => {
-      setMounted(true);
-      setVisits(getInitialVisits());
+    const timer = setTimeout(async () => {
       syncFromStorage();
       setDate(new Date());
+      try {
+        const session = await repository.getSession();
+        setAuthenticated(session.authenticated);
+        if (session.authenticated) setVisits(await repository.list());
+      } catch (error) {
+        setLoadError(error instanceof Error ? error.message : "記録の読み込みに失敗しました。");
+      } finally {
+        setMounted(true);
+      }
     }, 0);
 
     document.documentElement.classList.add("allow-page-scroll");
@@ -35,7 +45,7 @@ export function useStatsData() {
       document.documentElement.classList.remove("allow-page-scroll");
       document.body.classList.remove("allow-page-scroll");
     };
-  }, [syncFromStorage]);
+  }, [repository, syncFromStorage]);
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
 
@@ -78,6 +88,9 @@ export function useStatsData() {
     date,
     setDate,
     mounted,
+    authenticated,
+    loadError,
+    dataSource: repository.dataSource,
     stats,
     visitedEntries,
     rankedVisits,

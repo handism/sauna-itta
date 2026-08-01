@@ -3,6 +3,9 @@ import { Outfit } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 
+const isApiMode = process.env.NEXT_PUBLIC_DATA_SOURCE === "api";
+const publicBasePath = isApiMode ? "" : "/sauna-itta";
+
 // base.css の --font-main が参照するフォント。
 // next/font でセルフホストし、外部リクエスト（PWA オフライン時に失敗する）を無くす
 const outfit = Outfit({
@@ -22,11 +25,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/sauna-itta/icon.svg", type: "image/svg+xml" },
-      { url: "/sauna-itta/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: `${publicBasePath}/icon.svg`, type: "image/svg+xml" },
+      { url: `${publicBasePath}/icons/icon-192.png`, sizes: "192x192", type: "image/png" },
     ],
     apple: [
-      { url: "/sauna-itta/icons/apple-icon.png", sizes: "180x180", type: "image/png" },
+      { url: `${publicBasePath}/icons/apple-icon.png`, sizes: "180x180", type: "image/png" },
     ],
   },
 };

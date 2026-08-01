@@ -14,6 +14,14 @@ interface VisitsCRUDContextType {
   handleImportData: ReturnType<typeof useSaunaVisits>["handleImportData"];
   importing: boolean;
   importInputRef: ReturnType<typeof useSaunaVisits>["importInputRef"];
+  loading: boolean;
+  saving: boolean;
+  loadError: string | null;
+  authenticated: boolean;
+  user: ReturnType<typeof useSaunaVisits>["user"];
+  dataSource: "local" | "api";
+  reload: ReturnType<typeof useSaunaVisits>["reload"];
+  logout: ReturnType<typeof useSaunaVisits>["logout"];
 }
 
 const VisitsCRUDContext = createContext<VisitsCRUDContextType | null>(null);
@@ -31,6 +39,14 @@ export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
     handleImportData,
     importing,
     importInputRef,
+    loading,
+    saving,
+    loadError,
+    authenticated,
+    user,
+    dataSource,
+    reload,
+    logout,
   } = useSaunaVisits(showToast);
 
   const value = useMemo(
@@ -44,6 +60,14 @@ export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
       handleImportData,
       importing,
       importInputRef,
+      loading,
+      saving,
+      loadError,
+      authenticated,
+      user,
+      dataSource,
+      reload,
+      logout,
     }),
     [
       visits,
@@ -55,6 +79,14 @@ export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
       handleImportData,
       importing,
       importInputRef,
+      loading,
+      saving,
+      loadError,
+      authenticated,
+      user,
+      dataSource,
+      reload,
+      logout,
     ],
   );
 

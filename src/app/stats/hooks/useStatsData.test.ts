@@ -39,10 +39,14 @@ const mockVisits: SaunaVisit[] = [
   },
 ];
 
-// getInitialVisits だけを差し替え、テーマ系ユーティリティは実物を使う
-vi.mock("@/components/sauna-map/utils", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/components/sauna-map/utils")>();
-  return { ...actual, getInitialVisits: () => mockVisits };
+vi.mock("@/components/sauna-map/repositories", () => {
+  return {
+    getVisitRepository: () => ({
+      dataSource: "local",
+      getSession: vi.fn().mockResolvedValue({ authenticated: true, user: null, csrfToken: null }),
+      list: vi.fn().mockResolvedValue(mockVisits),
+    }),
+  };
 });
 
 const { useStatsData } = await import("./useStatsData");
@@ -69,10 +73,10 @@ Object.defineProperty(window, "localStorage", {
 });
 
 /** useStatsData は setTimeout(0) 経由でマウント後の初期化を行うため、それを進める */
-function renderMounted() {
+async function renderMounted() {
   const rendered = renderHook(() => useStatsData());
-  act(() => {
-    vi.advanceTimersByTime(0);
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
   });
   return rendered;
 }
@@ -87,16 +91,16 @@ describe("useStatsData", () => {
     vi.useRealTimers();
   });
 
-  it("マウント後に訪問データとテーマを読み込むこと", () => {
-    const { result } = renderMounted();
+  it("マウント後に訪問データとテーマを読み込むこと", async () => {
+    const { result } = await renderMounted();
 
     expect(result.current.mounted).toBe(true);
     expect(result.current.visits).toHaveLength(3);
     expect(result.current.theme).toBe("dark");
   });
 
-  it("visitedEntries が履歴を平坦化し、行きたい記録を除外すること", () => {
-    const { result } = renderMounted();
+  it("visitedEntries が履歴を平坦化し、行きたい記録を除外すること", async () => {
+    const { result } = await renderMounted();
 
     // しきじ 2 件 + 北欧 1 件。wishlist の記録は含まれない
     expect(result.current.visitedEntries).toHaveLength(3);
@@ -111,8 +115,8 @@ describe("useStatsData", () => {
     ).toBe(false);
   });
 
-  it("visitedEntries が同一参照で安定し、再レンダリングで再計算されないこと", () => {
-    const { result, rerender } = renderMounted();
+  it("visitedEntries が同一参照で安定し、再レンダリングで再計算されないこと", async () => {
+    const { result, rerender } = await renderMounted();
 
     const first = result.current.visitedEntries;
     rerender();
@@ -120,8 +124,8 @@ describe("useStatsData", () => {
     expect(result.current.visitedEntries).toBe(first);
   });
 
-  it("rankedVisits が訪問回数順に並び、行きたい記録を除外すること", () => {
-    const { result } = renderMounted();
+  it("rankedVisits が訪問回数順に並び、行きたい記録を除外すること", async () => {
+    const { result } = await renderMounted();
 
     // しきじは履歴 2 件で 2 回、北欧は 1 回。wishlist は順位付けの対象外
     expect(result.current.rankedVisits.map(({ visit, count }) => [visit.id, count])).toEqual([
@@ -130,8 +134,8 @@ describe("useStatsData", () => {
     ]);
   });
 
-  it("rankedVisits が同一参照で安定し、再レンダリングで並べ替え直されないこと", () => {
-    const { result, rerender } = renderMounted();
+  it("rankedVisits が同一参照で安定し、再レンダリングで並べ替え直されないこと", async () => {
+    const { result, rerender } = await renderMounted();
 
     const first = result.current.rankedVisits;
     rerender();
@@ -139,8 +143,8 @@ describe("useStatsData", () => {
     expect(result.current.rankedVisits).toBe(first);
   });
 
-  it("visitDates が訪問済みの日付ごとの件数を返すこと", () => {
-    const { result } = renderMounted();
+  it("visitDates が訪問済みの日付ごとの件数を返すこと", async () => {
+    const { result } = await renderMounted();
 
     const dates = result.current.visitDates;
     // 同日 (2026-01-15) にしきじ初訪問と北欧の 2 件
@@ -150,8 +154,8 @@ describe("useStatsData", () => {
     expect(dates.has(new Date("2026/02/01").toDateString())).toBe(false);
   });
 
-  it("toggleTheme がテーマを切り替えて保存すること", () => {
-    const { result } = renderMounted();
+  it("toggleTheme がテーマを切り替えて保存すること", async () => {
+    const { result } = await renderMounted();
 
     act(() => {
       result.current.toggleTheme();
