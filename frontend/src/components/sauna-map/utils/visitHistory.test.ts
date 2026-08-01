@@ -369,9 +369,11 @@ describe("getInitialVisits", () => {
   };
 
   beforeEach(() => {
-    vi.stubGlobal("localStorage", mockLocalStorage);
-    mockLocalStorage.clear();
+    // restoreAllMocks は vi.fn の実装まで戻すため、先に呼んでから読み書きを張り直す
     vi.restoreAllMocks();
+    mockLocalStorage.getItem.mockImplementation((key: string) => store[key] ?? null);
+    vi.stubGlobal("localStorage", mockLocalStorage);
+    for (const key in store) delete store[key];
   });
 
   it("should catch localStorage errors when reading visits, log warning and return baseVisits", () => {
@@ -387,6 +389,30 @@ describe("getInitialVisits", () => {
       'Failed to read "sauna-itta_visits" from localStorage:',
       expect.any(Error),
     );
+  });
+
+  it("保存がまだ無い場合は同梱JSONを返すこと", () => {
+    const visits = getInitialVisits();
+
+    expect(visits.length).toBeGreaterThan(0);
+  });
+
+  it("保存がある場合は同梱JSONを足し戻さないこと（デモ記録の編集・削除が戻らない）", () => {
+    const bundled = getInitialVisits();
+    const edited = { ...bundled[0], name: "編集後の名前" };
+    // 1件だけ編集して、残りは削除した状態を保存しておく
+    store["sauna-itta_visits"] = JSON.stringify([edited]);
+
+    const visits = getInitialVisits();
+
+    expect(visits).toHaveLength(1);
+    expect(visits[0].name).toBe("編集後の名前");
+  });
+
+  it("すべて削除した状態を保存していれば空のまま復元すること", () => {
+    store["sauna-itta_visits"] = JSON.stringify([]);
+
+    expect(getInitialVisits()).toEqual([]);
   });
 });
 

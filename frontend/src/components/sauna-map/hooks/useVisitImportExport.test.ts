@@ -1,8 +1,17 @@
 import { renderHook, act } from "@testing-library/react";
 import type { ChangeEvent } from "react";
-import { expect, test, vi, describe, beforeEach, type MockedFunction } from "vitest";
+import { expect, test, vi, describe, afterEach, beforeEach, type MockedFunction } from "vitest";
 import { useVisitImportExport } from "./useVisitImportExport";
 import { SaunaVisit } from "../types";
+
+/** jsdom は URL.createObjectURL を実装しないため、エクスポートの検証用に差し替える */
+function stubObjectUrl() {
+  const createObjectURL = vi.fn<(blob: Blob) => string>(() => "blob:sauna-itta/export");
+  const revokeObjectURL = vi.fn();
+  Object.assign(URL, { createObjectURL, revokeObjectURL });
+  vi.useFakeTimers();
+  return { createObjectURL, revokeObjectURL };
+}
 
 describe("useVisitImportExport", () => {
   const mockVisits: SaunaVisit[] = [
@@ -12,6 +21,12 @@ describe("useVisitImportExport", () => {
 
   beforeEach(() => {
     saveVisitsMock = vi.fn<(visits: SaunaVisit[]) => boolean>().mockReturnValue(true);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    Reflect.deleteProperty(URL, "createObjectURL");
+    Reflect.deleteProperty(URL, "revokeObjectURL");
   });
 
   test("importVisitsFromFile handles invalid JSON", async () => {
@@ -47,12 +62,13 @@ describe("useVisitImportExport", () => {
     expect(saveVisitsMock).not.toHaveBeenCalled();
   });
 
-  test("exportVisits creates a download link", () => {
+  test("exportVisits creates a download link", async () => {
     const { result } = renderHook(() => useVisitImportExport(mockVisits, saveVisitsMock));
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click");
     const appendSpy = vi.spyOn(document.body, "appendChild");
     const removeSpy = vi.spyOn(document.body, "removeChild");
     const setAttributeSpy = vi.spyOn(HTMLAnchorElement.prototype, "setAttribute");
+    const { createObjectURL, revokeObjectURL } = stubObjectUrl();
 
     act(() => {
       result.current.exportVisits();
@@ -62,7 +78,19 @@ describe("useVisitImportExport", () => {
     expect(appendSpy).toHaveBeenCalled();
     expect(removeSpy).toHaveBeenCalled();
     expect(setAttributeSpy).toHaveBeenCalledWith("download", "sauna-visits.json");
-    expect(setAttributeSpy).toHaveBeenCalledWith("href", expect.stringContaining("data:application/json;charset=utf-8,"));
+    // data: URL は写真付きの記録で長さ上限に当たるため Blob URL を使う
+    expect(setAttributeSpy).toHaveBeenCalledWith("href", "blob:sauna-itta/export");
+    const blob = createObjectURL.mock.calls[0][0];
+    expect(blob).toBeInstanceOf(Blob);
+    expect(blob.type).toBe("application/json");
+    await expect(blob.text()).resolves.toContain("Sauna A");
+
+    // 解放はダウンロード開始を待ってから
+    expect(revokeObjectURL).not.toHaveBeenCalled();
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:sauna-itta/export");
 
     clickSpy.mockRestore();
     appendSpy.mockRestore();

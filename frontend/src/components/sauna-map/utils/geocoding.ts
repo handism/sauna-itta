@@ -69,12 +69,10 @@ export async function searchLocation(
   const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "sauna-itta/1.0",
-      },
-      signal,
-    });
+    // User-Agent は Fetch 仕様の禁止ヘッダ名でブラウザが必ず落とすため指定しない
+    // （Nominatim へのアプリ識別は Referer に依存する）。利用ポリシー上のリクエスト
+    // 間隔は LocationSearchInput 側のデバウンスで守ること。
+    const response = await fetch(url, { signal });
 
     if (!response.ok) {
       throw new Error(`Geocoding HTTP error! status: ${response.status}`);

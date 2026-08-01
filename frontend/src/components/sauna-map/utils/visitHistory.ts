@@ -141,10 +141,13 @@ export function getInitialVisits(): SaunaVisit[] {
       ? batchResult.data
       : parsedSaved.filter(isValidVisit);
 
-    const initialIds = new Set(baseVisits.map((v) => v.id));
-    const customSaved = validSaved.filter((v) => !initialIds.has(v.id));
-    const customVisits = normalizeVisits(customSaved);
-    return [...customVisits, ...baseVisits];
+    /*
+     * 保存があるときは保存側だけを正とする。同梱JSONを毎回足し戻す実装に戻すと、
+     * デモ記録の編集・削除が保存直後は反映されるのに再読み込みで元へ戻ります
+     * （保存側の同一IDが捨てられ、削除した記録も同梱JSONから復活するため）。
+     * 同梱JSONは保存がまだ無いときの初期データとしてのみ使うこと。
+     */
+    return normalizeVisits(validSaved);
   } catch (e) {
     console.error("Failed to parse saved visits:", e);
     return baseVisits;

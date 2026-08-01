@@ -14,6 +14,18 @@ export default defineConfig({
     },
     alias: {
       '@': path.resolve(__dirname, './src')
+    },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'clover', 'json'],
+      // 現状の実測値をわずかに下回る値。テストを伴わない機能追加でここを下げないこと
+      // （下げる場合は、なぜ検証できないのかを PR に書くこと）。
+      thresholds: {
+        statements: 79,
+        branches: 69,
+        functions: 73,
+        lines: 82
+      }
     }
   }
 });
