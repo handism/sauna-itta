@@ -1,22 +1,7 @@
 require "test_helper"
 
 class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
-  setup do
-    @original_allowed_email = ENV["ALLOWED_GOOGLE_EMAIL"]
-    ENV["ALLOWED_GOOGLE_EMAIL"] = "owner@example.com"
-    OmniAuth.config.test_mode = true
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(
-      provider: "google_oauth2",
-      uid: "owner-subject",
-      info: { email: "owner@example.com" }
-    )
-  end
-
-  teardown do
-    ENV["ALLOWED_GOOGLE_EMAIL"] = @original_allowed_email
-    OmniAuth.config.mock_auth[:google_oauth2] = nil
-    OmniAuth.config.test_mode = false
-  end
+  include ApiAuthHelper
 
   test "未認証では一覧を取得できない" do
     get "/api/v1/sauna_visits"
@@ -35,9 +20,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
   end
 
   test "許可外Googleアカウントではセッションを作らない" do
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(
-      provider: "google_oauth2", uid: "denied", info: { email: "denied@example.com" }
-    )
+    OmniAuth.config.mock_auth[:google_oauth2] = google_auth_hash(uid: "denied", email: "denied@example.com")
     get "/auth/google_oauth2/callback"
     assert_response :redirect
     get "/api/v1/session"
@@ -95,21 +78,6 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "conflict", response.parsed_body.dig("error", "code")
   end
 
-  test "インポートはIDを保持して重複をスキップする" do
-    csrf = sign_in
-    imported = valid_attributes.merge(id: "legacy-id", visitCount: 4)
-
-    2.times do
-      post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
-        headers: csrf_header(csrf), as: :json
-      assert_response :success
-    end
-
-    assert_equal 1, User.find_by!(email: "owner@example.com").sauna_visits.where(external_id: "legacy-id").count
-    assert_equal 0, response.parsed_body["added"]
-    assert_equal 1, response.parsed_body["skipped"]
-  end
-
   test "SVGを拒否し写真を所有者だけへ配信する" do
     csrf = sign_in
     post "/api/v1/sauna_visits", params: {
@@ -118,9 +86,8 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
     assert_equal "invalid_image", response.parsed_body.dig("error", "code")
 
-    png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
     post "/api/v1/sauna_visits", params: {
-      saunaVisit: valid_attributes.merge(image: "data:image/png;base64,#{png}")
+      saunaVisit: valid_attributes.merge(image: png_data_url)
     }, headers: csrf_header(csrf), as: :json
     assert_response :created
     image_path = response.parsed_body.dig("saunaVisit", "image")
@@ -137,9 +104,8 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
 
   test "写真削除を含む更新が失敗しても既存写真を保持する" do
     csrf = sign_in
-    png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
     post "/api/v1/sauna_visits", params: {
-      saunaVisit: valid_attributes.merge(image: "data:image/png;base64,#{png}")
+      saunaVisit: valid_attributes.merge(image: png_data_url)
     }, headers: csrf_header(csrf), as: :json
     assert_response :created
     visit = response.parsed_body.fetch("saunaVisit")
@@ -160,34 +126,5 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     }, headers: csrf_header(csrf), as: :json
     assert_response :success
     assert_not ActiveStorage::Blob.exists?(blob.id)
-  end
-
-  private
-
-  def sign_in
-    get "/auth/google_oauth2/callback"
-    assert_response :redirect
-    get "/api/v1/session"
-    response.parsed_body.fetch("csrfToken")
-  end
-
-  def csrf_header(token)
-    { "X-CSRF-Token" => token }
-  end
-
-  def valid_attributes
-    {
-      name: "北欧",
-      lat: 35.71,
-      lng: 139.77,
-      area: "東京都",
-      status: "visited",
-      tags: [ "外気浴" ],
-      date: "2026-08-02",
-      comment: "最高",
-      rating: 5,
-      image: nil,
-      appendHistory: false
-    }
   end
 end

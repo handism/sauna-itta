@@ -1,0 +1,136 @@
+require "test_helper"
+
+class ApiV1ImportsTest < ActionDispatch::IntegrationTest
+  include ApiAuthHelper
+
+  test "インポートはIDを保持して重複をスキップする" do
+    csrf = sign_in
+    imported = valid_attributes.merge(id: "legacy-id", visitCount: 4)
+
+    2.times do
+      post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+        headers: csrf_header(csrf), as: :json
+      assert_response :success
+    end
+
+    assert_equal 1, owner.sauna_visits.where(external_id: "legacy-id").count
+    assert_equal 0, response.parsed_body["added"]
+    assert_equal 1, response.parsed_body["skipped"]
+  end
+
+  test "11件以上はbatch_too_largeで拒否する" do
+    csrf = sign_in
+    payload = Array.new(11) { |index| valid_attributes.merge(id: "legacy-#{index}") }
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "batch_too_large", response.parsed_body.dig("error", "code")
+    assert_equal 0, owner.sauna_visits.count
+  end
+
+  test "配列以外のsaunaVisitsは500にせず422で返す" do
+    csrf = sign_in
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: "不正なデータ" },
+      headers: csrf_header(csrf), as: :json
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ "不正な要素" ] },
+      headers: csrf_header(csrf), as: :json
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+  end
+
+  test "saunaVisitsが無い場合も共通のエラー形式で返す" do
+    csrf = sign_in
+
+    post "/api/v1/sauna_visits/imports", params: {}, headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+    assert_includes response.parsed_body.dig("error", "message"), "saunaVisits"
+  end
+
+  test "IDが無い記録を含むチャンクは1件も取り込まない" do
+    csrf = sign_in
+    payload = [ valid_attributes.merge(id: "legacy-ok"), valid_attributes ]
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+    assert_equal "IDがない記録は取り込めません。", response.parsed_body.dig("error", "message")
+    assert_equal 0, owner.sauna_visits.count
+  end
+
+  test "バリデーションに失敗する記録を含むチャンクはロールバックする" do
+    csrf = sign_in
+    payload = [
+      valid_attributes.merge(id: "legacy-ok"),
+      valid_attributes.merge(id: "legacy-ng", name: "")
+    ]
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+    assert_equal 0, owner.sauna_visits.count
+  end
+
+  test "不正な画像を含むチャンクはロールバックしinvalid_imageを返す" do
+    csrf = sign_in
+    payload = [
+      valid_attributes.merge(id: "legacy-ok"),
+      valid_attributes.merge(id: "legacy-ng", image: "data:image/svg+xml;base64,PHN2Zz4=")
+    ]
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "invalid_image", response.parsed_body.dig("error", "code")
+    assert_equal 0, owner.sauna_visits.count
+  end
+
+  test "履歴つきの記録は履歴IDと訪問回数を保持する" do
+    csrf = sign_in
+    imported = valid_attributes.merge(
+      id: "legacy-history",
+      visitCount: 5,
+      history: [
+        { id: "history-1", date: "2026-07-01", comment: "1回目", rating: 4 },
+        { id: "history-2", date: "2026-08-01", comment: "2回目", rating: 5 }
+      ]
+    )
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+      headers: csrf_header(csrf), as: :json
+    assert_response :success
+    assert_equal 1, response.parsed_body["added"]
+
+    get "/api/v1/sauna_visits"
+    visit = response.parsed_body["saunaVisits"].sole
+    assert_equal %w[history-1 history-2], visit["history"].pluck("id")
+    assert_equal 5, visit["visitCount"]
+  end
+
+  test "インポートにもCSRFトークンを要求する" do
+    sign_in
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ valid_attributes.merge(id: "x") ] }, as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "invalid_csrf", response.parsed_body.dig("error", "code")
+    assert_equal 0, owner.sauna_visits.count
+  end
+
+  private
+
+  def owner
+    User.find_by!(email: ApiAuthHelper::ALLOWED_EMAIL)
+  end
+end
