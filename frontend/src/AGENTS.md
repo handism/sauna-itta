@@ -1,6 +1,6 @@
 # フロントエンド規約（CSS ＆ アクセシビリティ）
 
-このファイルは `src/` 配下を編集するときに読み込まれます。状態管理・コンポーネント構造の規約は `src/components/sauna-map/AGENTS.md`、全体方針はリポジトリルートの `AGENTS.md` を参照してください。
+このファイルは `frontend/src/` 配下を編集するときに読み込まれます。状態管理・コンポーネント構造の規約は `frontend/src/components/sauna-map/AGENTS.md`、全体方針はリポジトリルートの `AGENTS.md` を参照してください。
 
 ## 1. CSS ＆ スタイリング
 - Z-Index や共通カラー変数等のレイアウト値は `styles/base.css` 内の CSS デザイントークンを必ず参照・利用してください。

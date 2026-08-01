@@ -1,6 +1,6 @@
 # sauna-map 規約（状態管理・コンポーネント・パフォーマンス）
 
-このファイルは `src/components/sauna-map/` 配下を編集するときに読み込まれます。CSS・アクセシビリティの規約は `src/AGENTS.md`、全体方針はリポジトリルートの `AGENTS.md` を参照してください。
+このファイルは `frontend/src/components/sauna-map/` 配下を編集するときに読み込まれます。CSS・アクセシビリティの規約は `frontend/src/AGENTS.md`、全体方針はリポジトリルートの `AGENTS.md` を参照してください。
 
 ## 1. 状態管理構造 (`SaunaMapContext`)
 状態管理は巨大な単一ステートを避け、責務ごとの専門 Provider にモジュール分割されています（`src/components/sauna-map/context/` 参照）。コンポーネントやロジックを追加する際は適切な Context / Hook を利用・拡充してください。

@@ -1,10 +1,10 @@
 .git
 .github
 .env*
-.next
-node_modules
-coverage
-out
+frontend/.next
+frontend/node_modules
+frontend/coverage
+frontend/out
 backend/log/*
 backend/test
 backend/tmp/*
