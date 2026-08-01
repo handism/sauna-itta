@@ -12,11 +12,14 @@ module Api
       def create
         visit = current_user.sauna_visits.build
         attributes = visit_params
-        assign_visit_attributes(visit, attributes)
-        entry = apply_history(visit, attributes, append: true)
 
         SaunaVisit.transaction do
+          assign_visit_attributes(visit, attributes)
+          entry = apply_history(visit, attributes, append: true, apply_image: false)
           visit.save!
+          raise ActiveRecord::RecordInvalid.new(entry) unless entry.valid?
+
+          apply_history_image(entry, attributes, [])
           entry.save!
         end
         render json: { saunaVisit: serialized(visit) }, status: :created
@@ -29,14 +32,24 @@ module Api
       def update
         visit = scoped_visit
         attributes = visit_params
-        visit.lock_version = attributes[:lockVersion] if attributes[:lockVersion].present?
-        assign_visit_attributes(visit, attributes)
-        entry = apply_history(visit, attributes, append: ActiveModel::Type::Boolean.new.cast(attributes[:appendHistory]))
+        stale_image_blobs = []
 
         SaunaVisit.transaction do
+          visit.lock_version = attributes[:lockVersion] if attributes[:lockVersion].present?
+          assign_visit_attributes(visit, attributes)
+          entry = apply_history(
+            visit,
+            attributes,
+            append: ActiveModel::Type::Boolean.new.cast(attributes[:appendHistory]),
+            apply_image: false
+          )
           visit.save!
+          raise ActiveRecord::RecordInvalid.new(entry) unless entry.valid?
+
+          apply_history_image(entry, attributes, stale_image_blobs)
           entry.save!
         end
+        purge_stale_image_blobs(stale_image_blobs)
         render json: { saunaVisit: serialized(visit) }
       rescue ActiveRecord::RecordInvalid => error
         render_validation_error(error.record)

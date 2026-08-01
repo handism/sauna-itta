@@ -7,6 +7,17 @@ import type { ImportResult } from "../repositories";
 const STORAGE_ERROR_MSG =
   "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
 
+class ImportProgressError extends Error {
+  constructor(
+    readonly added: number,
+    message: string,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = "ImportProgressError";
+  }
+}
+
 function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -51,10 +62,20 @@ export function useVisitImportExport(
 
       if (importBatch) {
         let added = 0;
-        for (let offset = 0; offset < normalizedImported.length; offset += 10) {
-          const result = await importBatch(normalizedImported.slice(offset, offset + 10));
-          added += result.added;
-          showToast?.(`${added}件の取り込みが完了しました。`, "info");
+        try {
+          for (let offset = 0; offset < normalizedImported.length; offset += 10) {
+            const result = await importBatch(normalizedImported.slice(offset, offset + 10));
+            added += result.added;
+            showToast?.(`${added}件の取り込みが完了しました。`, "info");
+          }
+        } catch (error) {
+          try {
+            await reload?.();
+          } catch (reloadError) {
+            console.error("インポート失敗後の再読み込みにも失敗しました。", reloadError);
+          }
+          const message = error instanceof Error ? error.message : "サーバーへの取り込みに失敗しました。";
+          throw new ImportProgressError(added, message, { cause: error });
         }
         await reload?.();
         return { added, success: true };
@@ -87,7 +108,12 @@ export function useVisitImportExport(
         }
       } catch (error) {
         console.error(error);
-        showToast?.("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
+        if (error instanceof ImportProgressError) {
+          const progress = error.added > 0 ? `${error.added}件は取り込み済みです。` : "";
+          showToast?.(`データの取り込みに失敗しました。${progress}${error.message}`, "error");
+        } else {
+          showToast?.("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
+        }
       } finally {
         setImporting(false);
         e.target.value = "";

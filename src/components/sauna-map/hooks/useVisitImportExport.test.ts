@@ -1,4 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
+import type { ChangeEvent } from "react";
 import { expect, test, vi, describe, beforeEach, type MockedFunction } from "vitest";
 import { useVisitImportExport } from "./useVisitImportExport";
 import { SaunaVisit } from "../types";
@@ -91,5 +92,37 @@ describe("useVisitImportExport", () => {
     await expect(result.current.importVisitsFromFile(file)).resolves.toEqual({ added: 25, success: true });
     expect(importBatch.mock.calls.map(([items]) => items.length)).toEqual([10, 10, 5]);
     expect(reload).toHaveBeenCalledOnce();
+  });
+
+  test("APIインポートが途中で失敗した場合は確定済み件数を通知して再読み込みする", async () => {
+    const importBatch = vi.fn()
+      .mockResolvedValueOnce({ added: 10, skipped: 0 })
+      .mockRejectedValueOnce(new Error("サーバーへ接続できません。"));
+    const reload = vi.fn().mockResolvedValue(undefined);
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, showToast, importBatch, reload),
+    );
+    const imported = Array.from({ length: 15 }, (_, index) => ({
+      id: `partial-${index}`,
+      name: `Sauna ${index}`,
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+    }));
+    const file = new File([JSON.stringify(imported)], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(reload).toHaveBeenCalledOnce();
+    expect(showToast).toHaveBeenLastCalledWith(
+      "データの取り込みに失敗しました。10件は取り込み済みです。サーバーへ接続できません。",
+      "error",
+    );
   });
 });

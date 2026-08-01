@@ -9,7 +9,7 @@
 | GitHub Pagesデモ | `local`（既定） | 同梱JSON＋`localStorage` | `/sauna-itta`、PWA／Service Worker有効 |
 | GCP個人版 | `api` | Rails API＋PostgreSQL＋非公開GCS | basePathなし、オンライン必須、Service Worker無効 |
 
-APIモードは許可したGoogleアカウント1件だけが利用できます。オフライン編集キュー、競合マージ、公開共有、管理画面、サーバー側統計集計は対象外です。JSONエクスポートは両モードで利用でき、APIインポートは10件ずつ送信して既存IDを除外するため再実行できます。
+APIモードは許可したGoogleアカウント1件だけが利用できます。オフライン編集キュー、競合マージ、公開共有、管理画面、サーバー側統計集計は対象外です。JSONエクスポートは両モードで利用でき、APIインポートは10件ずつ送信して既存IDを除外するため再実行できます。途中で通信に失敗した場合は、確定済み件数を表示してサーバー状態を再読み込みします。
 
 ## 主な機能
 
@@ -38,7 +38,9 @@ GitHub Pages (local)                 Cloud Run (api)
 
 フロントの `VisitRepository` がlocalStorage実装とAPI実装を分離します。既存のContextはUI、CRUD、フィルター、編集、地図状態の責務分割を維持し、CRUDはサーバー成功後だけクライアント状態を更新します。APIはcamelCase JSONと `{ "error": { "code", "message", "details?" } }` の共通エラー形式を返します。
 
-Railsは `User`、`SaunaVisit`、`VisitHistoryEntry` を `user_id` で分離します。任意の既存IDは `external_id` に保持し、新規IDにはUUIDを使います。写真はdata URLを復号・検証してActive Storageへ保存し、ログインユーザーで所有権を確認する画像エンドポイントだけから配信します。
+Railsは `User`、`SaunaVisit`、`VisitHistoryEntry` を `user_id` で分離します。任意の既存IDは `external_id` に保持し、新規IDにはUUIDを使います。写真はdata URLを復号・検証してActive Storageへ保存し、ログインユーザーで所有権を確認する画像エンドポイントだけから配信します。写真の削除・差し替えは記録更新と同じトランザクションで行い、更新が確定した後だけ古いblobを削除します。
+
+localモードのService Workerは静的資産と地図タイルを別キャッシュへ保存します。OpenStreetMapタイルは最大200件に制限し、更新時はこのアプリの旧キャッシュだけを削除します。
 
 ## ディレクトリ
 
