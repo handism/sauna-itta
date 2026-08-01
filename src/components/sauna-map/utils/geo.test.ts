@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractPrefecture, getDirectionsUrl } from "./geo";
+import { extractPrefecture, getDirectionsUrl, isInBounds } from "./geo";
 import { normalizeVisits } from "./visitHistory";
 import { SaunaVisit } from "../types";
 
@@ -242,3 +242,35 @@ describe("getDirectionsUrl", () => {
     expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=35.6812,139.7671");
   });
 });
+
+describe("isInBounds", () => {
+  const sampleBounds = {
+    northEast: { lat: 36.0, lng: 140.0 },
+    southWest: { lat: 35.0, lng: 139.0 },
+  };
+
+  it("should return true when point is inside bounds", () => {
+    expect(isInBounds(35.5, 139.5, sampleBounds)).toBe(true);
+  });
+
+  it("should return true when point is on boundary", () => {
+    expect(isInBounds(35.0, 139.0, sampleBounds)).toBe(true);
+    expect(isInBounds(36.0, 140.0, sampleBounds)).toBe(true);
+  });
+
+  it("should return false when point is outside lat bounds", () => {
+    expect(isInBounds(34.9, 139.5, sampleBounds)).toBe(false);
+    expect(isInBounds(36.1, 139.5, sampleBounds)).toBe(false);
+  });
+
+  it("should return false when point is outside lng bounds", () => {
+    expect(isInBounds(35.5, 138.9, sampleBounds)).toBe(false);
+    expect(isInBounds(35.5, 140.1, sampleBounds)).toBe(false);
+  });
+
+  it("should return false when bounds is null or undefined", () => {
+    expect(isInBounds(35.5, 139.5, null)).toBe(false);
+    expect(isInBounds(35.5, 139.5, undefined)).toBe(false);
+  });
+});
+

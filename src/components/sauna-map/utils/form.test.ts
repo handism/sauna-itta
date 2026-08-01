@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toFormState, validateVisitForm } from "./form";
+import { getSubmitBlockedReason, toFormState, validateVisitForm } from "./form";
 import { getTodayDate } from "./date";
 import { buildHistoryUpdate } from "./visitHistory";
 import { SaunaVisit, VisitFormState } from "../types";
@@ -326,3 +326,33 @@ describe("validateVisitForm", () => {
     }
   });
 });
+
+describe("getSubmitBlockedReason", () => {
+  const sampleLocation = { lat: 35.6812, lng: 139.7671 };
+
+  it("returns reason when location is not selected", () => {
+    expect(getSubmitBlockedReason(null, "サウナしきじ", false)).toBe(
+      "地図上をクリックして場所を選択してください",
+    );
+  });
+
+  it("returns reason when name is empty", () => {
+    expect(getSubmitBlockedReason(sampleLocation, "", false)).toBe(
+      "サウナ名を入力してください",
+    );
+    expect(getSubmitBlockedReason(sampleLocation, "   ", false)).toBe(
+      "サウナ名を入力してください",
+    );
+  });
+
+  it("returns reason when image is uploading", () => {
+    expect(getSubmitBlockedReason(sampleLocation, "サウナしきじ", true)).toBe(
+      "画像の処理が終わるまでお待ちください",
+    );
+  });
+
+  it("returns null when form is ready to submit", () => {
+    expect(getSubmitBlockedReason(sampleLocation, "サウナしきじ", false)).toBeNull();
+  });
+});
+

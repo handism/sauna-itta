@@ -8,3 +8,4 @@ export * from "./form";
 export * from "./visitHistory";
 export * from "./motion";
 export * from "./storage";
+export * from "./search";

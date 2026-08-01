@@ -52,4 +52,9 @@ export {
   useSaunaEditorForm,
   EditorProvider,
 } from "./EditorContext";
-export { useSaunaMapState, MapStateProvider } from "./MapStateContext";
+export {
+  useSaunaMapState,
+  useSaunaMapStateValue,
+  useSaunaMapActions,
+  MapStateProvider,
+} from "./MapStateContext";

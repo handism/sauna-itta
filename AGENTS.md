@@ -23,9 +23,9 @@
 ### 1. 状態管理構造 (`SaunaMapContext`)
 状態管理は巨大な単一ステートを避け、責務ごとの専門 Provider にモジュール分割されています（`src/components/sauna-map/context/` 参照）。コンポーネントやロジックを追加する際は適切な Context / Hook を利用・拡充してください。
 
-- **専用フックを直接使うこと**: 消費側は `useSaunaUI` / `useVisitsCRUD` / `useVisitFiltersContext` / `useSaunaEditor` / `useSaunaMapState` のうち、実際に必要なものだけを個別に呼びます。さらに操作関数だけなら `useSaunaUIActions` / `useVisitFilterActions` / `useSaunaEditorActions`、画面幅判定だけなら `useSaunaViewport` を使ってください。複数の Context を 1 オブジェクトに束ねるフック（旧 `useSaunaMap` / 旧 `useSaunaVisitsData`）は、どれか 1 つの状態変化で全消費側が再レンダリングされるため復活させないでください。
+- **専用フックを直接使うこと**: 消費側は `useSaunaUI` / `useVisitsCRUD` / `useVisitFiltersContext` / `useSaunaEditor` / `useSaunaMapState` のうち、実際に必要なものだけを個別に呼びます。さらに操作関数だけなら `useSaunaUIActions` / `useVisitFilterActions` / `useSaunaEditorActions` / `useSaunaMapActions`、状態のみなら `useSaunaMapStateValue`、画面幅判定だけなら `useSaunaViewport` を使ってください。複数の Context を 1 オブジェクトに束ねるフック（旧 `useSaunaMap` / 旧 `useSaunaVisitsData`）は、どれか 1 つの状態変化で全消費側が再レンダリングされるため復活させないでください。
 - **Provider 間は最小の Context だけを購読すること**: `VisitsCRUDProvider` は `useSaunaUIActions()`、`EditorProvider` は `useSaunaViewport()` + `useSaunaUIActions()` + `useVisitFilterActions()`、`MapStateProvider` は `useSaunaViewport()` を使います。ここで統合フックへ戻すと、モーダル開閉・検索入力・テーマ変更が無関係な Provider まで連鎖的に再レンダリングさせます。
-- **操作関数しか要らない消費側は `useSaunaEditorActions` を使うこと**: `useSaunaEditor()` は state と actions を束ねるため、これを購読すると `mode` / `editingId` / `selectedLocation` / `isSidebarExpanded` の変化でも再レンダリング対象になります。`MapStateProvider`（`startEditing` / `cancelEditing` / `startCreate` のみ）と `VisitList`（`startNewVisit` のみ）は `useSaunaEditorActions()` を使うこと。ここを `useSaunaEditor()` に戻すと、サイドバーを開閉するだけで一覧全体が再レンダリングされます。
+- **操作関数しか要らない消費側は `useSaunaEditorActions` / `useSaunaMapActions` を使うこと**: `useSaunaEditor()` や `useSaunaMapState()` は state と actions を束ねるため、これを購読すると無関係な状態変更でも再レンダリング対象になります。`MapStateProvider`（`startEditing` / `cancelEditing` / `startCreate` のみ）と `VisitList` / `DesktopSidebar` は `useSaunaEditorActions()`、`VisitForm` は `useSaunaMapActions()` を使うこと。
 - **Provider は `SaunaMapContext.tsx` に一本化**: `SaunaMapProvider` が `UIProvider` → `VisitsCRUDProvider` → `VisitFiltersProvider` → `EditorProvider` → `MapStateProvider` を直接入れ子にします。複数 Provider をまとめるだけの中間ファイルは作らないでください（旧 `VisitsDataContext.tsx` は削除済み）。
 - **訪問データとフィルターの分離**: 訪問データ本体・インポート/エクスポートは `useVisitsCRUD`、絞り込み結果・フィルター状態・統計は `useVisitFiltersContext` から取得します。CRUD しか使わない画面（`DesktopSidebar` など）がフィルターを購読すると、検索欄の 1 文字入力ごとに再レンダリングされます。
 - **入力中のフォーム値は `useSaunaEditorForm` から**: 編集フォームの `form` / `setForm` / `imageUploading` は専用の `EditorFormContext` に分離しています（`useSaunaEditor` には含まれません）。これを EditorState 側へ戻すと、1 文字入力するたびに `SaunaMapContent` / `DesktopSidebar` / `VisitList` まで再レンダリング対象になります。同じ理由で、`useVisitForm` の `handleSubmit` は依存配列に `form` を入れず `formRef` から最新値を読み、`useEditorState` が返す操作関数は必ず `useCallback` で参照を安定させること（`SaunaMapContext.test.tsx` の「フォーム入力で EditorState / EditorActions の参照が変わらないこと」が検査しています）。
@@ -42,6 +42,9 @@
 - **クイックフィルターチップの可視化**: 検索欄・ステータス絞り込み・カスタムフィルター（都道府県・評価など）のアクティブな条件は `QuickFilterChips` にまとめられ、リスト上部で個別に解除（×ボタン）できるようにしています。
 - **型定義**: `src/components/sauna-map/types/` 内の `domain.ts` (ドメインモデル) と `ui.ts` (UI・フィルター型) に集約し、`any` 型や不必要なキャストを排除すること。
 - **ユーティリティ**: 純粋関数ロジックは `src/components/sauna-map/utils/` に抽出し、単体テストを記述すること。
+- **バウンディングボックス判定**: 緯度経度のバウンディングボックス判定には `utils/geo.ts` の `isInBounds()` を使うこと。
+- **検索キーワードマッチング**: 検索文字列からの安全な正規表現生成および横断検索の判定には `utils/search.ts` の `createSearchRegex()` / `matchesSearchKeyword()` を使うこと。
+- **保存ボタンの非活性判定**: バリデーションやアップロード状態に伴う保存ボタンブロック理由の取得には `utils/form.ts` の `getSubmitBlockedReason()` を使うこと。
 - **記録のステータス判定**: `visit.status ?? "visited"` を直書きせず、`utils/visitStatus.ts` の `getVisitStatus()` / `isVisited()` / `isWishlist()` を使うこと（旧形式データの既定値の解釈が地図・一覧・統計でずれるのを防ぎます）。
 - **`localStorage` は必ず `utils/storage.ts` 経由**: 読み書きは `readStorage()` / `writeStorage()` を使うこと。Safari のプライベートモードや容量超過では例外が飛ぶため、直接触ると 1 箇所の try/catch 漏れで画面が落ちます。`writeStorage()` の戻り値は「保存できたか」で、容量超過の通知（`useSaunaVisits`）に使っています。読めなかったときだけ既定値へ倒したい場合は `readStorage(key, onErrorValue)` の第 2 引数を使うこと（テーマ判定がこれに依存しています）。
 - **今日の日付**: `new Date().toISOString().split("T")[0]` を書かず `utils/date.ts` の `getTodayDate()` を使うこと。UTC ではなく利用者のローカル日付を返すため、日本時間の深夜帯に前日になることを防ぎます（`form.ts` は `visitHistory.ts` に依存しているため、両方から使うこの関数だけ別モジュールに置いています）。

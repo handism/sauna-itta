@@ -18,7 +18,12 @@ import {
   MoreHorizontal,
   Loader2,
 } from "lucide-react";
-import { useSaunaUI, useVisitsCRUD, useSaunaEditor } from "../context";
+import {
+  useSaunaUI,
+  useVisitsCRUD,
+  useSaunaEditorState,
+  useSaunaEditorActions,
+} from "../context";
 
 export interface DesktopSidebarViewProps {
   isSidebarExpanded: boolean;
@@ -224,7 +229,8 @@ export function DesktopSidebar({ children }: { children: ReactNode }) {
     openShareView,
   } = useSaunaUI();
   const { importInputRef, exportVisits, importing, handleImportData } = useVisitsCRUD();
-  const { isSidebarExpanded, isAdding, toggleSidebar, startNewVisit } = useSaunaEditor();
+  const { isSidebarExpanded, isAdding } = useSaunaEditorState();
+  const { toggleSidebar, startNewVisit } = useSaunaEditorActions();
 
   return (
     <DesktopSidebarView

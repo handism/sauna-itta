@@ -12,3 +12,27 @@ export function getDirectionsUrl(lat: number, lng: number): string {
   const safeLng = encodeURIComponent(Number(lng).toString());
   return `https://www.google.com/maps/dir/?api=1&destination=${safeLat},${safeLng}`;
 }
+
+export interface BoundingBox {
+  northEast: { lat: number; lng: number };
+  southWest: { lat: number; lng: number };
+}
+
+/**
+ * 指定された緯度・経度がマップ表示範囲 (バウンディングボックス) 内にあるかを判定する。
+ */
+export function isInBounds(
+  lat: number,
+  lng: number,
+  bounds: BoundingBox | null | undefined,
+): boolean {
+  if (!bounds) return false;
+  const { northEast, southWest } = bounds;
+  const minLat = Math.min(southWest.lat, northEast.lat);
+  const maxLat = Math.max(southWest.lat, northEast.lat);
+  const minLng = Math.min(southWest.lng, northEast.lng);
+  const maxLng = Math.max(southWest.lng, northEast.lng);
+
+  return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+}
+

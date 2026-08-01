@@ -13,19 +13,22 @@ import { useVisitsCRUD } from "./VisitsCRUDContext";
 import { useSaunaEditorActions } from "./EditorContext";
 import { SheetSnapPosition, SaunaVisit, LatLng, MobileTab } from "../types";
 
-interface MapStateContextType {
+export interface MapStateValueType {
   hoveredId: string | null;
-  setHoveredId: (id: string | null) => void;
   selectedId: string | null;
-  setSelectedId: (id: string | null) => void;
   activeMapTarget: LatLng | null;
   snapPosition: SheetSnapPosition;
-  setSnapPosition: (pos: SheetSnapPosition) => void;
-  handleZoomChange: (zoom: number) => void;
   enableClustering: boolean;
-  toggleClustering: () => void;
   showBadges: boolean;
   selectedVisit: SaunaVisit | null;
+}
+
+export interface MapStateActionsType {
+  setHoveredId: (id: string | null) => void;
+  setSelectedId: (id: string | null) => void;
+  setSnapPosition: (pos: SheetSnapPosition) => void;
+  handleZoomChange: (zoom: number) => void;
+  toggleClustering: () => void;
   handleSelectVisit: (visit: SaunaVisit) => void;
   handleDeselectVisit: () => void;
   handleEditVisit: (visit: SaunaVisit) => void;
@@ -36,7 +39,10 @@ interface MapStateContextType {
   handleSelectMobileTab: (tab: MobileTab) => void;
 }
 
-const MapStateContext = createContext<MapStateContextType | null>(null);
+export type MapStateContextType = MapStateValueType & MapStateActionsType;
+
+const MapStateValueContext = createContext<MapStateValueType | null>(null);
+const MapStateActionsContext = createContext<MapStateActionsType | null>(null);
 
 export function MapStateProvider({ children }: { children: ReactNode }) {
   const { isMobile } = useSaunaViewport();
@@ -112,20 +118,34 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
     [cancelEditing, startCreate, setSnapPosition],
   );
 
-  const value = useMemo(
+  const stateValue = useMemo<MapStateValueType>(
     () => ({
       hoveredId,
-      setHoveredId,
       selectedId,
-      setSelectedId,
       activeMapTarget,
       snapPosition,
-      setSnapPosition,
-      handleZoomChange,
       enableClustering,
-      toggleClustering,
       showBadges,
       selectedVisit: selectedVisit ?? null,
+    }),
+    [
+      hoveredId,
+      selectedId,
+      activeMapTarget,
+      snapPosition,
+      enableClustering,
+      showBadges,
+      selectedVisit,
+    ],
+  );
+
+  const actionsValue = useMemo<MapStateActionsType>(
+    () => ({
+      setHoveredId,
+      setSelectedId,
+      setSnapPosition,
+      handleZoomChange,
+      toggleClustering,
       handleSelectVisit,
       handleDeselectVisit,
       handleEditVisit,
@@ -135,18 +155,11 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
       handleSelectMobileTab,
     }),
     [
-      hoveredId,
       setHoveredId,
-      selectedId,
       setSelectedId,
-      activeMapTarget,
-      snapPosition,
       setSnapPosition,
       handleZoomChange,
-      enableClustering,
       toggleClustering,
-      showBadges,
-      selectedVisit,
       handleSelectVisit,
       handleDeselectVisit,
       handleEditVisit,
@@ -157,13 +170,34 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
     ],
   );
 
-  return <MapStateContext.Provider value={value}>{children}</MapStateContext.Provider>;
+  return (
+    <MapStateValueContext.Provider value={stateValue}>
+      <MapStateActionsContext.Provider value={actionsValue}>
+        {children}
+      </MapStateActionsContext.Provider>
+    </MapStateValueContext.Provider>
+  );
 }
 
-export function useSaunaMapState() {
-  const context = useContext(MapStateContext);
+export function useSaunaMapStateValue() {
+  const context = useContext(MapStateValueContext);
   if (!context) {
-    throw new Error("useSaunaMapState must be used within a MapStateProvider");
+    throw new Error("useSaunaMapStateValue must be used within a MapStateProvider");
   }
   return context;
 }
+
+export function useSaunaMapActions() {
+  const context = useContext(MapStateActionsContext);
+  if (!context) {
+    throw new Error("useSaunaMapActions must be used within a MapStateProvider");
+  }
+  return context;
+}
+
+export function useSaunaMapState(): MapStateContextType {
+  const state = useSaunaMapStateValue();
+  const actions = useSaunaMapActions();
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+}
+

@@ -15,6 +15,8 @@ import {
   useSaunaEditorActions,
   useSaunaEditorForm,
   useSaunaMapState,
+  useSaunaMapStateValue,
+  useSaunaMapActions,
 } from "./SaunaMapContext";
 
 // Setup matchMedia and localStorage mocks
@@ -302,6 +304,43 @@ describe("SaunaMap Contexts", () => {
     // フォームを EditorState に戻すと、1 文字入力ごとに
     // SaunaMapContent / DesktopSidebar / VisitList まで再レンダリング対象になる
     expect(result.current.state).toBe(stateBefore);
+    expect(result.current.actions).toBe(actionsBefore);
+  });
+
+  it("分離された MapStateValue と MapStateActions フックがそれぞれ正常に動作すること", () => {
+    const { result } = renderHook(
+      () => ({
+        state: useSaunaMapStateValue(),
+        actions: useSaunaMapActions(),
+      }),
+      { wrapper },
+    );
+
+    expect(result.current.state.hoveredId).toBeNull();
+
+    act(() => {
+      result.current.actions.setHoveredId("1");
+    });
+
+    expect(result.current.state.hoveredId).toBe("1");
+  });
+
+  it("選択状態の変更で MapStateActions の参照が変わらないこと", () => {
+    const { result } = renderHook(
+      () => ({
+        state: useSaunaMapStateValue(),
+        actions: useSaunaMapActions(),
+      }),
+      { wrapper },
+    );
+
+    const actionsBefore = result.current.actions;
+
+    act(() => {
+      result.current.actions.setSelectedId("123");
+    });
+
+    expect(result.current.state.selectedId).toBe("123");
     expect(result.current.actions).toBe(actionsBefore);
   });
 });
