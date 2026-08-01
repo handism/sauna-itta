@@ -9,13 +9,13 @@ COPY frontend/src ./src
 ENV NEXT_PUBLIC_DATA_SOURCE=api
 RUN npm run build
 
-FROM ruby:3.4.2-slim-bookworm AS ruby-dependencies
+FROM ruby:4.0.6-slim-bookworm AS ruby-dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential libpq-dev git && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY backend/Gemfile backend/Gemfile.lock ./
 RUN bundle config set without "development test" && bundle install --jobs 4 --retry 3
 
-FROM ruby:3.4.2-slim-bookworm AS production
+FROM ruby:4.0.6-slim-bookworm AS production
 RUN apt-get update && apt-get install -y --no-install-recommends libpq5 curl && rm -rf /var/lib/apt/lists/*
 RUN groupadd --system --gid 10001 rails && useradd --system --uid 10001 --gid rails --create-home rails
 WORKDIR /app
