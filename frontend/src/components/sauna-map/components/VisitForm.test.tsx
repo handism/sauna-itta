@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
+import type { FormEvent } from "react";
 import "@testing-library/jest-dom/vitest";
 import { VisitFormView } from "./VisitForm";
 import { VisitFormState } from "../types";
@@ -106,5 +107,62 @@ describe("VisitFormView", () => {
     expect(document.getElementById("submit-blocked-reason")).toHaveTextContent(
       "画像の処理が終わるまでお待ちください"
     );
+  });
+
+  it("保存中は理由を示してボタンを止める", () => {
+    render(<VisitFormView {...defaultProps} saving />);
+
+    expect(screen.getByRole("button", { name: /保存中/ })).toBeDisabled();
+    expect(document.getElementById("submit-blocked-reason")).toHaveTextContent(
+      "サーバーへ保存しています。"
+    );
+  });
+
+  it("行きたい記録では日付・満足度・写真を出さずメモ欄にする", () => {
+    render(
+      <VisitFormView
+        {...defaultProps}
+        form={{ ...defaultForm, status: "wishlist" }}
+      />
+    );
+
+    expect(screen.queryByLabelText("訪問日")).not.toBeInTheDocument();
+    expect(screen.queryByText("写真を追加")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("メモ")).toBeInTheDocument();
+    // 訪問済みでないので履歴追加のチェックボックスも出さない
+    expect(
+      screen.queryByRole("checkbox", { name: /新しい訪問記録として追加する/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("新規作成時は削除ボタンと履歴セクションを出さない", () => {
+    render(<VisitFormView {...defaultProps} editingId={null} />);
+
+    expect(screen.getByRole("button", { name: /保存する/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /削除/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("checkbox", { name: /新しい訪問記録として追加する/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("削除・キャンセルはそれぞれのハンドラを呼ぶ", () => {
+    const onDelete = vi.fn();
+    const onCancel = vi.fn();
+    render(<VisitFormView {...defaultProps} onDelete={onDelete} onCancel={onCancel} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /削除/ }));
+    fireEvent.click(screen.getByRole("button", { name: /キャンセル/ }));
+
+    expect(onDelete).toHaveBeenCalledOnce();
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it("送信でハンドラを呼ぶ", () => {
+    const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
+    const { container } = render(<VisitFormView {...defaultProps} onSubmit={onSubmit} />);
+
+    fireEvent.submit(container.querySelector("form") as HTMLFormElement);
+
+    expect(onSubmit).toHaveBeenCalledOnce();
   });
 });

@@ -110,4 +110,125 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
       expect(handleEdit).toHaveBeenCalledWith(mockVisit);
     });
   });
+
+  describe("VisitCardItem の操作", () => {
+    it("カードのホバーとクリックで選択・ホバー状態を伝える", () => {
+      const handleHover = vi.fn();
+      const handleSelect = vi.fn();
+      const { container } = render(
+        <VisitCardItem
+          visit={mockVisit}
+          isHovered={false}
+          isSelected={false}
+          onHoverVisit={handleHover}
+          onSelectVisit={handleSelect}
+          onEdit={vi.fn()}
+          setFilters={vi.fn()}
+          onOpenImage={vi.fn()}
+        />
+      );
+      const card = container.querySelector(".sauna-card") as HTMLElement;
+
+      fireEvent.mouseEnter(card);
+      expect(handleHover).toHaveBeenCalledWith("sauna-1");
+
+      fireEvent.mouseLeave(card);
+      expect(handleHover).toHaveBeenLastCalledWith(null);
+
+      fireEvent.click(card);
+      expect(handleSelect).toHaveBeenCalledWith(mockVisit);
+    });
+
+    it("編集ボタンはカードのクリックを伝播させない", () => {
+      const handleSelect = vi.fn();
+      const handleEdit = vi.fn();
+      render(
+        <VisitCardItem
+          visit={mockVisit}
+          isHovered={false}
+          isSelected={false}
+          onSelectVisit={handleSelect}
+          onEdit={handleEdit}
+          setFilters={vi.fn()}
+          onOpenImage={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /編集/ }));
+
+      expect(handleEdit).toHaveBeenCalledWith(mockVisit);
+      expect(handleSelect).not.toHaveBeenCalled();
+    });
+
+    it("選択中だけ解除ボタンを出し、カードの選択を再実行しない", () => {
+      const handleSelect = vi.fn();
+      const handleDeselect = vi.fn();
+      const { rerender } = render(
+        <VisitCardItem
+          visit={mockVisit}
+          isHovered={false}
+          isSelected={false}
+          onSelectVisit={handleSelect}
+          onDeselectVisit={handleDeselect}
+          onEdit={vi.fn()}
+          setFilters={vi.fn()}
+          onOpenImage={vi.fn()}
+        />
+      );
+      expect(screen.queryByRole("button", { name: "選択を解除" })).not.toBeInTheDocument();
+
+      rerender(
+        <VisitCardItem
+          visit={mockVisit}
+          isHovered={false}
+          isSelected
+          onSelectVisit={handleSelect}
+          onDeselectVisit={handleDeselect}
+          onEdit={vi.fn()}
+          setFilters={vi.fn()}
+          onOpenImage={vi.fn()}
+        />
+      );
+      fireEvent.click(screen.getByRole("button", { name: "選択を解除" }));
+
+      expect(handleDeselect).toHaveBeenCalledOnce();
+      expect(handleSelect).not.toHaveBeenCalled();
+    });
+
+    it("タグをクリックすると検索条件へ反映する", () => {
+      const setFilters = vi.fn((updater) => updater({ search: "" }));
+      render(
+        <VisitCardItem
+          visit={mockVisit}
+          isHovered={false}
+          isSelected={false}
+          onSelectVisit={vi.fn()}
+          onEdit={vi.fn()}
+          setFilters={setFilters}
+          onOpenImage={vi.fn()}
+        />
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /外気浴/ }));
+
+      expect(setFilters).toHaveBeenCalledOnce();
+      expect(setFilters.mock.results[0].value).toEqual({ search: "外気浴" });
+    });
+
+    it("行きたい記録には行きたいチップを出す", () => {
+      render(
+        <VisitCardItem
+          visit={{ ...mockVisit, status: "wishlist" }}
+          isHovered={false}
+          isSelected={false}
+          onSelectVisit={vi.fn()}
+          onEdit={vi.fn()}
+          setFilters={vi.fn()}
+          onOpenImage={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText("行きたい")).toBeInTheDocument();
+    });
+  });
 });

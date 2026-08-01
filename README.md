@@ -11,6 +11,8 @@
 
 APIモードは許可したGoogleアカウント1件だけが利用できます。オフライン編集キュー、競合マージ、公開共有、管理画面、サーバー側統計集計は対象外です。JSONエクスポートは両モードで利用でき、APIインポートは10件ずつ送信して既存IDを除外するため再実行できます。途中で通信に失敗した場合は、確定済み件数を表示してサーバー状態を再読み込みします。
 
+localモードの同梱JSONは、localStorageへの保存がまだ無いときの初期データです。一度でも記録を編集・追加・削除すると以降は保存側だけが正になります（同梱JSONを毎回足し戻さないため、デモ記録の編集や削除も再読み込み後に残ります）。APIモードのエクスポートJSONは写真を `/api/v1/images/...` のURLとして書き出すため、そのファイルをlocalモードへ取り込んでも写真は表示されません（記録本体は取り込めます）。
+
 ## 主な機能
 
 - 訪問済み／行きたいサウナの地図登録、検索、タグ・エリア・評価フィルター
@@ -62,13 +64,16 @@ cd frontend
 npm ci
 npm run dev
 npm run test
+npm run test:coverage
 npm run lint
 npm run typecheck
 npm run build:local
 npm run build:api
 ```
 
-`npm run build` は環境変数未指定時にlocalモードを生成します。
+`npm run build` は環境変数未指定時にlocalモードを生成します。`npm run test:coverage` は `vitest.config.ts` のカバレッジ閾値付きで実行し、CIもこちらを使います。
+
+依存関係の更新はDependabot（`.github/dependabot.yml`）がnpm・Bundler・GitHub Actions・Dockerを毎週チェックします。
 
 ## Docker Composeでローカル起動
 

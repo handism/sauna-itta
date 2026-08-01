@@ -48,6 +48,24 @@ class ApiV1ImagesTest < ActionDispatch::IntegrationTest
     assert_equal "image/png", response.media_type
     assert_includes response.headers["Cache-Control"], "private"
     assert_includes response.headers["Content-Disposition"], "inline"
+    assert response.headers["ETag"].present?
+  end
+
+  test "ETagが一致する再取得は304を返し本文を送らない" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(image: png_data_url) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    image_path = response.parsed_body.dig("saunaVisit", "image")
+
+    get image_path
+    assert_response :success
+    etag = response.headers["ETag"]
+
+    get image_path, headers: { "If-None-Match" => etag }
+
+    assert_response :not_modified
+    assert_predicate response.body, :empty?
   end
 
   test "不正な署名IDは404を返す" do

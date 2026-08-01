@@ -1,0 +1,39 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # 個別PRが増えすぎないよう、開発依存とパッチ更新はまとめる
+      frontend-dev:
+        dependency-type: development
+      frontend-patch:
+        update-types: [patch]
+
+  - package-ecosystem: bundler
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      backend-patch:
+        update-types: [patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directories:
+      - /
+      - /backend
+      - /frontend
+    schedule:
+      interval: weekly

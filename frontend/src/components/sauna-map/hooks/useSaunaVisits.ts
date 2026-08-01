@@ -23,9 +23,13 @@ function mutationErrorMessage(error: unknown): string {
 export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepository) {
   const repositoryRef = useRef(injectedRepository ?? getVisitRepository());
   const repository = repositoryRef.current;
+  // localモードは初期描画を空にしないため同期的に読み込む（ちらつき防止）
+  const seededFromStorage = DATA_SOURCE === "local" && !injectedRepository;
   const [visits, setVisits] = useState<SaunaVisit[]>(() =>
-    DATA_SOURCE === "local" && !injectedRepository ? getInitialVisits() : [],
+    seededFromStorage ? getInitialVisits() : [],
   );
+  // 初回の list() は上の初期値と同じ localStorage の読み込み＋zod検証になるため省く
+  const pendingInitialListRef = useRef(!seededFromStorage);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [authenticated, setAuthenticated] = useState(repository.dataSource === "local");
@@ -53,10 +57,11 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
         if (!active) return;
         setAuthenticated(session.authenticated);
         setUser(session.user);
-        if (session.authenticated) {
+        if (session.authenticated && pendingInitialListRef.current) {
           const loaded = await repository.list();
           if (active) setVisits(loaded);
         }
+        pendingInitialListRef.current = true;
       } catch (error) {
         if (active) setLoadError(mutationErrorMessage(error));
       } finally {

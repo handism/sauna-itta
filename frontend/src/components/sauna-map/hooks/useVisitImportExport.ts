@@ -7,6 +7,8 @@ import type { ImportResult } from "../repositories";
 // Rails 側の ImportsController が 1 リクエストあたり 10 件までしか受け付けません
 const CHUNK_SIZE = 10;
 
+const REVOKE_OBJECT_URL_DELAY_MS = 1000;
+
 const STORAGE_ERROR_MSG =
   "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
 
@@ -140,15 +142,20 @@ export function useVisitImportExport(
   );
 
   const exportVisits = useCallback(() => {
-    const dataStr = JSON.stringify(visits, null, 2);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    // 写真は最大1MBのBase64として記録に含まれるため、数十件で data: URL の
+    // 長さ上限を超えて無言で失敗する。Blob URL なら容量の制約を受けない。
+    const blob = new Blob([JSON.stringify(visits, null, 2)], {
+      type: "application/json",
+    });
+    const objectUrl = URL.createObjectURL(blob);
     const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
+    linkElement.setAttribute("href", objectUrl);
     linkElement.setAttribute("download", "sauna-visits.json");
     document.body.appendChild(linkElement);
     linkElement.click();
     document.body.removeChild(linkElement);
+    // click() 直後の解放はダウンロード開始前に URL を無効化するブラウザがあるため遅らせる
+    setTimeout(() => URL.revokeObjectURL(objectUrl), REVOKE_OBJECT_URL_DELAY_MS);
   }, [visits]);
 
   return {

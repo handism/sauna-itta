@@ -40,11 +40,10 @@ describe("searchLocation", () => {
 
     const results = await searchLocation("かるまる");
 
+    // ブラウザが落とす User-Agent を送らないこと（送れているように見せない）
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining("https://nominatim.openstreetmap.org/search?"),
-      expect.objectContaining({
-        headers: { "User-Agent": "sauna-itta/1.0" },
-      })
+      { signal: undefined }
     );
 
     expect(results).toHaveLength(1);
