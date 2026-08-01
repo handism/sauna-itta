@@ -118,7 +118,7 @@
 
 ## 8. インフラ・検証規約
 
-- 本番イメージはルート`Dockerfile`でAPIモードのNext.js静的成果物とRailsだけを組み込み、非rootでPumaを起動します。ローカルは`frontend`／`api`／`postgres`のDocker Composeを使用し、初回起動時は `docker-compose run --rm frontend npm ci` で `frontend_node_modules` ボリュームへパッケージをインストールします。
+- 本番イメージはルート`Dockerfile`でAPIモードのNext.js静的成果物とRailsだけを組み込み、非rootでPumaを起動します。ローカルは`frontend`／`api`／`postgres`のDocker Composeを使用します。フロント依存関係は`Dockerfile.frontend.dev`のビルド時に`npm ci`でインストールします。APIは起動時に`/app/tmp/pids/server.pid`を除去し、`bin/rails db:prepare`の成功後にRailsを`exec`起動します。依存関係変更時は`docker-compose up --build`でフロントイメージを再ビルドしてください。
 - GCPは`infra/`のTerraformで管理します。Secret ManagerにはコンテナだけをTerraformで作り、秘密値やDBパスワードをtfvars、state、GitHub Secretsへ入れません。
 - GCPデプロイは基盤・Secret・GitHub Environment Variablesの設定が完了するまで`workflow_dispatch`による手動実行専用にします。WIF/OIDCを使い、単一buildの同じdigestをmigration jobとCloud Runサービスへ順に反映します。migration成功前にサービスを更新しないでください。
 - フロント変更時は従来の`npm run test`、`npm run lint`、`npm run typecheck`、`npm run build`に加え、両モードに関係する場合は`npm run build:local`と`npm run build:api`を実行します。
