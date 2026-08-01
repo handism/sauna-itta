@@ -3,7 +3,7 @@ FROM node:22-bookworm-slim AS frontend
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
-COPY next.config.ts tsconfig.json next-env.d.ts eslint.config.mjs vitest.config.ts ./
+COPY next.config.ts tsconfig.json eslint.config.mjs vitest.config.ts ./
 COPY public ./public
 COPY src ./src
 ENV NEXT_PUBLIC_DATA_SOURCE=api

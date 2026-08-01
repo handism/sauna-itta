@@ -120,6 +120,6 @@
 
 - 本番イメージはルート`Dockerfile`でAPIモードのNext.js静的成果物とRailsだけを組み込み、非rootでPumaを起動します。ローカルは`frontend`／`api`／`postgres`のDocker Composeを使用します。
 - GCPは`infra/`のTerraformで管理します。Secret ManagerにはコンテナだけをTerraformで作り、秘密値やDBパスワードをtfvars、state、GitHub Secretsへ入れません。
-- GCPデプロイはWIF/OIDCを使い、単一buildの同じdigestをmigration jobとCloud Runサービスへ順に反映します。migration成功前にサービスを更新しないでください。
+- GCPデプロイは基盤・Secret・GitHub Environment Variablesの設定が完了するまで`workflow_dispatch`による手動実行専用にします。WIF/OIDCを使い、単一buildの同じdigestをmigration jobとCloud Runサービスへ順に反映します。migration成功前にサービスを更新しないでください。
 - フロント変更時は従来の`npm run test`、`npm run lint`、`npm run typecheck`、`npm run build`に加え、両モードに関係する場合は`npm run build:local`と`npm run build:api`を実行します。
 - Rails／インフラ変更時は`backend/bin/rails test`、RuboCop、Brakeman、`terraform fmt -check`、`terraform validate`、production Docker buildとhealth checkも実行します。
