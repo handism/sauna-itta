@@ -45,20 +45,20 @@ localモードのService Workerは静的資産と地図タイルを別キャッ�
 ## ディレクトリ
 
 ```text
-src/                 Next.jsフロントエンド
+frontend/            Next.jsフロントエンド（src/、public/、npm設定、開発用Dockerfile）
 backend/             Rails 8.1.3 API／セッション／静的成果物配信
-infra/               GCP Terraform
-scripts/             Terraform state bootstrap等
+infra/               GCP Terraform（scripts/にstate bootstrap）
 .github/workflows/   PR CI、Pages、GCP継続デプロイ
 Dockerfile           APIモードNext.js＋Railsの本番イメージ
-docker-compose.yml   frontend／api／PostgreSQL 17
+docker-compose.yaml  frontend／api／PostgreSQL 17
 ```
 
 ## フロントエンド開発
 
-Node.js 22を使用します。
+Node.js 22を使用します。npmコマンドは `frontend/` ディレクトリで実行します。
 
 ```bash
+cd frontend
 npm ci
 npm run dev
 npm run test
@@ -79,7 +79,7 @@ DockerとDocker Composeを用意し、必要に応じて `.env.example` を `.en
 docker-compose up --build
 ```
 
-フロントの依存関係は `Dockerfile.frontend.dev` のビルド時に `npm ci` でインストールされます。APIは前回の異常終了で残ったRailsのPIDファイルを除去し、`bin/rails db:prepare` を実行してから起動します。`package.json` または `package-lock.json` を更新した場合も、フロントイメージへ依存関係を反映するため再度 `docker-compose up --build` を実行してください。
+フロントの依存関係は `frontend/Dockerfile.frontend.dev` のビルド時に `npm ci` でインストールされます。APIは前回の異常終了で残ったRailsのPIDファイルを除去し、`bin/rails db:prepare` を実行してから起動します。`package.json` または `package-lock.json` を更新した場合も、フロントイメージへ依存関係を反映するため再度 `docker-compose up --build` を実行してください。
 
 - フロント: `http://localhost:3000`
 - Rails: `http://localhost:3001`
@@ -150,7 +150,7 @@ Terraformは `asia-northeast1` に次を作成します。
 ### 1. stateバケットのbootstrap
 
 ```bash
-./scripts/bootstrap-terraform-state.sh PROJECT_ID UNIQUE_STATE_BUCKET
+./infra/scripts/bootstrap-terraform-state.sh PROJECT_ID UNIQUE_STATE_BUCKET
 terraform -chdir=infra init -backend-config="bucket=UNIQUE_STATE_BUCKET" -backend-config="prefix=sauna-itta"
 ```
 
