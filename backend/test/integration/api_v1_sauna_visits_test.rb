@@ -135,6 +135,33 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_response :unauthorized
   end
 
+  test "写真削除を含む更新が失敗しても既存写真を保持する" do
+    csrf = sign_in
+    png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+    post "/api/v1/sauna_visits", params: {
+      saunaVisit: valid_attributes.merge(image: "data:image/png;base64,#{png}")
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :created
+    visit = response.parsed_body.fetch("saunaVisit")
+    image_path = visit.fetch("image")
+    blob = ActiveStorage::Blob.find_signed!(image_path.split("/").last)
+
+    patch "/api/v1/sauna_visits/#{visit.fetch('id')}", params: {
+      saunaVisit: valid_attributes.merge(lat: 100, image: nil, lockVersion: visit.fetch("lockVersion"))
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :unprocessable_content
+
+    get image_path
+    assert_response :success
+    assert_equal "image/png", response.media_type
+
+    patch "/api/v1/sauna_visits/#{visit.fetch('id')}", params: {
+      saunaVisit: valid_attributes.merge(image: nil, lockVersion: visit.fetch("lockVersion"))
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :success
+    assert_not ActiveStorage::Blob.exists?(blob.id)
+  end
+
   private
 
   def sign_in

@@ -58,16 +58,17 @@ describe("searchLocation", () => {
     });
   });
 
-  it("handles HTTP errors gracefully and returns empty array", async () => {
+  it("HTTPエラーを呼び出し側へ伝える", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
       status: 500,
     });
 
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const results = await searchLocation("エラーテスト");
+    await expect(searchLocation("エラーテスト")).rejects.toThrow(
+      "Geocoding HTTP error! status: 500",
+    );
 
-    expect(results).toEqual([]);
     expect(consoleSpy).toHaveBeenCalled();
   });
 

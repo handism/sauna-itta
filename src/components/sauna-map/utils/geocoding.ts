@@ -104,6 +104,6 @@ export async function searchLocation(
       return [];
     }
     console.error("Geocoding search failed:", error);
-    return [];
+    throw error;
   }
 }

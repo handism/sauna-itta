@@ -48,6 +48,7 @@
 - **記録のステータス判定**: `visit.status ?? "visited"` を直書きせず、`utils/visitStatus.ts` の `getVisitStatus()` / `isVisited()` / `isWishlist()` を使うこと（旧形式データの既定値の解釈が地図・一覧・統計でずれるのを防ぎます）。
 - **`localStorage` は必ず `utils/storage.ts` 経由**: 読み書きは `readStorage()` / `writeStorage()` を使うこと。Safari のプライベートモードや容量超過では例外が飛ぶため、直接触ると 1 箇所の try/catch 漏れで画面が落ちます。`writeStorage()` の戻り値は「保存できたか」で、容量超過の通知（`useSaunaVisits`）に使っています。読めなかったときだけ既定値へ倒したい場合は `readStorage(key, onErrorValue)` の第 2 引数を使うこと（テーマ判定がこれに依存しています）。
 - **今日の日付**: `new Date().toISOString().split("T")[0]` を書かず `utils/date.ts` の `getTodayDate()` を使うこと。UTC ではなく利用者のローカル日付を返すため、日本時間の深夜帯に前日になることを防ぎます（`form.ts` は `visitHistory.ts` に依存しているため、両方から使うこの関数だけ別モジュールに置いています）。
+- **地点検索の障害を0件として扱わないこと**: `searchLocation()` は入力キャンセル (`AbortError`) だけ空配列へ変換し、HTTP・通信・JSONエラーは呼び出し側へ再送出します。`LocationSearchInput` が通信障害用のエラー表示を出すため、一般エラーを握り潰して空配列へ戻さないでください。
 - **訪問回数の算出**: 訪問回数は必ず `utils/visitHistory.ts` の `getVisitCount()` を使うこと（`history.length` と `visitCount` の両方を考慮します）。地図側と統計ページで別々に導出すると、旧形式データで表示が食い違います。訪問回数による順位付けは `rankVisitsByCount()` に集約しています（同数のときの並びまで揃わないと、「MY HOME SAUNA」と「よく行く施設 TOP 5」で 1 位が食い違います）。
 - **訪問リストの行コンポーネント**: `VisitCompactItem` / `VisitCardItem` は表示密度が違うだけなので、props 型と `memo` の比較関数は `components/visitItem.ts` の `VisitItemProps` / `areVisitItemPropsEqual` を共有します。片方にだけ props を足すと比較関数の更新漏れで表示が古いまま残るため、個別に再定義しないこと。
 - **テーマフックは 1 本**: 地図側・統計ページとも `hooks/useTheme.ts` を使います。統計ページのように静的プリレンダリングされる画面は `useTheme({ deferred: true })` で開始し、他のクライアント専用初期化と同じタイミングで `syncFromStorage()` を呼ぶこと（マウント直後に既定値でクラスを適用すると、`layout.tsx` のインラインスクリプトが付けた `light-theme` を剥がしてちらつきます）。
@@ -110,10 +111,10 @@
 
 - `NEXT_PUBLIC_DATA_SOURCE=local|api` で配布形態を切り替えます。localはGitHub Pages用の`/sauna-itta`、同梱JSON、`localStorage`、PWAを維持し、apiはbasePathなし・Rails API・オンライン必須でService Workerを登録しません。
 - フロントの永続化は `repositories/` の `VisitRepository` 経由にします。Contextや画面から`fetch`または`localStorage`を直接呼ばないでください。CRUDは非同期で、Repository成功後だけ画面状態を更新します。
-- APIインポートは最大10件のチャンクを維持し、既存`external_id`をスキップして再実行可能にします。JSONエクスポートは両モードで維持します。
+- APIインポートは最大10件のチャンクを維持し、既存`external_id`をスキップして再実行可能にします。途中のチャンクで失敗した場合は必ず再読み込みし、確定済み件数とRepositoryのエラー理由を利用者へ通知します。JSON形式エラーとして一律表示しないでください。JSONエクスポートは両モードで維持します。
 - Railsの全記録取得は必ず`current_user.sauna_visits`からスコープし、他ユーザーの記録・履歴・写真は404にします。APIはcamelCase、エラーは`{ error: { code, message, details? } }`形式です。
 - 変更系APIはセッション認証とCSRFを必須にし、`lock_version`競合は409を返します。開発ログインはdevelopmentかつ`ENABLE_DEV_LOGIN=true`の場合だけ許可し、本番ルートを追加しないでください。
-- 写真はJPEG／PNG／WebP／GIFのdata URLだけを許可し、復号後1MB以下をRails validationでも検査します。SVGと任意URLを受け付けないでください。本番配信は所有者確認を行う認証付き画像エンドポイントに限定します。
+- 写真はJPEG／PNG／WebP／GIFのdata URLだけを許可し、復号後1MB以下をRails validationでも検査します。SVGと任意URLを受け付けないでください。本番配信は所有者確認を行う認証付き画像エンドポイントに限定します。既存写真の削除・差し替えは他属性の保存と同じDBトランザクション内で添付を変更し、古いblobはコミット成功後だけ削除してください（バリデーション失敗や`lock_version`競合時に元写真を失わないこと）。
 - DB変更はexpand/contract方式で後方互換に進めます。本番seedへ個人データやデモデータを追加しないでください。
 
 ## 8. インフラ・検証規約
@@ -123,3 +124,4 @@
 - GCPデプロイは基盤・Secret・GitHub Environment Variablesの設定が完了するまで`workflow_dispatch`による手動実行専用にします。WIF/OIDCを使い、単一buildの同じdigestをmigration jobとCloud Runサービスへ順に反映します。migration成功前にサービスを更新しないでください。
 - フロント変更時は従来の`npm run test`、`npm run lint`、`npm run typecheck`、`npm run build`に加え、両モードに関係する場合は`npm run build:local`と`npm run build:api`を実行します。
 - Rails／インフラ変更時は`backend/bin/rails test`、RuboCop、Brakeman、`terraform fmt -check`、`terraform validate`、production Docker buildとhealth checkも実行します。
+- localモードのService Workerは静的資産と地図タイルのキャッシュを分離し、地図タイルはOpenStreetMapの明示的な許可ホストだけを最大200件保存します。activate時に削除してよいのは`sauna-itta-`接頭辞を持つ旧キャッシュだけです（GitHub Pagesの同一オリジンにある別アプリのキャッシュを削除しないこと）。キャッシュ方針を変えた場合は静的キャッシュのバージョンを更新してください。

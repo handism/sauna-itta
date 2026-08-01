@@ -1,4 +1,13 @@
-const CACHE_NAME = "sauna-itta-v1";
+const CACHE_PREFIX = "sauna-itta-";
+const STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v2`;
+const TILE_CACHE_NAME = `${CACHE_PREFIX}tiles-v1`;
+const MAX_TILE_ENTRIES = 200;
+const TILE_HOSTS = new Set([
+  "tile.openstreetmap.org",
+  "a.tile.openstreetmap.org",
+  "b.tile.openstreetmap.org",
+  "c.tile.openstreetmap.org",
+]);
 
 // Cache core assets on install
 const PRECACHE_ASSETS = [
@@ -15,7 +24,7 @@ const PRECACHE_ASSETS = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
-      .open(CACHE_NAME)
+      .open(STATIC_CACHE_NAME)
       .then((cache) => cache.addAll(PRECACHE_ASSETS))
       .then(() => self.skipWaiting())
   );
@@ -28,7 +37,11 @@ self.addEventListener("activate", (event) => {
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
-            if (cacheName !== CACHE_NAME) {
+            if (
+              cacheName.startsWith(CACHE_PREFIX) &&
+              cacheName !== STATIC_CACHE_NAME &&
+              cacheName !== TILE_CACHE_NAME
+            ) {
               return caches.delete(cacheName);
             }
           })
@@ -38,6 +51,13 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+async function trimCache(cache, maxEntries) {
+  const requests = await cache.keys();
+  const overflow = requests.length - maxEntries;
+  if (overflow <= 0) return;
+  await Promise.all(requests.slice(0, overflow).map((request) => cache.delete(request)));
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
 
@@ -46,26 +66,21 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  // Cache strategy for map tiles (CartoDB, OpenStreetMap, etc.)
-  const isMapTile =
-    url.hostname.includes("tile.openstreetmap.org") ||
-    url.hostname.includes("basemaps.cartocdn.com") ||
-    url.hostname.includes("tile");
+  // Cache strategy for explicitly allowed OpenStreetMap tile hosts
+  const isMapTile = TILE_HOSTS.has(url.hostname);
 
   if (isMapTile) {
     event.respondWith(
-      caches.open(CACHE_NAME).then((cache) => {
+      caches.open(TILE_CACHE_NAME).then((cache) => {
         return cache.match(request).then((cachedResponse) => {
-          const fetchPromise = fetch(request)
-            .then((networkResponse) => {
-              if (networkResponse && networkResponse.status === 200) {
-                cache.put(request, networkResponse.clone());
-              }
-              return networkResponse;
-            })
-            .catch(() => cachedResponse);
-
-          return cachedResponse || fetchPromise;
+          if (cachedResponse) return cachedResponse;
+          return fetch(request).then(async (networkResponse) => {
+            if (networkResponse && networkResponse.status === 200) {
+              await cache.put(request, networkResponse.clone());
+              await trimCache(cache, MAX_TILE_ENTRIES);
+            }
+            return networkResponse;
+          });
         });
       })
     );
@@ -80,7 +95,7 @@ self.addEventListener("fetch", (event) => {
         fetch(request)
           .then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => {
+              caches.open(STATIC_CACHE_NAME).then((cache) => {
                 cache.put(request, networkResponse);
               });
             }
@@ -98,7 +113,7 @@ self.addEventListener("fetch", (event) => {
           (url.origin === self.location.origin || request.destination === "style" || request.destination === "script")
         ) {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
+          caches.open(STATIC_CACHE_NAME).then((cache) => {
             cache.put(request, responseToCache);
           });
         }
