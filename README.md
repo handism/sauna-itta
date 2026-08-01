@@ -74,11 +74,10 @@ DockerとDocker Composeを用意し、必要に応じて `.env.example` を `.en
 （※ 環境によっては `docker compose` の代わりに `docker-compose` コマンドを使用してください）
 
 ```bash
-docker-compose build
-docker-compose run --rm api bin/rails db:prepare
-docker-compose run --rm frontend npm ci
-docker-compose up
+docker-compose up --build
 ```
+
+フロントの依存関係は `Dockerfile.frontend.dev` のビルド時に `npm ci` でインストールされます。APIは前回の異常終了で残ったRailsのPIDファイルを除去し、`bin/rails db:prepare` を実行してから起動します。`package.json` または `package-lock.json` を更新した場合も、フロントイメージへ依存関係を反映するため再度 `docker-compose up --build` を実行してください。
 
 - フロント: `http://localhost:3000`
 - Rails: `http://localhost:3001`

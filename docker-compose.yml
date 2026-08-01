@@ -1,6 +1,8 @@
 services:
   frontend:
-    image: node:22-bookworm-slim
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend.dev
     working_dir: /app
     command: npm run dev
     environment:
@@ -9,8 +11,8 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - .:/app
-      - frontend_node_modules:/app/node_modules
+      - ./public:/app/public
+      - ./src:/app/src
     depends_on:
       api:
         condition: service_healthy
@@ -19,7 +21,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    command: bundle exec rails server -b 0.0.0.0 -p 3001
+    command: sh -c "rm -f /app/tmp/pids/server.pid && bin/rails db:prepare && exec bundle exec rails server -b 0.0.0.0 -p 3001"
     environment:
       RAILS_ENV: development
       SECRET_KEY_BASE: local-development-secret-key-base-change-me
@@ -65,7 +67,6 @@ services:
       retries: 10
 
 volumes:
-  frontend_node_modules:
   backend_bundle:
   backend_storage:
   postgres_data:
