@@ -71,11 +71,13 @@ npm run build:api
 ## Docker Composeでローカル起動
 
 DockerとDocker Composeを用意し、必要に応じて `.env.example` を `.env` へコピーしてOAuth値を設定します。
+（※ 環境によっては `docker compose` の代わりに `docker-compose` コマンドを使用してください）
 
 ```bash
-docker compose build
-docker compose run --rm api bin/rails db:prepare
-docker compose up
+docker-compose build
+docker-compose run --rm api bin/rails db:prepare
+docker-compose run --rm frontend npm ci
+docker-compose up
 ```
 
 - フロント: `http://localhost:3000`
@@ -83,6 +85,23 @@ docker compose up
 - 開発ログイン: `ENABLE_DEV_LOGIN=true` の場合だけ `POST http://localhost:3000/dev/login`
 
 開発ログインはdevelopment環境でしかルーティングされず、本番には存在しません。写真は `backend_storage`、DBは `postgres_data` Dockerボリュームに残ります。
+
+### 開発ログインの実行手順
+
+`POST /dev/login` はCSRF保護の対象です。アドレスバーから開く（`GET`する）、またはCSRFトークンなしで`POST`するとログインできません。ブラウザで `http://localhost:3000` を開き、開発者ツールのコンソールで次を実行してください。
+
+```js
+const session = await fetch("/api/v1/session").then((response) => response.json());
+await fetch("/dev/login", {
+  method: "POST",
+  headers: { "X-CSRF-Token": session.csrfToken },
+});
+location.reload();
+```
+
+ブラウザが表示するSelf-XSSの警告は、開発者ツールへ出る一般的な注意喚起です。内容を理解できないコードは貼り付けず、上記コードもローカルアプリの `/api/v1/session` と `/dev/login` にだけアクセスすることを確認してから実行してください。
+
+`.env` に実際のOAuth情報を設定していない場合、Googleログイン用のクライアントIDは開発用ダミー値 `development-client-id` になります。この状態で「Googleでログイン」を選ぶと、Google側で `401: invalid_client` が表示されます。ローカル開発では上記の開発ログインを使うか、次節の手順でOAuthクライアントを設定してください。
 
 ## Google OAuth設定
 
