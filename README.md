@@ -93,7 +93,7 @@ src/
 │       │   ├── VisitFiltersContext.tsx  # フィルター状態/操作・絞り込み結果・統計
 │       │   ├── EditorContext.tsx        # フォーム・編集状態ステートマシン
 │       │   ├── UIContext.tsx            # モーダル・テーマ・画面幅・UI状態/操作
-│       │   └── MapStateContext.tsx      # マップ表示・選択/ホバー状態
+│       │   └── MapStateContext.tsx      # マップ表示・選択/ホバー状態 (State / Actions 二層化)
 │       ├── components/       # 分割された UI コンポーネント群
 │       │   ├── DesktopSidebar.tsx       # デスクトップ用サイドバー
 │       │   ├── BottomSheet.tsx          # モバイル用ボトムシート
@@ -108,7 +108,7 @@ src/
 │       │   └── Toast.tsx, etc.
 │       ├── hooks/            # ドメイン・UIのカスタムフック群
 │       ├── types/            # 型定義 (domain.ts / ui.ts)
-│       ├── utils/            # ユーティリティ (geo.ts, form.ts, image.ts, theme.ts, motion.ts,
+│       ├── utils/            # ユーティリティ (geo.ts, search.ts, form.ts, image.ts, theme.ts, motion.ts,
 │       │                     #   storage.ts = localStorage の安全な読み書き,
 │       │                     #   visitStatus.ts = 記録ステータスの判定, date.ts, etc.)
 │       └── styles/           # 構成要素ごとに分離された CSS スタイル
@@ -116,7 +116,7 @@ src/
     └── sauna-visits.json     # 初期ロード用シードデータ
 ```
 
-Context は状態と操作を分離しており、操作だけを使う箇所は `useSaunaUIActions` / `useVisitFilterActions` / `useSaunaEditorActions`、画面幅だけを使う箇所は `useSaunaViewport` を購読します。これにより、検索入力やモーダル開閉が無関係な Provider へ連鎖する再レンダリングを抑えています。
+Context は状態と操作を分離しており、操作だけを使う箇所は `useSaunaUIActions` / `useVisitFilterActions` / `useSaunaEditorActions` / `useSaunaMapActions`、状態だけを使う箇所は `useSaunaMapStateValue`、画面幅だけを使う箇所は `useSaunaViewport` を購読します。これにより、検索入力やモーダル開閉が無関係な Provider へ連鎖する再レンダリングを抑えています。
 
 ---
 

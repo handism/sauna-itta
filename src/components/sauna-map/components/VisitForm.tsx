@@ -13,8 +13,9 @@ import {
   AreaField,
   DateField,
 } from "./VisitFormFields";
-import { useSaunaEditor, useSaunaEditorForm, useSaunaMapState } from "../context";
+import { useSaunaEditor, useSaunaEditorForm, useSaunaMapActions } from "../context";
 import { GeocodingResult } from "../utils/geocoding";
+import { getSubmitBlockedReason } from "../utils/form";
 
 export interface VisitFormViewProps {
   form: VisitFormState;
@@ -50,13 +51,11 @@ export function VisitFormView({
   const historyCount = editingId ? Math.max(1, historyEntries.length) : 0;
 
   // 保存できない理由を明示し、無反応なボタンに見えないようにする
-  const submitBlockedReason = !selectedLocation
-    ? "地図上をクリックして場所を選択してください"
-    : !form.name.trim()
-      ? "サウナ名を入力してください"
-      : imageUploading
-        ? "画像の処理が終わるまでお待ちください"
-        : null;
+  const submitBlockedReason = getSubmitBlockedReason(
+    selectedLocation,
+    form.name,
+    imageUploading,
+  );
 
   const handleGeocodingSelect = (result: GeocodingResult) => {
     if (onLocationSelect) {
@@ -211,7 +210,7 @@ export function VisitForm() {
    * cancelEditing を直接呼ばず MapStateContext 経由にする（シート位置の知識を
    * 画面側へ漏らさないこと）。
    */
-  const { handleCancelEditing, handleEditingFinished } = useSaunaMapState();
+  const { handleCancelEditing, handleEditingFinished } = useSaunaMapActions();
 
   return (
     <VisitFormView

@@ -1,5 +1,12 @@
 import { useCallback, useMemo, useState } from "react";
-import { calculateStats, getVisitCount, getVisitStatus } from "../utils";
+import {
+  calculateStats,
+  getVisitCount,
+  getVisitStatus,
+  isInBounds,
+  createSearchRegex,
+  matchesSearchKeyword,
+} from "../utils";
 import { SaunaVisit, VisitFilters } from "../types";
 
 const DEFAULT_FILTERS: VisitFilters = {
@@ -30,9 +37,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
   const [filters, setFilters] = useState<VisitFilters>(getInitialFilters);
 
   const filteredVisits = useMemo(() => {
-    const keyword = filters.search.trim();
-    // Escape special regex characters in keyword for safe case-insensitive matching
-    const searchRegex = keyword ? new RegExp(keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') : null;
+    const searchRegex = createSearchRegex(filters.search);
 
     const result = visits.filter((v) => {
       if (filters.status !== "all" && getVisitStatus(v) !== filters.status) {
@@ -51,20 +56,11 @@ export function useVisitFilters(visits: SaunaVisit[]) {
         return false;
       }
 
-      if (filters.filterByBounds && filters.mapBounds) {
-        const { northEast, southWest } = filters.mapBounds;
-        const inLat = v.lat >= Math.min(southWest.lat, northEast.lat) && v.lat <= Math.max(southWest.lat, northEast.lat);
-        const minLng = Math.min(southWest.lng, northEast.lng);
-        const maxLng = Math.max(southWest.lng, northEast.lng);
-        const inLng = v.lng >= minLng && v.lng <= maxLng;
-        if (!inLat || !inLng) return false;
+      if (filters.filterByBounds && !isInBounds(v.lat, v.lng, filters.mapBounds)) {
+        return false;
       }
 
-      if (searchRegex) {
-        if (searchRegex.test(v.name)) return true;
-        if (v.comment && searchRegex.test(v.comment)) return true;
-        if (v.area && searchRegex.test(v.area)) return true;
-        if (v.tags && v.tags.some((tag) => searchRegex.test(tag))) return true;
+      if (!matchesSearchKeyword(v, searchRegex)) {
         return false;
       }
 
