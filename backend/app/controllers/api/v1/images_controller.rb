@@ -1,6 +1,10 @@
 module Api
   module V1
     class ImagesController < BaseController
+      rescue_from ActiveSupport::MessageVerifier::InvalidSignature do
+        render_error("not_found", "対象の記録が見つかりません。", :not_found)
+      end
+
       def show
         blob = ActiveStorage::Blob.find_signed!(params[:signed_id])
         attachment = ActiveStorage::Attachment.find_by!(blob_id: blob.id, name: "image", record_type: "VisitHistoryEntry")

@@ -1,0 +1,61 @@
+require "test_helper"
+
+class ApiV1ImagesTest < ActionDispatch::IntegrationTest
+  include ApiAuthHelper
+
+  test "他ユーザーの写真は署名IDを知っていても404にする" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(image: png_data_url) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    image_path = response.parsed_body.dig("saunaVisit", "image")
+
+    delete "/api/v1/session", headers: csrf_header(csrf)
+    assert_response :no_content
+
+    OmniAuth.config.mock_auth[:google_oauth2] = google_auth_hash(uid: "intruder", email: "intruder@example.com")
+    ENV["ALLOWED_GOOGLE_EMAIL"] = "intruder@example.com"
+    sign_in
+
+    get image_path
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.dig("error", "code")
+  end
+
+  test "未認証では写真を配信しない" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(image: png_data_url) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    image_path = response.parsed_body.dig("saunaVisit", "image")
+
+    delete "/api/v1/session", headers: csrf_header(csrf)
+    get image_path
+
+    assert_response :unauthorized
+    assert_equal "unauthenticated", response.parsed_body.dig("error", "code")
+  end
+
+  test "所有者にはキャッシュを共有しない形で配信する" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(image: png_data_url) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+
+    get response.parsed_body.dig("saunaVisit", "image")
+
+    assert_response :success
+    assert_equal "image/png", response.media_type
+    assert_includes response.headers["Cache-Control"], "private"
+    assert_includes response.headers["Content-Disposition"], "inline"
+  end
+
+  test "不正な署名IDは404を返す" do
+    sign_in
+
+    get "/api/v1/images/invalid-signed-id"
+
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.dig("error", "code")
+  end
+end
