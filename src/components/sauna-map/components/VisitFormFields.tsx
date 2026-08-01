@@ -1,6 +1,7 @@
 import { CheckCircle2, Star } from "lucide-react";
 import { LocationSearchInput } from "./LocationSearchInput";
 import { GeocodingResult } from "../utils/geocoding";
+import { getDateDaysAgo } from "../utils/date";
 
 export function FormHeader({
   editingId,
@@ -174,15 +175,6 @@ export function DateField({
   date: string;
   onChange: (date: string) => void;
 }) {
-  const setQuickDate = (offsetDays: number) => {
-    const d = new Date();
-    d.setDate(d.getDate() - offsetDays);
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    onChange(`${year}-${month}-${day}`);
-  };
-
   return (
     <div className="form-group">
       <div className="label-row-with-actions">
@@ -191,14 +183,14 @@ export function DateField({
           <button
             type="button"
             className="btn-quick-date"
-            onClick={() => setQuickDate(0)}
+            onClick={() => onChange(getDateDaysAgo(0))}
           >
             今日
           </button>
           <button
             type="button"
             className="btn-quick-date"
-            onClick={() => setQuickDate(1)}
+            onClick={() => onChange(getDateDaysAgo(1))}
           >
             昨日
           </button>

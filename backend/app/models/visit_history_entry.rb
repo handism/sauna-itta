@@ -6,7 +6,7 @@ class VisitHistoryEntry < ApplicationRecord
   has_one_attached :image
 
   validates :public_id, :visited_on, presence: true
-  validates :public_id, uniqueness: true
+  validates :public_id, uniqueness: { scope: :sauna_visit_id }
   validates :rating, numericality: { in: 0..5, allow_nil: true }
   validate :acceptable_image
 

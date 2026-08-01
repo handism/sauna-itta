@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_02_000005) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_02_000006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -35,7 +35,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_02_000005) do
     t.string "service_name", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
     t.check_constraint "byte_size >= 0 AND byte_size <= 1048576", name: "active_storage_blobs_visit_image_size"
-    t.check_constraint "content_type IS NULL OR (content_type::text = ANY (ARRAY['image/jpeg'::character varying, 'image/png'::character varying, 'image/webp'::character varying, 'image/gif'::character varying]::text[]))", name: "active_storage_blobs_visit_image_mime"
+    t.check_constraint "content_type IS NULL OR (content_type::text = ANY (ARRAY['image/jpeg'::character varying::text, 'image/png'::character varying::text, 'image/webp'::character varying::text, 'image/gif'::character varying::text]))", name: "active_storage_blobs_visit_image_mime"
   end
 
   create_table "active_storage_variant_records", force: :cascade do |t|
@@ -82,8 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_02_000005) do
     t.bigint "sauna_visit_id", null: false
     t.datetime "updated_at", null: false
     t.date "visited_on", null: false
-    t.index ["public_id"], name: "index_visit_history_entries_on_public_id", unique: true
-    t.index ["sauna_visit_id"], name: "index_visit_history_entries_on_sauna_visit_id"
+    t.index ["sauna_visit_id", "public_id"], name: "index_visit_history_entries_on_visit_and_public_id", unique: true
     t.check_constraint "rating IS NULL OR rating >= 0::numeric AND rating <= 5::numeric", name: "visit_history_entries_rating_range"
   end
 

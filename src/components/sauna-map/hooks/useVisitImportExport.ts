@@ -4,6 +4,9 @@ import { SaunaVisit, SaunaVisitSchema } from "../types";
 import { normalizeVisits } from "../utils";
 import type { ImportResult } from "../repositories";
 
+// Rails 側の ImportsController が 1 リクエストあたり 10 件までしか受け付けません
+const CHUNK_SIZE = 10;
+
 const STORAGE_ERROR_MSG =
   "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
 
@@ -55,18 +58,26 @@ export function useVisitImportExport(
       const validVisits = validationResult.data;
       const existingIds = new Set(visits.map((v) => v.id));
       const normalizedImported = normalizeVisits(validVisits.filter((v) => !existingIds.has(v.id)));
+      // 画面に出ている記録と重複した分。サーバー側で弾かれた分は importBatch の skipped に乗る
+      const alreadyKnown = validVisits.length - normalizedImported.length;
 
       if (normalizedImported.length === 0) {
-        return { added: 0, success: true };
+        return { added: 0, skipped: alreadyKnown, success: true };
       }
 
       if (importBatch) {
         let added = 0;
+        let skipped = alreadyKnown;
         try {
-          for (let offset = 0; offset < normalizedImported.length; offset += 10) {
-            const result = await importBatch(normalizedImported.slice(offset, offset + 10));
+          const total = normalizedImported.length;
+          for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
+            const result = await importBatch(normalizedImported.slice(offset, offset + CHUNK_SIZE));
             added += result.added;
-            showToast?.(`${added}件の取り込みが完了しました。`, "info");
+            skipped += result.skipped;
+            // 最終チャンクの結果は完了トーストで伝えるため、残りがある間だけ途中経過を出す
+            if (offset + CHUNK_SIZE < total) {
+              showToast?.(`${added}/${total}件を取り込み中です...`, "info");
+            }
           }
         } catch (error) {
           try {
@@ -78,12 +89,12 @@ export function useVisitImportExport(
           throw new ImportProgressError(added, message, { cause: error });
         }
         await reload?.();
-        return { added, success: true };
+        return { added, skipped, success: true };
       }
 
       const nextVisits = [...normalizedImported, ...visits];
       const success = saveVisits?.(nextVisits) ?? false;
-      return { added: normalizedImported.length, success };
+      return { added: normalizedImported.length, skipped: alreadyKnown, success };
     },
     [visits, saveVisits, importBatch, reload, showToast],
   );
@@ -95,16 +106,22 @@ export function useVisitImportExport(
 
       setImporting(true);
       try {
-        const { added, success } = await importVisitsFromFile(file);
+        const { added, skipped, success } = await importVisitsFromFile(file);
         if (added === 0) {
-          showToast?.("新しく追加されるデータはありませんでした。", "info");
+          showToast?.(
+            skipped > 0
+              ? `${skipped}件はすでに登録済みのため、新しく追加されたデータはありません。`
+              : "新しく追加されるデータはありませんでした。",
+            "info",
+          );
           return;
         }
 
         if (!success) {
           showToast?.(STORAGE_ERROR_MSG, "error");
         } else {
-          showToast?.(`データを${added}件取り込みました。`, "success");
+          const skippedNote = skipped > 0 ? `（${skipped}件はすでに登録済みのためスキップしました）` : "";
+          showToast?.(`データを${added}件取り込みました。${skippedNote}`, "success");
         }
       } catch (error) {
         console.error(error);

@@ -1,3 +1,23 @@
+/** Date をローカルタイムゾーンのまま YYYY-MM-DD にする（UTC へ倒さない）。 */
+function formatLocalDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/**
+ * 今日から `daysAgo` 日前の日付 (YYYY-MM-DD)。
+ *
+ * 「今日」「昨日」のようなクイック入力もここを通すこと。呼び出し側で
+ * `new Date()` を組み立て直すと、UTC 変換の有無が箇所ごとにずれます。
+ */
+export function getDateDaysAgo(daysAgo: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - daysAgo);
+  return formatLocalDate(date);
+}
+
 /**
  * 今日の日付 (YYYY-MM-DD)。
  *
@@ -5,11 +25,7 @@
  * どちらにも置けない（循環参照になる）。専用モジュールに切り出してある。
  */
 export function getTodayDate(): string {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return getDateDaysAgo(0);
 }
 
 /**
