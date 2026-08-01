@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getTodayDate, parseLocalDate, toDateString } from "./date";
+import { getDateDaysAgo, getTodayDate, parseLocalDate, toDateString } from "./date";
 
 describe("date utils", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   describe("getTodayDate", () => {
@@ -13,14 +14,39 @@ describe("date utils", () => {
     });
 
     it("UTC では前日でもローカル日付を返す", () => {
-      vi.spyOn(Date.prototype, "getFullYear").mockReturnValue(2026);
-      vi.spyOn(Date.prototype, "getMonth").mockReturnValue(6);
-      vi.spyOn(Date.prototype, "getDate").mockReturnValue(30);
-      vi.spyOn(Date.prototype, "toISOString").mockReturnValue(
-        "2026-07-29T15:30:00.000Z",
-      );
+      vi.useFakeTimers();
+      // UTC では 2026-07-29 だが、日本時間では 2026-07-30 の 0 時半
+      vi.setSystemTime(new Date("2026-07-30T00:30:00+09:00"));
 
       expect(getTodayDate()).toBe("2026-07-30");
+    });
+  });
+
+  describe("getDateDaysAgo", () => {
+    it("0 を渡すと今日を返す", () => {
+      expect(getDateDaysAgo(0)).toBe(getTodayDate());
+    });
+
+    it("指定した日数だけ遡った日付を返す", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-02T09:00:00+09:00"));
+
+      expect(getDateDaysAgo(1)).toBe("2026-08-01");
+      expect(getDateDaysAgo(7)).toBe("2026-07-26");
+    });
+
+    it("月や年をまたいでも繰り下がる", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-01-01T09:00:00+09:00"));
+
+      expect(getDateDaysAgo(1)).toBe("2025-12-31");
+    });
+
+    it("UTC では前日の時間帯でもローカル日付を基準に遡る", () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-08-02T00:30:00+09:00"));
+
+      expect(getDateDaysAgo(1)).toBe("2026-08-01");
     });
   });
 

@@ -119,6 +119,43 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_equal 5, visit["visitCount"]
   end
 
+  test "他ユーザーと履歴IDが重複していても取り込める" do
+    other = User.create!(google_subject: "other", email: "other@example.com")
+    other_visit = other.sauna_visits.create!(name: "他人", latitude: 35, longitude: 139, status: "visited")
+    other_visit.visit_history_entries.create!(public_id: "shared-history-id", visited_on: Date.new(2026, 7, 1))
+
+    csrf = sign_in
+    imported = valid_attributes.merge(
+      id: "legacy-shared",
+      history: [ { id: "shared-history-id", date: "2026-08-01", comment: "自分の記録" } ]
+    )
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :success
+    assert_equal 1, response.parsed_body["added"]
+    assert_equal "shared-history-id", owner.sauna_visits.sole.visit_history_entries.sole.public_id
+  end
+
+  test "同じ記録の中で履歴IDが重複する場合は取り込まない" do
+    csrf = sign_in
+    imported = valid_attributes.merge(
+      id: "legacy-dup",
+      history: [
+        { id: "same-history-id", date: "2026-07-01" },
+        { id: "same-history-id", date: "2026-08-01" }
+      ]
+    )
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+    assert_equal 0, owner.sauna_visits.count
+  end
+
   test "インポートにもCSRFトークンを要求する" do
     sign_in
     post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ valid_attributes.merge(id: "x") ] }, as: :json

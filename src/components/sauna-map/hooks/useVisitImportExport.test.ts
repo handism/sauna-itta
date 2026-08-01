@@ -31,7 +31,7 @@ describe("useVisitImportExport", () => {
     const newVisit = { id: "2", name: "Sauna B", lat: 35.1, lng: 139.1, comment: "nice", date: "2023-01-02" };
     const file = new File([JSON.stringify([newVisit])], "test.json", { type: "application/json" });
     const res = await result.current.importVisitsFromFile(file);
-    expect(res).toEqual({ added: 1, success: true });
+    expect(res).toEqual({ added: 1, skipped: 0, success: true });
     expect(saveVisitsMock).toHaveBeenCalledWith(expect.arrayContaining([
       expect.objectContaining({ id: "2" }),
       expect.objectContaining({ id: "1" }),
@@ -43,7 +43,7 @@ describe("useVisitImportExport", () => {
     const duplicateVisit = { id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2023-01-01" };
     const file = new File([JSON.stringify([duplicateVisit])], "test.json", { type: "application/json" });
     const res = await result.current.importVisitsFromFile(file);
-    expect(res).toEqual({ added: 0, success: true });
+    expect(res).toEqual({ added: 0, skipped: 1, success: true });
     expect(saveVisitsMock).not.toHaveBeenCalled();
   });
 
@@ -89,9 +89,116 @@ describe("useVisitImportExport", () => {
     }));
     const file = new File([JSON.stringify(imported)], "test.json", { type: "application/json" });
 
-    await expect(result.current.importVisitsFromFile(file)).resolves.toEqual({ added: 25, success: true });
+    await expect(result.current.importVisitsFromFile(file)).resolves.toEqual({
+      added: 25,
+      skipped: 0,
+      success: true,
+    });
     expect(importBatch.mock.calls.map(([items]) => items.length)).toEqual([10, 10, 5]);
     expect(reload).toHaveBeenCalledOnce();
+  });
+
+  test("途中経過のトーストは残りのチャンクがある間だけ出す", async () => {
+    const importBatch = vi.fn().mockImplementation(async (items: SaunaVisit[]) => ({
+      added: items.length,
+      skipped: 0,
+    }));
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, showToast, importBatch, vi.fn()),
+    );
+    const imported = Array.from({ length: 25 }, (_, index) => ({
+      id: `chunk-${index}`,
+      name: `Sauna ${index}`,
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+    }));
+    const file = new File([JSON.stringify(imported)], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    // 3チャンク送っても途中経過は2回まで。最後は完了トーストが伝える
+    expect(showToast.mock.calls).toEqual([
+      ["10/25件を取り込み中です...", "info"],
+      ["20/25件を取り込み中です...", "info"],
+      ["データを25件取り込みました。", "success"],
+    ]);
+  });
+
+  test("1チャンクで収まる場合は途中経過を出さない", async () => {
+    const importBatch = vi.fn().mockResolvedValue({ added: 1, skipped: 0 });
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, showToast, importBatch, vi.fn()),
+    );
+    const file = new File(
+      [JSON.stringify([{ id: "single", name: "Sauna", lat: 35, lng: 139, comment: "", date: "2026-08-02" }])],
+      "test.json",
+      { type: "application/json" },
+    );
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(showToast).toHaveBeenCalledExactlyOnceWith("データを1件取り込みました。", "success");
+  });
+
+  test("サーバーがスキップした件数を完了トーストで伝える", async () => {
+    const importBatch = vi.fn().mockResolvedValue({ added: 1, skipped: 1 });
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, showToast, importBatch, vi.fn()),
+    );
+    const imported = [
+      { id: "new-1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2026-08-02" },
+      { id: "new-2", name: "Sauna B", lat: 35, lng: 139, comment: "", date: "2026-08-02" },
+    ];
+    const file = new File([JSON.stringify(imported)], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(showToast).toHaveBeenLastCalledWith(
+      "データを1件取り込みました。（1件はすでに登録済みのためスキップしました）",
+      "success",
+    );
+  });
+
+  test("画面上の記録と重複しただけの場合もスキップ件数を伝える", async () => {
+    const importBatch = vi.fn();
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, showToast, importBatch, vi.fn()),
+    );
+    const file = new File(
+      [JSON.stringify([{ id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2023-01-01" }])],
+      "test.json",
+      { type: "application/json" },
+    );
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(importBatch).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledExactlyOnceWith(
+      "1件はすでに登録済みのため、新しく追加されたデータはありません。",
+      "info",
+    );
   });
 
   test("APIインポートが途中で失敗した場合は確定済み件数を通知して再読み込みする", async () => {

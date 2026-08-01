@@ -47,7 +47,7 @@
 - **保存ボタンの非活性判定**: バリデーションやアップロード状態に伴う保存ボタンブロック理由の取得には `utils/form.ts` の `getSubmitBlockedReason()` を使うこと。
 - **記録のステータス判定**: `visit.status ?? "visited"` を直書きせず、`utils/visitStatus.ts` の `getVisitStatus()` / `isVisited()` / `isWishlist()` を使うこと（旧形式データの既定値の解釈が地図・一覧・統計でずれるのを防ぎます）。
 - **`localStorage` は必ず `utils/storage.ts` 経由**: 読み書きは `readStorage()` / `writeStorage()` を使うこと。Safari のプライベートモードや容量超過では例外が飛ぶため、直接触ると 1 箇所の try/catch 漏れで画面が落ちます。`writeStorage()` の戻り値は「保存できたか」で、容量超過の通知（`useSaunaVisits`）に使っています。読めなかったときだけ既定値へ倒したい場合は `readStorage(key, onErrorValue)` の第 2 引数を使うこと（テーマ判定がこれに依存しています）。
-- **今日の日付**: `new Date().toISOString().split("T")[0]` を書かず `utils/date.ts` の `getTodayDate()` を使うこと。UTC ではなく利用者のローカル日付を返すため、日本時間の深夜帯に前日になることを防ぎます（`form.ts` は `visitHistory.ts` に依存しているため、両方から使うこの関数だけ別モジュールに置いています）。
+- **今日の日付**: `new Date().toISOString().split("T")[0]` を書かず `utils/date.ts` の `getTodayDate()` を使うこと。UTC ではなく利用者のローカル日付を返すため、日本時間の深夜帯に前日になることを防ぎます（`form.ts` は `visitHistory.ts` に依存しているため、両方から使うこの関数だけ別モジュールに置いています）。「昨日」のような相対日付も `getDateDaysAgo(daysAgo)` を使い（`getTodayDate()` はその薄いラッパー）、コンポーネント側で `new Date()` から年月日を組み立て直さないこと。
 - **地点検索の障害を0件として扱わないこと**: `searchLocation()` は入力キャンセル (`AbortError`) だけ空配列へ変換し、HTTP・通信・JSONエラーは呼び出し側へ再送出します。`LocationSearchInput` が通信障害用のエラー表示を出すため、一般エラーを握り潰して空配列へ戻さないでください。
 - **訪問回数の算出**: 訪問回数は必ず `utils/visitHistory.ts` の `getVisitCount()` を使うこと（`history.length` と `visitCount` の両方を考慮します）。地図側と統計ページで別々に導出すると、旧形式データで表示が食い違います。訪問回数による順位付けは `rankVisitsByCount()` に集約しています（同数のときの並びまで揃わないと、「MY HOME SAUNA」と「よく行く施設 TOP 5」で 1 位が食い違います）。
 - **訪問リストの行コンポーネント**: `VisitCompactItem` / `VisitCardItem` は表示密度が違うだけなので、props 型と `memo` の比較関数は `components/visitItem.ts` の `VisitItemProps` / `areVisitItemPropsEqual` を共有します。片方にだけ props を足すと比較関数の更新漏れで表示が古いまま残るため、個別に再定義しないこと。
@@ -112,6 +112,8 @@
 - `NEXT_PUBLIC_DATA_SOURCE=local|api` で配布形態を切り替えます。localはGitHub Pages用の`/sauna-itta`、同梱JSON、`localStorage`、PWAを維持し、apiはbasePathなし・Rails API・オンライン必須でService Workerを登録しません。
 - フロントの永続化は `repositories/` の `VisitRepository` 経由にします。Contextや画面から`fetch`または`localStorage`を直接呼ばないでください。CRUDは非同期で、Repository成功後だけ画面状態を更新します。
 - APIインポートは最大10件のチャンクを維持し、既存`external_id`をスキップして再実行可能にします。途中のチャンクで失敗した場合は必ず再読み込みし、確定済み件数とRepositoryのエラー理由を利用者へ通知します。JSON形式エラーとして一律表示しないでください。JSONエクスポートは両モードで維持します。
+- インポートの結果は `ImportResult` の `added` と `skipped` を両方とも利用者へ伝えます。チャンクごとの途中経過トーストは残りのチャンクがある間だけ出し、最後のチャンクの結果は完了トーストにまとめること（チャンク数と同じ回数トーストを出すと、大量取り込みで通知が連続します）。`skipped` にはサーバーが弾いた重複と、画面上の記録と重複してリクエスト前に除外した分の両方を含めます。
+- 履歴IDは記録内で一意です（`public_id` は `scope: :sauna_visit_id`）。グローバル一意へ戻すと、他ユーザーがエクスポートしたJSONを取り込んだときに履歴IDが衝突して取り込めなくなります。
 - インポートAPIのペイロード検証は`ImportsController::InvalidPayload`へ集約し、配列でない`saunaVisits`・記録以外の要素・IDが無い記録をすべて422で返します。`attributes.fetch(:id)`の`KeyError`を直接rescueしないでください（`ActionController::ParameterMissing`は`KeyError`のサブクラスのため、キー欠落が「IDがない記録」として誤って報告されます）。
 - Railsの全記録取得は必ず`current_user.sauna_visits`からスコープし、他ユーザーの記録・履歴・写真は404にします。APIはcamelCase、エラーは`{ error: { code, message, details? } }`形式です。
 - 変更系APIはセッション認証とCSRFを必須にし、`lock_version`競合は409を返します。開発ログインはdevelopmentかつ`ENABLE_DEV_LOGIN=true`の場合だけ許可し、本番ルートを追加しないでください。
