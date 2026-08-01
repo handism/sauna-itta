@@ -695,6 +695,23 @@
   box-shadow: 0 2px 8px rgba(238, 143, 67, 0.2);
 }
 
+.active-filter-chip {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 22%, var(--input-bg)), color-mix(in srgb, var(--primary) 32%, var(--input-bg)));
+  color: var(--primary);
+  border-color: var(--primary);
+  font-weight: 600;
+}
+
+.chip-remove-icon {
+  opacity: 0.75;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.chip-btn:hover .chip-remove-icon {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
 
 .chip-reset-btn {
   background: color-mix(in srgb, var(--error) 15%, transparent);
@@ -776,7 +793,9 @@
   /* 並び順ドロップダウンは開閉・選択ともに主要動線なので必ず 44px を確保する */
   .quick-sort-trigger,
   .quick-sort-option,
-  .filters-panel-close {
+  .filters-panel-close,
+  .chip-btn,
+  .active-filter-chip {
     min-height: 44px;
   }
 }

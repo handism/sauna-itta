@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useMemo } from "react";
 import { Flame, Calendar, Award, MapPin } from "lucide-react";
 import { getVisitHistoryEntries, RankedVisit } from "@/components/sauna-map/utils";
@@ -51,7 +52,17 @@ export function HomeSaunaCard({ ranked }: HomeSaunaCardProps) {
           <Flame size={18} className={styles.flameIcon} />
           <span>MY HOME SAUNA</span>
         </div>
-        <span className={styles.homeSaunaCount}>計 {count} 回訪問</span>
+        <div className={styles.homeSaunaHeaderActions}>
+          <span className={styles.homeSaunaCount}>計 {count} 回訪問</span>
+          <Link
+            href={`/?id=${sauna.id}`}
+            className={styles.mapJumpLink}
+            title={`${sauna.name}を地図で見る`}
+            aria-label={`${sauna.name}を地図で見る`}
+          >
+            <MapPin size={13} /> <span>地図で見る</span>
+          </Link>
+        </div>
       </div>
 
       <div className={styles.homeSaunaMain}>

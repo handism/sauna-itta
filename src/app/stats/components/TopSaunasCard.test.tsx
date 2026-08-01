@@ -1,9 +1,14 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+/** @vitest-environment jsdom */
+import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { TopSaunasCard } from "./TopSaunasCard";
 import type { RankedVisit } from "@/components/sauna-map/utils";
 import type { SaunaVisit } from "@/components/sauna-map/types";
+
+afterEach(() => {
+  cleanup();
+});
 
 const createVisit = (overrides: Partial<SaunaVisit>): SaunaVisit => ({
   id: "test-id",
@@ -74,4 +79,15 @@ describe("TopSaunasCard", () => {
     // Rating 0 should not render rating span
     expect(container.querySelector('[class*="topSaunaRating"]')).toBeNull();
   });
+
+  it("renders a link to view sauna on the map for each row", () => {
+    const ranked: RankedVisit[] = [
+      { visit: createVisit({ id: "sauna-top-1", name: "Top 1 Sauna" }), count: 5 },
+    ];
+    render(<TopSaunasCard ranked={ranked} />);
+
+    const link = screen.getByRole("link", { name: "Top 1 Saunaを地図で見る" });
+    expect(link).toHaveAttribute("href", "/?id=sauna-top-1");
+  });
 });
+

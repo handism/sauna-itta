@@ -1,5 +1,5 @@
 import { Dispatch, ReactNode, SetStateAction, useMemo } from "react";
-import { X, Star, MapPin, Tag } from "lucide-react";
+import { X, Star, MapPin, Tag, Search, SlidersHorizontal } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../types";
 import { getPopularAreas, getPopularTags } from "../utils";
 
@@ -10,6 +10,14 @@ interface QuickFilterChipsProps {
   activeFilterCount?: number;
   onClearFilters?: () => void;
   resultCount?: number;
+}
+
+interface ChipItem {
+  key: string;
+  icon: ReactNode;
+  label: string;
+  isActive: boolean;
+  onToggle: () => void;
 }
 
 export function QuickFilterChips({
@@ -23,10 +31,80 @@ export function QuickFilterChips({
   const popularTags = useMemo(() => getPopularTags(visits, 5), [visits]);
 
   /*
-   * チップはどれも「押すと絞り込みが入り、もう一度押すと外れる」同じ振る舞いなので、
-   * 種類ごとに JSX とハンドラを複製せず、宣言的に並べて 1 箇所で描画する。
+   * 検索やステータス、マップ範囲内絞り込みなど、
+   * 通常のクイックフィルター候補に含まれない有効なフィルター条件を個別チップとして集約する。
    */
-  const chips: { key: string; icon: ReactNode; label: string; isActive: boolean; onToggle: () => void }[] = [
+  const activeExtraChips: ChipItem[] = useMemo(() => {
+    const extra: ChipItem[] = [];
+
+    if (filters.search.trim().length > 0) {
+      extra.push({
+        key: "active-search",
+        icon: <Search size={13} />,
+        label: `検索: "${filters.search}"`,
+        isActive: true,
+        onToggle: () => setFilters((prev) => ({ ...prev, search: "" })),
+      });
+    }
+
+    if (filters.status !== "all") {
+      extra.push({
+        key: "active-status",
+        icon: <SlidersHorizontal size={13} />,
+        label: `ステータス: ${filters.status === "visited" ? "行った" : "行きたい"}`,
+        isActive: true,
+        onToggle: () => setFilters((prev) => ({ ...prev, status: "all" })),
+      });
+    }
+
+    if (filters.minRating > 0 && filters.minRating !== 4) {
+      extra.push({
+        key: "active-rating-custom",
+        icon: <Star size={13} />,
+        label: `★ ${filters.minRating}.0以上`,
+        isActive: true,
+        onToggle: () => setFilters((prev) => ({ ...prev, minRating: 0 })),
+      });
+    }
+
+    if (filters.selectedArea && !popularAreas.includes(filters.selectedArea)) {
+      extra.push({
+        key: "active-area-custom",
+        icon: <MapPin size={13} />,
+        label: `エリア: ${filters.selectedArea}`,
+        isActive: true,
+        onToggle: () => setFilters((prev) => ({ ...prev, selectedArea: "" })),
+      });
+    }
+
+    if (filters.selectedTag && !popularTags.includes(filters.selectedTag)) {
+      extra.push({
+        key: "active-tag-custom",
+        icon: <Tag size={13} />,
+        label: `タグ: ${filters.selectedTag}`,
+        isActive: true,
+        onToggle: () => setFilters((prev) => ({ ...prev, selectedTag: "" })),
+      });
+    }
+
+    if (filters.filterByBounds) {
+      extra.push({
+        key: "active-bounds",
+        icon: <MapPin size={13} />,
+        label: "エリア内のみ",
+        isActive: true,
+        onToggle: () => setFilters((prev) => ({ ...prev, filterByBounds: false })),
+      });
+    }
+
+    return extra;
+  }, [filters, popularAreas, popularTags, setFilters]);
+
+  /*
+   * プリセットのクイックフィルター候補。
+   * どれも「押すと絞り込みが入り、もう一度押すと外れる」同じ振る舞い。
+   */
+  const presetChips: ChipItem[] = [
     {
       key: "rating-4",
       icon: <Star size={13} />,
@@ -60,11 +138,11 @@ export function QuickFilterChips({
   ];
 
   const isFilterActive = activeFilterCount > 0;
+  const allChips = [...activeExtraChips, ...presetChips];
 
-  // もしサブフィルター（★4以上、エリア、タグ、またはアクティブフィルター）が存在しない場合は非表示にすることも視野に入れるが、スクロールチップバーとしてシンプルに提供
   return (
     <div className="quick-filter-container">
-      {chips.length > 3 && (
+      {allChips.length > 3 && (
         <span className="quick-filter-scroll-hint" aria-hidden="true">
           横にスワイプ
         </span>
@@ -83,19 +161,21 @@ export function QuickFilterChips({
           </button>
         )}
 
-        {/* ★4以上 → 人気エリア → 人気タグの順に並ぶ */}
-        {chips.map(({ key, icon, label, isActive, onToggle }) => (
+        {/* アクティブな特別チップ → ★4以上 → 人気エリア → 人気タグの順に並ぶ */}
+        {allChips.map(({ key, icon, label, isActive, onToggle }) => (
           <button
             key={key}
             type="button"
-            className={`chip-btn ${isActive ? "is-active" : ""}`}
+            className={`chip-btn ${isActive ? "is-active active-filter-chip" : ""}`}
             aria-pressed={isActive}
             onClick={onToggle}
           >
-            {icon} {label}
+            {icon} <span>{label}</span>
+            {isActive && <X size={12} className="chip-remove-icon" aria-hidden="true" />}
           </button>
         ))}
       </div>
     </div>
   );
 }
+

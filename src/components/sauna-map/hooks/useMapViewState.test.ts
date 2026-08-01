@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useMapViewState } from "./useMapViewState";
 import { SaunaVisit } from "../types";
 
@@ -91,4 +91,20 @@ describe("useMapViewState", () => {
 
     expect(result.current.enableClustering).toBe(false);
   });
+
+  it("URLクエリパラメータ ?id= に該当する施設が存在する場合初期選択されること", async () => {
+    window.history.pushState({}, "Test Title", "/?id=2");
+    const { result } = renderHook(() => useMapViewState(mockVisits, true));
+
+    await waitFor(() => {
+      expect(result.current.selectedId).toBe("2");
+    });
+    expect(result.current.hoveredId).toBe("2");
+    expect(result.current.mapTargetOverride).toEqual({ lat: 35.73, lng: 139.71 });
+    expect(result.current.snapPosition).toBe("min");
+
+    window.history.pushState({}, "Test Title", "/");
+  });
 });
+
+

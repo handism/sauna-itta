@@ -64,4 +64,19 @@ describe("BottomSheet", () => {
     fireEvent.keyDown(screen.getByRole("button", { name: "パネルを開く" }), { key: "ArrowDown" });
     expect(onSnapChange).not.toHaveBeenCalled();
   });
+
+  it("shows '地図を見る' button when selectedVisitName is provided and snapPosition is not 'min', and clicking it calls onSnapChange('min')", () => {
+    render(
+      <BottomSheet snapPosition="half" onSnapChange={onSnapChange} filteredCount={3} selectedVisitName="サウナA">
+        <p>リスト本体</p>
+      </BottomSheet>
+    );
+
+    const mapBtn = screen.getByRole("button", { name: "シートを閉じて地図で選択中のピンを確認" });
+    expect(mapBtn).toBeInTheDocument();
+
+    fireEvent.click(mapBtn);
+    expect(onSnapChange).toHaveBeenCalledWith("min");
+  });
 });
+
