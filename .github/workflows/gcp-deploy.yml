@@ -2,16 +2,6 @@ name: GCPへデプロイ
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - backend/**
-      - src/**
-      - public/**
-      - Dockerfile
-      - package*.json
-      - next.config.ts
-      - .github/workflows/gcp-deploy.yml
 
 permissions:
   contents: read

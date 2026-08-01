@@ -156,9 +156,11 @@ Cloud RunはCloud SQLのUnix socketを使うためVPC Connectorは不要です�
 
 - `ci.yml`: npm検証、Rails test／RuboCop／Brakeman、Terraform format／validate、本番Docker build
 - `pages.yml`: mainからlocalモードをGitHub Pagesへ配信
-- `gcp-deploy.yml`: WIF/OIDCで認証し、イメージを一度だけbuild・push。同一digestでmigration job成功後にCloud Runを更新
+- `gcp-deploy.yml`: GCP基盤の構築完了後に手動実行します。WIF/OIDCで認証し、イメージを一度だけbuild・push。同一digestでmigration job成功後にCloud Runを更新
 
 GitHub Environment `gcp-production` に `GCP_PROJECT_ID`、`GCP_WORKLOAD_IDENTITY_PROVIDER`、`GCP_DEPLOYER_SERVICE_ACCOUNT` をVariablesとして登録します。長期鍵はGitHub Secretsへ保存しません。
+
+GCPデプロイは、未構築の環境で`main`へのpushが失敗し続けないよう、初期状態では`workflow_dispatch`による手動実行専用です。Terraform適用、Secret登録、上記Variablesの登録がすべて完了してからActions画面で実行してください。継続デプロイを有効にする場合は、その確認後に`gcp-deploy.yml`へ`main`の`push`トリガーを追加します。
 
 アプリのロールバックはCloud Runコンソールまたは `gcloud run services update-traffic` で直前revisionへトラフィックを戻します。migrationは先に追加変更、後のリリースで削除するexpand/contract方式を守ります。
 
