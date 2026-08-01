@@ -1,5 +1,5 @@
 import { Dispatch, FormEvent, SetStateAction } from "react";
-import { Check, Save, X, Trash2, Info } from "lucide-react";
+import { Check, Save, X, Trash2, Info, Loader2 } from "lucide-react";
 import { VisitFormState, VisitHistoryEntry } from "../types";
 import { VisitHistorySection } from "./VisitHistorySection";
 import { VisitTagsField } from "./VisitTagsField";
@@ -23,7 +23,7 @@ export interface VisitFormViewProps {
   selectedLocation: { lat: number; lng: number } | null;
   editingId: string | null;
   historyEntries: VisitHistoryEntry[];
-  onSubmit: (e: FormEvent) => void;
+  onSubmit: (e: FormEvent) => void | Promise<void>;
   onImageFile: (file: File) => void;
   onRemoveImage: () => void;
   onDelete: () => void;
@@ -31,6 +31,7 @@ export interface VisitFormViewProps {
   onDeleteHistoryEntry?: (index: number) => void;
   onLocationSelect?: (lat: number, lng: number) => void;
   imageUploading: boolean;
+  saving?: boolean;
 }
 
 export function VisitFormView({
@@ -47,15 +48,14 @@ export function VisitFormView({
   onDeleteHistoryEntry,
   onLocationSelect,
   imageUploading,
+  saving = false,
 }: VisitFormViewProps) {
   const historyCount = editingId ? Math.max(1, historyEntries.length) : 0;
 
   // 保存できない理由を明示し、無反応なボタンに見えないようにする
-  const submitBlockedReason = getSubmitBlockedReason(
-    selectedLocation,
-    form.name,
-    imageUploading,
-  );
+  const submitBlockedReason = saving
+    ? "サーバーへ保存しています。"
+    : getSubmitBlockedReason(selectedLocation, form.name, imageUploading);
 
   const handleGeocodingSelect = (result: GeocodingResult) => {
     if (onLocationSelect) {
@@ -170,8 +170,8 @@ export function VisitFormView({
           title={submitBlockedReason ?? undefined}
           aria-describedby={submitBlockedReason ? "submit-blocked-reason" : undefined}
         >
-          {editingId ? <Check size={18} /> : <Save size={18} />}
-          <span>{editingId ? "更新する" : "保存する"}</span>
+          {saving ? <Loader2 size={18} className="spin-icon" /> : editingId ? <Check size={18} /> : <Save size={18} />}
+          <span>{saving ? "保存中..." : editingId ? "更新する" : "保存する"}</span>
         </button>
         {submitBlockedReason && (
           <p className="form-hint form-hint--blocked" id="submit-blocked-reason" role="status">
@@ -204,7 +204,7 @@ export function VisitFormView({
 export function VisitForm() {
   const editor = useSaunaEditor();
   // 入力値は専用 Context から。ここだけが 1 文字ごとの更新を購読する
-  const { form, setForm, imageUploading } = useSaunaEditorForm();
+  const { form, setForm, imageUploading, saving } = useSaunaEditorForm();
   /*
    * 保存・キャンセルはモバイルのシート位置と連動するため、EditorContext の
    * cancelEditing を直接呼ばず MapStateContext 経由にする（シート位置の知識を
@@ -227,6 +227,7 @@ export function VisitForm() {
       onDeleteHistoryEntry={editor.editingId ? editor.handleDeleteHistoryEntry : undefined}
       onLocationSelect={editor.handleLocationSelect}
       imageUploading={imageUploading}
+      saving={saving}
     />
   );
 }

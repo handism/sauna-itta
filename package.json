@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:local": "NEXT_PUBLIC_DATA_SOURCE=local next build",
+    "build:api": "NEXT_PUBLIC_DATA_SOURCE=api next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

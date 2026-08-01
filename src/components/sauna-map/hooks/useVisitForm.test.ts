@@ -63,16 +63,16 @@ describe("useVisitForm", () => {
     expect(result.current.form.name).toBe("サウナしきじ");
   });
 
-  it("handleSubmit で新規登録成功時に addVisit と cancelEdit が呼ばれること", () => {
+  it("handleSubmit で新規登録成功時に addVisit と cancelEdit が呼ばれること", async () => {
     const { result } = renderHook(() => useVisitForm(defaultOptions));
 
     act(() => {
       result.current.setForm((prev) => ({ ...prev, name: "サウナ北欧" }));
     });
 
-    act(() => {
+    await act(async () => {
       const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
-      result.current.handleSubmit(e);
+      await result.current.handleSubmit(e);
     });
 
     expect(defaultOptions.addVisit).toHaveBeenCalledWith(
@@ -82,22 +82,22 @@ describe("useVisitForm", () => {
     expect(defaultOptions.cancelEdit).toHaveBeenCalledWith(true);
   });
 
-  it("handleSubmit の onCompleted が保存成功時のみ呼ばれること（モバイルのシート位置を戻すため）", () => {
+  it("handleSubmit の onCompleted が保存成功時のみ呼ばれること（モバイルのシート位置を戻すため）", async () => {
     const { result } = renderHook(() => useVisitForm(defaultOptions));
     const onCompleted = vi.fn();
-    const submit = () => {
+    const submit = async () => {
       const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
-      result.current.handleSubmit(e, onCompleted);
+      await result.current.handleSubmit(e, onCompleted);
     };
 
     // 名前が未入力のうちはバリデーションで止まるため呼ばれない
-    act(submit);
+    await act(submit);
     expect(onCompleted).not.toHaveBeenCalled();
 
     act(() => {
       result.current.setForm((prev) => ({ ...prev, name: "サウナ北欧" }));
     });
-    act(submit);
+    await act(submit);
 
     expect(onCompleted).toHaveBeenCalledTimes(1);
   });
@@ -122,12 +122,12 @@ describe("useVisitForm", () => {
     expect(options.cancelEdit).not.toHaveBeenCalled();
   });
 
-  it("confirmDelete で削除成功時に deleteVisit, showToast, closeDeleteConfirm が呼ばれること", () => {
+  it("confirmDelete で削除成功時に deleteVisit, showToast, closeDeleteConfirm が呼ばれること", async () => {
     const options = { ...defaultOptions, editingId: "v1" };
     const { result } = renderHook(() => useVisitForm(options));
 
-    act(() => {
-      result.current.confirmDelete();
+    await act(async () => {
+      await result.current.confirmDelete();
     });
 
     expect(options.deleteVisit).toHaveBeenCalledWith("v1");

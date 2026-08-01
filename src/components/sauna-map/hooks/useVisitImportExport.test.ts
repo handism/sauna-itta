@@ -68,4 +68,28 @@ describe("useVisitImportExport", () => {
     removeSpy.mockRestore();
     setAttributeSpy.mockRestore();
   });
+
+  test("APIインポートは10件ずつ送信する", async () => {
+    const importBatch = vi.fn().mockImplementation(async (items: SaunaVisit[]) => ({
+      added: items.length,
+      skipped: 0,
+    }));
+    const reload = vi.fn().mockResolvedValue(undefined);
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, undefined, importBatch, reload),
+    );
+    const imported = Array.from({ length: 25 }, (_, index) => ({
+      id: `api-${index}`,
+      name: `Sauna ${index}`,
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+    }));
+    const file = new File([JSON.stringify(imported)], "test.json", { type: "application/json" });
+
+    await expect(result.current.importVisitsFromFile(file)).resolves.toEqual({ added: 25, success: true });
+    expect(importBatch.mock.calls.map(([items]) => items.length)).toEqual([10, 10, 5]);
+    expect(reload).toHaveBeenCalledOnce();
+  });
 });

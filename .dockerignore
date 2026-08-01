@@ -1,0 +1,13 @@
+.git
+.github
+.env*
+.next
+node_modules
+coverage
+out
+backend/log/*
+backend/test
+backend/tmp/*
+backend/storage/*
+infra/.terraform
+infra/*.tfstate*

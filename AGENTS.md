@@ -97,9 +97,29 @@
 ## ⚠️ 重要な制約・注意事項
 
 1. **静的サイト制約**:
-   - バックエンド API や サーバーサイド DB への依存を追加しないでください。
-   - アセットパスや内部リンク生成時、GitHub Pages 用の `basePath` ( `/sauna-itta` ) を壊さないよう留意してください。
+   - localモードにはバックエンド API やサーバーサイド DB への依存を持ち込まないでください。apiモードの永続化は`VisitRepository`経由のRails APIに限定します。
+   - アセットパスや内部リンク生成時、localモードのGitHub Pages用`basePath` (`/sauna-itta`) とapiモードのbasePathなしを両立してください。
 2. **パフォーマンス・画像圧縮**:
    - ユーザーがアップロードした画像は `browser-image-compression` で圧縮し、Base64 として `localStorage` に保持します（最大 1MB / 1024px）。
 3. **React Compiler**:
    - `next.config.ts` で React Compiler が有効化されています。不要な再レンダリングや依存配列・再計算のバグを生む非純粋な関数定義・レンダリング内副作用を避けてください。
+
+---
+
+## 7. Railsバックエンド・データソース規約
+
+- `NEXT_PUBLIC_DATA_SOURCE=local|api` で配布形態を切り替えます。localはGitHub Pages用の`/sauna-itta`、同梱JSON、`localStorage`、PWAを維持し、apiはbasePathなし・Rails API・オンライン必須でService Workerを登録しません。
+- フロントの永続化は `repositories/` の `VisitRepository` 経由にします。Contextや画面から`fetch`または`localStorage`を直接呼ばないでください。CRUDは非同期で、Repository成功後だけ画面状態を更新します。
+- APIインポートは最大10件のチャンクを維持し、既存`external_id`をスキップして再実行可能にします。JSONエクスポートは両モードで維持します。
+- Railsの全記録取得は必ず`current_user.sauna_visits`からスコープし、他ユーザーの記録・履歴・写真は404にします。APIはcamelCase、エラーは`{ error: { code, message, details? } }`形式です。
+- 変更系APIはセッション認証とCSRFを必須にし、`lock_version`競合は409を返します。開発ログインはdevelopmentかつ`ENABLE_DEV_LOGIN=true`の場合だけ許可し、本番ルートを追加しないでください。
+- 写真はJPEG／PNG／WebP／GIFのdata URLだけを許可し、復号後1MB以下をRails validationでも検査します。SVGと任意URLを受け付けないでください。本番配信は所有者確認を行う認証付き画像エンドポイントに限定します。
+- DB変更はexpand/contract方式で後方互換に進めます。本番seedへ個人データやデモデータを追加しないでください。
+
+## 8. インフラ・検証規約
+
+- 本番イメージはルート`Dockerfile`でAPIモードのNext.js静的成果物とRailsだけを組み込み、非rootでPumaを起動します。ローカルは`frontend`／`api`／`postgres`のDocker Composeを使用します。
+- GCPは`infra/`のTerraformで管理します。Secret ManagerにはコンテナだけをTerraformで作り、秘密値やDBパスワードをtfvars、state、GitHub Secretsへ入れません。
+- GCPデプロイはWIF/OIDCを使い、単一buildの同じdigestをmigration jobとCloud Runサービスへ順に反映します。migration成功前にサービスを更新しないでください。
+- フロント変更時は従来の`npm run test`、`npm run lint`、`npm run typecheck`、`npm run build`に加え、両モードに関係する場合は`npm run build:local`と`npm run build:api`を実行します。
+- Rails／インフラ変更時は`backend/bin/rails test`、RuboCop、Brakeman、`terraform fmt -check`、`terraform validate`、production Docker buildとhealth checkも実行します。

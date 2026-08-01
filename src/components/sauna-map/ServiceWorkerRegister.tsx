@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 export function ServiceWorkerRegister() {
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DATA_SOURCE === "api") return;
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
       return;
     }

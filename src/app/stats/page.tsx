@@ -12,6 +12,7 @@ import { PrefectureSection } from './components/PrefectureSection';
 import { HomeSaunaCard } from './components/HomeSaunaCard';
 import { TopSaunasCard } from './components/TopSaunasCard';
 import { TagCloudCard } from './components/TagCloudCard';
+import { ApiAccessGate } from '@/components/sauna-map/components/ApiAccessGate';
 
 const MonthlyVisitsChart = dynamic(() => import('@/components/charts/MonthlyVisitsChart'), {
   loading: () => <div className={`${styles.chartCard} ${styles.skeleton}`} style={{ minHeight: 260 }} />,
@@ -36,6 +37,9 @@ export default function StatsPage() {
     date,
     setDate,
     mounted,
+    authenticated,
+    loadError,
+    dataSource,
     stats,
     visitedEntries,
     rankedVisits,
@@ -60,6 +64,17 @@ export default function StatsPage() {
           </div>
         </main>
       </div>
+    );
+  }
+
+  if (dataSource === "api" && (!authenticated || loadError)) {
+    return (
+      <ApiAccessGate
+        loading={false}
+        authenticated={authenticated}
+        error={loadError}
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 

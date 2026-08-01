@@ -17,10 +17,12 @@ import {
   useVisitFiltersContext,
   useSaunaEditor,
   useSaunaMapState,
+  useVisitsCRUD,
 } from "./context";
 import { CurrentLocation } from "./types";
 import { MobilePinHint } from "./components/MobilePinHint";
 import { SaunaMapLayer } from "./components/SaunaMapLayer";
+import { ApiAccessGate } from "./components/ApiAccessGate";
 
 function SaunaMapContent() {
   const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
@@ -37,6 +39,7 @@ function SaunaMapContent() {
   } = useSaunaUI();
 
   const { filteredVisits, isFilterActive } = useVisitFiltersContext();
+  const { dataSource, loading, authenticated, loadError, reload } = useVisitsCRUD();
 
   const {
     isAdding,
@@ -59,6 +62,17 @@ function SaunaMapContent() {
 
   if (!mounted) {
     return <div className="map-container" style={{ background: "var(--background)", height: "100%", width: "100%" }} />;
+  }
+
+  if (dataSource === "api" && (loading || !authenticated || loadError)) {
+    return (
+      <ApiAccessGate
+        loading={loading}
+        authenticated={authenticated}
+        error={loadError}
+        onRetry={() => void reload()}
+      />
+    );
   }
 
   return (

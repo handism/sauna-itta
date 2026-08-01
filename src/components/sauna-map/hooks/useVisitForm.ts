@@ -15,10 +15,10 @@ export interface UseVisitFormOptions {
   editingId: string | null;
   selectedLocation: LatLng | null;
   historyEntries: VisitHistoryEntry[];
-  addVisit: (location: LatLng, formState: VisitFormState) => { success: boolean };
-  editVisit: (id: string, location: LatLng, formState: VisitFormState) => { success: boolean };
-  deleteVisit: (id: string) => { success: boolean };
-  removeHistoryEntry: (visitId: string, entryIndex: number) => void;
+  addVisit: (location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
+  editVisit: (id: string, location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
+  deleteVisit: (id: string) => Promise<{ success: boolean }>;
+  removeHistoryEntry: (visitId: string, entryIndex: number) => Promise<{ success: boolean }>;
   startCreate: () => void;
   startEdit: (visit: SaunaVisit) => void;
   cancelEdit: (completed?: boolean) => void;
@@ -84,9 +84,9 @@ export function useVisitForm({
     openDeleteConfirm();
   }, [editingId, openDeleteConfirm]);
 
-  const confirmDelete = useCallback(() => {
+  const confirmDelete = useCallback(async () => {
     if (!editingId) return;
-    const { success } = deleteVisit(editingId);
+    const { success } = await deleteVisit(editingId);
     if (!success) {
       showToast(STORAGE_ERROR_MSG, "error");
     } else {
@@ -102,7 +102,7 @@ export function useVisitForm({
    *   直接触れない。呼び出し側が MapStateContext の関数を渡す）。
    */
   const handleSubmit = useCallback(
-    (e: FormEvent, onCompleted?: () => void) => {
+    async (e: FormEvent, onCompleted?: () => void) => {
       e.preventDefault();
       if (!selectedLocation) {
         showToast("サウナの場所が選択されていません。", "error");
@@ -118,10 +118,10 @@ export function useVisitForm({
 
       let success = false;
       if (editingId) {
-        const result = editVisit(editingId, selectedLocation, currentForm);
+        const result = await editVisit(editingId, selectedLocation, currentForm);
         success = result.success;
       } else {
-        const result = addVisit(selectedLocation, currentForm);
+        const result = await addVisit(selectedLocation, currentForm);
         success = result.success;
       }
 
@@ -157,10 +157,11 @@ export function useVisitForm({
   }, []);
 
   const handleDeleteHistoryEntry = useCallback(
-    (index: number) => {
+    async (index: number) => {
       if (!editingId) return;
 
-      removeHistoryEntry(editingId, index);
+      const { success } = await removeHistoryEntry(editingId, index);
+      if (!success) return;
 
       const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
 

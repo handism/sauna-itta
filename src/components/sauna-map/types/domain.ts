@@ -16,6 +16,7 @@ export type VisitStatus = "visited" | "wishlist";
 
 // --- Zod バリデーションスキーマ ---
 export const VisitHistoryEntrySchema = z.object({
+  id: z.string().optional(),
   date: z.string(),
   comment: z.string(),
   rating: z.number().optional(),
@@ -36,6 +37,7 @@ export const SaunaVisitSchema = z.object({
   area: z.string().optional(),
   visitCount: z.number().optional(),
   history: z.array(VisitHistoryEntrySchema).optional(),
+  lockVersion: z.number().int().nonnegative().optional(),
 });
 
 export const VisitFormInputSchema = z.object({
