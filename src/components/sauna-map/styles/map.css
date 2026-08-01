@@ -50,6 +50,8 @@
 .sauna-marker--selected {
   background: linear-gradient(135deg, var(--accent-water) 0%, var(--accent-water-deep) 100%);
   box-shadow: 0 6px 20px var(--water-glow), 0 0 16px var(--accent-water);
+  z-index: var(--z-map-controls) !important;
+  animation: pulseRingSelected 1.8s infinite;
 }
 
 .sauna-marker--wishlist {
@@ -89,6 +91,19 @@
   }
   70% {
     box-shadow: 0 0 0 16px transparent, var(--shadow-marker-lifted);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent, var(--shadow-marker-lifted);
+  }
+}
+
+@keyframes pulseRingSelected {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-water) 80%, transparent),
+      var(--shadow-marker-lifted);
+  }
+  70% {
+    box-shadow: 0 0 0 18px transparent, var(--shadow-marker-lifted);
   }
   100% {
     box-shadow: 0 0 0 0 transparent, var(--shadow-marker-lifted);

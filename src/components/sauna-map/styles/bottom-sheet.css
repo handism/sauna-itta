@@ -44,6 +44,42 @@
     transform: translateY(calc(var(--drag-offset-y, 0px)));
   }
 
+  /* ヘッダーコンテナ（ハンドルとショートカットボタンを横配置） */
+  .bottom-sheet-header {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .bottom-sheet-map-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius-full);
+    padding: 0.35rem 0.75rem;
+    min-height: 44px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px var(--primary-glow);
+    white-space: nowrap;
+    z-index: 10;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  .bottom-sheet-map-btn:hover {
+    transform: translateY(-50%) scale(1.04);
+  }
+
   /* ハンドル領域 */
   .bottom-sheet-handle-wrapper {
     width: 100%;

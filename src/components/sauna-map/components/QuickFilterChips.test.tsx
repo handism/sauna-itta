@@ -53,4 +53,26 @@ describe("QuickFilterChips", () => {
 
     expect(screen.getByText("横にスワイプ")).toBeInTheDocument();
   });
+
+  it("検索文字列やステータス絞り込みがある場合、アクティブフィルターチップとして表示されクリックでクリアできること", () => {
+    const setFilters = vi.fn();
+    const activeFilters: VisitFilters = {
+      ...filters,
+      search: "東京",
+      status: "visited",
+    };
+
+    render(
+      <QuickFilterChips
+        filters={activeFilters}
+        setFilters={setFilters}
+        visits={visits}
+        activeFilterCount={2}
+      />
+    );
+
+    expect(screen.getByText('検索: "東京"')).toBeInTheDocument();
+    expect(screen.getByText("ステータス: 行った")).toBeInTheDocument();
+  });
 });
+

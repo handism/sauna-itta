@@ -132,34 +132,47 @@ export function BottomSheet({
       role="region"
       aria-label="ボトムシートパネル"
     >
-      <button
-        type="button"
-        className="bottom-sheet-handle-wrapper"
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onClick={handleHandleClick}
-        onKeyDown={handleHandleKeyDown}
-        aria-label={handleLabel}
-        aria-expanded={snapPosition !== "min"}
-        aria-controls="bottom-sheet-content"
-        title="タップまたはスワイプでパネルを開閉"
-      >
-        {/* button の子要素は phrasing content に限られるため span で構成する */}
-        <span className="bottom-sheet-handle-bar-container">
-          <span className="bottom-sheet-handle" />
-          <span className="bottom-sheet-summary-badge">
-            <span className="summary-count">
-              <MapPin size={13} /> {filteredCount ?? 0}件表示中
-            </span>
-            {selectedVisitName && (
-              <span className="summary-selected" title={selectedVisitName}>
-                選択中: {selectedVisitName}
+      <div className="bottom-sheet-header">
+        <button
+          type="button"
+          className="bottom-sheet-handle-wrapper"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onClick={handleHandleClick}
+          onKeyDown={handleHandleKeyDown}
+          aria-label={handleLabel}
+          aria-expanded={snapPosition !== "min"}
+          aria-controls="bottom-sheet-content"
+          title="タップまたはスワイプでパネルを開閉"
+        >
+          {/* button の子要素は phrasing content に限られるため span で構成する */}
+          <span className="bottom-sheet-handle-bar-container">
+            <span className="bottom-sheet-handle" />
+            <span className="bottom-sheet-summary-badge">
+              <span className="summary-count">
+                <MapPin size={13} /> {filteredCount ?? 0}件表示中
               </span>
-            )}
+              {selectedVisitName && (
+                <span className="summary-selected" title={selectedVisitName}>
+                  選択中: {selectedVisitName}
+                </span>
+              )}
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
+        {selectedVisitName && snapPosition !== "min" && (
+          <button
+            type="button"
+            className="bottom-sheet-map-btn"
+            onClick={() => onSnapChange("min")}
+            title="シートを閉じて地図でピンを確認"
+            aria-label="シートを閉じて地図で選択中のピンを確認"
+          >
+            <MapPin size={13} /> 地図を見る
+          </button>
+        )}
+      </div>
       <div className="bottom-sheet-content" id="bottom-sheet-content">
         {children}
       </div>

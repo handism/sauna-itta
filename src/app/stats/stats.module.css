@@ -512,6 +512,36 @@
   white-space: nowrap;
 }
 
+.topSaunaActions,
+.homeSaunaHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mapJumpLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
+  border: 1px solid var(--primary);
+  box-shadow: 0 2px 8px var(--primary-glow);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.mapJumpLink:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
 .topSaunaMetaRow {
   display: flex;
   gap: 10px;
@@ -718,7 +748,8 @@
 /* Mobile responsive styles */
 @media (max-width: 720px) {
   /* タップ操作のターゲットサイズを確保する */
-  .tagPill {
+  .tagPill,
+  .mapJumpLink {
     min-height: 44px;
   }
 

@@ -1,9 +1,14 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+/** @vitest-environment jsdom */
+import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { HomeSaunaCard } from "./HomeSaunaCard";
 import type { RankedVisit } from "@/components/sauna-map/utils";
 import type { SaunaVisit } from "@/components/sauna-map/types";
+
+afterEach(() => {
+  cleanup();
+});
 
 const createVisit = (overrides: Partial<SaunaVisit>): SaunaVisit => ({
   id: "test-id",
@@ -80,4 +85,16 @@ describe("HomeSaunaCard", () => {
     expect(screen.getByText("初訪問: 2024-03-15")).toBeInTheDocument();
     expect(screen.getByText("最新訪問: 2024-03-15")).toBeInTheDocument();
   });
+
+  it("renders a link to view sauna on the map", () => {
+    const ranked: RankedVisit[] = [
+      { visit: createVisit({ id: "home-sauna-id", name: "Home Sauna" }), count: 10 },
+    ];
+
+    render(<HomeSaunaCard ranked={ranked} />);
+
+    const link = screen.getByRole("link", { name: "Home Saunaを地図で見る" });
+    expect(link).toHaveAttribute("href", "/?id=home-sauna-id");
+  });
 });
+

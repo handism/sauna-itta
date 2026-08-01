@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useMemo } from "react";
 import { Trophy, Star, MapPin } from "lucide-react";
 import { RankedVisit } from "@/components/sauna-map/utils";
@@ -45,7 +46,17 @@ export function TopSaunasCard({ ranked }: TopSaunasCardProps) {
               <div className={styles.topSaunaDetails}>
                 <div className={styles.topSaunaNameRow}>
                   <span className={styles.topSaunaName}>{sauna.name}</span>
-                  <span className={styles.topSaunaCount}>{count} 回</span>
+                  <div className={styles.topSaunaActions}>
+                    <span className={styles.topSaunaCount}>{count} 回</span>
+                    <Link
+                      href={`/?id=${sauna.id}`}
+                      className={styles.mapJumpLink}
+                      title={`${sauna.name}を地図で見る`}
+                      aria-label={`${sauna.name}を地図で見る`}
+                    >
+                      <MapPin size={12} /> <span>地図で見る</span>
+                    </Link>
+                  </div>
                 </div>
 
                 <div className={styles.topSaunaMetaRow}>
