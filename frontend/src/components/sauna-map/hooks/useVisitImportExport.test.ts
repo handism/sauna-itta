@@ -260,4 +260,42 @@ describe("useVisitImportExport", () => {
       "error",
     );
   });
+
+  test("APIインポートが途中で失敗し、さらに再読み込みにも失敗した場合エラーログを出力する", async () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const importBatch = vi.fn()
+      .mockRejectedValueOnce(new Error("サーバーへ接続できません。"));
+    const reloadError = new Error("再読み込みエラー");
+    const reload = vi.fn().mockRejectedValue(reloadError);
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, showToast, importBatch, reload),
+    );
+    const imported = Array.from({ length: 5 }, (_, index) => ({
+      id: `fail-${index}`,
+      name: `Sauna ${index}`,
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+    }));
+    const file = new File([JSON.stringify(imported)], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(reload).toHaveBeenCalledOnce();
+    expect(consoleSpy).toHaveBeenCalledWith("インポート失敗後の再読み込みにも失敗しました。", reloadError);
+
+    // Toast のエラーも確認
+    expect(showToast).toHaveBeenCalledWith(
+      "データの取り込みに失敗しました。サーバーへ接続できません。",
+      "error"
+    );
+
+    consoleSpy.mockRestore();
+  });
 });
