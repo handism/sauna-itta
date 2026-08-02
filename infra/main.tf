@@ -32,6 +32,13 @@ resource "google_storage_bucket" "photos" {
   public_access_prevention    = "enforced"
   force_destroy               = false
   versioning { enabled = true }
+  lifecycle_rule {
+    condition {
+      days_since_noncurrent_time = var.photo_version_retention_days
+      with_state                 = "ARCHIVED"
+    }
+    action { type = "Delete" }
+  }
 }
 
 resource "google_sql_database_instance" "postgres" {

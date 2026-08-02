@@ -21,3 +21,13 @@ variable "budget_jpy" {
   type    = number
   default = 3000
 }
+variable "photo_version_retention_days" {
+  type        = number
+  default     = 30
+  description = "GCS写真バケットの非現行オブジェクト世代を保持する日数"
+
+  validation {
+    condition     = var.photo_version_retention_days >= 7
+    error_message = "photo_version_retention_daysは7日以上にしてください。"
+  }
+}

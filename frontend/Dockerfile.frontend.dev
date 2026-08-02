@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY next.config.ts tsconfig.json eslint.config.mjs vitest.config.ts next-env.d.ts ./
+COPY next.config.ts dataSource.ts tsconfig.json eslint.config.mjs vitest.config.ts next-env.d.ts ./
 COPY public ./public
 COPY src ./src
 

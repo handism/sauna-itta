@@ -14,7 +14,7 @@ class SaunaVisit < ApplicationRecord
 
   before_validation { self.external_id = SecureRandom.uuid if external_id.blank? }
   before_destroy :capture_history_image_blobs, prepend: true
-  after_destroy :purge_history_image_blobs
+  after_destroy_commit :purge_history_image_blobs
 
   def visit_count
     [ legacy_visit_count.to_i, visit_history_entries.size ].max

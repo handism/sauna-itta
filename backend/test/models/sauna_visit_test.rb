@@ -32,4 +32,23 @@ class SaunaVisitTest < ActiveSupport::TestCase
 
     assert_not ActiveStorage::Blob.exists?(blob_id)
   end
+
+  test "記録削除がロールバックされたときは履歴写真のblobを残す" do
+    visit = @user.sauna_visits.create!(name: "テスト", latitude: 35, longitude: 139, status: "visited")
+    entry = visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 1), comment: "写真あり")
+    png = Base64.decode64(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+    )
+    entry.image.attach(io: StringIO.new(png), filename: "visit.png", content_type: "image/png")
+    visit_id = visit.id
+    blob_id = entry.image.blob.id
+
+    SaunaVisit.transaction do
+      visit.destroy!
+      raise ActiveRecord::Rollback
+    end
+
+    assert SaunaVisit.exists?(visit_id)
+    assert ActiveStorage::Blob.exists?(blob_id), "削除がロールバックされたのに写真blobが消えています"
+  end
 end

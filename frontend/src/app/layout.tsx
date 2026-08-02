@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Script from "next/script";
+import { DATA_SOURCE } from "../../dataSource";
 import "./globals.css";
 
-const isApiMode = process.env.NEXT_PUBLIC_DATA_SOURCE === "api";
+const isApiMode = DATA_SOURCE === "api";
 const publicBasePath = isApiMode ? "" : "/sauna-itta";
 
 // base.css の --font-main が参照するフォント。

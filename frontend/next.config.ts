@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
+import { DATA_SOURCE } from "./dataSource";
 
-const dataSource = process.env.NEXT_PUBLIC_DATA_SOURCE ?? "local";
-const isLocalMode = dataSource === "local";
+const isLocalMode = DATA_SOURCE === "local";
 const isDevelopment = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {

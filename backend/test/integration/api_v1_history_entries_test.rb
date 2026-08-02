@@ -32,6 +32,24 @@ class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
     assert_not ActiveStorage::Blob.exists?(blob.id), "削除した履歴の写真blobが残っています"
   end
 
+  test "履歴の件数確認と削除を親レコードのロック内で行う" do
+    csrf = sign_in
+    visit = create_visit(csrf)
+    visit = append_history(csrf, visit, comment: "2回目")
+    queries = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      queries << payload[:sql]
+    end
+
+    delete history_path(visit, visit.fetch("history").first.fetch("id")), headers: csrf_header(csrf)
+
+    assert_response :success
+    assert queries.any? { |sql| sql.include?("sauna_visits") && sql.include?("FOR UPDATE") },
+      "履歴削除時に親の訪問記録をロックしていません"
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
+
   test "履歴の削除に失敗したときは写真を残す" do
     csrf = sign_in
     visit = create_visit(csrf, image: png_data_url)

@@ -100,30 +100,30 @@ self.addEventListener("fetch", (event) => {
     caches.match(request).then((cachedResponse) => {
       if (cachedResponse) {
         // Fetch background update for cache freshness
-        fetch(request)
+        const updatePromise = fetch(request)
           .then((networkResponse) => {
             if (networkResponse && networkResponse.status === 200) {
-              caches.open(STATIC_CACHE_NAME).then((cache) => {
-                cache.put(request, networkResponse);
+              return caches.open(STATIC_CACHE_NAME).then((cache) => {
+                return cache.put(request, networkResponse);
               });
             }
           })
           .catch(() => {
             /* ignore offline network error */
           });
+        event.waitUntil(updatePromise);
         return cachedResponse;
       }
 
-      return fetch(request).then((networkResponse) => {
+      return fetch(request).then(async (networkResponse) => {
         if (
           networkResponse &&
           networkResponse.status === 200 &&
           (url.origin === self.location.origin || request.destination === "style" || request.destination === "script")
         ) {
           const responseToCache = networkResponse.clone();
-          caches.open(STATIC_CACHE_NAME).then((cache) => {
-            cache.put(request, responseToCache);
-          });
+          const cache = await caches.open(STATIC_CACHE_NAME);
+          await cache.put(request, responseToCache);
         }
         return networkResponse;
       });
