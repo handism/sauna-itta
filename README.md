@@ -61,7 +61,7 @@ docker-compose.yaml  frontend／api／PostgreSQL 17
 
 ## フロントエンド開発
 
-Node.js 24 (LTS) を使用します。npmコマンドは `frontend/` ディレクトリで実行します。
+Node.js 24 (LTS) を使用します。バージョンはリポジトリ直下の `.nvmrc` に記載しているため、nvm利用時は `nvm use` で切り替えられます。npmコマンドは `frontend/` ディレクトリで実行します。
 
 ```bash
 cd frontend
