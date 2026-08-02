@@ -1,9 +1,43 @@
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
-import type { FormEvent } from "react";
+import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import type { FormEvent, SetStateAction } from "react";
 import "@testing-library/jest-dom/vitest";
-import { VisitFormView } from "./VisitForm";
+import { VisitForm, VisitFormView } from "./VisitForm";
 import { VisitFormState } from "../types";
+import {
+  SaunaMapProvider,
+  useSaunaMapActions,
+  useSaunaMapStateValue,
+} from "../context";
+
+// 地点検索は debounce と Nominatim への fetch を伴うため、選択結果の受け渡しだけを差し替える
+vi.mock("./VisitFormFields", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./VisitFormFields")>();
+  return {
+    ...actual,
+    LocationSearchField: ({
+      onSelectLocation,
+    }: {
+      onSelectLocation: (result: import("../utils/geocoding").GeocodingResult) => void;
+    }) => (
+      <button
+        type="button"
+        onClick={() =>
+          onSelectLocation({
+            placeId: 1,
+            lat: 43.06,
+            lng: 141.35,
+            displayName: "ニコーリフレ, 札幌市",
+            name: "ニコーリフレ",
+            addressText: "北海道札幌市中央区",
+          })
+        }
+      >
+        検索結果を選ぶ
+      </button>
+    ),
+  };
+});
 
 describe("VisitFormView", () => {
   afterEach(() => {
@@ -164,5 +198,161 @@ describe("VisitFormView", () => {
     fireEvent.submit(container.querySelector("form") as HTMLFormElement);
 
     expect(onSubmit).toHaveBeenCalledOnce();
+  });
+
+  /*
+   * setForm には更新関数が渡る。コメント欄の onChange は `e.target.value` を更新関数の
+   * 中で読むため、setForm がダミーだと再レンダリングで DOM の値が元へ戻り、あとから
+   * 評価しても取りこぼす。そのため呼び出された時点で適用しておく。
+   */
+  function createSetForm(base: VisitFormState = defaultForm) {
+    const results: VisitFormState[] = [];
+    const setForm = vi.fn((action: SetStateAction<VisitFormState>) => {
+      results.push(typeof action === "function" ? action(base) : action);
+    });
+    return { setForm, latest: () => results[results.length - 1] };
+  }
+
+  it.each([
+    ["サウナ名", "しきじ", "name"],
+    ["エリア（任意）", "静岡県", "area"],
+    ["タグ（カンマ区切り）", "薬草", "tagsText"],
+    ["感想・メモ", "水がうまい", "comment"],
+    ["行った日", "2026-08-01", "date"],
+  ] as const)("%s の入力をフォーム状態へ反映する", (label, value, key) => {
+    const { setForm, latest } = createSetForm();
+    render(<VisitFormView {...defaultProps} setForm={setForm} />);
+
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+
+    expect(latest()[key]).toBe(value);
+  });
+
+  it("ステータスと満足度の変更をフォーム状態へ反映する", () => {
+    const { setForm, latest } = createSetForm();
+    render(<VisitFormView {...defaultProps} setForm={setForm} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "行きたい" }));
+    expect(latest().status).toBe("wishlist");
+
+    fireEvent.click(screen.getByRole("button", { name: "3つ星" }));
+    expect(latest().rating).toBe(3);
+  });
+
+  it("地点検索の選択は座標を通知し、空欄の名前とエリアだけを埋める", () => {
+    const emptyForm = { ...defaultForm, name: "", area: "" };
+    const { setForm, latest } = createSetForm(emptyForm);
+    const onLocationSelect = vi.fn();
+    render(
+      <VisitFormView
+        {...defaultProps}
+        form={emptyForm}
+        setForm={setForm}
+        onLocationSelect={onLocationSelect}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "検索結果を選ぶ" }));
+
+    expect(onLocationSelect).toHaveBeenCalledExactlyOnceWith(43.06, 141.35);
+    expect(latest().name).toBe("ニコーリフレ");
+    expect(latest().area).toBe("北海道札幌市中央区");
+  });
+
+  it("入力済みの名前とエリアは地点検索の結果で上書きしない", () => {
+    const { setForm, latest } = createSetForm();
+    render(<VisitFormView {...defaultProps} setForm={setForm} onLocationSelect={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "検索結果を選ぶ" }));
+
+    expect(latest().name).toBe("テストサウナ");
+    expect(latest().area).toBe("東京");
+  });
+
+  it("onLocationSelectが無くてもフォームの補完だけは行う", () => {
+    const emptyForm = { ...defaultForm, name: "", area: "" };
+    const { setForm, latest } = createSetForm(emptyForm);
+    render(<VisitFormView {...defaultProps} form={emptyForm} setForm={setForm} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "検索結果を選ぶ" }));
+
+    expect(latest().name).toBe("ニコーリフレ");
+  });
+});
+
+/*
+ * コンテナは Context を集めて View へ渡すだけだが、キャンセルを EditorContext の
+ * cancelEditing へ直結させるとモバイルでシートが full のまま地図が隠れる。
+ * その配線（MapStateContext 経由であること）をここで固定する。
+ */
+describe("VisitForm（コンテナ）", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "innerWidth", { writable: true, value: 500 });
+    Object.defineProperty(window, "matchMedia", {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: true,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  function Harness() {
+    const { snapPosition } = useSaunaMapStateValue();
+    const { handleSelectMobileTab } = useSaunaMapActions();
+    return (
+      <>
+        <span data-testid="snap">{snapPosition}</span>
+        <button type="button" onClick={() => handleSelectMobileTab("add")}>
+          追加を開始
+        </button>
+        <VisitForm />
+      </>
+    );
+  }
+
+  it("キャンセルでモバイルのシートを最小化まで戻す", async () => {
+    render(
+      <SaunaMapProvider>
+        <Harness />
+      </SaunaMapProvider>
+    );
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "追加を開始" }));
+    });
+    expect(screen.getByTestId("snap")).toHaveTextContent("full");
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: /キャンセル/ }));
+    });
+    expect(screen.getByTestId("snap")).toHaveTextContent("min");
+  });
+
+  it("Contextのフォーム値を表示し、入力を書き戻す", async () => {
+    render(
+      <SaunaMapProvider>
+        <Harness />
+      </SaunaMapProvider>
+    );
+
+    const nameInput = screen.getByLabelText("サウナ名");
+    expect(nameInput).toHaveValue("");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "サウナしきじ" } });
+    });
+
+    expect(screen.getByLabelText("サウナ名")).toHaveValue("サウナしきじ");
   });
 });

@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "sauna-itta-";
-const STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v2`;
+const STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v3`;
 const TILE_CACHE_NAME = `${CACHE_PREFIX}tiles-v1`;
 const MAX_TILE_ENTRIES = 200;
 const TILE_HOSTS = new Set([
@@ -21,12 +21,20 @@ const PRECACHE_ASSETS = [
   "/sauna-itta/icons/apple-icon.png",
 ];
 
+// 統計画面は別ドキュメントのため、一度も開かずにオフラインへ入ると遷移できない。
+// ただし必須資産と同じ addAll に混ぜない：addAll は 1 つでも取得に失敗すると install
+// ごと失敗し、オフライン対応そのものが失われるため、ここは取得できた分だけ保存する。
+const OPTIONAL_PRECACHE_ASSETS = ["/sauna-itta/stats"];
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches
-      .open(STATIC_CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(STATIC_CACHE_NAME).then(async (cache) => {
+      await cache.addAll(PRECACHE_ASSETS);
+      await Promise.allSettled(
+        OPTIONAL_PRECACHE_ASSETS.map((asset) => cache.add(asset))
+      );
+      await self.skipWaiting();
+    })
   );
 });
 

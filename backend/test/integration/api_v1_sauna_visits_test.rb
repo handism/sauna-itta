@@ -127,4 +127,51 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_not ActiveStorage::Blob.exists?(blob.id)
   end
+
+  test "更新レスポンスは履歴件数に比例して写真クエリを増やさない" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(image: png_data_url) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    id = response.parsed_body.dig("saunaVisit", "id")
+
+    # 履歴を積み増して、件数が変わってもクエリ数が変わらないことを比較できるようにする
+    single_history_queries = count_attachment_queries do
+      patch "/api/v1/sauna_visits/#{id}",
+        params: { saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url) },
+        headers: csrf_header(csrf), as: :json
+      assert_response :success
+    end
+
+    2.times do
+      patch "/api/v1/sauna_visits/#{id}",
+        params: { saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url) },
+        headers: csrf_header(csrf), as: :json
+      assert_response :success
+    end
+
+    many_history_queries = count_attachment_queries do
+      patch "/api/v1/sauna_visits/#{id}",
+        params: { saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url) },
+        headers: csrf_header(csrf), as: :json
+      assert_response :success
+    end
+
+    assert_equal 5, response.parsed_body.dig("saunaVisit", "history").size
+    assert_equal single_history_queries, many_history_queries,
+      "履歴ごとに添付を引いています（serialized の先読みが外れていないか確認してください）"
+  end
+
+  private
+
+  def count_attachment_queries(&block)
+    count = 0
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      count += 1 if payload[:sql].include?("active_storage_attachments")
+    end
+    block.call
+    count
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+  end
 end

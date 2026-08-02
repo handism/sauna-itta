@@ -40,9 +40,11 @@ GitHub Pages (local)                 Cloud Run (api)
 
 フロントの `VisitRepository` がlocalStorage実装とAPI実装を分離します。既存のContextはUI、CRUD、フィルター、編集、地図状態の責務分割を維持し、CRUDはサーバー成功後だけクライアント状態を更新します。APIはcamelCase JSONと `{ "error": { "code", "message", "details?" } }` の共通エラー形式を返します。
 
-Railsは `User`、`SaunaVisit`、`VisitHistoryEntry` を `user_id` で分離します。任意の既存IDは `external_id` に保持し、新規IDにはUUIDを使います。写真はdata URLを復号・検証してActive Storageへ保存し、ログインユーザーで所有権を確認する画像エンドポイントだけから配信します。写真の削除・差し替えは記録更新と同じトランザクションで行い、更新が確定した後だけ古いblobを削除します。
+Googleログインは `ALLOWED_GOOGLE_EMAIL` と一致し、かつ確認済みのメールアドレスだけを通します。Railsは `User`、`SaunaVisit`、`VisitHistoryEntry` を `user_id` で分離します。任意の既存IDは `external_id` に保持し、新規IDにはUUIDを使います。写真はdata URLを復号・検証してActive Storageへ保存し、ログインユーザーで所有権を確認する画像エンドポイントだけから配信します。写真の削除・差し替えは記録更新と同じトランザクションで行い、更新が確定した後だけ古いblobを削除します。
 
-localモードのService Workerは静的資産と地図タイルを別キャッシュへ保存します。OpenStreetMapタイルは最大200件に制限し、更新時はこのアプリの旧キャッシュだけを削除します。
+localモードのService Workerは静的資産と地図タイルを別キャッシュへ保存します。OpenStreetMapタイルは最大200件に制限し、更新時はこのアプリの旧キャッシュだけを削除します。統計画面は必須資産とは別枠で先読みするため、一度も開かずにオフラインへ入っても遷移できます（先読みに失敗してもインストールは成功します）。
+
+APIモードでは、Railsが同梱するNext.js成果物のうち内容ハッシュ付きの `/_next/static/` だけに長期キャッシュ（`immutable`）を付けます。`index.html` は毎回再検証されるため、デプロイした更新はすぐ届きます。
 
 ## ディレクトリ
 

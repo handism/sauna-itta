@@ -18,8 +18,14 @@ module ApiAuthHelper
     end
   end
 
-  def google_auth_hash(uid: "owner-subject", email: ALLOWED_EMAIL)
-    OmniAuth::AuthHash.new(provider: "google_oauth2", uid: uid, info: { email: email })
+  # email_verified は本物のGoogle応答と同じく extra.raw_info に置く（nil を渡すと欠落を再現できる）
+  def google_auth_hash(uid: "owner-subject", email: ALLOWED_EMAIL, email_verified: true)
+    OmniAuth::AuthHash.new(
+      provider: "google_oauth2",
+      uid: uid,
+      info: { email: email },
+      extra: { raw_info: { email_verified: email_verified } }
+    )
   end
 
   # ログインしてCSRFトークンを返す
