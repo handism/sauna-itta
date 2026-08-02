@@ -260,4 +260,48 @@ describe("useVisitImportExport", () => {
       "error",
     );
   });
+
+  test("保存に失敗した場合はエラートーストを表示する", async () => {
+    const saveVisitsMockFail = vi.fn().mockReturnValue(false);
+    const showToast = vi.fn();
+    const { result } = renderHook(() => useVisitImportExport(mockVisits, saveVisitsMockFail, showToast));
+
+    const newVisit = { id: "2", name: "Sauna B", lat: 35.1, lng: 139.1, comment: "nice", date: "2023-01-02" };
+    const file = new File([JSON.stringify([newVisit])], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(showToast).toHaveBeenCalledWith(
+      "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。",
+      "error",
+    );
+    expect(showToast).toHaveBeenCalledTimes(1);
+  });
+
+  test("JSONの読み込みに失敗した場合はエラートーストを表示する", async () => {
+    const showToast = vi.fn();
+    const { result } = renderHook(() => useVisitImportExport(mockVisits, saveVisitsMock, showToast));
+
+    const file = new File(["invalid json"], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(showToast).toHaveBeenCalledWith(
+      "JSONの読み込みに失敗しました。ファイル形式を確認してください。",
+      "error",
+    );
+    expect(showToast).toHaveBeenCalledTimes(1);
+
+    consoleErrorSpy.mockRestore();
+  });
 });
