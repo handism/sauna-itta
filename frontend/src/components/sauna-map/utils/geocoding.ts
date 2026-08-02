@@ -32,6 +32,9 @@ interface NominatimRawResult {
   address?: NominatimRawAddress;
 }
 
+const DEFAULT_GEOCODING_ENDPOINT = "https://nominatim.openstreetmap.org/search";
+const resultCache = new Map<string, GeocodingResult[]>();
+
 /**
  * Formats a raw Nominatim address object into a human-readable Japanese address string.
  */
@@ -66,7 +69,14 @@ export async function searchLocation(
     limit: "5",
   });
 
-  const url = `https://nominatim.openstreetmap.org/search?${params.toString()}`;
+  // Nominatim互換の接続先へ差し替えられるようにし、公共APIからの移行を
+  // フロントコードの変更なしで行えるようにする。
+  const endpoint = process.env.NEXT_PUBLIC_GEOCODING_ENDPOINT ?? DEFAULT_GEOCODING_ENDPOINT;
+  const cacheKey = `${endpoint}\n${trimmed}`;
+  const cached = resultCache.get(cacheKey);
+  if (cached) return cached;
+
+  const url = `${endpoint}?${params.toString()}`;
 
   try {
     // User-Agent は Fetch 仕様の禁止ヘッダ名でブラウザが必ず落とすため指定しない
@@ -80,7 +90,7 @@ export async function searchLocation(
 
     const data: NominatimRawResult[] = await response.json();
 
-    return data.map((item) => {
+    const results = data.map((item) => {
       const lat = parseFloat(item.lat);
       const lng = parseFloat(item.lon);
       const formattedAddress = formatJapaneseAddress(item.address);
@@ -97,6 +107,8 @@ export async function searchLocation(
         addressText: formattedAddress || displayName,
       };
     });
+    resultCache.set(cacheKey, results);
+    return results;
   } catch (error: unknown) {
     if (error instanceof Error && error.name === "AbortError") {
       return [];

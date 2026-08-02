@@ -24,7 +24,7 @@ describe("LocationSearchInput", () => {
     expect(screen.getByPlaceholderText("施設名や住所で場所を検索...")).toBeInTheDocument();
   });
 
-  it("triggers search and displays results list when user types", async () => {
+  it("入力だけでは検索せず、検索ボタンで結果を表示する", async () => {
     const mockResults: geocodingModule.GeocodingResult[] = [
       {
         placeId: 1,
@@ -42,6 +42,8 @@ describe("LocationSearchInput", () => {
 
     const input = screen.getByRole("combobox", { name: "地点検索" });
     fireEvent.change(input, { target: { value: "東京駅" } });
+    expect(geocodingModule.searchLocation).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "地点を検索" }));
 
     await waitFor(
       () => {
@@ -67,6 +69,7 @@ describe("LocationSearchInput", () => {
 
     const input = screen.getByRole("combobox", { name: "地点検索" });
     fireEvent.change(input, { target: { value: "東京駅" } });
+    fireEvent.click(screen.getByRole("button", { name: "地点を検索" }));
 
     await waitFor(() => {
       expect(screen.getByText("東京都千代田区丸の内1丁目")).toBeInTheDocument();
@@ -106,6 +109,7 @@ describe("LocationSearchInput", () => {
 
     const input = screen.getByRole("combobox", { name: "地点検索" });
     fireEvent.change(input, { target: { value: "東京" } });
+    fireEvent.keyDown(input, { key: "Enter" });
 
     await waitFor(() => {
       expect(screen.getAllByRole("option")).toHaveLength(2);
@@ -153,6 +157,7 @@ describe("LocationSearchInput", () => {
 
     const input = screen.getByRole("combobox", { name: "地点検索" });
     fireEvent.change(input, { target: { value: "東京" } });
+    fireEvent.click(screen.getByRole("button", { name: "地点を検索" }));
 
     await waitFor(() => {
       expect(screen.getAllByRole("option")).toHaveLength(2);
@@ -180,6 +185,7 @@ describe("LocationSearchInput", () => {
 
     const input = screen.getByRole("combobox", { name: "地点検索" });
     fireEvent.change(input, { target: { value: "東京駅" } });
+    fireEvent.click(screen.getByRole("button", { name: "地点を検索" }));
 
     await waitFor(() => {
       expect(screen.getByRole("listbox")).toBeInTheDocument();
@@ -200,6 +206,7 @@ describe("LocationSearchInput", () => {
 
     const input = screen.getByRole("combobox", { name: "地点検索" });
     fireEvent.change(input, { target: { value: "東京駅" } });
+    fireEvent.click(screen.getByRole("button", { name: "地点を検索" }));
 
     // ドロップダウン内と aria-live 領域の両方に表示される
     await waitFor(() => {

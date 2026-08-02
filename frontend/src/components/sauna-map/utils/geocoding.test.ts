@@ -71,6 +71,18 @@ describe("searchLocation", () => {
     expect(consoleSpy).toHaveBeenCalled();
   });
 
+  it("同じ検索語の結果をメモリキャッシュから返す", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+    });
+
+    await searchLocation("キャッシュ確認");
+    await searchLocation("キャッシュ確認");
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
   it("handles AbortError quietly", async () => {
     const abortError = new Error("Aborted");
     abortError.name = "AbortError";

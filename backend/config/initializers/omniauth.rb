@@ -6,5 +6,6 @@ Rails.application.config.middleware.use OmniAuth::Builder do
     prompt: "select_account"
 end
 
-OmniAuth.config.allowed_request_methods = [ :get ]
-OmniAuth.config.silence_get_warning = true
+# OmniAuth 2の既定どおり、OAuthのrequest phaseはPOSTだけを許可する。
+# omniauth-rails_csrf_protection がRailsのauthenticity_tokenを検証する。
+OmniAuth.config.allowed_request_methods = [ :post ]

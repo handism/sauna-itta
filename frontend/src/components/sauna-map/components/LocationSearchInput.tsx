@@ -25,54 +25,60 @@ export function LocationSearchInput({
   const [hasSearched, setHasSearched] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [coolingDown, setCoolingDown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const requestControllerRef = useRef<AbortController | null>(null);
+  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Debounce search API call
+  // 入力変更では検索しない。公共Nominatimのクライアント側オートコンプリート禁止に
+  // 従い、検索ボタンまたはEnterによる明示操作だけで送信する。
   useEffect(() => {
-    const trimmed = query.trim();
-    if (!trimmed) {
+    if (!query.trim()) {
       setResults([]);
       setIsOpen(false);
       setHasSearched(false);
       setIsLoading(false);
       setErrorMessage(null);
       setActiveIndex(-1);
-      return;
     }
-
-    setIsLoading(true);
-    const controller = new AbortController();
-
-    const timer = setTimeout(async () => {
-      try {
-        const data = await searchLocation(trimmed, controller.signal);
-        setResults(data);
-        setErrorMessage(null);
-        setIsOpen(true);
-        setHasSearched(true);
-        setActiveIndex(-1);
-      } catch (error) {
-        // 入力継続によるキャンセルはエラー表示しない
-        if (controller.signal.aborted) return;
-        console.error("Search failed:", error);
-        setResults([]);
-        setErrorMessage("場所を検索できませんでした。通信環境を確認して再度お試しください。");
-        setIsOpen(true);
-        setHasSearched(true);
-        setActiveIndex(-1);
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsLoading(false);
-        }
-      }
-    }, 400);
-
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
   }, [query]);
+
+  useEffect(() => () => {
+    requestControllerRef.current?.abort();
+    if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+  }, []);
+
+  const handleSearch = async () => {
+    const trimmed = query.trim();
+    if (!trimmed || isLoading || coolingDown) return;
+
+    const controller = new AbortController();
+    requestControllerRef.current?.abort();
+    requestControllerRef.current = controller;
+    setIsLoading(true);
+    setCoolingDown(true);
+    cooldownTimerRef.current = setTimeout(() => setCoolingDown(false), 1000);
+
+    try {
+      const data = await searchLocation(trimmed, controller.signal);
+      setResults(data);
+      setErrorMessage(null);
+      setIsOpen(true);
+      setHasSearched(true);
+      setActiveIndex(-1);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      console.error("Search failed:", error);
+      setResults([]);
+      setErrorMessage("場所を検索できませんでした。通信環境を確認して再度お試しください。");
+      setIsOpen(true);
+      setHasSearched(true);
+      setActiveIndex(-1);
+    } finally {
+      if (!controller.signal.aborted) setIsLoading(false);
+    }
+  };
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -106,6 +112,8 @@ export function LocationSearchInput({
   };
 
   const handleClear = () => {
+    requestControllerRef.current?.abort();
+    setIsLoading(false);
     setQuery("");
     setResults([]);
     setIsOpen(false);
@@ -117,6 +125,16 @@ export function LocationSearchInput({
     if (e.key === "Escape") {
       setIsOpen(false);
       setActiveIndex(-1);
+      return;
+    }
+
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (isOpen && activeIndex >= 0) {
+        handleSelect(results[activeIndex]);
+      } else {
+        void handleSearch();
+      }
       return;
     }
 
@@ -136,11 +154,6 @@ export function LocationSearchInput({
       return;
     }
 
-    if (e.key === "Enter" && isOpen && activeIndex >= 0) {
-      // フォーム全体の submit を防いで候補選択に充てる
-      e.preventDefault();
-      handleSelect(results[activeIndex]);
-    }
   };
 
   return (
@@ -152,7 +165,11 @@ export function LocationSearchInput({
           id={inputId}
           className="location-search-input"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            requestControllerRef.current?.abort();
+            setIsLoading(false);
+            setQuery(e.target.value);
+          }}
           onKeyDown={handleKeyDown}
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
@@ -162,12 +179,11 @@ export function LocationSearchInput({
           role="combobox"
           aria-expanded={isOpen}
           aria-controls="location-search-listbox"
-          aria-autocomplete="list"
+          aria-autocomplete="none"
           aria-activedescendant={
             isOpen && activeIndex >= 0 ? `${OPTION_ID_PREFIX}${activeIndex}` : undefined
           }
         />
-        {isLoading && <Loader2 className="location-search-spinner spin" size={16} />}
         {!isLoading && query && (
           <button
             type="button"
@@ -178,6 +194,16 @@ export function LocationSearchInput({
             <X size={14} />
           </button>
         )}
+        <button
+          type="button"
+          className="location-search-submit"
+          disabled={!query.trim() || isLoading || coolingDown}
+          aria-label="地点を検索"
+          onClick={() => void handleSearch()}
+        >
+          {isLoading ? <Loader2 className="spin-icon" size={16} aria-hidden="true" /> : <Search size={16} aria-hidden="true" />}
+          <span>検索</span>
+        </button>
       </div>
 
       {isOpen && (

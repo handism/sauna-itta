@@ -12,6 +12,9 @@
 
 # testing
 /frontend/coverage
+/frontend/playwright-report
+/frontend/test-results
+/frontend/blob-report
 
 # next.js
 /frontend/.next/

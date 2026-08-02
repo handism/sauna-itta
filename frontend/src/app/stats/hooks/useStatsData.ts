@@ -14,6 +14,7 @@ export function useStatsData() {
   const [date, setDate] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
   const [authenticated, setAuthenticated] = useState(false);
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const repository = useMemo(() => getVisitRepository(), []);
 
@@ -29,6 +30,7 @@ export function useStatsData() {
       try {
         const session = await repository.getSession();
         setAuthenticated(session.authenticated);
+        setCsrfToken(session.csrfToken);
         if (session.authenticated) setVisits(await repository.list());
       } catch (error) {
         setLoadError(error instanceof Error ? error.message : "記録の読み込みに失敗しました。");
@@ -89,6 +91,7 @@ export function useStatsData() {
     setDate,
     mounted,
     authenticated,
+    csrfToken,
     loadError,
     dataSource: repository.dataSource,
     stats,

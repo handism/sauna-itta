@@ -71,9 +71,15 @@ npm run lint
 npm run typecheck
 npm run build:local
 npm run build:api
+npm run playwright:install
+npm run test:e2e
 ```
 
 `npm run build` は環境変数未指定時にlocalモードを生成します。`npm run test:coverage` は `vitest.config.ts` のカバレッジ閾値付きで実行し、CIもこちらを使います。
+
+Playwright E2Eはローカルで任意に行う実ブラウザ確認です。初回だけ`npm run playwright:install`でChromiumを用意し、`npm run test:e2e`（対話的に確認する場合は`npm run test:e2e:ui`）を実行してください。開発速度を維持するためGitHub Actionsの必須CIには含めていません。localモードのテーマ保持、統計導線、地点検索の明示実行、モバイルのボトムシートを検査します。
+
+地点検索は公共Nominatimの利用方針に合わせ、入力中には送信せず検索ボタンまたはEnterで実行します。同一語句はブラウザ内でキャッシュし、連続検索は1秒間隔です。Nominatim互換サービスへ切り替える場合はビルド時に`NEXT_PUBLIC_GEOCODING_ENDPOINT`を指定します。
 
 依存関係の更新はDependabot（`.github/dependabot.yml`）がnpm・Bundler・GitHub Actions・Dockerを毎週チェックします。
 
@@ -119,6 +125,8 @@ Google Cloud ConsoleでOAuth 2.0ウェブクライアントを作り、承認済
 - 本番: `https://SERVICE_HASH.asia-northeast1.run.app/auth/google_oauth2/callback`
 
 `ALLOWED_GOOGLE_EMAIL` は大文字小文字を正規化した完全一致で検査されます。OAuthクライアントID／秘密鍵はローカルでは環境変数、本番ではSecret Managerから渡します。
+
+Googleログインの開始は`GET /api/v1/session`が返すCSRFトークンを含むPOSTフォームで行います。`/auth/google_oauth2`をアドレスバーからGETしてもログインは開始されません。
 
 ## Rails API
 
