@@ -31,18 +31,15 @@ export function LocationSearchInput({
   const requestControllerRef = useRef<AbortController | null>(null);
   const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 入力変更では検索しない。公共Nominatimのクライアント側オートコンプリート禁止に
-  // 従い、検索ボタンまたはEnterによる明示操作だけで送信する。
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults([]);
-      setIsOpen(false);
-      setHasSearched(false);
-      setIsLoading(false);
-      setErrorMessage(null);
-      setActiveIndex(-1);
-    }
-  }, [query]);
+  // query が空になったら検索結果をリセットする（onChange から直接呼び出す）
+  const resetSearchState = () => {
+    setResults([]);
+    setIsOpen(false);
+    setHasSearched(false);
+    setIsLoading(false);
+    setErrorMessage(null);
+    setActiveIndex(-1);
+  };
 
   useEffect(() => () => {
     requestControllerRef.current?.abort();
@@ -168,7 +165,9 @@ export function LocationSearchInput({
           onChange={(e) => {
             requestControllerRef.current?.abort();
             setIsLoading(false);
-            setQuery(e.target.value);
+            const newValue = e.target.value;
+            setQuery(newValue);
+            if (!newValue.trim()) resetSearchState();
           }}
           onKeyDown={handleKeyDown}
           onFocus={() => {
