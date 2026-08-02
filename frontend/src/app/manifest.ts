@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
+import { DATA_SOURCE } from "../../dataSource";
 
 export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
-  const basePath = process.env.NEXT_PUBLIC_DATA_SOURCE === "api" ? "" : "/sauna-itta";
+  const basePath = DATA_SOURCE === "api" ? "" : "/sauna-itta";
   return {
     name: "サウナイッタ - マイととのいマップ",
     short_name: "サウナイッタ",

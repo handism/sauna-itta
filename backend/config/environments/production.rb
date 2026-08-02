@@ -8,6 +8,6 @@ Rails.application.configure do
   config.assume_ssl = true
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
   config.log_tags = [ :request_id ]
-  config.active_storage.service = :google
+  config.active_storage.service = ENV.fetch("ACTIVE_STORAGE_SERVICE", "google").to_sym
   config.active_support.report_deprecations = false
 end

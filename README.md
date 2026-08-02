@@ -9,6 +9,8 @@
 | GitHub Pagesデモ | `local`（既定）           | 同梱JSON＋`localStorage`         | `/sauna-itta`、PWA／Service Worker有効           |
 | GCP個人版        | `api`                     | Rails API＋PostgreSQL＋非公開GCS | basePathなし、オンライン必須、Service Worker無効 |
 
+`NEXT_PUBLIC_DATA_SOURCE`は未指定時にlocalとなり、`local`／`api`以外の値はbasePath・Repository・Service Workerの混在構成を防ぐためビルドエラーになります。
+
 APIモードは許可したGoogleアカウント1件だけが利用できます。オフライン編集キュー、競合マージ、公開共有、管理画面、サーバー側統計集計は対象外です。JSONエクスポートは両モードで利用でき、APIインポートは10件ずつ送信して既存IDを除外するため再実行できます。途中で通信に失敗した場合は、確定済み件数を表示してサーバー状態を再読み込みします。
 
 localモードの同梱JSONは、localStorageへの保存がまだ無いときの初期データです。一度でも記録を編集・追加・削除すると以降は保存側だけが正になります（同梱JSONを毎回足し戻さないため、デモ記録の編集や削除も再読み込み後に残ります）。APIモードのエクスポートJSONは写真を `/api/v1/images/...` のURLとして書き出すため、そのファイルをlocalモードへ取り込んでも写真は表示されません（記録本体は取り込めます）。
@@ -42,7 +44,7 @@ GitHub Pages (local)                 Cloud Run (api)
 
 Googleログインは `ALLOWED_GOOGLE_EMAIL` と一致し、かつ確認済みのメールアドレスだけを通します。Railsは `User`、`SaunaVisit`、`VisitHistoryEntry` を `user_id` で分離します。任意の既存IDは `external_id` に保持し、新規IDにはUUIDを使います。写真はdata URLを復号・検証してActive Storageへ保存し、ログインユーザーで所有権を確認する画像エンドポイントだけから配信します。写真の削除・差し替えは記録更新と同じトランザクションで行い、更新が確定した後だけ古いblobを削除します。
 
-localモードのService Workerは静的資産と地図タイルを別キャッシュへ保存します。OpenStreetMapタイルは最大200件に制限し、更新時はこのアプリの旧キャッシュだけを削除します。統計画面は必須資産とは別枠で先読みするため、一度も開かずにオフラインへ入っても遷移できます（先読みに失敗してもインストールは成功します）。
+localモードのService Workerは静的資産と地図タイルを別キャッシュへ保存します。OpenStreetMapタイルは最大200件に制限し、更新時はこのアプリの旧キャッシュだけを削除します。統計画面は必須資産とは別枠で先読みするため、一度も開かずにオフラインへ入っても遷移できます（先読みに失敗してもインストールは成功します）。キャッシュ書き込みはService Workerイベントの完了条件へ含め、ブラウザがバックグラウンド処理を途中終了して保存が欠落しないようにしています。
 
 APIモードでは、Railsが同梱するNext.js成果物のうち内容ハッシュ付きの `/_next/static/` だけに長期キャッシュ（`immutable`）を付けます。`index.html` は毎回再検証されるため、デプロイした更新はすぐ届きます。
 
@@ -159,7 +161,7 @@ Terraformは `asia-northeast1` に次を作成します。
 
 - Cloud Run: 1 vCPU、512MiB、min 0／max 2、concurrency 10
 - Cloud SQL PostgreSQL 17: `db-f1-micro`、単一ゾーン、SSD 10GB、日次バックアップ、PITRなし
-- Public Access Prevention付き非公開GCS、Artifact Registry、Secret Manager
+- Public Access Prevention付き非公開GCS（バージョニング、非現行世代は既定30日後に削除）、Artifact Registry、Secret Manager
 - 実行／デプロイ用サービスアカウント、GitHub Actions WIF
 - 初期値月3,000円の50%／90%／100%予算通知
 
@@ -190,7 +192,7 @@ Cloud RunはCloud SQLのUnix socketを使うためVPC Connectorは不要です�
 
 ## 継続デプロイとロールバック
 
-- `ci.yml`: npm検証、Rails test／RuboCop／Brakeman、Terraform format／validate、本番Docker build
+- `ci.yml`: npm検証、Rails test／RuboCop／Brakeman、Terraform format／validate、本番Docker build／DB準備／`GET /up`スモークテスト
 - `pages.yml`: mainからlocalモードをGitHub Pagesへ配信
 - `gcp-deploy.yml`: GCP基盤の構築完了後に手動実行します。WIF/OIDCで認証し、イメージを一度だけbuild・push。同一digestでmigration job成功後にCloud Runを更新
 
@@ -202,7 +204,7 @@ GCPデプロイは、未構築の環境で`main`へのpushが失敗し続けな�
 
 ## バックアップ・復旧・費用
 
-Cloud SQLは日次バックアップを有効にしますがPITRは無効です。復旧時はバックアップから新インスタンスへリストアし、接続先を切り替えて画像との整合性を確認します。GCSはオブジェクトバージョニングを有効にし、誤削除時は旧世代から復元します。定期的なJSONエクスポートも利用者側バックアップとして保管してください。
+Cloud SQLは日次バックアップを有効にしますがPITRは無効です。復旧時はバックアップから新インスタンスへリストアし、接続先を切り替えて画像との整合性を確認します。GCSはオブジェクトバージョニングを有効にし、誤削除時は旧世代から復元します。削除済み写真を無期限に保持しないよう、非現行世代は`photo_version_retention_days`（既定30日）後にライフサイクル削除します。定期的なJSONエクスポートも利用者側バックアップとして保管してください。
 
 Cloud Runはscale-to-zeroしますがCloud SQLは停止しないため、アクセスがなくても固定費が残ります。Google Cloud無料トライアルは現在90日・$300ですが、Cloud SQLは無料枠対象外です。利用前に公式の[Google Cloud無料プログラム](https://docs.cloud.google.com/free/docs/free-cloud-features)と[Cloud SQL料金](https://cloud.google.com/sql/pricing)を確認し、不要になった試用基盤は削除してください。
 

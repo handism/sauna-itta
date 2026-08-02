@@ -28,3 +28,6 @@
 - 絞り込み結果の件数など、操作の結果として変わる情報は `role="status"` + `aria-live="polite"` のライブリージョンで伝えること（`VisitListHeader` の `.sr-only` 要素）。見た目の数字だけを更新しても支援技術には伝わりません。
 - アニメーションは `prefers-reduced-motion` を尊重すること。CSS は `base.css` の共通ブロックが担い、JS 由来のもの（Leaflet の `flyTo`、`scrollIntoView`）は `utils/motion.ts` の `prefersReducedMotion()` / `getScrollBehavior()` を経由させます。
 - テーマは初期描画前に `layout.tsx` のインラインスクリプトが `html` へ `light-theme` を付与します（ちらつき防止）。判定ロジックを変更する際は `utils/theme.ts` の `getInitialTheme()` と必ず揃えてください。保存値が無い場合は OS の `prefers-color-scheme` に従います。
+
+## 3. ビルドモード
+- local／apiの判定は`frontend/dataSource.ts`の`DATA_SOURCE`を使います。`process.env.NEXT_PUBLIC_DATA_SOURCE === "api"`のような個別判定を増やさないでください。不正値はbasePath・Repository・Service Workerが食い違うため、暗黙のフォールバックではなくビルドエラーにします。

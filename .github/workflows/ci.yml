@@ -64,6 +64,17 @@ jobs:
 
   infrastructure:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_DB: sauna_itta_production_smoke
+          POSTGRES_USER: sauna_itta
+          POSTGRES_PASSWORD: sauna_itta
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U sauna_itta -d sauna_itta_production_smoke"
+          --health-interval 5s --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@v7
       - uses: hashicorp/setup-terraform@v4
@@ -72,3 +83,33 @@ jobs:
       - run: terraform -chdir=infra validate
       - name: productionイメージをビルド
         run: docker build -t sauna-itta:ci .
+      - name: productionイメージでDBを準備
+        run: >-
+          docker run --rm --network host
+          -e RAILS_ENV=production
+          -e SECRET_KEY_BASE=ci-production-smoke-secret-key-base
+          -e DB_HOST=127.0.0.1
+          -e POSTGRES_DB=sauna_itta_production_smoke
+          -e POSTGRES_USER=sauna_itta
+          -e POSTGRES_PASSWORD=sauna_itta
+          -e ACTIVE_STORAGE_SERVICE=local
+          sauna-itta:ci bundle exec rails db:prepare
+      - name: productionコンテナのhealth check
+        run: |
+          container_id=$(docker run -d --network host \
+            -e RAILS_ENV=production \
+            -e SECRET_KEY_BASE=ci-production-smoke-secret-key-base \
+            -e DB_HOST=127.0.0.1 \
+            -e POSTGRES_DB=sauna_itta_production_smoke \
+            -e POSTGRES_USER=sauna_itta \
+            -e POSTGRES_PASSWORD=sauna_itta \
+            -e ACTIVE_STORAGE_SERVICE=local \
+            sauna-itta:ci)
+          trap 'docker logs "$container_id"; docker rm -f "$container_id"' EXIT
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:8080/up; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1

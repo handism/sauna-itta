@@ -1,9 +1,9 @@
 import { ApiVisitRepository } from "./apiVisitRepository";
 import { LocalVisitRepository } from "./localVisitRepository";
+import { DATA_SOURCE } from "../../../../dataSource";
 
 export * from "./types";
-
-export const DATA_SOURCE = process.env.NEXT_PUBLIC_DATA_SOURCE === "api" ? "api" : "local";
+export { DATA_SOURCE };
 
 let repository: ApiVisitRepository | LocalVisitRepository | undefined;
 

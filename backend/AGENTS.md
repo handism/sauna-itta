@@ -15,6 +15,7 @@
 
 ## 写真
 - 写真はJPEG／PNG／WebP／GIFのdata URLだけを許可し、復号後1MB以下をRails validationでも検査します。SVGと任意URLを受け付けないでください。本番配信は所有者確認を行う認証付き画像エンドポイントに限定します。既存写真の削除・差し替えは他属性の保存と同じDBトランザクション内で添付を変更し、古いblobはコミット成功後だけ削除してください（バリデーション失敗や`lock_version`競合時に元写真を失わないこと）。履歴エントリの削除も同じ方針で、blobは`purge_stale_image_blobs`へ渡して`destroy!`のコミット後に破棄します（`destroy!`より前に`purge`を呼ぶと、削除が失敗したときに写真だけが失われます）。
+- 記録全体の削除で履歴写真を破棄するコールバックは`after_destroy_commit`を維持します。`after_destroy`へ戻すと、外部ストレージ上の画像削除後にDBトランザクションがロールバックして画像だけ失われます。履歴単体の削除は親の`SaunaVisit`を`with_lock`し、ロック内で残件数を再確認してから削除してください（同時削除で履歴が0件になるのを防ぎます）。
 - 画像エンドポイントは所有者確認の後に `expires_in 5.minutes, public: false` と `stale?(etag: blob.checksum, last_modified: blob.created_at)` で条件付きGETへ応答します（共有キャッシュへ載せないこと、および `blob.download` をキャッシュヒット時に実行しないこと）。認可チェックより前に304を返す実装にしないでください。
 
 ## 静的成果物の配信

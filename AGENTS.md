@@ -42,12 +42,14 @@
 ## データソース規約
 
 - `NEXT_PUBLIC_DATA_SOURCE=local|api` で配布形態を切り替えます。localはGitHub Pages用の`/sauna-itta`、同梱JSON、`localStorage`、PWAを維持し、apiはbasePathなし・Rails API・オンライン必須でService Workerを登録しません。
+- `NEXT_PUBLIC_DATA_SOURCE`は未指定（local扱い）・`local`・`api`だけを許可し、それ以外はビルド時に失敗させます。各コンポーネントで独自にフォールバックせず、`frontend/dataSource.ts`の`DATA_SOURCE`を参照してください（判定がずれるとbasePathとRepositoryが異なる混在構成になります）。
 - フロントの永続化は `repositories/` の `VisitRepository` 経由にします。Contextや画面から`fetch`または`localStorage`を直接呼ばないでください。CRUDは非同期で、Repository成功後だけ画面状態を更新します。
 - localモードの同梱JSONは「保存がまだ無いときの初期データ」です。`getInitialVisits()` は保存があればそちらだけを正とし、同梱JSONを足し戻しません（足し戻す実装に戻すと、デモ記録の編集・削除が保存直後だけ反映され再読み込みで元へ戻ります）。
 - JSONエクスポートは `Blob` + `URL.createObjectURL` で書き出します（`data:` URLへ戻さないこと。写真は最大1MBのBase64で含まれるため、数十件でURL長の上限に当たって無言で失敗します）。APIモードのエクスポートは写真を画像エンドポイントのURLとして書き出すため、localモードへ取り込んでも写真は復元されません。
 - APIインポートは最大10件のチャンクを維持し、既存`external_id`をスキップして再実行可能にします。途中のチャンクで失敗した場合は必ず再読み込みし、確定済み件数とRepositoryのエラー理由を利用者へ通知します。JSON形式エラーとして一律表示しないでください。JSONエクスポートは両モードで維持します。
 - インポートの結果は `ImportResult` の `added` と `skipped` を両方とも利用者へ伝えます。チャンクごとの途中経過トーストは残りのチャンクがある間だけ出し、最後のチャンクの結果は完了トーストにまとめること（チャンク数と同じ回数トーストを出すと、大量取り込みで通知が連続します）。`skipped` にはサーバーが弾いた重複と、画面上の記録と重複してリクエスト前に除外した分の両方を含めます。
 - localモードのService Workerは静的資産と地図タイルのキャッシュを分離し、地図タイルはOpenStreetMapの明示的な許可ホストだけを最大200件保存します。activate時に削除してよいのは`sauna-itta-`接頭辞を持つ旧キャッシュだけです（GitHub Pagesの同一オリジンにある別アプリのキャッシュを削除しないこと）。キャッシュ方針を変えた場合は静的キャッシュのバージョンを更新してください。
+- Service Workerの非同期キャッシュ書き込みはイベント寿命へ必ず結び付けます。キャッシュ済みレスポンスのバックグラウンド更新は`event.waitUntil()`へ渡し、初回取得時の`cache.put()`は`respondWith()`へ渡すPromise内で`await`してください（未接続のPromiseはブラウザがイベントを終了して書き込みが欠落します）。
 - 統計画面は別ドキュメントのため`OPTIONAL_PRECACHE_ASSETS`で先読みしますが、必須資産の`cache.addAll`へ混ぜないでください（`addAll`は1つでも取得に失敗するとinstallごと失敗し、オフライン対応が丸ごと失われます）。任意の先読みは`Promise.allSettled`で取得できた分だけ保存します。
 - 公共Nominatimへの地点検索は入力中のオートコンプリートにせず、検索ボタンまたはEnterによる明示操作だけで実行します。同一語句はメモリキャッシュし、連続実行は1秒間隔に制限します。接続先を変える場合は`NEXT_PUBLIC_GEOCODING_ENDPOINT`へNominatim互換URLを指定します。
 - Google OAuthのrequest phaseはPOSTだけを許可し、`GET /api/v1/session`のCSRFトークンを`authenticity_token`として送信します。通常リンクやGET許可へ戻さないでください。
@@ -59,3 +61,4 @@
 
 - リポジトリは`frontend/`（Next.js）／`backend/`（Rails）／`infra/`（Terraform）のモノレポ構成です。ルートには`Dockerfile`、`docker-compose.yaml`、`README.md`等のリポジトリ横断ファイルだけを置きます。
 - 本番イメージはルート`Dockerfile`（ビルドコンテキストはリポジトリルート）でAPIモードのNext.js静的成果物とRailsだけを組み込み、非rootでPumaを起動します。ローカルは`frontend`／`api`／`postgres`のDocker Composeを使用します。フロント依存関係は`frontend/Dockerfile.frontend.dev`のビルド時に`npm ci`でインストールします（ビルドコンテキストは`./frontend`）。APIは起動時に`/app/tmp/pids/server.pid`を除去し、`bin/rails db:prepare`の成功後にRailsを`exec`起動します。依存関係変更時は`docker-compose up --build`でフロントイメージを再ビルドしてください。
+- CIの本番イメージ検証はビルドだけで終えず、PostgreSQLへ`db:prepare`したうえでproductionコンテナを起動し、`GET /up`が成功するところまで確認します。スモークテストでは外部GCSへ接続しないよう`ACTIVE_STORAGE_SERVICE=local`を指定します。

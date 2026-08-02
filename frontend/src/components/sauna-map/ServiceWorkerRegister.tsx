@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
+import { DATA_SOURCE } from "../../../dataSource";
 
 export function ServiceWorkerRegister() {
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DATA_SOURCE === "api") return;
+    if (DATA_SOURCE === "api") return;
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
       return;
     }
