@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "Bash(grep -iv '^$')",
+      "Bash(gh repo *)",
+      "Bash(git checkout *)",
+      "Bash(git pull *)",
+      "Bash(sed *)",
+      "Bash(npm run *)",
+      "Bash(git fetch *)",
+      "Bash(git worktree *)",
+      "Bash(docker compose *)",
+      "Bash(ruby -v)",
+      "Bash(bundle check *)",
+      "Bash(bundle install *)",
+      "Bash(bundle exec *)",
+      "Bash(git branch *)",
+      "Bash(git rm *)",
+      "Bash(git push *)"
+    ]
+  }
+}
