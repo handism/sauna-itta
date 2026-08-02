@@ -68,4 +68,14 @@ describe("useSaunaVisits", () => {
     expect(result.current.visits).toEqual(initialVisits);
     expect(showToast).toHaveBeenCalledWith(expect.stringContaining("再読み込み"), "error");
   });
+
+  it("初期読み込み時のエラーを適切に処理しloadErrorに設定する", async () => {
+    const source = repository({
+      list: vi.fn().mockRejectedValue(new Error("ネットワークエラー")),
+    });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.loadError).toBe("ネットワークエラー");
+  });
 });
