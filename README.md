@@ -95,6 +95,16 @@ docker compose up --build
 
 フロントの依存関係は `frontend/Dockerfile.frontend.dev` のビルド時に `npm ci` でインストールされます。APIは前回の異常終了で残ったRailsのPIDファイルを除去し、`bin/rails db:prepare` を実行してから起動します。`package.json` または `package-lock.json` を更新した場合も、フロントイメージへ依存関係を反映するため再度 `docker-compose up --build` を実行してください。
 
+### Gemfileを更新したとき
+
+APIのgemは名前付きボリューム `backend_bundle` を `/usr/local/bundle` へマウントして保持します。名前付きボリュームは空のときだけイメージの中身で初期化されるため、`Gemfile` や `Gemfile.lock` を更新しても**`--build` では反映されません**。イメージのビルドは成功するのに起動時だけ `Bundler::GemNotFound` で落ちる場合はこれが原因です。次のコマンドでボリューム側へ反映してください。
+
+```bash
+docker compose run --rm --no-deps api bundle install --jobs 4 --retry 3
+```
+
+`docker volume rm sauna-itta_backend_bundle` してから `docker compose up` でも、ボリュームが再作成されるため解消します。ただし `docker compose down -v` は `postgres_data` も削除してローカルの開発用DBが失われるため使わないでください。
+
 - フロント: `http://localhost:3000`
 - Rails: `http://localhost:3001`
 - 開発ログイン: `ENABLE_DEV_LOGIN=true` の場合だけ `POST http://localhost:3000/dev/login`
