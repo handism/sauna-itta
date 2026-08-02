@@ -121,9 +121,11 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "image/png", response.media_type
 
-    patch "/api/v1/sauna_visits/#{visit.fetch('id')}", params: {
-      saunaVisit: valid_attributes.merge(image: nil, lockVersion: visit.fetch("lockVersion"))
-    }, headers: csrf_header(csrf), as: :json
+    perform_enqueued_jobs do
+      patch "/api/v1/sauna_visits/#{visit.fetch('id')}", params: {
+        saunaVisit: valid_attributes.merge(image: nil, lockVersion: visit.fetch("lockVersion"))
+      }, headers: csrf_header(csrf), as: :json
+    end
     assert_response :success
     assert_not ActiveStorage::Blob.exists?(blob.id)
   end
