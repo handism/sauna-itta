@@ -4,10 +4,10 @@
 
 ## 2つの実行モード
 
-| モード | `NEXT_PUBLIC_DATA_SOURCE` | データ | 配信 |
-|---|---|---|---|
-| GitHub Pagesデモ | `local`（既定） | 同梱JSON＋`localStorage` | `/sauna-itta`、PWA／Service Worker有効 |
-| GCP個人版 | `api` | Rails API＋PostgreSQL＋非公開GCS | basePathなし、オンライン必須、Service Worker無効 |
+| モード           | `NEXT_PUBLIC_DATA_SOURCE` | データ                           | 配信                                             |
+| ---------------- | ------------------------- | -------------------------------- | ------------------------------------------------ |
+| GitHub Pagesデモ | `local`（既定）           | 同梱JSON＋`localStorage`         | `/sauna-itta`、PWA／Service Worker有効           |
+| GCP個人版        | `api`                     | Rails API＋PostgreSQL＋非公開GCS | basePathなし、オンライン必須、Service Worker無効 |
 
 APIモードは許可したGoogleアカウント1件だけが利用できます。オフライン編集キュー、競合マージ、公開共有、管理画面、サーバー側統計集計は対象外です。JSONエクスポートは両モードで利用でき、APIインポートは10件ずつ送信して既存IDを除外するため再実行できます。途中で通信に失敗した場合は、確定済み件数を表示してサーバー状態を再読み込みします。
 
@@ -86,10 +86,9 @@ Playwright E2Eはローカルで任意に行う実ブラウザ確認です。初
 ## Docker Composeでローカル起動
 
 DockerとDocker Composeを用意し、必要に応じて `.env.example` を `.env` へコピーしてOAuth値を設定します。
-（※ 環境によっては `docker compose` の代わりに `docker-compose` コマンドを使用してください）
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 フロントの依存関係は `frontend/Dockerfile.frontend.dev` のビルド時に `npm ci` でインストールされます。APIは前回の異常終了で残ったRailsのPIDファイルを除去し、`bin/rails db:prepare` を実行してから起動します。`package.json` または `package-lock.json` を更新した場合も、フロントイメージへ依存関係を反映するため再度 `docker-compose up --build` を実行してください。
@@ -105,7 +104,9 @@ docker-compose up --build
 `POST /dev/login` はCSRF保護の対象です。アドレスバーから開く（`GET`する）、またはCSRFトークンなしで`POST`するとログインできません。ブラウザで `http://localhost:3000` を開き、開発者ツールのコンソールで次を実行してください。
 
 ```js
-const session = await fetch("/api/v1/session").then((response) => response.json());
+const session = await fetch("/api/v1/session").then((response) =>
+  response.json(),
+);
 await fetch("/dev/login", {
   method: "POST",
   headers: { "X-CSRF-Token": session.csrfToken },
