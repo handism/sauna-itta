@@ -28,8 +28,6 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
   const [visits, setVisits] = useState<SaunaVisit[]>(() =>
     seededFromStorage ? getInitialVisits() : [],
   );
-  // 初回の list() は上の初期値と同じ localStorage の読み込み＋zod検証になるため省く
-  const pendingInitialListRef = useRef(!seededFromStorage);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [authenticated, setAuthenticated] = useState(repository.dataSource === "local");
@@ -57,11 +55,11 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
         if (!active) return;
         setAuthenticated(session.authenticated);
         setUser(session.user);
-        if (session.authenticated && pendingInitialListRef.current) {
+        // 初回の list() は上の初期値と同じ localStorage の読み込み＋zod検証になるため省く
+        if (session.authenticated && !seededFromStorage) {
           const loaded = await repository.list();
           if (active) setVisits(loaded);
         }
-        pendingInitialListRef.current = true;
       } catch (error) {
         if (active) setLoadError(mutationErrorMessage(error));
       } finally {
@@ -71,7 +69,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     return () => {
       active = false;
     };
-  }, [repository]);
+  }, [repository, seededFromStorage]);
 
   const runMutation = useCallback(
     async <T,>(operation: () => Promise<T>): Promise<{ success: boolean; value?: T }> => {

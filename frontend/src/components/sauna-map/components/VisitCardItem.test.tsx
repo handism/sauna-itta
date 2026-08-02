@@ -111,6 +111,124 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
     });
   });
 
+  describe("VisitCompactItem の操作", () => {
+    const compactProps = {
+      visit: mockVisit,
+      isHovered: false,
+      onEdit: vi.fn(),
+      setFilters: vi.fn(),
+      onOpenImage: vi.fn(),
+    };
+
+    it("展開中はトグルで折りたたみ、選択は再実行しない", () => {
+      const handleSelect = vi.fn();
+      const handleDeselect = vi.fn();
+      render(
+        <VisitCompactItem
+          {...compactProps}
+          isSelected
+          onSelectVisit={handleSelect}
+          onDeselectVisit={handleDeselect}
+        />
+      );
+
+      const toggle = screen.getByRole("button", { name: "天空サウナの情報を折りたたむ" });
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+      fireEvent.click(toggle);
+
+      expect(handleDeselect).toHaveBeenCalledOnce();
+      expect(handleSelect).not.toHaveBeenCalled();
+    });
+
+    it("展開時だけ詳細・写真・経路リンクを描画する", () => {
+      const onOpenImage = vi.fn();
+      const { rerender } = render(
+        <VisitCompactItem {...compactProps} isSelected={false} onSelectVisit={vi.fn()} />
+      );
+      expect(screen.queryByText("最高のととのい")).not.toBeInTheDocument();
+
+      rerender(
+        <VisitCompactItem
+          {...compactProps}
+          isSelected
+          onSelectVisit={vi.fn()}
+          onOpenImage={onOpenImage}
+        />
+      );
+
+      expect(screen.getByText("最高のととのい")).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /ここへ行く/ })).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole("button", { name: /天空サウナの写真/ }));
+      expect(onOpenImage).toHaveBeenCalledWith(mockVisit.image);
+    });
+
+    it("展開中の解除ボタンは折りたたみを一度だけ呼ぶ", () => {
+      const handleDeselect = vi.fn();
+      render(
+        <VisitCompactItem
+          {...compactProps}
+          isSelected
+          onSelectVisit={vi.fn()}
+          onDeselectVisit={handleDeselect}
+        />
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /解除/ }));
+
+      expect(handleDeselect).toHaveBeenCalledOnce();
+    });
+
+    it("展開中のタグをクリックすると検索条件へ反映する", () => {
+      const setFilters = vi.fn((updater) => updater({ search: "" }));
+      render(
+        <VisitCompactItem
+          {...compactProps}
+          isSelected
+          onSelectVisit={vi.fn()}
+          setFilters={setFilters}
+        />
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: /水風呂/ }));
+
+      expect(setFilters.mock.results[0].value).toEqual({ search: "水風呂" });
+    });
+
+    it("行の出入りでホバー状態を伝える", () => {
+      const handleHover = vi.fn();
+      const { container } = render(
+        <VisitCompactItem
+          {...compactProps}
+          isSelected={false}
+          onSelectVisit={vi.fn()}
+          onHoverVisit={handleHover}
+        />
+      );
+      const row = container.querySelector(".sauna-compact-item") as HTMLElement;
+
+      fireEvent.mouseEnter(row);
+      expect(handleHover).toHaveBeenCalledWith("sauna-1");
+
+      fireEvent.mouseLeave(row);
+      expect(handleHover).toHaveBeenLastCalledWith(null);
+    });
+
+    it("行きたい記録には行きたいチップを出す", () => {
+      render(
+        <VisitCompactItem
+          {...compactProps}
+          visit={{ ...mockVisit, status: "wishlist" }}
+          isSelected={false}
+          onSelectVisit={vi.fn()}
+        />
+      );
+
+      expect(screen.getByText("行きたい")).toBeInTheDocument();
+    });
+  });
+
   describe("VisitCardItem の操作", () => {
     it("カードのホバーとクリックで選択・ホバー状態を伝える", () => {
       const handleHover = vi.fn();

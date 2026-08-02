@@ -21,10 +21,10 @@ export default defineConfig({
       // 現状の実測値をわずかに下回る値。テストを伴わない機能追加でここを下げないこと
       // （下げる場合は、なぜ検証できないのかを PR に書くこと）。
       thresholds: {
-        statements: 79,
-        branches: 69,
-        functions: 73,
-        lines: 82
+        statements: 84,
+        branches: 73,
+        functions: 83,
+        lines: 86
       }
     }
   }

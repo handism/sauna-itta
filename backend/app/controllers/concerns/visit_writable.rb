@@ -58,7 +58,12 @@ module VisitWritable
     end
   end
 
+  # 書き込み後の再読み込み。SaunaVisitSerializer は履歴ごとに image を参照するため、
+  # index と同じく添付とblobを先読みする（visit.reload だけだと履歴件数ぶんクエリが出る）。
   def serialized(visit)
-    SaunaVisitSerializer.new(visit.reload).as_json
+    reloaded = current_user.sauna_visits
+      .includes(visit_history_entries: { image_attachment: :blob })
+      .find(visit.id)
+    SaunaVisitSerializer.new(reloaded).as_json
   end
 end
