@@ -3,6 +3,14 @@ require "test_helper"
 class AuthCallbacksTest < ActionDispatch::IntegrationTest
   include ApiAuthHelper
 
+  test "OAuthコールバックが正常な場合にセッションを作成しリダイレクトする" do
+    get "/auth/google_oauth2/callback"
+    assert_redirected_to "/"
+    assert User.exists?(email: ApiAuthHelper::ALLOWED_EMAIL)
+    get "/api/v1/session"
+    assert response.parsed_body["authenticated"]
+  end
+
   test "Google OAuthの開始はCSRFトークン付きPOSTだけを許可する" do
     get "/api/v1/session"
     csrf_token = response.parsed_body.fetch("csrfToken")
@@ -15,6 +23,17 @@ class AuthCallbacksTest < ActionDispatch::IntegrationTest
 
     post "/auth/google_oauth2", params: { authenticity_token: csrf_token }
     assert_redirected_to "/auth/google_oauth2/callback"
+  end
+
+
+  test "許可されていないメールアドレスの場合はForbiddenを返す" do
+    OmniAuth.config.mock_auth[:google_oauth2] = google_auth_hash(email: "hacker@example.com")
+    get "/auth/google_oauth2/callback"
+
+    assert_redirected_to "/?authError=forbidden"
+    assert_not User.exists?(email: "hacker@example.com")
+    get "/api/v1/session"
+    assert_not response.parsed_body["authenticated"]
   end
 
   # 許可メール以外を弾く経路は api_v1_sauna_visits_test.rb 側で押さえている。
