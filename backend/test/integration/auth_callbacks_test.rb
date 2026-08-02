@@ -3,6 +3,15 @@ require "test_helper"
 class AuthCallbacksTest < ActionDispatch::IntegrationTest
   include ApiAuthHelper
 
+  test "許可メールのコールバックはユーザーを作りセッションを開始する" do
+    get "/auth/google_oauth2/callback"
+
+    assert_redirected_to "/"
+    assert User.exists?(email: ApiAuthHelper::ALLOWED_EMAIL)
+    get "/api/v1/session"
+    assert response.parsed_body["authenticated"]
+  end
+
   test "Google OAuthの開始はCSRFトークン付きPOSTだけを許可する" do
     get "/api/v1/session"
     csrf_token = response.parsed_body.fetch("csrfToken")
@@ -17,8 +26,19 @@ class AuthCallbacksTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/auth/google_oauth2/callback"
   end
 
-  # 許可メール以外を弾く経路は api_v1_sauna_visits_test.rb 側で押さえている。
-  # ここでは「メールは一致するが確認済みでない」場合と失敗コールバックを検証する。
+  # 許可メール以外でセッションが作られないことは api_v1_sauna_visits_test.rb 側でも押さえている。
+  # ここではリダイレクト先の理由コードと、ユーザーレコードを作らないことまで確認する。
+
+  test "許可メール以外は理由つきで戻しユーザーも作らない" do
+    OmniAuth.config.mock_auth[:google_oauth2] = google_auth_hash(email: "denied@example.com")
+
+    get "/auth/google_oauth2/callback"
+
+    assert_redirected_to "/?authError=forbidden"
+    assert_not User.exists?(email: "denied@example.com")
+    get "/api/v1/session"
+    assert_not response.parsed_body["authenticated"]
+  end
 
   test "メールが確認済みでないGoogleアカウントではセッションを作らない" do
     OmniAuth.config.mock_auth[:google_oauth2] = google_auth_hash(email_verified: false)
