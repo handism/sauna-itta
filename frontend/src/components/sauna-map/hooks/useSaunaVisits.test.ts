@@ -68,4 +68,33 @@ describe("useSaunaVisits", () => {
     expect(result.current.visits).toEqual(initialVisits);
     expect(showToast).toHaveBeenCalledWith(expect.stringContaining("再読み込み"), "error");
   });
+
+  it("reload時にエラーが発生した場合、loadErrorが設定される", async () => {
+    const source = repository({
+      list: vi.fn()
+        .mockResolvedValueOnce(initialVisits) // First call on mount
+        .mockRejectedValueOnce(new Error("Network Error")), // Second call on reload
+    });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(result.current.loadError).toBe("Network Error");
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("初期読み込み時にエラーが発生した場合、loadErrorが設定される", async () => {
+    const source = repository({
+      list: vi.fn().mockRejectedValue(new Error("Initial Load Error")),
+    });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.loadError).toBe("Initial Load Error");
+    expect(result.current.visits).toEqual([]); // since we default to empty array
+  });
 });
