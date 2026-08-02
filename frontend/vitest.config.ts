@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import path from 'path';
 
 // 日付ユーティリティのテストは「UTC では前日になる時間帯でもローカル日付を返す」
@@ -8,6 +8,7 @@ process.env.TZ = 'Asia/Tokyo';
 
 export default defineConfig({
   test: {
+    exclude: [...configDefaults.exclude, 'e2e/**'],
     environment: 'jsdom',
     env: {
       TZ: 'Asia/Tokyo'

@@ -1,187 +1,14 @@
-.page {
-  min-height: 100dvh;
-  background:
-    radial-gradient(circle at 15% 10%, rgba(249, 115, 22, 0.15), transparent 40%),
-    radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.15), transparent 38%),
-    radial-gradient(circle at 50% 75%, rgba(16, 185, 129, 0.12), transparent 45%),
-    var(--background);
-  background-attachment: fixed;
-  color: var(--foreground);
-}
-
-:global(.light-theme) .page,
-.page:global(.light-theme) {
-  background:
-    radial-gradient(circle at 15% 10%, rgba(249, 115, 22, 0.08), transparent 40%),
-    radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.08), transparent 38%),
-    radial-gradient(circle at 50% 75%, rgba(16, 185, 129, 0.06), transparent 45%),
-    #f8fafc;
-}
-
-.main {
-  display: flex;
-  min-height: 100dvh;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  flex-direction: column;
-  align-items: stretch;
-  padding: 2.25rem 1.25rem 5rem;
-}
-
 /* Glassmorphic Card Base Style */
 .glassCard {
   position: relative;
   border-radius: 20px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.07) 0%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
+  background: var(--glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-lg);
   transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
-}
-
-:global(.light-theme) .glassCard {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.85) 0%,
-    rgba(255, 255, 255, 0.65) 100%
-  );
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  /* box-shadow は --shadow-lg / --shadow-xl がテーマごとに切り替わるため上書き不要 */
-}
-
-/* Header Section */
-.description {
-  display: flex;
-  width: 100%;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #f97316;
-  margin-bottom: 0.35rem;
-}
-
-.sparkleIcon {
-  color: #f97316;
-}
-
-.description h1 {
-  font-size: clamp(1.75rem, 3vw, 2.35rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #ffffff 30%, rgba(255, 255, 255, 0.7) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0;
-}
-
-:global(.light-theme) .description h1 {
-  background: linear-gradient(135deg, #0f172a 30%, #334155 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-shrink: 0;
-}
-
-.themeToggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  border-radius: 999px;
-  color: var(--foreground);
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.themeToggle:hover {
-  color: var(--primary);
-  border-color: color-mix(in srgb, var(--primary) 45%, transparent);
-  transform: translateY(-1px);
-}
-
-.backLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 2.6rem;
-  padding: 0 1.2rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--foreground);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.04) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.backLink:hover {
-  background: rgba(249, 115, 22, 0.2);
-  border-color: rgba(249, 115, 22, 0.4);
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-:global(.light-theme) .backLink {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 0, 0, 0.1);
-  color: #1e293b;
-}
-
-:global(.light-theme) .backLink:hover {
-  background: #f97316;
-  border-color: #f97316;
-  color: #fff;
-}
-
-/* Empty State */
-.emptyState {
-  width: 100%;
-  margin-bottom: 1.5rem;
-  padding: 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-radius: 20px;
-  background: rgba(249, 115, 22, 0.1);
-  border: 1px solid rgba(249, 115, 22, 0.25);
-}
-
-.emptyState p {
-  margin: 0;
-  font-size: 0.95rem;
-  opacity: 0.9;
 }
 
 /* Summary Grid */
@@ -216,12 +43,12 @@
   opacity: 0.75;
 }
 
-.statIconPrimary { color: #f97316; }
-.statIconSuccess { color: #10b981; }
-.statIconInfo { color: #3b82f6; }
-.statIconWarning { color: #f59e0b; }
-.statIconAccent { color: #8b5cf6; }
-.statIconMuted { color: #94a3b8; }
+.statIconPrimary { color: var(--primary); }
+.statIconSuccess { color: var(--accent-wishlist); }
+.statIconInfo { color: var(--accent-water); }
+.statIconWarning { color: var(--star-color); }
+.statIconAccent { color: var(--accent-insight); }
+.statIconMuted { color: var(--text-muted); }
 
 .statValue {
   margin: 0;
@@ -274,19 +101,10 @@
   justify-content: space-between;
   background: linear-gradient(
     135deg,
-    rgba(249, 115, 22, 0.12) 0%,
-    rgba(255, 255, 255, 0.04) 100%
+    color-mix(in srgb, var(--primary) 12%, transparent),
+    var(--overlay-subtle)
   );
-  border: 1px solid rgba(249, 115, 22, 0.28);
-}
-
-:global(.light-theme) .homeSaunaCard {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 237, 213, 0.9) 0%,
-    rgba(255, 255, 255, 0.8) 100%
-  );
-  border: 1px solid rgba(249, 115, 22, 0.3);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
 }
 
 .homeSaunaHeader {
@@ -302,16 +120,16 @@
   gap: 6px;
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
-  background: rgba(249, 115, 22, 0.2);
-  border: 1px solid rgba(249, 115, 22, 0.4);
-  color: #f97316;
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+  color: var(--primary);
   font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.06em;
 }
 
 .flameIcon {
-  color: #f97316;
+  color: var(--primary);
   animation: pulseFlame 2s ease-in-out infinite;
 }
 
@@ -323,7 +141,7 @@
 .homeSaunaCount {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #f97316;
+  color: var(--primary);
 }
 
 .homeSaunaMain {
@@ -360,25 +178,21 @@
 
 .progressValue {
   font-weight: 700;
-  color: #f97316;
+  color: var(--primary);
 }
 
 .progressBarTrack {
   width: 100%;
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-hover);
   overflow: hidden;
-}
-
-:global(.light-theme) .progressBarTrack {
-  background: rgba(0, 0, 0, 0.08);
 }
 
 .progressBarFill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #f97316 0%, #fb923c 100%);
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
   transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -386,11 +200,7 @@
   display: flex;
   gap: 1.25rem;
   padding-top: 0.85rem;
-  border-top: 1px dashed rgba(255, 255, 255, 0.12);
-}
-
-:global(.light-theme) .homeSaunaFooter {
-  border-top-color: rgba(0, 0, 0, 0.08);
+  border-top: 1px dashed var(--glass-border);
 }
 
 .homeSaunaMetaItem {
@@ -426,7 +236,7 @@
 }
 
 .trophyIcon {
-  color: #f59e0b;
+  color: var(--star-color);
 }
 
 .cardSubtitle {
@@ -459,29 +269,25 @@
 }
 
 .rankGold {
-  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  color: #fff;
-  box-shadow: 0 3px 8px rgba(217, 119, 6, 0.4);
+  background: linear-gradient(135deg, var(--star-color), var(--primary));
+  color: var(--text-on-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .rankSilver {
-  background: linear-gradient(135deg, #cbd5e1 0%, #64748b 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--glass-hover), var(--text-muted));
+  color: var(--foreground);
 }
 
 .rankBronze {
-  background: linear-gradient(135deg, #fdba74 0%, #c2410c 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary-hover), var(--accent-sauna));
+  color: var(--text-on-primary);
 }
 
 .rankNormal {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--overlay-hover);
   color: var(--foreground);
   opacity: 0.8;
-}
-
-:global(.light-theme) .rankNormal {
-  background: rgba(0, 0, 0, 0.06);
 }
 
 .topSaunaDetails {
@@ -507,7 +313,7 @@
 .topSaunaCount {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #f97316;
+  color: var(--primary);
   margin-left: 8px;
   white-space: nowrap;
 }
@@ -529,7 +335,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   text-decoration: none;
-  color: #ffffff;
+  color: var(--text-on-primary);
   background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
   border: 1px solid var(--primary);
   box-shadow: 0 2px 8px var(--primary-glow);
@@ -558,25 +364,21 @@
 }
 
 .topSaunaRating {
-  color: #f59e0b;
+  color: var(--star-color);
 }
 
 .topSaunaBarTrack {
   width: 100%;
   height: 5px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--overlay-subtle);
   overflow: hidden;
-}
-
-:global(.light-theme) .topSaunaBarTrack {
-  background: rgba(0, 0, 0, 0.06);
 }
 
 .topSaunaBarFill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+  background: linear-gradient(90deg, var(--accent-water-deep), var(--accent-water));
 }
 
 /* Charts Wrap & Grid */
@@ -616,7 +418,7 @@
 }
 
 .tagIcon {
-  color: #10b981;
+  color: var(--accent-wishlist);
 }
 
 .tagCloudList {
@@ -633,8 +435,8 @@
   border-radius: 999px;
   font-size: 0.82rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--overlay-subtle);
+  border: 1px solid var(--glass-border);
   color: var(--foreground);
   transition: all 0.2s ease;
   /* 地図側のタグ絞り込みへのリンクなので、下線は消して見た目をピルのまま保つ */
@@ -646,32 +448,17 @@
   background: var(--overlay-hover);
 }
 
-:global(.light-theme) .tagPill {
-  background: rgba(0, 0, 0, 0.04);
-  border-color: rgba(0, 0, 0, 0.08);
-}
-
 .tagPillPopular {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.35);
-  color: #10b981;
-}
-
-:global(.light-theme) .tagPillPopular {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.3);
-  color: #047857;
+  background: color-mix(in srgb, var(--accent-wishlist) 15%, transparent);
+  border-color: color-mix(in srgb, var(--accent-wishlist) 35%, transparent);
+  color: var(--foreground);
 }
 
 .tagPillCount {
   font-size: 0.72rem;
   padding: 1px 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.15);
-}
-
-:global(.light-theme) .tagPillCount {
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--overlay-hover);
 }
 
 /* Prefecture Section Adaptations */
@@ -679,19 +466,10 @@
   width: 100%;
   padding: 1.35rem 1.5rem;
   border-radius: 20px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.07) 0%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
+  background: var(--glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-:global(.light-theme) .prefectureSection {
-  background: rgba(255, 255, 255, 0.85);
-  border-color: rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--glass-border);
 }
 
 .prefectureSection h2 {
@@ -712,11 +490,11 @@
 .prefectureBadge {
   padding: 0.3rem 0.7rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary), var(--accent-sauna));
+  color: var(--text-on-primary);
   font-size: 0.78rem;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.25);
+  box-shadow: var(--shadow-sm);
 }
 
 /* Skeleton animation */
@@ -724,7 +502,7 @@
   position: relative;
   overflow: hidden;
   color: transparent;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--overlay-subtle);
 }
 
 .skeleton::after {
@@ -734,7 +512,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.08),
+    var(--overlay-hover),
     transparent
   );
   animation: skeletonShimmer 1.4s ease-in-out infinite;
@@ -751,39 +529,6 @@
   .tagPill,
   .mapJumpLink {
     min-height: 44px;
-  }
-
-  .themeToggle {
-    width: 44px;
-    height: 44px;
-  }
-
-  .main {
-    padding: 1.25rem 1rem 3.5rem;
-  }
-
-  .description {
-    align-items: flex-end;
-    gap: 0.5rem;
-  }
-
-  .eyebrow {
-    font-size: 0.7rem;
-    margin-bottom: 0.2rem;
-  }
-
-  .description h1 {
-    font-size: clamp(1.25rem, 5vw, 1.5rem);
-  }
-
-  .backLink {
-    height: 44px;
-    min-height: 44px;
-    padding: 0 0.8rem;
-    font-size: 0.8rem;
-    gap: 5px;
-    flex-shrink: 0;
-    white-space: nowrap;
   }
 
   .summaryGrid {

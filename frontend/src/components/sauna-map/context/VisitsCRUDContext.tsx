@@ -18,6 +18,7 @@ interface VisitsCRUDContextType {
   saving: boolean;
   loadError: string | null;
   authenticated: boolean;
+  csrfToken: string | null;
   user: ReturnType<typeof useSaunaVisits>["user"];
   dataSource: "local" | "api";
   reload: ReturnType<typeof useSaunaVisits>["reload"];
@@ -43,6 +44,7 @@ export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
     saving,
     loadError,
     authenticated,
+    csrfToken,
     user,
     dataSource,
     reload,
@@ -64,6 +66,7 @@ export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
       saving,
       loadError,
       authenticated,
+      csrfToken,
       user,
       dataSource,
       reload,
@@ -83,6 +86,7 @@ export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
       saving,
       loadError,
       authenticated,
+      csrfToken,
       user,
       dataSource,
       reload,

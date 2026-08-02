@@ -6,6 +6,7 @@
 - Railsの全記録取得は必ず`current_user.sauna_visits`からスコープし、他ユーザーの記録・履歴・写真は404にします。APIはcamelCase、エラーは`{ error: { code, message, details? } }`形式です。
 - 変更系APIはセッション認証とCSRFを必須にし、`lock_version`競合は409を返します。開発ログインはdevelopmentかつ`ENABLE_DEV_LOGIN=true`の場合だけ許可し、本番ルートを追加しないでください。
 - Googleログインは`ALLOWED_GOOGLE_EMAIL`との一致に加えて、確認済みメール（`extra.raw_info.email_verified`、無ければ`info.email_verified`）であることも必須にします。メール一致がこのアプリ唯一の認可境界のため、片方だけの判定へ戻さないでください。テストの`google_auth_hash`は`email_verified:`を差し替えられます。
+- Google OAuthのrequest phaseはOmniAuth 2の既定どおりPOSTだけを許可し、`omniauth-rails_csrf_protection`でRailsの`authenticity_token`を検証します。`allowed_request_methods`へGETを追加したり警告を抑制したりしないでください。Googleからのcallbackは従来どおりGETです。
 - 書き込み系レスポンスの再読み込み（`VisitWritable#serialized`）は`includes(visit_history_entries: { image_attachment: :blob })`で先読みします。`visit.reload`だけに戻すと、`SaunaVisitSerializer`が履歴ごとに添付を引いて履歴件数に比例したクエリが出ます（`api_v1_sauna_visits_test.rb`のクエリ数比較が検査しています）。
 
 ## インポート

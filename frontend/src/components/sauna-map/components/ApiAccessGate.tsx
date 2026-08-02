@@ -3,11 +3,12 @@ import { Loader2, LogIn, RefreshCw } from "lucide-react";
 interface ApiAccessGateProps {
   loading: boolean;
   authenticated: boolean;
+  csrfToken: string | null;
   error: string | null;
   onRetry: () => void;
 }
 
-export function ApiAccessGate({ loading, authenticated, error, onRetry }: ApiAccessGateProps) {
+export function ApiAccessGate({ loading, authenticated, csrfToken, error, onRetry }: ApiAccessGateProps) {
   if (!loading && authenticated && !error) return null;
 
   return (
@@ -30,10 +31,13 @@ export function ApiAccessGate({ loading, authenticated, error, onRetry }: ApiAcc
         ) : (
           <>
             <p>記録を表示するには、許可されたGoogleアカウントでログインしてください。</p>
-            <a className="btn btn-primary" href="/auth/google_oauth2">
-              <LogIn size={18} aria-hidden="true" />
-              <span>Googleでログイン</span>
-            </a>
+            <form method="post" action="/auth/google_oauth2">
+              <input type="hidden" name="authenticity_token" value={csrfToken ?? ""} />
+              <button type="submit" className="btn btn-primary" disabled={!csrfToken}>
+                <LogIn size={18} aria-hidden="true" />
+                <span>Googleでログイン</span>
+              </button>
+            </form>
           </>
         )}
       </div>

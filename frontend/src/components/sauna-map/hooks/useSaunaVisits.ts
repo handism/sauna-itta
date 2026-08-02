@@ -31,6 +31,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [authenticated, setAuthenticated] = useState(repository.dataSource === "local");
+  const [csrfToken, setCsrfToken] = useState<string | null>(null);
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -54,6 +55,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
         const session = await repository.getSession();
         if (!active) return;
         setAuthenticated(session.authenticated);
+        setCsrfToken(session.csrfToken);
         setUser(session.user);
         // 初回の list() は上の初期値と同じ localStorage の読み込み＋zod検証になるため省く
         if (session.authenticated && !seededFromStorage) {
@@ -148,6 +150,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     saving,
     loadError,
     authenticated,
+    csrfToken,
     user,
     dataSource: repository.dataSource,
     reload,

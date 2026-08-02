@@ -39,7 +39,7 @@ function SaunaMapContent() {
   } = useSaunaUI();
 
   const { filteredVisits, isFilterActive } = useVisitFiltersContext();
-  const { dataSource, loading, authenticated, loadError, reload } = useVisitsCRUD();
+  const { dataSource, loading, authenticated, csrfToken, loadError, reload } = useVisitsCRUD();
 
   const {
     isAdding,
@@ -69,6 +69,7 @@ function SaunaMapContent() {
       <ApiAccessGate
         loading={loading}
         authenticated={authenticated}
+        csrfToken={csrfToken}
         error={loadError}
         onRetry={() => void reload()}
       />

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ArrowLeft, Sparkles, Sun, Moon } from 'lucide-react';
-import styles from '../stats.module.css';
+import styles from '../stats-shell.module.css';
 
 interface StatsHeaderProps {
   /** マウント前のスケルトン表示では戻るリンクとテーマ切り替えを出さない */

@@ -12,6 +12,12 @@ const styleFiles = readdirSync(STYLE_DIR)
   .filter((file) => file.endsWith(".css"))
   .map((file) => ({ file, css: readFileSync(join(STYLE_DIR, file), "utf8") }));
 
+const statsStyleFiles = ["stats.module.css", "stats-shell.module.css"].map((file) => ({
+  file: `app/stats/${file}`,
+  css: readFileSync(resolve(STYLE_DIR, `../../../app/stats/${file}`), "utf8"),
+}));
+const allStyleFiles = [...styleFiles, ...statsStyleFiles];
+
 // JS が実行時に設定する変数は base.css には定義されない
 const RUNTIME_DEFINED = new Set(["--drag-offset-y", "--font-outfit"]);
 
@@ -26,7 +32,7 @@ describe("CSS デザイントークンの規約", () => {
   });
 
   it("var() にハードコードされた色のフォールバックを持たないこと", () => {
-    const offenders = styleFiles.flatMap(({ file, css }) =>
+    const offenders = allStyleFiles.flatMap(({ file, css }) =>
       (css.match(/var\(--[a-z0-9-]+, *(?:#[0-9a-fA-F]{3,8}|rgba?\([^()]*\))\)/g) ?? []).map(
         (match) => `${file}: ${match}`
       )
@@ -37,7 +43,7 @@ describe("CSS デザイントークンの規約", () => {
   });
 
   it("参照している変数が base.css に定義されていること", () => {
-    const offenders = styleFiles.flatMap(({ file, css }) =>
+    const offenders = allStyleFiles.flatMap(({ file, css }) =>
       (css.match(/var\((--[a-z0-9-]+)/g) ?? [])
         .map((match) => match.replace("var(", ""))
         .filter((token) => !definedTokens.has(token) && !RUNTIME_DEFINED.has(token))
@@ -51,7 +57,7 @@ describe("CSS デザイントークンの規約", () => {
   it("面に重ねる色は白の直書きではなくトークンを使うこと", () => {
     // base.css はトークン定義そのもの、map.css のマーカーは地図タイル上の
     // コントラスト確保のため意図的に白枠・白文字を使う
-    const targets = styleFiles.filter(
+    const targets = allStyleFiles.filter(
       ({ file }) => file !== "base.css" && file !== "map.css"
     );
 
@@ -79,13 +85,7 @@ describe("CSS デザイントークンの規約", () => {
      * --shadow-* はライトテーマで弱い値へ差し替わる。直書きするとその切り替えから
      * 漏れ、明るい背景に濃い黒の影が落ちる。統計ページの CSS Modules も対象に含める。
      */
-    const targets = [
-      ...styleFiles.filter(({ file }) => file !== "base.css"),
-      {
-        file: "app/stats/stats.module.css",
-        css: readFileSync(resolve(STYLE_DIR, "../../../app/stats/stats.module.css"), "utf8"),
-      },
-    ];
+    const targets = allStyleFiles.filter(({ file }) => file !== "base.css");
 
     const offenders = targets.flatMap(({ file, css }) =>
       (css.match(/box-shadow:[^;]*rgba\(0, *0, *0[^;]*;/g) ?? []).map(
@@ -98,7 +98,7 @@ describe("CSS デザイントークンの規約", () => {
 
   it("エラー色は直書きせず --error / --error-text を使うこと", () => {
     // #ef4444 系を直書きすると、ライトテーマで文字色のコントラストが 4.5:1 を下回る
-    const offenders = styleFiles
+    const offenders = allStyleFiles
       .filter(({ file }) => file !== "base.css")
       .flatMap(({ file, css }) =>
         (css.match(/#ef4444|#f87171|#fca5a5|rgba\(239, *68, *68/gi) ?? []).map(
@@ -176,7 +176,7 @@ describe("CSS デザイントークンの規約", () => {
     // Leaflet 由来のクラスと、テンプレートリテラルで組み立てる修飾子は対象外
     const IGNORED_PREFIXES = ["leaflet-", "app-toast--", "bottom-sheet--"];
 
-    const offenders = styleFiles.flatMap(({ file, css }) =>
+    const offenders = allStyleFiles.flatMap(({ file, css }) =>
       [...new Set((css.match(/\.(-?[A-Za-z_][A-Za-z0-9_-]*)/g) ?? []).map((m) => m.slice(1)))]
         .filter(
           (cls) =>
@@ -190,10 +190,10 @@ describe("CSS デザイントークンの規約", () => {
   });
 
   it("モバイル境界が JS の「768px 未満」と一致していること", () => {
-    const mobileOffenders = styleFiles
+    const mobileOffenders = allStyleFiles
       .filter(({ css }) => css.includes("@media (max-width: 768px)"))
       .map(({ file }) => file);
-    const desktopOffenders = styleFiles
+    const desktopOffenders = allStyleFiles
       .filter(({ css }) => css.includes("@media (min-width: 769px)"))
       .map(({ file }) => file);
     const bottomSheet = readFileSync(join(STYLE_DIR, "bottom-sheet.css"), "utf8");
@@ -212,8 +212,8 @@ describe("CSS デザイントークンの規約", () => {
   it("見落としやすいモバイル操作にも 44px のターゲットが定義されていること", () => {
     const bottomSheet = readFileSync(join(STYLE_DIR, "bottom-sheet.css"), "utf8");
     const visitCard = readFileSync(join(STYLE_DIR, "visit-card.css"), "utf8");
-    const stats = readFileSync(
-      resolve(STYLE_DIR, "../../../app/stats/stats.module.css"),
+    const statsShell = readFileSync(
+      resolve(STYLE_DIR, "../../../app/stats/stats-shell.module.css"),
       "utf8"
     );
 
@@ -223,7 +223,7 @@ describe("CSS デザイントークンの規約", () => {
     expect(visitCard).toMatch(
       /@media \(max-width: 767px\)[\s\S]*\.history-delete-btn\s*\{[^}]*width:\s*44px;/
     );
-    expect(stats).toMatch(
+    expect(statsShell).toMatch(
       /@media \(max-width: 720px\)[\s\S]*\.backLink\s*\{[^}]*height:\s*44px;/
     );
   });

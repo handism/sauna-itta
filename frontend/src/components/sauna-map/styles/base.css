@@ -24,7 +24,9 @@
   --accent-wishlist: #10b981;
   --accent-wishlist-deep: #34d399;
   --wishlist-glow: rgba(16, 185, 129, 0.35);
+  --accent-insight: #a78bfa;
   --star-color: #fbbf24;
+  --text-on-primary: #ffffff;
 
   /*
    * ホバー等の重ね色。白の半透明を直書きするとライトテーマで消えるため、
@@ -117,8 +119,10 @@
   --accent-wishlist: #10b981;
   --accent-wishlist-deep: #34d399;
   --wishlist-glow: rgba(16, 185, 129, 0.35);
+  --accent-insight: #6d28d9;
   /* #fbbf24 は白地でコントラスト約 1.8:1 しかなく、星の塗り分けが読めない */
   --star-color: #d97706;
+  --text-on-primary: #ffffff;
   --glass: rgba(255, 255, 255, 0.88);
   --glass-hover: rgba(255, 255, 255, 0.95);
   --glass-heavy: rgba(255, 255, 255, 0.96);
@@ -288,8 +292,7 @@ body.allow-page-scroll {
     scroll-behavior: auto !important;
   }
 
-  .spin-icon,
-  .location-search-spinner {
+  .spin-icon {
     animation-duration: 2s !important;
     animation-iteration-count: infinite !important;
   }

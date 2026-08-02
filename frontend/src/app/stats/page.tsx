@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import styles from './stats.module.css';
+import shellStyles from './stats-shell.module.css';
 import 'react-calendar/dist/Calendar.css';
 import './calendar.css';
 import { useStatsData } from './hooks/useStatsData';
@@ -38,6 +39,7 @@ export default function StatsPage() {
     setDate,
     mounted,
     authenticated,
+    csrfToken,
     loadError,
     dataSource,
     stats,
@@ -48,8 +50,8 @@ export default function StatsPage() {
 
   if (!mounted) {
     return (
-      <div className={styles.page}>
-        <main className={styles.main}>
+      <div className={shellStyles.page}>
+        <main className={shellStyles.main}>
           <StatsHeader showBackLink={false} />
           <div className={styles.summaryGrid} aria-hidden="true">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -72,6 +74,7 @@ export default function StatsPage() {
       <ApiAccessGate
         loading={false}
         authenticated={authenticated}
+        csrfToken={csrfToken}
         error={loadError}
         onRetry={() => window.location.reload()}
       />
@@ -79,8 +82,8 @@ export default function StatsPage() {
   }
 
   return (
-    <div className={`${styles.page} ${theme === 'light' ? 'light-theme' : ''}`}>
-      <main className={styles.main}>
+    <div className={`${shellStyles.page} ${theme === 'light' ? 'light-theme' : ''}`}>
+      <main className={shellStyles.main}>
         <StatsHeader theme={theme} onToggleTheme={toggleTheme} />
 
         {/*
@@ -88,9 +91,9 @@ export default function StatsPage() {
           登録への導線だけを見せる
         */}
         {stats.total === 0 ? (
-          <div className={styles.emptyState}>
+          <div className={shellStyles.emptyState}>
             <p>まだ訪問記録がありません。地図からサウナを登録すると、ここにグラフィカルな統計が表示されます。</p>
-            <Link href="/" className={styles.backLink}>
+            <Link href="/" className={shellStyles.backLink}>
               マップでサウナを登録する
             </Link>
           </div>
