@@ -60,5 +60,5 @@
 ## 開発環境
 
 - リポジトリは`frontend/`（Next.js）／`backend/`（Rails）／`infra/`（Terraform）のモノレポ構成です。ルートには`Dockerfile`、`docker-compose.yaml`、`README.md`等のリポジトリ横断ファイルだけを置きます。
-- 本番イメージはルート`Dockerfile`（ビルドコンテキストはリポジトリルート）でAPIモードのNext.js静的成果物とRailsだけを組み込み、非rootでPumaを起動します。ローカルは`frontend`／`api`／`postgres`のDocker Composeを使用します。フロント依存関係は`frontend/Dockerfile.frontend.dev`のビルド時に`npm ci`でインストールします（ビルドコンテキストは`./frontend`）。APIは起動時に`/app/tmp/pids/server.pid`を除去し、`bin/rails db:prepare`の成功後にRailsを`exec`起動します。依存関係変更時は`docker-compose up --build`でフロントイメージを再ビルドしてください。
+- 本番イメージはルート`Dockerfile`（ビルドコンテキストはリポジトリルート）でAPIモードのNext.js静的成果物とRailsだけを組み込み、非rootでPumaを起動します。ローカルは`frontend`／`api`／`postgres`のDocker Composeを使用します。フロント依存関係は`frontend/Dockerfile.frontend.dev`のビルド時に`npm ci`でインストールします（ビルドコンテキストは`./frontend`）。APIは起動時に`/app/tmp/pids/server.pid`を除去し、`bin/rails db:prepare`の成功後にRailsを`exec`起動します。依存関係変更時は`docker-compose up --build`でフロントイメージを再ビルドしてください。APIのgemは名前付きボリューム`backend_bundle`が`/usr/local/bundle`を覆うため`--build`では更新されません。`Gemfile`変更時は`docker compose run --rm --no-deps api bundle install`でボリューム側へ反映します（`docker compose down -v`は`postgres_data`まで削除するため使わないこと）。
 - CIの本番イメージ検証はビルドだけで終えず、PostgreSQLへ`db:prepare`したうえでproductionコンテナを起動し、`GET /up`が成功するところまで確認します。スモークテストでは外部GCSへ接続しないよう`ACTIVE_STORAGE_SERVICE=local`を指定します。
