@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 import {
   DATA_SOURCE,
@@ -21,8 +21,8 @@ function mutationErrorMessage(error: unknown): string {
 }
 
 export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepository) {
-  const repositoryRef = useRef(injectedRepository ?? getVisitRepository());
-  const repository = repositoryRef.current;
+  // useRef → useState でレンダリング中の ref アクセス (react-hooks/refs) を回避
+  const [repository] = useState(() => injectedRepository ?? getVisitRepository());
   // localモードは初期描画を空にしないため同期的に読み込む（ちらつき防止）
   const seededFromStorage = DATA_SOURCE === "local" && !injectedRepository;
   const [visits, setVisits] = useState<SaunaVisit[]>(() =>
