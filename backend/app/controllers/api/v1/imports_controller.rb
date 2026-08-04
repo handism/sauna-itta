@@ -18,6 +18,15 @@ module Api
 
         added = 0
         skipped = 0
+
+        # 重複判定を記録ごとの exists? で回さないよう、既存の external_id をまとめて引いておく。
+        # 取り込み済みの分もループ内で足していくため、ペイロード内の重複も従来どおり弾ける。
+        payload_external_ids = payload.filter_map { |raw| raw[:id].to_s if raw.is_a?(ActionController::Parameters) }
+        existing_external_ids = current_user.sauna_visits
+          .where(external_id: payload_external_ids)
+          .pluck(:external_id)
+          .to_set
+
         SaunaVisit.transaction do
           payload.each do |raw|
             raise InvalidPayload, "取り込むデータは記録の配列で指定してください。" unless raw.is_a?(ActionController::Parameters)
@@ -33,12 +42,13 @@ module Api
             external_id = attributes[:id].to_s
             raise InvalidPayload, "IDがない記録は取り込めません。" if external_id.blank?
 
-            if current_user.sauna_visits.exists?(external_id: external_id)
+            if existing_external_ids.include?(external_id)
               skipped += 1
               next
             end
 
             import_visit(attributes.merge(external_id: external_id))
+            existing_external_ids.add(external_id)
             added += 1
           end
         end
