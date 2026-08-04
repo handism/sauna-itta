@@ -20,6 +20,7 @@ export function useMapViewState(visits: SaunaVisit[], isMobile: boolean) {
     const targetVisit = visits.find((v) => v.id === targetId);
     if (targetVisit) {
       handledUrlIdRef.current = targetId;
+      // エフェクト実行中の同期的 setState による React レンダリング警告を避けるためマイクロタスクで遅延させる
       queueMicrotask(() => {
         setSelectedId(targetVisit.id);
         setHoveredId(targetVisit.id);

@@ -7,7 +7,8 @@ COPY frontend/next.config.ts frontend/dataSource.ts frontend/tsconfig.json front
 COPY frontend/public ./public
 COPY frontend/src ./src
 ENV NEXT_PUBLIC_DATA_SOURCE=api
-RUN npm run build
+RUN npm run build && \
+    find out -type f \( -name "*.js" -o -name "*.css" -o -name "*.html" -o -name "*.json" -o -name "*.svg" -o -name "*.xml" -o -name "*.txt" \) -exec gzip -k -9 {} +
 
 FROM ruby:3.4.2-slim-bookworm AS ruby-dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends build-essential libpq-dev git && rm -rf /var/lib/apt/lists/*

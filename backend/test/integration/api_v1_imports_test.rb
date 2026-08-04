@@ -202,6 +202,28 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_equal 0, owner.sauna_visits.count
   end
 
+  test "画像保存中の予期せぬエラー発生時は画像をスキップして取り込みを完了する" do
+    csrf = sign_in
+    imported = valid_attributes.merge(id: "legacy-broken-storage", image: "data:image/png;base64,iVBORw0KGgo=")
+
+    singleton = (class << DataUrlImage; self; end)
+    original_method = DataUrlImage.method(:decode)
+    singleton.define_method(:decode) { |_| raise ActiveStorage::Error, "ストレージ一時障害" }
+    begin
+      post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+        headers: csrf_header(csrf), as: :json
+    ensure
+      singleton.define_method(:decode, original_method)
+    end
+
+    assert_response :success
+    assert_equal 1, response.parsed_body["added"]
+    assert_equal 0, response.parsed_body["skipped"]
+    visit = owner.sauna_visits.find_by!(external_id: "legacy-broken-storage")
+    assert_equal "北欧", visit.name
+    assert_not visit.visit_history_entries.first.image.attached?
+  end
+
   private
 
   def owner

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import type { ToastState, ToastTone } from "../components/Toast";
+import type { ToastState, ToastTone } from "../components/common/Toast";
 
 export function useToast() {
   const [toast, setToast] = useState<ToastState | null>(null);

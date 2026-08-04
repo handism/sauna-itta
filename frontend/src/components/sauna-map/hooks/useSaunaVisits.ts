@@ -50,6 +50,8 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
 
   useEffect(() => {
     let active = true;
+    // React 18/19 のエフェクト実行直後における状態不整合や「Cannot update a component while rendering」
+    // の警告を避けるため、マイクロタスクキューにスケジュールしてから非同期読み込み・状態更新を開始する
     queueMicrotask(async () => {
       try {
         const session = await repository.getSession();

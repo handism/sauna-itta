@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
-import { RatingStars, WishlistChip } from "./common";
+import { RatingStars, WishlistChip } from "./common/common";
 import { isWishlist } from "../utils";
 import { useModalBehavior } from "../hooks/useModalBehavior";
 import { useSaunaUI, useVisitFiltersContext } from "../context";
