@@ -18,6 +18,22 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_equal 1, response.parsed_body["skipped"]
   end
 
+  test "同じチャンク内でIDが重複する記録は1件だけ取り込む" do
+    csrf = sign_in
+    payload = [
+      valid_attributes.merge(id: "legacy-dup-id", name: "1件目"),
+      valid_attributes.merge(id: "legacy-dup-id", name: "2件目")
+    ]
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :success
+    assert_equal 1, response.parsed_body["added"]
+    assert_equal 1, response.parsed_body["skipped"]
+    assert_equal "1件目", owner.sauna_visits.sole.name
+  end
+
   test "11件以上はbatch_too_largeで拒否する" do
     csrf = sign_in
     payload = Array.new(11) { |index| valid_attributes.merge(id: "legacy-#{index}") }
