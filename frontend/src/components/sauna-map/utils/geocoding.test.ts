@@ -91,4 +91,26 @@ describe("searchLocation", () => {
     const results = await searchLocation("キャンセルテスト");
     expect(results).toEqual([]);
   });
+
+  it("throws generic error when fetch fails entirely (e.g. network error)", async () => {
+    const error = new Error("Network connection lost");
+    (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
+
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(searchLocation("network error test")).rejects.toThrow("Network connection lost");
+
+    expect(consoleSpy).toHaveBeenCalledWith("Geocoding search failed:", error);
+  });
+
+  it("throws non-Error objects and logs them correctly", async () => {
+    const errorString = "String error thrown somehow";
+    (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(errorString);
+
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(searchLocation("string error test")).rejects.toEqual("String error thrown somehow");
+
+    expect(consoleSpy).toHaveBeenCalledWith("Geocoding search failed:", errorString);
+  });
 });
