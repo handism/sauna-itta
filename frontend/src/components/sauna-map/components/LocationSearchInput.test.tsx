@@ -217,4 +217,64 @@ describe("LocationSearchInput", () => {
 
     consoleSpy.mockRestore();
   });
+
+  it("中断された検索はエラー表示にしないこと（入力の変更で前の検索を打ち切る）", async () => {
+    let requestSignal: AbortSignal | undefined;
+    vi.mocked(geocodingModule.searchLocation).mockImplementation((_query, signal) => {
+      requestSignal = signal;
+      return new Promise((_resolve, reject) => {
+        signal?.addEventListener("abort", () => {
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+      });
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    render(<LocationSearchInput onSelectLocation={mockOnSelectLocation} />);
+
+    const input = screen.getByRole("combobox", { name: "地点検索" });
+    fireEvent.change(input, { target: { value: "東京駅" } });
+    fireEvent.click(screen.getByRole("button", { name: "地点を検索" }));
+    expect(geocodingModule.searchLocation).toHaveBeenCalled();
+
+    // 続けて入力すると、実行中のリクエストは abort される
+    fireEvent.change(input, { target: { value: "東京駅前" } });
+    expect(requestSignal?.aborted).toBe(true);
+
+    await waitFor(() => {
+      expect(
+        screen.queryByText("場所を検索できませんでした。通信環境を確認して再度お試しください。"),
+      ).not.toBeInTheDocument();
+    });
+    // 通信障害用のログも出さない（中断はエラーとして扱わない）
+    expect(consoleSpy).not.toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+  });
+
+  it("アンマウントで中断された検索もエラーとして扱わないこと", async () => {
+    vi.mocked(geocodingModule.searchLocation).mockImplementation((_query, signal) => {
+      return new Promise((_resolve, reject) => {
+        signal?.addEventListener("abort", () => {
+          reject(new DOMException("Aborted", "AbortError"));
+        });
+      });
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { unmount } = render(<LocationSearchInput onSelectLocation={mockOnSelectLocation} />);
+
+    const input = screen.getByRole("combobox", { name: "地点検索" });
+    fireEvent.change(input, { target: { value: "東京駅" } });
+    fireEvent.click(screen.getByRole("button", { name: "地点を検索" }));
+    expect(geocodingModule.searchLocation).toHaveBeenCalled();
+
+    unmount();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+  });
 });
