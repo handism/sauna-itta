@@ -156,6 +156,27 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_equal 0, owner.sauna_visits.count
   end
 
+  test "許可していない属性は取り込まない" do
+    csrf = sign_in
+    other = User.create!(google_subject: "other-subject", email: "other@example.com")
+    # 未許可キーの扱いはテスト環境の設定に左右されるため、ここでは本番と同じ「黙って捨てる」で検証する
+    original = ActionController::Parameters.action_on_unpermitted_parameters
+    ActionController::Parameters.action_on_unpermitted_parameters = false
+
+    imported = valid_attributes.merge(id: "legacy-mass-assign", user_id: other.id, created_at: "2000-01-01")
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :success
+    visit = owner.sauna_visits.sole
+    assert_equal owner.id, visit.user_id
+    assert_operator visit.created_at, :>, 1.day.ago
+    assert_equal 0, other.sauna_visits.count
+  ensure
+    ActionController::Parameters.action_on_unpermitted_parameters = original
+  end
+
   test "インポートにもCSRFトークンを要求する" do
     sign_in
     post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ valid_attributes.merge(id: "x") ] }, as: :json

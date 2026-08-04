@@ -22,7 +22,14 @@ module Api
           payload.each do |raw|
             raise InvalidPayload, "取り込むデータは記録の配列で指定してください。" unless raw.is_a?(ActionController::Parameters)
 
-            attributes = raw.permit!.to_h.deep_symbolize_keys
+            # 許可キーは SaunaVisitsController#visit_params と揃える（エクスポートしたJSONを
+            # そのまま取り込むため、lockVersion / appendHistory も届く）
+            attributes = raw.permit(
+              :id, :name, :lat, :lng, :area, :status, :date, :comment, :rating, :image,
+              :appendHistory, :lockVersion, :visitCount, tags: [],
+              history: [ :id, :date, :comment, :rating, :image ]
+            ).to_h.deep_symbolize_keys
+
             external_id = attributes[:id].to_s
             raise InvalidPayload, "IDがない記録は取り込めません。" if external_id.blank?
 
