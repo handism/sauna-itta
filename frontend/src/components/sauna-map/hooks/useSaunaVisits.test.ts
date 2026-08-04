@@ -97,4 +97,25 @@ describe("useSaunaVisits", () => {
     expect(result.current.loadError).toBe("Initial Load Error");
     expect(result.current.visits).toEqual([]); // since we default to empty array
   });
+
+  it("409以外のエラー時はメッセージをトーストで伝え、状態を変更しない", async () => {
+    const showToast = vi.fn();
+    const source = repository({
+      create: vi.fn().mockRejectedValue(new Error("ネットワークエラー")),
+    });
+    const { result } = renderHook(() => useSaunaVisits(showToast, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let addResult;
+    await act(async () => {
+      addResult = await result.current.addVisit({ lat: 35, lng: 139 }, {
+        name: "新規", comment: "", image: "", date: "2026-08-02", rating: 4,
+        tagsText: "", status: "visited", area: "東京", appendHistory: false,
+      });
+    });
+
+    expect(result.current.visits).toEqual(initialVisits);
+    expect(showToast).toHaveBeenCalledWith("ネットワークエラー", "error");
+    expect(addResult).toEqual({ success: false, newVisit: undefined });
+  });
 });
