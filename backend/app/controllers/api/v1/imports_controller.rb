@@ -70,7 +70,14 @@ module Api
 
         histories.each do |history|
           normalized = history.deep_symbolize_keys
-          entry = apply_history(visit, normalized, append: true)
+          entry = begin
+            apply_history(visit, normalized, append: true, apply_image: true)
+          rescue StandardError => error
+            raise if error.is_a?(ArgumentError) || error.is_a?(ActiveRecord::RecordInvalid)
+
+            Rails.logger.warn("画像インポートに失敗しました (ID: #{attributes[:external_id]}): #{error.message}")
+            apply_history(visit, normalized, append: true, apply_image: false)
+          end
           entry.public_id = normalized[:id] if normalized[:id].present?
         end
         visit.save!

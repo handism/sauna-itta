@@ -1,4 +1,9 @@
 :root {
+  /*
+   * デザイントークン: 基本背景色・テキスト色
+   * アプリケーション全体の背景色、前景色（主テキスト色）、補助テキスト色。
+   * 背景や文字色をハードコードせず必ずここまたはライトテーマの対応トークンを使用すること。
+   */
   --background: #090d16;
   --foreground: #f0f5fc;
   --text-muted: #94a3b8;
@@ -35,14 +40,24 @@
   --overlay-subtle: rgba(255, 255, 255, 0.06);
   --overlay-hover: rgba(255, 255, 255, 0.12);
 
-  /* スチームグラスモフィズム */
+  /*
+   * デザイントークン: スチームグラスモフィズム（透過サーフェス）
+   * パネル・モーダル・ヘッダーバー等の背景には --glass-* と --backdrop-blur-* を組み合わせて使用します。
+   * --glass-heavy は背面透過を抑えたいオーバーレイやダイアログで使用します。
+   */
   --glass: rgba(30, 41, 59, 0.65);
   --glass-hover: rgba(51, 65, 85, 0.75);
   --glass-heavy: rgba(9, 14, 24, 0.92);
   --glass-border: rgba(255, 255, 255, 0.16);
   --glass-border-glow: rgba(255, 140, 56, 0.25);
 
-  /* デザイントークン: 角丸 */
+  /*
+   * デザイントークン: 角丸 (Border Radius)
+   * xs/sm: バッジ、タグ、入力フォーム
+   * md/lg: カード、パネル、ボタン
+   * xl: モーダルコンテナ、ボトムシート
+   * full: 丸型ピルボタン、アイコンボタン
+   */
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -50,7 +65,11 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* デザイントークン: Z-Index 階層 */
+  /*
+   * デザイントークン: Z-Index 階層
+   * コンポーネント間で重なり順が破綻しないよう、任意の数値は書かずに必ず以下のトークンを参照すること。
+   * map-base(0) -> map-overlay(10) -> controls(500) -> sidebar(1000) -> sheet(1100) -> modal(1500~2000) -> toast(9999)
+   */
   --z-map-base: 0;
   --z-map-overlay: 10;
   --z-map-controls: 500;
@@ -60,12 +79,20 @@
   --z-modal: 2000;
   --z-toast: 9999;
 
-  /* デザイントークン: トランジション・イージング */
+  /*
+   * デザイントークン: トランジション・イージング
+   * fast: ボタンのホバー・フォーカスやトグル状態
+   * normal: モーダルの開閉やフェードイン
+   * smooth: サイドバー開閉等のパネルレイアウト変化
+   */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.25s ease;
   --transition-smooth: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* デザイントークン: グラス・バックドロップフィルター */
+  /*
+   * デザイントークン: グラス・バックドロップフィルター
+   * --glass-* 背景と合わせて指定する背景ぼかし効果。
+   */
   --backdrop-blur: blur(12px) saturate(160%);
   --backdrop-blur-heavy: blur(24px);
   --backdrop-blur-sm: blur(6px);

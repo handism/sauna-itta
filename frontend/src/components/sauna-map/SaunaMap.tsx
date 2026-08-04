@@ -4,10 +4,11 @@ import { useCallback, useState } from "react";
 import "leaflet/dist/leaflet.css";
 
 import { ShareModal } from "./components/ShareModal";
-import { VisitForm } from "./components/VisitForm";
-import { VisitList } from "./components/VisitList";
-import { ConfirmModal } from "./components/ConfirmModal";
-import { Toast } from "./components/Toast";
+import { VisitForm } from "./components/form/VisitForm";
+import { VisitList } from "./components/list/VisitList";
+import { ConfirmModal } from "./components/common/ConfirmModal";
+import { Toast } from "./components/common/Toast";
+import { ErrorBoundary } from "./components/common/ErrorBoundary";
 import { BottomSheet } from "./components/BottomSheet";
 import { MobileNavBar } from "./components/MobileNavBar";
 import { DesktopSidebar } from "./components/DesktopSidebar";
@@ -20,8 +21,8 @@ import {
   useVisitsCRUD,
 } from "./context";
 import { CurrentLocation } from "./types";
-import { MobilePinHint } from "./components/MobilePinHint";
-import { SaunaMapLayer } from "./components/SaunaMapLayer";
+import { MobilePinHint } from "./components/map/MobilePinHint";
+import { SaunaMapLayer } from "./components/map/SaunaMapLayer";
 import { ApiAccessGate } from "./components/ApiAccessGate";
 
 function SaunaMapContent() {
@@ -136,8 +137,10 @@ function SaunaMapContent() {
 
 export default function SaunaMap() {
   return (
-    <SaunaMapProvider>
-      <SaunaMapContent />
-    </SaunaMapProvider>
+    <ErrorBoundary>
+      <SaunaMapProvider>
+        <SaunaMapContent />
+      </SaunaMapProvider>
+    </ErrorBoundary>
   );
 }

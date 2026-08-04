@@ -1,28 +1,30 @@
 "use client";
 
-import { createContext, useContext, useMemo, ReactNode } from "react";
+import { createContext, useContext, useMemo, ReactNode, ChangeEvent, RefObject } from "react";
 import { useSaunaVisits } from "../hooks/useSaunaVisits";
 import { useSaunaUIActions } from "./UIContext";
+import type { SaunaVisit, LatLng, VisitFormState } from "../types";
+import type { SessionUser } from "../repositories";
 
 interface VisitsCRUDContextType {
-  visits: import("../types").SaunaVisit[];
-  addVisit: ReturnType<typeof useSaunaVisits>["addVisit"];
-  editVisit: ReturnType<typeof useSaunaVisits>["editVisit"];
-  deleteVisit: ReturnType<typeof useSaunaVisits>["deleteVisit"];
-  removeHistoryEntry: ReturnType<typeof useSaunaVisits>["removeHistoryEntry"];
-  exportVisits: ReturnType<typeof useSaunaVisits>["exportVisits"];
-  handleImportData: ReturnType<typeof useSaunaVisits>["handleImportData"];
+  visits: SaunaVisit[];
+  addVisit: (location: LatLng, form: VisitFormState) => Promise<{ success: boolean; newVisit?: SaunaVisit }>;
+  editVisit: (id: string, location: LatLng, form: VisitFormState) => Promise<{ success: boolean }>;
+  deleteVisit: (id: string) => Promise<{ success: boolean }>;
+  removeHistoryEntry: (id: string, index: number) => Promise<{ success: boolean }>;
+  exportVisits: () => void;
+  handleImportData: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
   importing: boolean;
-  importInputRef: ReturnType<typeof useSaunaVisits>["importInputRef"];
+  importInputRef: RefObject<HTMLInputElement | null>;
   loading: boolean;
   saving: boolean;
   loadError: string | null;
   authenticated: boolean;
   csrfToken: string | null;
-  user: ReturnType<typeof useSaunaVisits>["user"];
+  user: SessionUser | null;
   dataSource: "local" | "api";
-  reload: ReturnType<typeof useSaunaVisits>["reload"];
-  logout: ReturnType<typeof useSaunaVisits>["logout"];
+  reload: () => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const VisitsCRUDContext = createContext<VisitsCRUDContextType | null>(null);
