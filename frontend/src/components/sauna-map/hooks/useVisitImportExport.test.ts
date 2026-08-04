@@ -260,4 +260,70 @@ describe("useVisitImportExport", () => {
       "error",
     );
   });
+
+  test("APIインポート失敗後の再読み込みにも失敗した場合はコンソールにエラーを出力する", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const importBatch = vi.fn().mockRejectedValueOnce(new Error("サーバーへ接続できません。"));
+    const reloadError = new Error("再読み込み失敗");
+    const reload = vi.fn().mockRejectedValueOnce(reloadError);
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, showToast, importBatch, reload),
+    );
+    const imported = Array.from({ length: 1 }, (_, index) => ({
+      id: `fail-${index}`,
+      name: `Sauna ${index}`,
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+    }));
+    const file = new File([JSON.stringify(imported)], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(reload).toHaveBeenCalledOnce();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "インポート失敗後の再読み込みにも失敗しました。",
+      reloadError,
+    );
+    consoleErrorSpy.mockRestore();
+  });
+
+  test("保存に失敗した場合はエラートーストを表示する", async () => {
+    const saveVisitsFail = vi.fn().mockReturnValue(false);
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, saveVisitsFail, showToast)
+    );
+
+    const newVisit = { id: "3", name: "Sauna C", lat: 35.2, lng: 139.2, comment: "failed", date: "2023-01-03" };
+    const file = new File([JSON.stringify([newVisit])], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(showToast).toHaveBeenCalledWith("画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。", "error");
+  });
+
+  test("JSONの読み込みなどそれ以外のエラーの場合はエラートーストを表示する", async () => {
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, saveVisitsMock, showToast)
+    );
+    const file = new File(["invalid json"], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+    expect(showToast).toHaveBeenCalledWith("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
+  });
 });
