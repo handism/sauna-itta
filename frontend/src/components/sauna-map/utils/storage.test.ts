@@ -10,15 +10,27 @@ describe("readStorage / writeStorage", () => {
     }),
   };
 
+  let originalLocalStorage: PropertyDescriptor | undefined;
+
   beforeEach(() => {
     for (const key in store) delete store[key];
+
+    // 一部のテストが Object.defineProperty で localStorage を差し替えるため、
+    // vi.stubGlobal では戻せない元の記述子をここで退避しておく。
+    originalLocalStorage = Object.getOwnPropertyDescriptor(window, "localStorage");
+
     vi.stubGlobal("localStorage", mockLocalStorage);
     mockLocalStorage.getItem.mockClear();
     mockLocalStorage.setItem.mockClear();
   });
 
   afterEach(() => {
+    vi.unstubAllGlobals();
     vi.restoreAllMocks();
+
+    if (originalLocalStorage) {
+      Object.defineProperty(window, "localStorage", originalLocalStorage);
+    }
   });
 
   it("保存した値を読み戻せること", () => {
@@ -66,10 +78,56 @@ describe("readStorage / writeStorage", () => {
     );
   });
 
-  it("localStorage が存在しない環境でも例外にならないこと", () => {
+  it("localStorage が存在しない環境（SSR）でも例外にならないこと", () => {
     vi.stubGlobal("window", undefined);
 
     expect(readStorage("key")).toBeNull();
     expect(writeStorage("key", "value")).toBe(false);
+  });
+
+  it("localStorage へのアクセス自体が例外になる環境でも落ちないこと", () => {
+    Object.defineProperty(window, "localStorage", {
+      get() {
+        throw new Error("Access Denied");
+      },
+      configurable: true,
+    });
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(readStorage("key")).toBeNull();
+    expect(warn).toHaveBeenCalledWith(
+      'Failed to read "key" from localStorage:',
+      expect.any(Error),
+    );
+
+    expect(writeStorage("key", "value")).toBe(false);
+    expect(error).toHaveBeenCalledWith(
+      'Failed to save "key" to localStorage:',
+      expect.any(Error),
+    );
+  });
+
+  it("localStorage が undefined の環境でも落ちないこと", () => {
+    Object.defineProperty(window, "localStorage", {
+      value: undefined,
+      configurable: true,
+    });
+
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    expect(readStorage("key")).toBeNull();
+    expect(warn).toHaveBeenCalledWith(
+      'Failed to read "key" from localStorage:',
+      expect.any(TypeError),
+    );
+
+    expect(writeStorage("key", "value")).toBe(false);
+    expect(error).toHaveBeenCalledWith(
+      'Failed to save "key" to localStorage:',
+      expect.any(TypeError),
+    );
   });
 });
