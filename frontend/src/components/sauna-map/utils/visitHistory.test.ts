@@ -391,6 +391,28 @@ describe("getInitialVisits", () => {
     );
   });
 
+  it("should catch JSON.parse errors, log error and return baseVisits", () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    store["sauna-itta_visits"] = "{ invalid_json }";
+
+    const visits = getInitialVisits();
+    expect(Array.isArray(visits)).toBe(true);
+    expect(visits.length).toBeGreaterThan(0);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      "Failed to parse saved visits:",
+      expect.any(Error)
+    );
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("should return baseVisits if parsed saved data is not an array", () => {
+    store["sauna-itta_visits"] = JSON.stringify({ not: "an array" });
+
+    const visits = getInitialVisits();
+    expect(Array.isArray(visits)).toBe(true);
+    expect(visits.length).toBeGreaterThan(0);
+  });
+
   it("保存がまだ無い場合は同梱JSONを返すこと", () => {
     const visits = getInitialVisits();
 
