@@ -2,6 +2,7 @@ import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useVisitForm, UseVisitFormOptions } from "./useVisitForm";
 import { SaunaVisit } from "../types";
+import * as utils from "../utils";
 
 describe("useVisitForm", () => {
   const mockVisit: SaunaVisit = {
@@ -162,5 +163,23 @@ describe("useVisitForm", () => {
 
     expect(options.showToast).toHaveBeenCalledWith("サウナの場所が選択されていません。", "error");
     expect(options.addVisit).not.toHaveBeenCalled();
+  });
+
+  it("handleImageFile で画像圧縮に失敗したときにエラーのトーストが表示されること", async () => {
+    const { result } = renderHook(() => useVisitForm(defaultOptions));
+
+    const spy = vi.spyOn(utils, "compressAndGetBase64").mockRejectedValue(new Error("compression failed"));
+
+    await act(async () => {
+      await result.current.handleImageFile(new File([""], "test.png"));
+    });
+
+    // 実装が本当にモックを経由したことまで確かめないと、jsdom で実処理が失敗しても
+    // 同じトーストが出るため、このテストは素通りしてしまう。
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(defaultOptions.showToast).toHaveBeenCalledWith("画像の圧縮に失敗しました。別の画像で試してください。", "error");
+    expect(result.current.imageUploading).toBe(false);
+
+    spy.mockRestore();
   });
 });
