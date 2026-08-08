@@ -7,7 +7,7 @@ gem "pg", "~> 1.5"
 gem "puma", ">= 6.4"
 gem "bootsnap", require: false
 gem "omniauth", "~> 2.1"
-gem "omniauth-rails_csrf_protection", "~> 1.0"
+gem "omniauth-rails_csrf_protection", "~> 2.0"
 gem "omniauth-google-oauth2", "~> 1.2"
 gem "google-cloud-storage", "~> 1.50"
 
