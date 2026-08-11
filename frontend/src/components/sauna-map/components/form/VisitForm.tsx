@@ -1,5 +1,4 @@
 import { Dispatch, FormEvent, SetStateAction } from "react";
-import { Check, Save, X, Trash2, Info, Loader2 } from "lucide-react";
 import { VisitFormState, VisitHistoryEntry } from "../../types";
 import { VisitHistorySection } from "./VisitHistorySection";
 import { VisitTagsField } from "./VisitTagsField";
@@ -12,6 +11,9 @@ import {
   NameField,
   AreaField,
   DateField,
+  HistoryAppendField,
+  CommentField,
+  FormActions,
 } from "./VisitFormFields";
 import { useSaunaEditor, useSaunaEditorForm, useSaunaMapActions } from "../../context";
 import { GeocodingResult } from "../../utils/geocoding";
@@ -89,21 +91,12 @@ export function VisitFormView({
       )}
 
       {editingId && form.status === "visited" && (
-        <div className="form-group form-group--checkbox">
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={form.appendHistory}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, appendHistory: e.target.checked }))
-              }
-            />
-            <span>新しい訪問記録として追加する（訪問回数+1）</span>
-          </label>
-          <p className="form-hint">
-            チェックを入れると、今回の内容が新しい訪問履歴として保存されます。チェックを外すと前回の記録を修正します。
-          </p>
-        </div>
+        <HistoryAppendField
+          appendHistory={form.appendHistory}
+          onChange={(appendHistory) =>
+            setForm((prev) => ({ ...prev, appendHistory }))
+          }
+        />
       )}
 
       <NameField
@@ -135,23 +128,11 @@ export function VisitFormView({
         onChange={(tagsText) => setForm((prev) => ({ ...prev, tagsText }))}
       />
 
-      <div className="form-group">
-        <label htmlFor="visit-comment">
-          {form.status === "wishlist" ? "メモ" : "感想・メモ"}
-        </label>
-        <textarea
-          id="visit-comment"
-          className="input textarea"
-          rows={3}
-          value={form.comment}
-          onChange={(e) => setForm((prev) => ({ ...prev, comment: e.target.value }))}
-          placeholder={
-            form.status === "wishlist"
-              ? "行きたい理由や気になっているポイント..."
-              : "ととのい具合、水風呂の温度、外気浴の雰囲気など..."
-          }
-        />
-      </div>
+      <CommentField
+        status={form.status}
+        comment={form.comment}
+        onChange={(comment) => setForm((prev) => ({ ...prev, comment }))}
+      />
 
       {form.status === "visited" && (
         <VisitImageField
@@ -162,40 +143,13 @@ export function VisitFormView({
         />
       )}
 
-      <div className="form-actions">
-        <button
-          type="submit"
-          className="btn btn-primary"
-          disabled={submitBlockedReason !== null}
-          title={submitBlockedReason ?? undefined}
-          aria-describedby={submitBlockedReason ? "submit-blocked-reason" : undefined}
-        >
-          {saving ? <Loader2 size={18} className="spin-icon" /> : editingId ? <Check size={18} /> : <Save size={18} />}
-          <span>{saving ? "保存中..." : editingId ? "更新する" : "保存する"}</span>
-        </button>
-        {submitBlockedReason && (
-          <p className="form-hint form-hint--blocked" id="submit-blocked-reason" role="status">
-            <Info size={13} aria-hidden="true" />
-            {submitBlockedReason}
-          </p>
-        )}
-        <div className={`form-actions-secondary ${!editingId ? "form-actions-secondary--single" : ""}`}>
-          {editingId && (
-            <button
-              type="button"
-              className="btn btn-danger btn-delete"
-              onClick={onDelete}
-            >
-              <Trash2 size={16} />
-              <span>削除</span>
-            </button>
-          )}
-          <button type="button" className="btn btn-ghost" onClick={onCancel}>
-            <X size={16} />
-            <span>キャンセル</span>
-          </button>
-        </div>
-      </div>
+      <FormActions
+        saving={saving}
+        editingId={editingId}
+        submitBlockedReason={submitBlockedReason}
+        onDelete={onDelete}
+        onCancel={onCancel}
+      />
     </form>
   );
 }
