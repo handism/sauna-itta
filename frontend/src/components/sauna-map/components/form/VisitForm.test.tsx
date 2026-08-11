@@ -206,11 +206,11 @@ describe("VisitFormView", () => {
    * 評価しても取りこぼす。そのため呼び出された時点で適用しておく。
    */
   function createSetForm(base: VisitFormState = defaultForm) {
-    const results: VisitFormState[] = [];
+    let current = base;
     const setForm = vi.fn((action: SetStateAction<VisitFormState>) => {
-      results.push(typeof action === "function" ? action(base) : action);
+      current = typeof action === "function" ? action(current) : action;
     });
-    return { setForm, latest: () => results[results.length - 1] };
+    return { setForm, latest: () => current };
   }
 
   it.each([
