@@ -97,10 +97,6 @@ function VisitMarkersComponent({
     [editingId, hoveredId, onEdit, onSelectVisit, selectedId, showBadges],
   );
 
-  if (!enableClustering) {
-    return <>{visits.map(renderMarker)}</>;
-  }
-
   const { priorityVisits, normalVisits } = useMemo(() => {
     const priority: SaunaVisit[] = [];
     const normal: SaunaVisit[] = [];
@@ -117,6 +113,10 @@ function VisitMarkersComponent({
 
     return { priorityVisits: priority, normalVisits: normal };
   }, [visits, selectedId, editingId]);
+
+  if (!enableClustering) {
+    return <>{visits.map(renderMarker)}</>;
+  }
 
   return (
     <>
