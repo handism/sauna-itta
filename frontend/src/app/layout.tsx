@@ -12,7 +12,7 @@ const publicBasePath = isApiMode ? "" : "/sauna-itta";
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
-  weight: ["300", "400", "600"],
+  // Turbopack Google Font resolving error fallback: omit exact weights to fetch variable font or adjust fallback
   display: "swap",
 });
 
