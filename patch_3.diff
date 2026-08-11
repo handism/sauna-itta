@@ -1,0 +1,54 @@
+--- frontend/src/components/sauna-map/hooks/useSaunaVisits.ts
++++ frontend/src/components/sauna-map/hooks/useSaunaVisits.ts
+@@ -67,7 +67,7 @@
+     return () => {
+       active = false;
+     };
+-  }, [repository, seededFromStorage]);
++  }, [repository, seededFromStorage, setVisits]);
+
+   const runMutation = useCallback(
+@@ -90,7 +90,7 @@
+       if (result.value) setVisits((current) => [result.value as SaunaVisit, ...current]);
+       return { success: result.success, newVisit: result.value };
+     },
+-    [repository, runMutation],
++    [repository, runMutation, setVisits],
+   );
+
+   const editVisit = useCallback(
+@@ -101,7 +101,7 @@
+       }
+       return { success: result.success };
+     },
+-    [repository, runMutation],
++    [repository, runMutation, setVisits],
+   );
+
+   const deleteVisit = useCallback(
+@@ -110,7 +110,7 @@
+       if (result.success) setVisits((current) => current.filter((visit) => visit.id !== id));
+       return { success: result.success };
+     },
+-    [repository, runMutation],
++    [repository, runMutation, setVisits],
+   );
+
+   const removeHistoryEntry = useCallback(
+@@ -123,7 +123,7 @@
+       }
+       return { success: result.success };
+     },
+-    [repository, runMutation, visits],
++    [repository, runMutation, setVisits, visits],
+   );
+
+   const importBatch = useCallback(
+@@ -138,7 +138,7 @@
+     setAuthenticated(false);
+     setUser(null);
+     setVisits([]);
+-  }, [repository]);
++  }, [repository, setVisits]);
+
+   return {
