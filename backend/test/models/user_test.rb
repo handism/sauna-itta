@@ -67,7 +67,7 @@ class UserTest < ActiveSupport::TestCase
       status: "visited",
       tags: []
     )
-    assert_difference('SaunaVisit.count', -1) do
+    assert_difference("SaunaVisit.count", -1) do
       @user.destroy
     end
   end
