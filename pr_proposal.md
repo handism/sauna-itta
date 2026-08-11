@@ -1,21 +1,19 @@
-# 🧹 [Code Health] Refactor VisitForm for improved readability and maintainability
+# 🧹 [Code Health] Extract complex virtualized list setup to a custom hook
 
 ## 🎯 What
-This PR addresses a code health issue in `frontend/src/components/sauna-map/components/form/VisitForm.tsx` where the `VisitFormView` component had become excessively large and complex (170+ lines).
-
-The following inline blocks have been extracted into focused, reusable pure components inside `VisitFormFields.tsx`:
-- `HistoryAppendField`: Handles the "History Append" checkbox toggle logic.
-- `CommentField`: Handles the memo/comment textarea, dynamically adjusting placeholder text based on status.
-- `FormActions`: Encapsulates the save, delete, and cancel buttons along with their loading and blocked states.
+This PR addresses code health issues in `frontend/src/components/sauna-map/components/list/VisitList.tsx` by extracting the complex incremental rendering logic (often referred to as virtualized list setup) into a new custom hook, `useIncrementalList`.
 
 ## 💡 Why
-Extracting these parts into pure components significantly reduces the size and complexity of `VisitFormView`. This makes the main form component much easier to read and maintain. Since these child components only rely on props for their state and event handling, they are fully decoupled from the context, minimizing architectural changes while maximizing clarity.
+`VisitList.tsx` was handling too many responsibilities, including its primary job of UI rendering and the low-level DOM intersection and scrolling logic required to lazily load and auto-scroll the visits list.
+By extracting this complex setup into `useIncrementalList`:
+*   **Maintainability**: `VisitList.tsx` becomes much cleaner and focused solely on what it renders. The file size and cognitive complexity are significantly reduced.
+*   **Testability**: The incremental list logic (Intersection Observer behavior, chunked loading, selection scrolling) can now be tested in isolation inside `useIncrementalList.test.ts`, rather than relying solely on component-level DOM interaction tests.
+*   **Reusability**: If similar "load more on scroll" behavior is needed elsewhere, the hook is ready to be reused.
 
 ## ✅ Verification
-- Ensured all icons (`Check`, `Save`, `X`, `Trash2`, `Info`, `Loader2`) were correctly migrated to `VisitFormFields.tsx`.
-- Ran `npm run typecheck` and `npm run lint` in the `frontend/` directory to ensure type safety and code style compliance.
-- Ran the full frontend test suite (`npx vitest run`) which passed completely (533 passed), including specific checks for `VisitForm.test.tsx` and `VisitFormFields.test.tsx`.
-- Successfully completed Code Review with an outcome of `#Correct#`, confirming the refactoring safely abstracted logic without breaking or modifying existing behavior.
+- Verified that all unit tests still pass, including the original `VisitList.test.tsx` which tests the component's integration with the incremental rendering behavior.
+- Added comprehensive unit tests for the newly extracted `useIncrementalList` hook to ensure correct item chunking and `IntersectionObserver` mock handling.
+- Ran `npm run lint` inside the `frontend` directory, which successfully passed after cleaning up unused imports in `VisitList.tsx`.
 
 ## ✨ Result
-`VisitForm.tsx` is now much cleaner and more readable. The extracted components effectively encapsulate distinct UI sections, paving the way for easier testing and future updates to the form fields.
+The codebase is cleaner, with better separation of concerns between state/intersection management and UI rendering. No external behavior or performance was changed, preserving existing functionality entirely.
