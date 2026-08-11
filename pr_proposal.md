@@ -1,13 +1,21 @@
-## Title: 🔒 Fix hardcoded default Google Client Secret vulnerability
+# 🧹 [Code Health] Refactor VisitForm for improved readability and maintainability
 
-## Description:
+## 🎯 What
+This PR addresses a code health issue in `frontend/src/components/sauna-map/components/form/VisitForm.tsx` where the `VisitFormView` component had become excessively large and complex (170+ lines).
 
-### 🎯 What:
-Removed the hardcoded default fallback values (`"development-client-id"`, `"development-client-secret"`) for the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables in the production environment.
+The following inline blocks have been extracted into focused, reusable pure components inside `VisitFormFields.tsx`:
+- `HistoryAppendField`: Handles the "History Append" checkbox toggle logic.
+- `CommentField`: Handles the memo/comment textarea, dynamically adjusting placeholder text based on status.
+- `FormActions`: Encapsulates the save, delete, and cancel buttons along with their loading and blocked states.
 
-### ⚠️ Risk:
-Previously, if a production environment failed to set the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables, the application would silently fall back to using development secrets. This could put the application at risk if those default fallback values were known to an attacker, potentially allowing them to compromise the authentication mechanism or exploit an improperly configured production setup. It violates security best practices by allowing production to boot with unsafe default credentials instead of failing securely.
+## 💡 Why
+Extracting these parts into pure components significantly reduces the size and complexity of `VisitFormView`. This makes the main form component much easier to read and maintain. Since these child components only rely on props for their state and event handling, they are fully decoupled from the context, minimizing architectural changes while maximizing clarity.
 
-### 🛡️ Solution:
-Updated `config/initializers/omniauth.rb` to conditionally apply the fallback values based on the environment. If `Rails.env.production?` is true, the initializer uses `ENV.fetch(key, "")` to fall back to an empty string. This securely prevents the use of known credentials and allows the OAuth flow to fail safely if the variables are missing, while also preventing the application from crashing via `KeyError` during CI/CD or build tasks (like `db:prepare`) that run in the production environment but do not supply these runtime secrets. In non-production environments (like development and test), the fallback values are retained to ensure local development workflows remain unbroken out-of-the-box.
+## ✅ Verification
+- Ensured all icons (`Check`, `Save`, `X`, `Trash2`, `Info`, `Loader2`) were correctly migrated to `VisitFormFields.tsx`.
+- Ran `npm run typecheck` and `npm run lint` in the `frontend/` directory to ensure type safety and code style compliance.
+- Ran the full frontend test suite (`npx vitest run`) which passed completely (533 passed), including specific checks for `VisitForm.test.tsx` and `VisitFormFields.test.tsx`.
+- Successfully completed Code Review with an outcome of `#Correct#`, confirming the refactoring safely abstracted logic without breaking or modifying existing behavior.
 
+## ✨ Result
+`VisitForm.tsx` is now much cleaner and more readable. The extracted components effectively encapsulate distinct UI sections, paving the way for easier testing and future updates to the form fields.
