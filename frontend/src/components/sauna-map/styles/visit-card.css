@@ -270,7 +270,7 @@
 .sauna-card-rating {
   font-size: 0.8rem;
   margin-bottom: 0.25rem;
-  color: var(--primary);
+  color: var(--star-color);
 }
 
 .sauna-tag-list {
@@ -436,7 +436,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
-  color: var(--primary);
+  color: var(--star-color);
   font-weight: 600;
   font-size: 0.78rem;
 }

@@ -142,8 +142,8 @@
 
 .sauna-marker-pill--rating {
   background: rgba(30, 30, 30, 0.85);
-  color: #fbbf24;
-  border-color: rgba(251, 191, 36, 0.4);
+  color: var(--star-color);
+  border-color: color-mix(in srgb, var(--star-color) 40%, transparent);
 }
 
 .sauna-marker-pill--count {
@@ -154,7 +154,7 @@
 
 .sauna-marker-pill--wishlist {
   background: rgba(16, 185, 129, 0.9);
-  color: #ffffff;
+  color: #04241a;
   border-color: rgba(255, 255, 255, 0.5);
 }
 
@@ -324,6 +324,7 @@
   gap: 0.25rem;
   margin-left: 0.5rem;
   font-size: 0.75rem;
+  color: var(--accent-wishlist);
 }
 
 .wishlist-chip--compact {
@@ -338,13 +339,6 @@
 
 .popup-rating {
   font-size: 0.8rem;
-  margin-bottom: 0.5rem;
-}
-
-.popup-image {
-  width: 100%;
-  height: auto;
-  border-radius: var(--radius-sm);
   margin-bottom: 0.5rem;
 }
 

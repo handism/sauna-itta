@@ -62,17 +62,17 @@ describe("SaunaMarkerPopup", () => {
     const dataUrl =
       "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
     const { rerender } = render(
-      <SaunaMarkerPopup visit={{ ...visit, image: dataUrl }} isWishlist={false} onEdit={vi.fn()} />,
+      <SaunaMarkerPopup visit={{ ...visit, image: dataUrl }} isWishlist={false} onEdit={vi.fn()} />
     );
-    expect(screen.getByRole("img", { name: "天空サウナ" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "天空サウナの写真を拡大表示" })).toBeInTheDocument();
 
     rerender(
       <SaunaMarkerPopup
         visit={{ ...visit, image: "javascript:alert(1)" }}
         isWishlist={false}
         onEdit={vi.fn()}
-      />,
+      />
     );
-    expect(screen.queryByRole("img", { name: "天空サウナ" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "天空サウナの写真を拡大表示" })).not.toBeInTheDocument();
   });
 });

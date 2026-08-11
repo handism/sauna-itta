@@ -1,16 +1,16 @@
 import { Navigation } from "lucide-react";
-import Image from "next/image";
 import { SaunaVisit } from "../../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../../utils";
-import { RatingStars, WishlistChip } from "../common/common";
+import { RatingStars, VisitImagePreview, WishlistChip } from "../common/common";
 
 interface SaunaMarkerPopupProps {
   visit: SaunaVisit;
   isWishlist: boolean;
   onEdit: (visit: SaunaVisit) => void;
+  onOpenImage?: (src: string) => void;
 }
 
-export function SaunaMarkerPopup({ visit, isWishlist, onEdit }: SaunaMarkerPopupProps) {
+export function SaunaMarkerPopup({ visit, isWishlist, onEdit, onOpenImage }: SaunaMarkerPopupProps) {
   const visitCount = getVisitCount(visit);
   const imageUrl = sanitizeImageUrl(visit.image);
 
@@ -22,16 +22,11 @@ export function SaunaMarkerPopup({ visit, isWishlist, onEdit }: SaunaMarkerPopup
       </h3>
       {visit.area && <div className="popup-area">{visit.area}</div>}
       <RatingStars rating={visit.rating ?? 0} className="popup-rating" />
-      {imageUrl && (
-        <Image
-          src={imageUrl}
-          alt={visit.name}
-          className="popup-image"
-          width={400}
-          height={300}
-          unoptimized
-        />
-      )}
+      <VisitImagePreview
+        src={imageUrl}
+        alt={`${visit.name}の写真`}
+        onOpenImage={onOpenImage || (() => {})}
+      />
       <p className="popup-comment">{visit.comment}</p>
       <small className="popup-meta">
         {visit.date}
