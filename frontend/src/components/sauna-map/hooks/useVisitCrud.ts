@@ -1,84 +1,41 @@
-import { useState, useCallback, useEffect, useRef, FormEvent } from "react";
-import { SaunaVisit, VisitFormState, LatLng, VisitHistoryEntry } from "../types";
-import {
-  getDefaultForm,
-  getTodayDate,
-  toFormState,
-  compressAndGetBase64,
-  validateVisitForm,
-} from "../utils";
+import { useCallback, FormEvent, MutableRefObject } from "react";
+import { VisitFormState, LatLng, VisitHistoryEntry } from "../types";
+import { validateVisitForm } from "../utils";
 
 const STORAGE_ERROR_MSG =
   "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
 
-export interface UseVisitFormOptions {
+export interface UseVisitCrudOptions {
   editingId: string | null;
   selectedLocation: LatLng | null;
   historyEntries: VisitHistoryEntry[];
+  formRef: MutableRefObject<VisitFormState>;
+  setForm: React.Dispatch<React.SetStateAction<VisitFormState>>;
   addVisit: (location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
   editVisit: (id: string, location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
   deleteVisit: (id: string) => Promise<{ success: boolean }>;
   removeHistoryEntry: (visitId: string, entryIndex: number) => Promise<{ success: boolean }>;
-  startCreate: () => void;
-  startEdit: (visit: SaunaVisit) => void;
-  cancelEdit: (completed?: boolean) => void;
   openDeleteConfirm: () => void;
   closeDeleteConfirm: () => void;
   showToast: (message: string, type: "success" | "error" | "info") => void;
+  cancelEditing: (completed?: boolean) => void;
 }
 
-export function useVisitForm({
+export function useVisitCrud({
   editingId,
   selectedLocation,
   historyEntries,
+  formRef,
+  setForm,
   addVisit,
   editVisit,
   deleteVisit,
   removeHistoryEntry,
-  startCreate,
-  startEdit,
-  cancelEdit,
   openDeleteConfirm,
   closeDeleteConfirm,
   showToast,
-}: UseVisitFormOptions) {
-  const [form, setForm] = useState<VisitFormState>(getDefaultForm());
-  const [imageUploading, setImageUploading] = useState(false);
-
-  /**
-   * 送信時点の入力値を読むための ref。
-   *
-   * handleSubmit の依存配列に form を入れると、1 文字入力するたびに関数の参照が変わり、
-   * EditorActions Context 経由で SaunaMapContent / DesktopSidebar / VisitList まで
-   * 再レンダリング対象になる。送信はユーザー操作起点なので、その時点では effect が
-   * 反映済みであり、ref から読んでも常に画面と同じ値になる。
-   */
-  const formRef = useRef(form);
-  useEffect(() => {
-    formRef.current = form;
-  }, [form]);
-
-  const cancelEditing = useCallback(
-    (completed = false) => {
-      cancelEdit(completed);
-      setForm(getDefaultForm());
-    },
-    [cancelEdit],
-  );
-
-  const startNewVisit = useCallback(() => {
-    startCreate();
-    setForm(getDefaultForm(getTodayDate()));
-  }, [startCreate]);
-
-  const startEditing = useCallback(
-    (visit: SaunaVisit) => {
-      startEdit(visit);
-      setForm(toFormState(visit));
-    },
-    [startEdit],
-  );
-
+  cancelEditing,
+}: UseVisitCrudOptions) {
   const handleDelete = useCallback(() => {
     if (!editingId) return;
     openDeleteConfirm();
@@ -133,28 +90,8 @@ export function useVisitForm({
       cancelEditing(true);
       onCompleted?.();
     },
-    [selectedLocation, editingId, editVisit, addVisit, showToast, cancelEditing],
+    [selectedLocation, editingId, editVisit, addVisit, showToast, cancelEditing, formRef],
   );
-
-  const handleImageFile = useCallback(
-    async (file: File) => {
-      setImageUploading(true);
-      try {
-        const base64 = await compressAndGetBase64(file);
-        setForm((prev) => ({ ...prev, image: base64 }));
-      } catch (error) {
-        console.error(error);
-        showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
-      } finally {
-        setImageUploading(false);
-      }
-    },
-    [showToast],
-  );
-
-  const handleRemoveImage = useCallback(() => {
-    setForm((prev) => ({ ...prev, image: "" }));
-  }, []);
 
   const handleDeleteHistoryEntry = useCallback(
     async (index: number) => {
@@ -175,21 +112,13 @@ export function useVisitForm({
         }));
       }
     },
-    [editingId, removeHistoryEntry, historyEntries],
+    [editingId, removeHistoryEntry, historyEntries, setForm],
   );
 
   return {
-    form,
-    setForm,
-    imageUploading,
-    startNewVisit,
-    startEditing,
-    cancelEditing,
     handleDelete,
     confirmDelete,
     handleSubmit,
-    handleImageFile,
-    handleRemoveImage,
     handleDeleteHistoryEntry,
   };
 }
