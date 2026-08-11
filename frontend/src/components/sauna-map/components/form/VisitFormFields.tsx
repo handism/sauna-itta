@@ -1,4 +1,4 @@
-import { CheckCircle2, Star } from "lucide-react";
+import { Check, Save, X, Trash2, Info, Loader2, CheckCircle2, Star } from "lucide-react";
 import { LocationSearchInput } from "./LocationSearchInput";
 import { GeocodingResult } from "../../utils/geocoding";
 import { getDateDaysAgo } from "../../utils/date";
@@ -40,6 +40,111 @@ export function LocationSearchField({
         inputId="visit-location-search"
         onSelectLocation={onSelectLocation}
       />
+    </div>
+  );
+}
+
+export function HistoryAppendField({
+  appendHistory,
+  onChange,
+}: {
+  appendHistory: boolean;
+  onChange: (appendHistory: boolean) => void;
+}) {
+  return (
+    <div className="form-group form-group--checkbox">
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={appendHistory}
+          onChange={(e) => onChange(e.target.checked)}
+        />
+        <span>新しい訪問記録として追加する（訪問回数+1）</span>
+      </label>
+      <p className="form-hint">
+        チェックを入れると、今回の内容が新しい訪問履歴として保存されます。チェックを外すと前回の記録を修正します。
+      </p>
+    </div>
+  );
+}
+
+export function CommentField({
+  status,
+  comment,
+  onChange,
+}: {
+  status: "visited" | "wishlist";
+  comment: string;
+  onChange: (comment: string) => void;
+}) {
+  return (
+    <div className="form-group">
+      <label htmlFor="visit-comment">
+        {status === "wishlist" ? "メモ" : "感想・メモ"}
+      </label>
+      <textarea
+        id="visit-comment"
+        className="input textarea"
+        rows={3}
+        value={comment}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={
+          status === "wishlist"
+            ? "行きたい理由や気になっているポイント..."
+            : "ととのい具合、水風呂の温度、外気浴の雰囲気など..."
+        }
+      />
+    </div>
+  );
+}
+
+export function FormActions({
+  saving,
+  editingId,
+  submitBlockedReason,
+  onDelete,
+  onCancel,
+}: {
+  saving: boolean;
+  editingId: string | null;
+  submitBlockedReason: string | null;
+  onDelete: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div className="form-actions">
+      <button
+        type="submit"
+        className="btn btn-primary"
+        disabled={submitBlockedReason !== null}
+        title={submitBlockedReason ?? undefined}
+        aria-describedby={submitBlockedReason ? "submit-blocked-reason" : undefined}
+      >
+        {saving ? <Loader2 size={18} className="spin-icon" /> : editingId ? <Check size={18} /> : <Save size={18} />}
+        <span>{saving ? "保存中..." : editingId ? "更新する" : "保存する"}</span>
+      </button>
+      {submitBlockedReason && (
+        <p className="form-hint form-hint--blocked" id="submit-blocked-reason" role="status">
+          <Info size={13} aria-hidden="true" />
+          {submitBlockedReason}
+        </p>
+      )}
+      <div className={`form-actions-secondary ${!editingId ? "form-actions-secondary--single" : ""}`}>
+        {editingId && (
+          <button
+            type="button"
+            className="btn btn-danger btn-delete"
+            onClick={onDelete}
+          >
+            <Trash2 size={16} />
+            <span>削除</span>
+          </button>
+        )}
+        <button type="button" className="btn btn-ghost" onClick={onCancel}>
+          <X size={16} />
+          <span>キャンセル</span>
+        </button>
+      </div>
     </div>
   );
 }
