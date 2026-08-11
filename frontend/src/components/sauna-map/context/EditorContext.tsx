@@ -9,7 +9,8 @@ import {
   FormEvent,
 } from "react";
 import { useEditorState } from "../hooks/useEditorState";
-import { useVisitForm } from "../hooks/useVisitForm";
+import { useVisitFormState } from "../hooks/useVisitFormState";
+import { useVisitCrud } from "../hooks/useVisitCrud";
 import { useSaunaUIActions, useSaunaViewport } from "./UIContext";
 import { useVisitsCRUD } from "./VisitsCRUDContext";
 import { useVisitFilterActions } from "./VisitFiltersContext";
@@ -115,30 +116,39 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const {
     form,
     setForm,
+    formRef,
     imageUploading,
     startNewVisit,
     startEditing,
     cancelEditing,
+    handleImageFile,
+    handleRemoveImage,
+  } = useVisitFormState({
+    startCreate,
+    startEdit,
+    cancelEdit,
+    showToast,
+  });
+
+  const {
     handleDelete,
     confirmDelete,
     handleSubmit,
-    handleImageFile,
-    handleRemoveImage,
     handleDeleteHistoryEntry,
-  } = useVisitForm({
+  } = useVisitCrud({
     editingId,
     selectedLocation,
     historyEntries,
+    formRef,
+    setForm,
     addVisit,
     editVisit,
     deleteVisit,
     removeHistoryEntry,
-    startCreate,
-    startEdit,
-    cancelEdit,
     openDeleteConfirm,
     closeDeleteConfirm,
     showToast,
+    cancelEditing,
   });
 
   // フォームの値は state 側に混ぜないこと（1 文字ごとに全消費側が再レンダリングされる）
