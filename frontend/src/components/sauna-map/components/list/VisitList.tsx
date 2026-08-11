@@ -1,13 +1,13 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 import { SaunaVisit, VisitFilters } from "../../types";
 import { ImageLightbox } from "../common/common";
 import { useImageLightbox } from "../../hooks/useImageLightbox";
+import { useIncrementalList } from "../../hooks/useIncrementalList";
 import { VisitCompactItem } from "./VisitCompactItem";
 import { VisitCardItem } from "./VisitCardItem";
 import { VisitListHeader, ViewMode } from "./VisitListHeader";
 import { VisitListSearch } from "./VisitListSearch";
 import { VisitListEmpty } from "./VisitListEmpty";
-import { getScrollBehavior } from "../../utils/motion";
 import { readStorage, writeStorage } from "../../utils/storage";
 import {
   useVisitsCRUD,
@@ -58,10 +58,6 @@ export function VisitListView({
   hoveredId,
   onHoverVisit,
 }: VisitListViewProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  // ユーザー操作で伸ばした分の追加件数。実際の描画件数はレンダー中に導出する
-  const [extraCount, setExtraCount] = useState(0);
   const { lightboxSrc, openImage, closeImage } = useImageLightbox();
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     const saved = readStorage(STORAGE_KEY);
@@ -73,47 +69,18 @@ export function VisitListView({
     writeStorage(STORAGE_KEY, mode);
   };
 
-  // 選択された記録が初期ウィンドウの外にある場合はそこまで描画を伸ばす。
-  // フィルター変更時に extraCount は保持されるが、件数が減れば hasMore が false になり
-  // 番兵も消えるため、描画数は常に filteredVisits の範囲に収まる。
-  const selectedIndex = selectedId
-    ? filteredVisits.findIndex((v) => v.id === selectedId)
-    : -1;
-  const visibleCount = Math.max(
-    INITIAL_RENDER_COUNT + extraCount,
-    selectedIndex + 1
+  const {
+    containerRef,
+    sentinelRef,
+    renderedVisits,
+    hasMore,
+    loadMore,
+  } = useIncrementalList(
+    filteredVisits,
+    selectedId,
+    INITIAL_RENDER_COUNT,
+    CHUNK_SIZE
   );
-  const renderedVisits = filteredVisits.slice(0, visibleCount);
-  const hasMore = filteredVisits.length > renderedVisits.length;
-
-  useEffect(() => {
-    if (!selectedId || !containerRef.current) return;
-    const targetEl = containerRef.current.querySelector<HTMLElement>(
-      `[data-visit-id="${selectedId}"]`
-    );
-    // jsdom など scrollIntoView 未実装の環境を考慮して optional call にする
-    targetEl?.scrollIntoView?.({ behavior: getScrollBehavior(), block: "center" });
-  }, [selectedId, visibleCount]);
-
-  // 末尾の番兵が見えたら次のチャンクを描画する
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || typeof IntersectionObserver !== "function") return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setExtraCount((prev) => prev + CHUNK_SIZE);
-        }
-      },
-      // スクロールコンテナは .sidebar-content / .bottom-sheet-content 側なので
-      // root は指定せずビューポート基準で監視する
-      { rootMargin: "200px" }
-    );
-    observer.observe(sentinel);
-
-    return () => observer.disconnect();
-  }, [visibleCount, filteredVisits.length]);
 
   return (
     <div className="sauna-list" ref={containerRef}>
@@ -183,7 +150,7 @@ export function VisitListView({
           <button
             type="button"
             className="btn btn-ghost list-load-more-btn"
-            onClick={() => setExtraCount((prev) => prev + CHUNK_SIZE)}
+            onClick={loadMore}
           >
             さらに表示（残り {filteredVisits.length - renderedVisits.length} 件）
           </button>
