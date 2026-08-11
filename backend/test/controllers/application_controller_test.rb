@@ -25,7 +25,7 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
       get "/dummy_login/:id", to: ->(env) {
         request = ActionDispatch::Request.new(env)
         request.session[:user_id] = env["action_dispatch.request.path_parameters"][:id].to_i
-        [200, {"Content-Type" => "text/plain"}, ["Logged in"]]
+        [ 200, { "Content-Type" => "text/plain" }, [ "Logged in" ] ]
       }
     end
   end
