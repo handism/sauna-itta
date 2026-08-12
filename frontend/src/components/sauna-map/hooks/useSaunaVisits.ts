@@ -1,15 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 import {
-  DATA_SOURCE,
+
   getVisitRepository,
   RepositoryError,
   type ImportResult,
   type SessionUser,
   type VisitRepository,
 } from "../repositories";
-import { getInitialVisits } from "../utils";
 import { useVisitImportExport } from "./useVisitImportExport";
+import { useInitialVisits } from "./useInitialVisits";
 
 type Toast = (message: string, type: "success" | "error" | "info") => void;
 
@@ -23,11 +23,8 @@ function mutationErrorMessage(error: unknown): string {
 export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepository) {
   // useRef → useState でレンダリング中の ref アクセス (react-hooks/refs) を回避
   const [repository] = useState(() => injectedRepository ?? getVisitRepository());
-  // localモードは初期描画を空にしないため同期的に読み込む（ちらつき防止）
-  const seededFromStorage = DATA_SOURCE === "local" && !injectedRepository;
-  const [visits, setVisits] = useState<SaunaVisit[]>(() =>
-    seededFromStorage ? getInitialVisits() : [],
-  );
+  const { visits, setVisits, seededFromStorage } = useInitialVisits(injectedRepository);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [authenticated, setAuthenticated] = useState(repository.dataSource === "local");
@@ -46,7 +43,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     } finally {
       setLoading(false);
     }
-  }, [repository]);
+  }, [repository, setVisits]);
 
   useEffect(() => {
     let active = true;
@@ -73,7 +70,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     return () => {
       active = false;
     };
-  }, [repository, seededFromStorage]);
+  }, [repository, seededFromStorage, setVisits]);
 
   const runMutation = useCallback(
     async <T,>(operation: () => Promise<T>): Promise<{ success: boolean; value?: T }> => {
@@ -96,7 +93,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
       if (result.value) setVisits((current) => [result.value as SaunaVisit, ...current]);
       return { success: result.success, newVisit: result.value };
     },
-    [repository, runMutation],
+    [repository, runMutation, setVisits],
   );
 
   const editVisit = useCallback(
@@ -107,7 +104,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
       }
       return { success: result.success };
     },
-    [repository, runMutation],
+    [repository, runMutation, setVisits],
   );
 
   const deleteVisit = useCallback(
@@ -116,7 +113,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
       if (result.success) setVisits((current) => current.filter((visit) => visit.id !== id));
       return { success: result.success };
     },
-    [repository, runMutation],
+    [repository, runMutation, setVisits],
   );
 
   const removeHistoryEntry = useCallback(
@@ -129,7 +126,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
       }
       return { success: result.success };
     },
-    [repository, runMutation, visits],
+    [repository, runMutation, setVisits, visits],
   );
 
   const importBatch = useCallback(
@@ -144,7 +141,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     setAuthenticated(false);
     setUser(null);
     setVisits([]);
-  }, [repository]);
+  }, [repository, setVisits]);
 
   return {
     visits,
