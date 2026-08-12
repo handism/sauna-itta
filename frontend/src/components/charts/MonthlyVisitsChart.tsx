@@ -44,15 +44,13 @@ export default function MonthlyVisitsChart({
   }, [entries]);
 
   const yearBoundaries = useMemo(() => {
-    const seenYears = new Set<string>();
-    return data
-      .filter((d) => {
-        const year = d.month.slice(0, 4);
-        if (seenYears.has(year)) return false;
-        seenYears.add(year);
-        return true;
-      })
-      .map((d) => ({ month: d.month, year: d.month.slice(0, 4) }));
+    return data.reduce<{ month: string; year: string }[]>((acc, d) => {
+      const year = d.month.slice(0, 4);
+      if (acc.length === 0 || acc[acc.length - 1].year !== year) {
+        acc.push({ month: d.month, year });
+      }
+      return acc;
+    }, []);
   }, [data]);
 
   const {
