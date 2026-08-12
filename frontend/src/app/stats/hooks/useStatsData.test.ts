@@ -39,13 +39,15 @@ const mockVisits: SaunaVisit[] = [
   },
 ];
 
+import { getVisitRepository } from "@/components/sauna-map/repositories";
+
 vi.mock("@/components/sauna-map/repositories", () => {
   return {
-    getVisitRepository: () => ({
+    getVisitRepository: vi.fn(() => ({
       dataSource: "local",
       getSession: vi.fn().mockResolvedValue({ authenticated: true, user: null, csrfToken: null }),
       list: vi.fn().mockResolvedValue(mockVisits),
-    }),
+    })),
   };
 });
 
@@ -163,5 +165,18 @@ describe("useStatsData", () => {
 
     expect(result.current.theme).toBe("light");
     expect(document.documentElement.classList.contains("light-theme")).toBe(true);
+  });
+
+  it("初期読み込み時にエラーが発生した場合、loadErrorが設定されること", async () => {
+    vi.mocked(getVisitRepository).mockReturnValueOnce({
+      dataSource: "local",
+      getSession: vi.fn().mockResolvedValue({ authenticated: true, user: null, csrfToken: null }),
+      list: vi.fn().mockRejectedValue(new Error("ネットワークエラー")),
+    } as any);
+
+    const { result } = await renderMounted();
+
+    expect(result.current.mounted).toBe(true);
+    expect(result.current.loadError).toBe("ネットワークエラー");
   });
 });
