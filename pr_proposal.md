@@ -1,19 +1,13 @@
-# 🧹 Split overloaded useVisitForm hook
+# 🧪 [Testing] Add error path test for initial load in useSaunaVisits hook
 
-## 🎯 What
-The `useVisitForm` hook in `frontend/src/components/sauna-map/hooks/` was overloaded, taking on responsibilities for both form state management (including image uploading) and CRUD operations via the backend API. This PR splits it into two specialized hooks:
-1. `useVisitFormState`: Manages the form state, validation context (formRef), and image handling.
-2. `useVisitCrud`: Manages the API calls for creating, editing, and deleting sauna visits and their history entries.
+## 🎯 **What**
+This PR addresses a missing test case in `useSaunaVisits.test.ts` where the initial data load in the `useEffect` hook throws an error. Previously, there was no test confirming that `loadError` state gets correctly set when `repository.list()` fails during the mount phase.
 
-It also updates `EditorContext.tsx` to integrate these two new hooks and splits the existing unit test file into `useVisitFormState.test.ts` and `useVisitCrud.test.ts`.
+## 📊 **Coverage**
+- Added a specific test case that mocks `repository.list()` to reject with an error (e.g. "ネットワークエラー").
+- Verified that the `catch` block correctly transitions `loadError` from `null` to the expected error message.
+- Tested that the component safely resolves its `loading` state to `false` even if an error is thrown.
 
-## 💡 Why
-Splitting this overloaded hook vastly improves maintainability and separation of concerns. The state management piece can be reasoned about (and tested) entirely independently from the side effects of saving and deleting data. This reduces complexity and makes each individual hook smaller and easier to extend in the future.
-
-## ✅ Verification
-- All tests in `frontend/` were executed and pass.
-- Linting (`npm run lint`) and typechecking (`npm run typecheck`) were run with 0 errors.
-- The `EditorContext.tsx` has identical inputs and exports to consuming components. No side-effects or regressions have been introduced into the context logic.
-
-## ✨ Result
-A cleaner, more modular hook structure for the Visit form, leading to higher codebase quality without breaking or altering application behavior.
+## ✨ **Result**
+- Test coverage for the `useSaunaVisits` hook is improved, effectively ensuring that the `loadError` logic for the critical initial loading path functions correctly and does not break during future refactoring.
+- The hook is now robustly tested against network or parsing failures during initial hydration.
