@@ -79,4 +79,34 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("カスタムエラー: テスト用の例外です")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "カスタムリセット" })).toBeInTheDocument();
   });
+
+  it("ReactNodeのfallbackが指定されている場合はそれを描画する", () => {
+    render(
+      <ErrorBoundary fallback={<div data-testid="custom-fallback">カスタムフォールバック</div>}>
+        <Bomb shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(screen.getByTestId("custom-fallback")).toBeInTheDocument();
+  });
+
+  it("onResetが指定されておらず再読み込みボタンをクリックした場合は、window.location.reloadが呼ばれる", () => {
+    const originalLocation = window.location;
+    // @ts-ignore
+    delete window.location;
+    window.location = { ...originalLocation, reload: vi.fn() };
+
+    render(
+      <ErrorBoundary>
+        <Bomb shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    const button = screen.getByRole("button", { name: "再読み込み" });
+    fireEvent.click(button);
+
+    expect(window.location.reload).toHaveBeenCalledTimes(1);
+
+    window.location = originalLocation;
+  });
 });
