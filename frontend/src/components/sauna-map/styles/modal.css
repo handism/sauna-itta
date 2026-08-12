@@ -94,7 +94,7 @@
 
 .share-rating {
   margin-top: 0.1rem;
-  color: var(--primary);
+  color: var(--star-color);
 }
 
 .share-tags {
