@@ -7,6 +7,7 @@ import { getVisitCount, isWishlist } from "../../utils";
 import { getSaunaIcon } from "../common/markerIcon";
 import { flameIconSvg } from "../common/iconSvg";
 import { SaunaMarkerPopup } from "./SaunaMarkerPopup";
+import { useImageLightbox } from "../../hooks/useImageLightbox";
 
 interface VisitMarkersProps {
   visits: SaunaVisit[];
@@ -58,6 +59,8 @@ function VisitMarkersComponent({
   onEdit,
   onSelectVisit,
 }: VisitMarkersProps) {
+  const { openImage } = useImageLightbox();
+
   const renderMarker = useCallback(
     (visit: SaunaVisit) => {
       const visitCount = getVisitCount(visit);
@@ -89,12 +92,13 @@ function VisitMarkersComponent({
               visit={visit}
               isWishlist={wishlist}
               onEdit={onEdit}
+              onOpenImage={openImage}
             />
           </Popup>
         </Marker>
       );
     },
-    [editingId, hoveredId, onEdit, onSelectVisit, selectedId, showBadges],
+    [editingId, hoveredId, onEdit, onSelectVisit, openImage, selectedId, showBadges],
   );
 
   const { priorityVisits, normalVisits } = useMemo(() => {
