@@ -1,16 +1,14 @@
-# 🧪 [testing improvement] Add comprehensive tests for VisitCompactItem
+# 🧪 Add tests for `useEditorState` hook
 
 ## 🎯 What
-This pull request addresses the testing gap for the `VisitCompactItem` component located in `frontend/src/components/sauna-map/components/list/VisitCompactItem.tsx`.
+This PR addresses the missing test coverage for the `useEditorState` custom React hook located in `frontend/src/components/sauna-map/hooks/useEditorState.ts`.
 
 ## 📊 Coverage
-The new tests cover the following scenarios:
-* Correct rendering of the compact view with essential details (name, area).
-* Verification that interaction buttons (expand/collapse toggle) are native and appropriately isolated from other action buttons (edit button) for accessibility purposes.
-* Logic and conditional rendering for expand/collapse states (e.g. details, image previews, route link are only rendered on expand).
-* Invocation checks for callbacks like hover, selection, deselection, tag clicks, and image previews, ensuring correct arguments are passed.
-* Tests confirming the display of status indicators (e.g. "wishlist" tag).
-* Conditional rendering based on missing/optional data like thumbnail images, area information, and comments.
+A comprehensive test suite was added (`frontend/src/components/sauna-map/hooks/useEditorState.test.ts`) that verifies the following behaviors:
+* **Initial State:** Proper state initialization for both desktop and mobile environments.
+* **State Transitions:** Correct reducer updates for actions including `startCreate`, `startEdit`, `selectLocation`, `cancelEdit`, and `toggleSidebar`.
+* **Sidebar Logic:** Ensures the `isSidebarExpanded` state appropriately collapses and expands based on device type (mobile vs. desktop) during mode changes.
+* **Cleanup:** Uses `cleanup()` from React Testing Library properly in `afterEach` teardowns to avoid state leakage.
 
 ## ✨ Result
-The component test coverage for `VisitCompactItem.tsx` has been significantly improved, hitting 100% statement and branch coverage. The added tests ensure the safety net allows confident refactoring. Also ensured the mock variables strictly type check against the application data models.
+The hook now has 13 dedicated unit tests, achieving ~95% statement and line coverage. Only the unreachable default branch of the internal reducer remains untested through the public hook API. This ensures that any future refactoring of the map editor state management can be done with confidence.
