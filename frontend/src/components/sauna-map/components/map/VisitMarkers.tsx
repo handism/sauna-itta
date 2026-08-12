@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
 import { Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
@@ -97,21 +97,26 @@ function VisitMarkersComponent({
     [editingId, hoveredId, onEdit, onSelectVisit, selectedId, showBadges],
   );
 
+  const { priorityVisits, normalVisits } = useMemo(() => {
+    const priority: SaunaVisit[] = [];
+    const normal: SaunaVisit[] = [];
+
+    const len = visits.length;
+    for (let i = 0; i < len; i++) {
+      const visit = visits[i];
+      if (visit.id === selectedId || visit.id === editingId || isWishlist(visit)) {
+        priority.push(visit);
+      } else {
+        normal.push(visit);
+      }
+    }
+
+    return { priorityVisits: priority, normalVisits: normal };
+  }, [visits, selectedId, editingId]);
+
   if (!enableClustering) {
     return <>{visits.map(renderMarker)}</>;
   }
-
-  const priorityVisits: SaunaVisit[] = [];
-  const normalVisits: SaunaVisit[] = [];
-
-  visits.forEach((visit) => {
-    const isSelected = visit.id === selectedId || visit.id === editingId;
-    if (isSelected || isWishlist(visit)) {
-      priorityVisits.push(visit);
-    } else {
-      normalVisits.push(visit);
-    }
-  });
 
   return (
     <>
