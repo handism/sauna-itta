@@ -92,8 +92,9 @@ describe("ErrorBoundary", () => {
 
   it("onResetが指定されておらず再読み込みボタンをクリックした場合は、window.location.reloadが呼ばれる", () => {
     const originalLocation = window.location;
-    // @ts-ignore
+    // @ts-expect-error JSDOM environment requires deleting window.location for mocking
     delete window.location;
+    // @ts-expect-error JSDOM location mock does not fully match Location interface
     window.location = { ...originalLocation, reload: vi.fn() };
 
     render(
@@ -107,6 +108,7 @@ describe("ErrorBoundary", () => {
 
     expect(window.location.reload).toHaveBeenCalledTimes(1);
 
+    // @ts-expect-error Restore original window.location
     window.location = originalLocation;
   });
 });

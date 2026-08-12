@@ -172,7 +172,7 @@ describe("useStatsData", () => {
       dataSource: "local",
       getSession: vi.fn().mockResolvedValue({ authenticated: true, user: null, csrfToken: null }),
       list: vi.fn().mockRejectedValue(new Error("ネットワークエラー")),
-    } as any);
+    } as unknown as ReturnType<typeof getVisitRepository>);
 
     const { result } = await renderMounted();
 
