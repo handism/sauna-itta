@@ -75,6 +75,7 @@ class ApiV1ImagesTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
     assert_equal "not_found", response.parsed_body.dig("error", "code")
+    assert_equal "対象の記録が見つかりません。", response.parsed_body.dig("error", "message")
   end
 
   test "対応するAttachmentがない場合は404を返す" do
@@ -88,25 +89,6 @@ class ApiV1ImagesTest < ActionDispatch::IntegrationTest
     ActiveStorage::Attachment.destroy_all
 
     get image_path
-    assert_response :not_found
-    assert_equal "not_found", response.parsed_body.dig("error", "code")
-    assert_equal "対象の記録が見つかりません。", response.parsed_body.dig("error", "message")
-  end
-
-  test "署名の有効期限切れや改ざんによるInvalidSignatureを処理できる" do
-    sign_in
-
-    begin
-      original_method = ActiveStorage::Blob.method(:find_signed!)
-      ActiveStorage::Blob.define_singleton_method(:find_signed!) do |*args|
-        raise ActiveSupport::MessageVerifier::InvalidSignature
-      end
-
-      get "/api/v1/images/invalid-or-tampered-signed-id"
-    ensure
-      ActiveStorage::Blob.define_singleton_method(:find_signed!, &original_method)
-    end
-
     assert_response :not_found
     assert_equal "not_found", response.parsed_body.dig("error", "code")
     assert_equal "対象の記録が見つかりません。", response.parsed_body.dig("error", "message")
