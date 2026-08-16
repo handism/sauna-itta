@@ -2,77 +2,102 @@ require "test_helper"
 
 class DevSessionsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @original_forgery_protection = ActionController::Base.allow_forgery_protection
-    ActionController::Base.allow_forgery_protection = false
-
-    # We will redefine Rails.env for the tests in a way that respects test environment
-    # but mocks the behavior for this specific controller safely.
+    Rails.application.routes.draw do
+      get "/up", to: "health#show"
+      post "/dev/login", to: "dev_sessions#create"
+      namespace :api do
+        namespace :v1 do
+          resource :session, only: %i[show]
+        end
+      end
+      root "static#index"
+    end
   end
 
   teardown do
-    ActionController::Base.allow_forgery_protection = @original_forgery_protection
+    Rails.application.reload_routes!
   end
 
-  def mock_rails_env(environment, &block)
+  def with_rails_env(environment)
     original_env = Rails.env
-    Rails.define_singleton_method(:env) { ActiveSupport::StringInquirer.new(environment) }
-    block.call
+    Rails.env = environment
+    yield
   ensure
-    Rails.define_singleton_method(:env) { original_env }
+    Rails.env = original_env
   end
 
-  test "returns not_found when not in development environment" do
-    # When not in development, the route is not drawn in config/routes.rb.
-    # However, since we are calling it directly, it should raise a RoutingError in test environment.
-
-    begin
-      Rails.application.routes.draw do
-        post "/dev/login", to: "dev_sessions#create"
+  def with_env(vars)
+    original = vars.keys.to_h { |k| [ k, ENV[k] ] }
+    vars.each do |k, v|
+      if v.nil?
+        ENV.delete(k)
+      else
+        ENV[k] = v
       end
-
-      mock_rails_env("test") do
-        post "/dev/login"
-        assert_response :not_found
+    end
+    yield
+  ensure
+    original.each do |k, v|
+      if v.nil?
+        ENV.delete(k)
+      else
+        ENV[k] = v
       end
-    ensure
-      Rails.application.reload_routes!
     end
   end
 
-  test "returns not_found when ENABLE_DEV_LOGIN is not true" do
-    original_enable = ENV["ENABLE_DEV_LOGIN"]
+  def fetch_csrf_token
+    get "/api/v1/session"
+    assert_response :success
+    response.parsed_body.fetch("csrfToken")
+  end
 
-    begin
-      Rails.application.routes.draw do
-        post "/dev/login", to: "dev_sessions#create"
-      end
+  def csrf_headers(token = fetch_csrf_token)
+    { "X-CSRF-Token" => token }
+  end
 
-      mock_rails_env("development") do
-        ENV["ENABLE_DEV_LOGIN"] = "false"
+  test "CSRFトークンがない場合は422を返す" do
+    with_rails_env("development") do
+      with_env("ENABLE_DEV_LOGIN" => "true") do
         post "/dev/login"
-        assert_response :not_found
+        assert_response :unprocessable_content
+        json = JSON.parse(response.body)
+        assert_equal "invalid_csrf", json["error"]["code"]
       end
-    ensure
-      Rails.application.reload_routes!
-      ENV["ENABLE_DEV_LOGIN"] = original_enable
     end
   end
 
-  test "creates user and logs in when conditions are met" do
-    original_enable = ENV["ENABLE_DEV_LOGIN"]
-    original_email = ENV["DEV_LOGIN_EMAIL"]
+  test "development環境以外では404を返す" do
+    token = fetch_csrf_token
+    with_rails_env("test") do
+      with_env("ENABLE_DEV_LOGIN" => "true") do
+        post "/dev/login", headers: csrf_headers(token)
+        assert_response :not_found
+      end
+    end
+  end
 
-    begin
-      Rails.application.routes.draw do
-        post "/dev/login", to: "dev_sessions#create"
+  test "ENABLE_DEV_LOGINがtrueでない場合は404を返す" do
+    token = fetch_csrf_token
+    with_rails_env("development") do
+      with_env("ENABLE_DEV_LOGIN" => "false") do
+        post "/dev/login", headers: csrf_headers(token)
+        assert_response :not_found
       end
 
-      mock_rails_env("development") do
-        ENV["ENABLE_DEV_LOGIN"] = "true"
-        ENV.delete("DEV_LOGIN_EMAIL") # Default fallback
+      with_env("ENABLE_DEV_LOGIN" => nil) do
+        post "/dev/login", headers: csrf_headers(token)
+        assert_response :not_found
+      end
+    end
+  end
 
+  test "条件を満たす場合は開発ユーザーを作成してログインしトップへリダイレクトする" do
+    token = fetch_csrf_token
+    with_rails_env("development") do
+      with_env("ENABLE_DEV_LOGIN" => "true", "DEV_LOGIN_EMAIL" => nil) do
         assert_difference("User.count", 1) do
-          post "/dev/login"
+          post "/dev/login", headers: csrf_headers(token)
         end
 
         assert_redirected_to "/"
@@ -82,66 +107,50 @@ class DevSessionsControllerTest < ActionDispatch::IntegrationTest
         assert_equal "developer@example.com", user.email
         assert_equal user.id, session[:user_id]
       end
-    ensure
-      Rails.application.reload_routes!
-      ENV["ENABLE_DEV_LOGIN"] = original_enable
-      ENV["DEV_LOGIN_EMAIL"] = original_email
     end
   end
 
-  test "uses DEV_LOGIN_EMAIL from ENV if present" do
-    original_enable = ENV["ENABLE_DEV_LOGIN"]
-    original_email = ENV["DEV_LOGIN_EMAIL"]
-
-    begin
-      Rails.application.routes.draw do
-        post "/dev/login", to: "dev_sessions#create"
-      end
-
-      mock_rails_env("development") do
-        ENV["ENABLE_DEV_LOGIN"] = "true"
-        ENV["DEV_LOGIN_EMAIL"] = "custom@example.com"
-
+  test "DEV_LOGIN_EMAIL環境変数が設定されている場合はそのメールアドレスを使用する" do
+    token = fetch_csrf_token
+    with_rails_env("development") do
+      with_env("ENABLE_DEV_LOGIN" => "true", "DEV_LOGIN_EMAIL" => "custom@example.com") do
         assert_difference("User.count", 1) do
-          post "/dev/login"
+          post "/dev/login", headers: csrf_headers(token)
         end
 
         user = User.last
         assert_equal "custom@example.com", user.email
+        assert_equal user.id, session[:user_id]
       end
-    ensure
-      Rails.application.reload_routes!
-      ENV["ENABLE_DEV_LOGIN"] = original_enable
-      ENV["DEV_LOGIN_EMAIL"] = original_email
     end
   end
 
-  test "finds existing user instead of creating new one" do
-    original_enable = ENV["ENABLE_DEV_LOGIN"]
-
-    begin
-      Rails.application.routes.draw do
-        post "/dev/login", to: "dev_sessions#create"
-      end
-
-      mock_rails_env("development") do
-        ENV["ENABLE_DEV_LOGIN"] = "true"
-
-        User.create!(google_subject: "development-user", email: "existing@example.com")
+  test "既に開発ユーザーが存在する場合は新規作成せず既存ユーザーでログインする" do
+    token = fetch_csrf_token
+    with_rails_env("development") do
+      with_env("ENABLE_DEV_LOGIN" => "true") do
+        existing_user = User.create!(google_subject: "development-user", email: "existing@example.com")
 
         assert_no_difference("User.count") do
-          post "/dev/login"
+          post "/dev/login", headers: csrf_headers(token)
         end
 
         assert_redirected_to "/"
-
-        user = User.last
-        assert_equal "existing@example.com", user.email
-        assert_equal user.id, session[:user_id]
+        assert_equal existing_user.id, session[:user_id]
       end
-    ensure
-      Rails.application.reload_routes!
-      ENV["ENABLE_DEV_LOGIN"] = original_enable
+    end
+  end
+
+  test "ログイン時にセッションをリセットする" do
+    token = fetch_csrf_token
+    first_session_cookie = cookies[:_sauna_itta_session]
+
+    with_rails_env("development") do
+      with_env("ENABLE_DEV_LOGIN" => "true") do
+        post "/dev/login", headers: csrf_headers(token)
+        assert_redirected_to "/"
+        assert_not_equal first_session_cookie, cookies[:_sauna_itta_session]
+      end
     end
   end
 end
