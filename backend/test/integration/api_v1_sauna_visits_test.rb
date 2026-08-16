@@ -193,8 +193,10 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     image_path = visit.fetch("image")
     blob = ActiveStorage::Blob.find_signed!(image_path.split("/").last)
 
-    delete "/api/v1/sauna_visits/#{visit.fetch('id')}", headers: csrf_header(csrf)
-    assert_response :no_content
+    perform_enqueued_jobs do
+      delete "/api/v1/sauna_visits/#{visit.fetch('id')}", headers: csrf_header(csrf)
+      assert_response :no_content
+    end
     assert_not ActiveStorage::Blob.exists?(blob.id), "削除したサウナ記録の写真blobが残っています"
   end
 
