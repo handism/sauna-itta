@@ -35,6 +35,74 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "invalid_csrf", response.parsed_body.dig("error", "code")
   end
 
+  test "一覧(index)は更新日時順で取得でき、正しくシリアライズされる" do
+    csrf = sign_in
+
+    # 1件目作成
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(name: "サウナA") },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    visit_a = response.parsed_body.fetch("saunaVisit")
+
+    # 2件目作成 (画像あり)
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(name: "サウナB", image: png_data_url) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    visit_b = response.parsed_body.fetch("saunaVisit")
+
+    # 1件目を更新して updated_at を最新にする
+    patch "/api/v1/sauna_visits/#{visit_a['id']}", params: {
+      saunaVisit: valid_attributes.merge(name: "サウナA(更新)", lockVersion: visit_a['lockVersion'])
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :success
+
+    # 3件目作成 (画像と複数の履歴を持たせる)
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(name: "サウナC") },
+      headers: csrf_header(csrf), as: :json
+    visit_c = response.parsed_body.fetch("saunaVisit")
+
+    patch "/api/v1/sauna_visits/#{visit_c['id']}", params: {
+      saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url)
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :success
+
+    # N+1チェックのためクエリ数をカウント
+    queries = 0
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      queries += 1 if payload[:sql].match?(/SELECT /i)
+    end
+
+    get "/api/v1/sauna_visits"
+    assert_response :success
+
+    ActiveSupport::Notifications.unsubscribe(subscriber)
+
+    # 発行されるSELECTクエリは User, SaunaVisit, VisitHistoryEntry, ActiveStorage::Attachment, ActiveStorage::Blob の5回程度に収まるはず
+    assert_operator queries, :<=, 6, "N+1クエリが発生している可能性があります"
+
+    visits = response.parsed_body["saunaVisits"]
+    assert_equal 3, visits.size
+
+    # 更新日時(updated_at)の降順になっているか確認: 最後に更新されたC, 次にA(更新), 最後にB
+    assert_equal visit_c["id"], visits[0]["id"]
+    assert_equal visit_a["id"], visits[1]["id"]
+    assert_equal visit_b["id"], visits[2]["id"]
+
+    assert_equal "サウナA(更新)", visits[1]["name"]
+
+    # シリアライズの検証
+    assert_includes visits[0], "id"
+    assert_includes visits[0], "name"
+    assert_includes visits[0], "lat"
+    assert_includes visits[0], "lng"
+    assert_includes visits[0], "status"
+    assert_includes visits[0], "tags"
+    assert_includes visits[0], "history"
+
+    # サウナCの履歴は2件あるはず
+    assert_equal 2, visits[0]["history"].size
+  end
+
   test "作成・一覧・削除をログインユーザーへ限定する" do
     csrf = sign_in
     post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
