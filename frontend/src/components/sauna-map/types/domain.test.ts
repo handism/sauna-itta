@@ -154,6 +154,22 @@ describe("VisitHistoryEntrySchema", () => {
     expect(VisitHistoryEntrySchema.safeParse({ comment: "no date" }).success).toBe(false);
     expect(VisitHistoryEntrySchema.safeParse({ date: "2024-01-15" }).success).toBe(false);
   });
+
+  it("fails when fields are of incorrect type", () => {
+    expect(
+      VisitHistoryEntrySchema.safeParse({
+        date: 1696118400000,
+        comment: "Great sauna!",
+      }).success
+    ).toBe(false);
+    expect(
+      VisitHistoryEntrySchema.safeParse({
+        date: "2024-01-15",
+        comment: "Great sauna!",
+        rating: "5",
+      }).success
+    ).toBe(false);
+  });
 });
 
 describe("SaunaVisitSchema", () => {
@@ -202,6 +218,19 @@ describe("SaunaVisitSchema", () => {
       const result = SaunaVisitSchema.safeParse(data);
       expect(result.success).toBe(false);
     }
+  });
+
+  it("fails when fields have incorrect types", () => {
+    expect(SaunaVisitSchema.safeParse({ ...validVisit, lat: "35.6895" }).success).toBe(false);
+    expect(SaunaVisitSchema.safeParse({ ...validVisit, lng: "139.6917" }).success).toBe(false);
+    expect(SaunaVisitSchema.safeParse({ ...validVisit, rating: "4" }).success).toBe(false);
+    expect(SaunaVisitSchema.safeParse({ ...validVisit, tags: "dry" }).success).toBe(false);
+    expect(
+      SaunaVisitSchema.safeParse({
+        ...validVisit,
+        history: [{ date: "2024-01-10" }], // missing comment in history entry
+      }).success
+    ).toBe(false);
   });
 
   it("fails on invalid status", () => {
