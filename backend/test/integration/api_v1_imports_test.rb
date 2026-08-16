@@ -3,6 +3,16 @@ require "test_helper"
 class ApiV1ImportsTest < ActionDispatch::IntegrationTest
   include ApiAuthHelper
 
+  test "未ログイン時は401を返す" do
+    # GET してCSRFトークンを取得（未ログイン状態）
+    get "/api/v1/session"
+    csrf = response.parsed_body.fetch("csrfToken")
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: [] }, headers: csrf_header(csrf), as: :json
+    assert_response :unauthorized
+    assert_equal "unauthenticated", response.parsed_body.dig("error", "code")
+  end
+
   test "インポートはIDを保持して重複をスキップする" do
     csrf = sign_in
     imported = valid_attributes.merge(id: "legacy-id", visitCount: 4)
@@ -58,6 +68,19 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
       headers: csrf_header(csrf), as: :json
     assert_response :unprocessable_content
     assert_equal "validation_error", response.parsed_body.dig("error", "code")
+  end
+
+  test "配列の中にハッシュではない不正な要素が含まれる場合は422で返す" do
+    csrf = sign_in
+    payload = [ valid_attributes.merge(id: "legacy-ok"), "不正な要素" ]
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+    assert_equal "取り込むデータは記録の配列で指定してください。", response.parsed_body.dig("error", "message")
+    assert_equal 0, owner.sauna_visits.count
   end
 
   test "saunaVisitsが無い場合も共通のエラー形式で返す" do
