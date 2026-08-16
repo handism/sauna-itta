@@ -25,6 +25,22 @@ class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
     assert_equal 1, owner.sauna_visits.sole.visit_history_entries.count
   end
 
+  test "destroy is successful when user deletes an entry without an image" do
+    csrf = sign_in
+    visit = create_visit(csrf)
+    visit = append_history(csrf, visit, comment: "2回目")
+    assert_equal 2, visit.fetch("history").size
+
+    removed = visit.fetch("history").first
+    delete history_path(visit, removed.fetch("id")), headers: csrf_header(csrf)
+
+    assert_response :success
+    remaining = response.parsed_body.dig("saunaVisit", "history")
+    assert_equal 1, remaining.size
+    assert_equal "2回目", remaining.sole.fetch("comment")
+  end
+
+
   test "履歴を削除すると残りの履歴と写真だけが返る" do
     csrf = sign_in
     visit = create_visit(csrf, image: png_data_url)
