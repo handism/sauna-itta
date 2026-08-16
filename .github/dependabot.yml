@@ -6,10 +6,14 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
     groups:
-      # 個別PRが増えすぎないよう、開発依存とパッチ更新はまとめる
+      # 個別PRが増えすぎないよう、開発依存（minor/patch）とパッチ更新はまとめる
       frontend-dev:
         dependency-type: development
+        update-types: [minor, patch]
       frontend-patch:
         update-types: [patch]
 
