@@ -28,7 +28,9 @@ class SaunaVisitTest < ActiveSupport::TestCase
     entry.image.attach(io: StringIO.new(png), filename: "visit.png", content_type: "image/png")
     blob_id = entry.image.blob.id
 
-    visit.destroy!
+    perform_enqueued_jobs do
+      visit.destroy!
+    end
 
     assert_not ActiveStorage::Blob.exists?(blob_id)
   end
@@ -43,9 +45,11 @@ class SaunaVisitTest < ActiveSupport::TestCase
     visit_id = visit.id
     blob_id = entry.image.blob.id
 
-    SaunaVisit.transaction do
-      visit.destroy!
-      raise ActiveRecord::Rollback
+    perform_enqueued_jobs do
+      SaunaVisit.transaction do
+        visit.destroy!
+        raise ActiveRecord::Rollback
+      end
     end
 
     assert SaunaVisit.exists?(visit_id)

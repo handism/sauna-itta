@@ -5,4 +5,5 @@ require_relative "support/api_auth_helper"
 
 class ActiveSupport::TestCase
   parallelize(workers: 1)
+  include ActiveJob::TestHelper
 end
