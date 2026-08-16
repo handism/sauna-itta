@@ -41,8 +41,16 @@ describe("metadata", () => {
 
   it("contains correct icon paths", () => {
     expect(metadata.icons).toBeDefined();
+
+    type IconsType = {
+      icon?: { url: string; sizes?: string; type?: string }[];
+      apple?: { url: string; sizes?: string; type?: string }[];
+    };
+
+    const icons = metadata.icons as IconsType;
+
     // Verify the structure without exact URLs first
-    expect(metadata.icons?.icon).toEqual(
+    expect(icons.icon).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: "image/svg+xml" }),
         expect.objectContaining({ sizes: "192x192", type: "image/png" })
@@ -50,10 +58,9 @@ describe("metadata", () => {
     );
 
     // With DATA_SOURCE=local, publicBasePath is /sauna-itta
-    const icons = metadata.icons as any;
-    expect(icons.icon[0].url).toBe("/sauna-itta/icon.svg");
-    expect(icons.icon[1].url).toBe("/sauna-itta/icons/icon-192.png");
-    expect(icons.apple[0].url).toBe("/sauna-itta/icons/apple-icon.png");
+    expect(icons.icon?.[0].url).toBe("/sauna-itta/icon.svg");
+    expect(icons.icon?.[1].url).toBe("/sauna-itta/icons/icon-192.png");
+    expect(icons.apple?.[0].url).toBe("/sauna-itta/icons/apple-icon.png");
   });
 });
 
