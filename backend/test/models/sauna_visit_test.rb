@@ -1,6 +1,8 @@
 require "test_helper"
 
 class SaunaVisitTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
+
   setup do
     @user = User.create!(google_subject: "subject", email: "owner@example.com")
   end
@@ -28,7 +30,9 @@ class SaunaVisitTest < ActiveSupport::TestCase
     entry.image.attach(io: StringIO.new(png), filename: "visit.png", content_type: "image/png")
     blob_id = entry.image.blob.id
 
-    visit.destroy!
+    perform_enqueued_jobs do
+      visit.destroy!
+    end
 
     assert_not ActiveStorage::Blob.exists?(blob_id)
   end

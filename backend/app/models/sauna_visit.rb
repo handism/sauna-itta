@@ -33,6 +33,6 @@ class SaunaVisit < ApplicationRecord
   end
 
   def purge_history_image_blobs
-    @history_image_blobs&.each(&:purge)
+    @history_image_blobs&.each(&:purge_later)
   end
 end
