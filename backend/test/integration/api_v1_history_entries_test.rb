@@ -3,6 +3,17 @@ require "test_helper"
 class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
   include ApiAuthHelper
 
+  test "未ログイン時は履歴を削除できない" do
+    get "/api/v1/session"
+    csrf = response.parsed_body.fetch("csrfToken")
+
+    delete "/api/v1/sauna_visits/some-id/history_entries/some-history-id",
+      headers: csrf_header(csrf)
+
+    assert_response :unauthorized
+    assert_equal "unauthenticated", response.parsed_body.dig("error", "code")
+  end
+
   test "最後の履歴は削除できない" do
     csrf = sign_in
     visit = create_visit(csrf)

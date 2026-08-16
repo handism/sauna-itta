@@ -9,6 +9,25 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "unauthenticated", response.parsed_body.dig("error", "code")
   end
 
+  test "未認証では記録の作成・更新・削除ができない" do
+    get "/api/v1/session"
+    csrf = response.parsed_body.fetch("csrfToken")
+
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    assert_response :unauthorized
+    assert_equal "unauthenticated", response.parsed_body.dig("error", "code")
+
+    patch "/api/v1/sauna_visits/some-id", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    assert_response :unauthorized
+    assert_equal "unauthenticated", response.parsed_body.dig("error", "code")
+
+    delete "/api/v1/sauna_visits/some-id", headers: csrf_header(csrf)
+    assert_response :unauthorized
+    assert_equal "unauthenticated", response.parsed_body.dig("error", "code")
+  end
+
   test "セッションは認証状態とCSRFトークンを返す" do
     sign_in
     get "/api/v1/session"
