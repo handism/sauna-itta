@@ -35,6 +35,54 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "invalid_csrf", response.parsed_body.dig("error", "code")
   end
 
+  test "新規サウナ訪問記録を正しく作成できる" do
+    csrf = sign_in
+    assert_difference -> { SaunaVisit.count } => 1, -> { VisitHistoryEntry.count } => 1 do
+      post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+        headers: csrf_header(csrf), as: :json
+    end
+    assert_response :created
+
+    visit = response.parsed_body["saunaVisit"]
+    assert visit.present?
+    assert visit["id"].present?
+    assert_equal valid_attributes[:name], visit["name"]
+    assert_equal valid_attributes[:lat], visit["lat"]
+    assert_equal valid_attributes[:lng], visit["lng"]
+    assert_equal valid_attributes[:area], visit["area"]
+    assert_equal valid_attributes[:status], visit["status"]
+    assert_equal valid_attributes[:tags], visit["tags"]
+    assert_equal 1, visit["history"].size
+    assert_equal valid_attributes[:date], visit["history"].first["date"]
+    assert_equal valid_attributes[:comment], visit["history"].first["comment"]
+    assert_equal valid_attributes[:rating], visit["history"].first["rating"]
+  end
+
+  test "既存のサウナ訪問記録を正しく更新できる" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    visit = response.parsed_body.fetch("saunaVisit")
+
+    patch "/api/v1/sauna_visits/#{visit['id']}", params: {
+      saunaVisit: valid_attributes.merge(
+        name: "北欧（更新）",
+        status: "wishlist",
+        rating: 4,
+        comment: "更新コメント",
+        lockVersion: visit["lockVersion"]
+      )
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :success
+
+    updated = response.parsed_body["saunaVisit"]
+    assert_equal "北欧（更新）", updated["name"]
+    assert_equal "wishlist", updated["status"]
+    assert_equal "更新コメント", updated["history"].first["comment"]
+    assert_equal 4, updated["history"].first["rating"]
+  end
+
   test "一覧(index)は更新日時順で取得でき、正しくシリアライズされる" do
     csrf = sign_in
 
