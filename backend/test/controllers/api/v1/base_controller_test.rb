@@ -122,6 +122,6 @@ class Api::V1::BaseControllerTest < ActionDispatch::IntegrationTest
     json = JSON.parse(response.body)
     assert_equal "validation_error", json["error"]["code"]
     assert_equal "入力内容を確認してください。", json["error"]["message"]
-    assert_equal ["invalid input"], json["error"]["details"]["base"]
+    assert_equal [ "invalid input" ], json["error"]["details"]["base"]
   end
 end
