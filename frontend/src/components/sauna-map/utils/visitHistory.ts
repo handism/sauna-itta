@@ -154,6 +154,62 @@ export function getInitialVisits(): SaunaVisit[] {
   }
 }
 
+function calculateAreaStats(visits: SaunaVisit[]) {
+  const areasSet = new Set<string>();
+  const prefectureSet = new Set<string>();
+
+  for (const visit of visits) {
+    const area = (visit.area ?? "").trim();
+    if (area.length > 0) {
+      areasSet.add(area);
+    }
+
+    if (isVisited(visit)) {
+      const pref = extractPrefecture(visit.area);
+      if (pref != null) {
+        prefectureSet.add(pref);
+      }
+    }
+  }
+
+  const prefectures = Array.from(prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
+  return {
+    uniqueAreas: areasSet.size,
+    prefectures,
+    prefectureCount: prefectures.length,
+  };
+}
+
+function calculateRatingAndDateStats(visits: SaunaVisit[]) {
+  let firstDate: string | null = null;
+  let lastDate: string | null = null;
+  let ratingSum = 0;
+  let ratingCount = 0;
+
+  for (const visit of visits) {
+    if (!isVisited(visit)) continue;
+
+    const history = getVisitHistoryEntries(visit);
+    for (const entry of history) {
+      if (firstDate === null || entry.date < firstDate) {
+        firstDate = entry.date;
+      }
+      if (lastDate === null || entry.date > lastDate) {
+        lastDate = entry.date;
+      }
+
+      const rating = entry.rating ?? 0;
+      if (rating > 0) {
+        ratingSum += rating;
+        ratingCount++;
+      }
+    }
+  }
+
+  const avgRating = ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0;
+  return { firstDate, lastDate, avgRating };
+}
+
 export function calculateStats(visits: SaunaVisit[]): VisitStats {
   const total = visits.length;
   if (total === 0) {
@@ -170,59 +226,16 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
     };
   }
 
-  let visitedCount = 0;
-  const areasSet = new Set<string>();
-  const prefectureSet = new Set<string>();
-  let firstDate: string | null = null;
-  let lastDate: string | null = null;
-  let ratingSum = 0;
-  let ratingCount = 0;
-
-  for (const visit of visits) {
-    const area = (visit.area ?? "").trim();
-    if (area.length > 0) {
-      areasSet.add(area);
-    }
-
-    if (isVisited(visit)) {
-      visitedCount++;
-
-      const pref = extractPrefecture(visit.area);
-      if (pref != null) {
-        prefectureSet.add(pref);
-      }
-
-      const history = getVisitHistoryEntries(visit);
-      for (const entry of history) {
-        if (firstDate === null || entry.date < firstDate) {
-          firstDate = entry.date;
-        }
-        if (lastDate === null || entry.date > lastDate) {
-          lastDate = entry.date;
-        }
-
-        const rating = entry.rating ?? 0;
-        if (rating > 0) {
-          ratingSum += rating;
-          ratingCount++;
-        }
-      }
-    }
-  }
-
-  const avgRating = ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0;
-  const prefectures = Array.from(prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
+  const visitedCount = visits.filter(isVisited).length;
+  const areaStats = calculateAreaStats(visits);
+  const ratingDateStats = calculateRatingAndDateStats(visits);
 
   return {
     total,
     visitedCount,
     wishlistCount: total - visitedCount,
-    firstDate,
-    lastDate,
-    avgRating,
-    uniqueAreas: areasSet.size,
-    prefectures,
-    prefectureCount: prefectures.length,
+    ...areaStats,
+    ...ratingDateStats,
   };
 }
 
