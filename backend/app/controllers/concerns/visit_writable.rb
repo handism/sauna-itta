@@ -52,7 +52,7 @@ module VisitWritable
 
   def purge_stale_image_blobs(blobs)
     blobs.uniq(&:id).each do |blob|
-      blob.purge
+      blob.purge_later
     rescue StandardError => error
       Rails.logger.error("古い訪問画像の削除に失敗しました: #{error.class}: #{error.message}")
     end

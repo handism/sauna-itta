@@ -23,7 +23,9 @@ class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
     removed = visit.fetch("history").first
     blob = ActiveStorage::Blob.find_signed!(removed.fetch("image").split("/").last)
 
-    delete history_path(visit, removed.fetch("id")), headers: csrf_header(csrf)
+    perform_enqueued_jobs do
+      delete history_path(visit, removed.fetch("id")), headers: csrf_header(csrf)
+    end
 
     assert_response :success
     remaining = response.parsed_body.dig("saunaVisit", "history")
