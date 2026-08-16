@@ -52,7 +52,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
 
     # 1件目を更新して updated_at を最新にする
     patch "/api/v1/sauna_visits/#{visit_a['id']}", params: {
-      saunaVisit: valid_attributes.merge(name: "サウナA(更新)", lockVersion: visit_a['lockVersion'])
+      saunaVisit: valid_attributes.merge(name: "サウナA(更新)", lockVersion: visit_a["lockVersion"])
     }, headers: csrf_header(csrf), as: :json
     assert_response :success
 
