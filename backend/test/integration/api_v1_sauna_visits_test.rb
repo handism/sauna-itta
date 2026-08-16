@@ -53,6 +53,29 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "自身のサウナ記録を削除できる" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    external_id = response.parsed_body.dig("saunaVisit", "id")
+
+    delete "/api/v1/sauna_visits/#{external_id}", headers: csrf_header(csrf)
+    assert_response :no_content
+
+    get "/api/v1/sauna_visits"
+    assert_empty response.parsed_body["saunaVisits"]
+  end
+
+  test "他人のサウナ記録は削除できない" do
+    csrf = sign_in
+    other = User.create!(google_subject: "other", email: "other@example.com")
+    visit = other.sauna_visits.create!(name: "他人", latitude: 35, longitude: 139, status: "visited")
+
+    delete "/api/v1/sauna_visits/#{visit.external_id}", headers: csrf_header(csrf)
+    assert_response :not_found
+  end
+
   test "validation errorと楽観ロック競合を共通形式で返す" do
     csrf = sign_in
     post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(lat: 100) },
