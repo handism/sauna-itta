@@ -35,6 +35,17 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "invalid_csrf", response.parsed_body.dig("error", "code")
   end
 
+  test "新規サウナ訪問記録を正しく作成できる" do
+    csrf = sign_in
+    assert_difference("SaunaVisit.count", 1) do
+      post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+        headers: csrf_header(csrf), as: :json
+    end
+    assert_response :created
+    assert response.parsed_body["saunaVisit"].present?
+    assert_equal valid_attributes[:name], response.parsed_body.dig("saunaVisit", "name")
+  end
+
   test "一覧(index)は更新日時順で取得でき、正しくシリアライズされる" do
     csrf = sign_in
 
