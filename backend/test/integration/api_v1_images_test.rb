@@ -75,5 +75,22 @@ class ApiV1ImagesTest < ActionDispatch::IntegrationTest
 
     assert_response :not_found
     assert_equal "not_found", response.parsed_body.dig("error", "code")
+    assert_equal "対象の記録が見つかりません。", response.parsed_body.dig("error", "message")
+  end
+
+  test "対応するAttachmentがない場合は404を返す" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(image: png_data_url) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    image_path = response.parsed_body.dig("saunaVisit", "image")
+
+    # DBからAttachmentを削除してRecordNotFoundを誘発
+    ActiveStorage::Attachment.destroy_all
+
+    get image_path
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.dig("error", "code")
+    assert_equal "対象の記録が見つかりません。", response.parsed_body.dig("error", "message")
   end
 end
