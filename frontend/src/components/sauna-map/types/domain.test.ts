@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { VisitFormInputSchema } from "./domain";
+import {
+  VisitFormInputSchema,
+  VisitHistoryEntrySchema,
+  SaunaVisitSchema,
+} from "./domain";
 
 describe("VisitFormInputSchema", () => {
   const validData = {
@@ -121,5 +125,93 @@ describe("VisitFormInputSchema", () => {
       const result = VisitFormInputSchema.safeParse(completeData);
       expect(result.success).toBe(true);
     });
+  });
+});
+
+describe("VisitHistoryEntrySchema", () => {
+  const validEntry = {
+    date: "2024-01-15",
+    comment: "Good sauna experience",
+  };
+
+  it("validates a minimal valid history entry", () => {
+    const result = VisitHistoryEntrySchema.safeParse(validEntry);
+    expect(result.success).toBe(true);
+  });
+
+  it("validates entry with all optional fields", () => {
+    const fullEntry = {
+      ...validEntry,
+      id: "hist-1",
+      rating: 4.5,
+      image: "data:image/png;base64,...",
+    };
+    const result = VisitHistoryEntrySchema.safeParse(fullEntry);
+    expect(result.success).toBe(true);
+  });
+
+  it("fails when required fields are missing", () => {
+    expect(VisitHistoryEntrySchema.safeParse({ comment: "no date" }).success).toBe(false);
+    expect(VisitHistoryEntrySchema.safeParse({ date: "2024-01-15" }).success).toBe(false);
+  });
+});
+
+describe("SaunaVisitSchema", () => {
+  const validVisit = {
+    id: "visit-1",
+    name: "Sauna Center",
+    lat: 35.6895,
+    lng: 139.6917,
+    comment: "Classic Finnish style",
+    date: "2024-01-15",
+  };
+
+  it("validates a minimal valid sauna visit", () => {
+    const result = SaunaVisitSchema.safeParse(validVisit);
+    expect(result.success).toBe(true);
+  });
+
+  it("validates sauna visit with all optional fields", () => {
+    const fullVisit = {
+      ...validVisit,
+      image: "https://example.com/photo.jpg",
+      rating: 4,
+      tags: ["dry", "water-bath"],
+      status: "visited" as const,
+      area: "Tokyo",
+      visitCount: 2,
+      history: [
+        {
+          id: "hist-1",
+          date: "2024-01-10",
+          comment: "First visit",
+          rating: 4,
+        },
+      ],
+      lockVersion: 1,
+    };
+    const result = SaunaVisitSchema.safeParse(fullVisit);
+    expect(result.success).toBe(true);
+  });
+
+  it("fails when required fields are missing", () => {
+    const requiredKeys = ["id", "name", "lat", "lng", "comment", "date"] as const;
+    for (const key of requiredKeys) {
+      const data = { ...validVisit };
+      delete (data as Record<string, unknown>)[key];
+      const result = SaunaVisitSchema.safeParse(data);
+      expect(result.success).toBe(false);
+    }
+  });
+
+  it("fails on invalid status", () => {
+    const invalidData = { ...validVisit, status: "unknown" };
+    const result = SaunaVisitSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+  });
+
+  it("fails on negative or non-integer lockVersion", () => {
+    expect(SaunaVisitSchema.safeParse({ ...validVisit, lockVersion: -1 }).success).toBe(false);
+    expect(SaunaVisitSchema.safeParse({ ...validVisit, lockVersion: 1.5 }).success).toBe(false);
   });
 });
