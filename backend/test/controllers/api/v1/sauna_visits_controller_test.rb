@@ -18,7 +18,7 @@ class Api::V1::SaunaVisitsControllerTest < ActionController::TestCase
         appendHistory: true,
         lockVersion: 1,
         visitCount: 2,
-        tags: ["relax", "hot"],
+        tags: [ "relax", "hot" ],
         unallowed_attribute: "hacker"
       }
     })
@@ -39,7 +39,7 @@ class Api::V1::SaunaVisitsControllerTest < ActionController::TestCase
     assert_equal true, permitted_params[:appendHistory]
     assert_equal 1, permitted_params[:lockVersion]
     assert_equal 2, permitted_params[:visitCount]
-    assert_equal ["relax", "hot"], permitted_params[:tags]
+    assert_equal [ "relax", "hot" ], permitted_params[:tags]
 
     assert_nil permitted_params[:unallowed_attribute]
     assert_not permitted_params.key?(:unallowed_attribute)
