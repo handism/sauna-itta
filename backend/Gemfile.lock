@@ -236,7 +236,7 @@ GEM
       actionpack (>= 4.2)
       omniauth (~> 2.0)
     os (1.1.4)
-    parallel (2.1.0)
+    parallel (1.28.0)
     parser (3.3.12.0)
       ast (~> 2.4.1)
       racc
@@ -317,7 +317,7 @@ GEM
       trailblazer-option (>= 0.1.1, < 0.2.0)
       uber (< 0.2.0)
     retriable (4.2.0)
-    rubocop (1.88.2)
+    rubocop (1.89.0)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.1.0)
@@ -397,7 +397,7 @@ DEPENDENCIES
   rubocop-rails-omakase
 
 RUBY VERSION
-   ruby 3.4.2p28
+   ruby 3.2.3p157
 
 BUNDLED WITH
    2.6.2
