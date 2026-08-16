@@ -18,10 +18,6 @@ module Auth
       redirect_to "/"
     end
 
-    def failure
-      redirect_to "/?authError=failed", alert: "Googleログインに失敗しました。"
-    end
-
     private
 
     # 許可メールとの一致がこのアプリ唯一の認可境界のため、メールの確認済みフラグも見る

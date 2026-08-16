@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   get "/up", to: "health#show"
 
   get "/auth/:provider/callback", to: "auth/callbacks#create"
-  get "/auth/failure", to: "auth/callbacks#failure"
+  get "/auth/failure", to: redirect("/?authError=failed", status: 302)
   post "/dev/login", to: "dev_sessions#create" if Rails.env.development?
 
   namespace :api do
