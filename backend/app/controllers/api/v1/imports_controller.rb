@@ -16,16 +16,31 @@ module Api
         raise InvalidPayload, "取り込むデータは記録の配列で指定してください。" unless payload.is_a?(Array)
         return render_error("batch_too_large", "一度に取り込めるのは10件までです。", :unprocessable_content) if payload.size > 10
 
-        added = 0
-        skipped = 0
+        existing_external_ids = find_existing_external_ids(payload)
+        result = process_payload(payload, existing_external_ids)
 
+        render json: result
+      rescue ActiveRecord::RecordInvalid => error
+        render_validation_error(error.record)
+      rescue ArgumentError => error
+        render_error("invalid_image", error.message, :unprocessable_content)
+      end
+
+      private
+
+      def find_existing_external_ids(payload)
         # 重複判定を記録ごとの exists? で回さないよう、既存の external_id をまとめて引いておく。
         # 取り込み済みの分もループ内で足していくため、ペイロード内の重複も従来どおり弾ける。
         payload_external_ids = payload.filter_map { |raw| raw[:id].to_s if raw.is_a?(ActionController::Parameters) }
-        existing_external_ids = current_user.sauna_visits
+        current_user.sauna_visits
           .where(external_id: payload_external_ids)
           .pluck(:external_id)
           .to_set
+      end
+
+      def process_payload(payload, existing_external_ids)
+        added = 0
+        skipped = 0
 
         SaunaVisit.transaction do
           payload.each do |raw|
@@ -52,14 +67,9 @@ module Api
             added += 1
           end
         end
-        render json: { added: added, skipped: skipped }
-      rescue ActiveRecord::RecordInvalid => error
-        render_validation_error(error.record)
-      rescue ArgumentError => error
-        render_error("invalid_image", error.message, :unprocessable_content)
-      end
 
-      private
+        { added: added, skipped: skipped }
+      end
 
       def import_visit(attributes)
         visit = current_user.sauna_visits.build(external_id: attributes[:external_id])
