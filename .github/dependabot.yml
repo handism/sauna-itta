@@ -9,6 +9,8 @@ updates:
     ignore:
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
     groups:
       # 個別PRが増えすぎないよう、開発依存（minor/patch）とパッチ更新はまとめる
       frontend-dev:
