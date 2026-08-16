@@ -78,6 +78,38 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "conflict", response.parsed_body.dig("error", "code")
   end
 
+  test "属性を更新できること" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    visit = response.parsed_body.fetch("saunaVisit")
+    id = visit.fetch("id")
+    original_lock = visit.fetch("lockVersion")
+
+    updated_attributes = valid_attributes.merge(
+      name: "更新後の名前",
+      area: "更新後のエリア",
+      comment: "更新後のコメント",
+      rating: 4,
+      lockVersion: original_lock
+    )
+
+    patch "/api/v1/sauna_visits/#{id}",
+      params: { saunaVisit: updated_attributes },
+      headers: csrf_header(csrf), as: :json
+    assert_response :success
+
+    updated_visit = response.parsed_body.fetch("saunaVisit")
+    assert_equal "更新後の名前", updated_visit["name"]
+    assert_equal "更新後のエリア", updated_visit["area"]
+    assert_equal 4, updated_visit["rating"]
+
+    # The comment is stored in the latest history entry
+    latest_history = updated_visit["history"].first
+    assert_equal "更新後のコメント", latest_history["comment"]
+  end
+
   test "SVGを拒否し写真を所有者だけへ配信する" do
     csrf = sign_in
     post "/api/v1/sauna_visits", params: {
