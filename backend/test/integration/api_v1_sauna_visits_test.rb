@@ -51,6 +51,20 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     patch "/api/v1/sauna_visits/#{other.sauna_visits.first.external_id}",
       params: { saunaVisit: valid_attributes }, headers: csrf_header(csrf), as: :json
     assert_response :not_found
+
+    delete "/api/v1/sauna_visits/#{other.sauna_visits.first.external_id}",
+      headers: csrf_header(csrf)
+    assert_response :not_found
+
+    delete "/api/v1/sauna_visits/#{external_id}",
+      headers: csrf_header(csrf)
+    assert_response :no_content
+
+    get "/api/v1/sauna_visits"
+    assert_empty response.parsed_body["saunaVisits"]
+
+    delete "/api/v1/sauna_visits/invalid_id", headers: csrf_header(csrf)
+    assert_response :not_found
   end
 
   test "validation errorと楽観ロック競合を共通形式で返す" do
