@@ -35,6 +35,7 @@ class AuthCallbacksTest < ActionDispatch::IntegrationTest
     get "/auth/google_oauth2/callback"
 
     assert_redirected_to "/?authError=forbidden"
+    assert_equal "このアカウントは許可されていません。", flash[:alert]
     assert_not User.exists?(email: "denied@example.com")
     get "/api/v1/session"
     assert_not response.parsed_body["authenticated"]
@@ -46,6 +47,7 @@ class AuthCallbacksTest < ActionDispatch::IntegrationTest
     get "/auth/google_oauth2/callback"
 
     assert_redirected_to "/?authError=forbidden"
+    assert_equal "このアカウントは許可されていません。", flash[:alert]
     assert_not User.exists?(email: ApiAuthHelper::ALLOWED_EMAIL)
     get "/api/v1/session"
     assert_not response.parsed_body["authenticated"]
@@ -57,6 +59,7 @@ class AuthCallbacksTest < ActionDispatch::IntegrationTest
     get "/auth/google_oauth2/callback"
 
     assert_redirected_to "/?authError=forbidden"
+    assert_equal "このアカウントは許可されていません。", flash[:alert]
     get "/api/v1/session"
     assert_not response.parsed_body["authenticated"]
   end
@@ -75,6 +78,7 @@ class AuthCallbacksTest < ActionDispatch::IntegrationTest
     get "/auth/failure"
 
     assert_redirected_to "/?authError=failed"
+    assert_equal "Googleログインに失敗しました。", flash[:alert]
   end
 
   test "ログインのたびにセッションIDを作り直す" do
