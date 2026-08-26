@@ -20,6 +20,77 @@ interface ChipItem {
   onToggle: () => void;
 }
 
+function getActiveExtraChips(
+  filters: VisitFilters,
+  popularAreas: string[],
+  popularTags: string[],
+  setFilters: Dispatch<SetStateAction<VisitFilters>>
+): ChipItem[] {
+  const extra: ChipItem[] = [];
+
+  if (filters.search.trim().length > 0) {
+    extra.push({
+      key: "active-search",
+      icon: <Search size={13} />,
+      label: `検索: "${filters.search}"`,
+      isActive: true,
+      onToggle: () => setFilters((prev) => ({ ...prev, search: "" })),
+    });
+  }
+
+  if (filters.status !== "all") {
+    extra.push({
+      key: "active-status",
+      icon: <SlidersHorizontal size={13} />,
+      label: `ステータス: ${filters.status === "visited" ? "行った" : "行きたい"}`,
+      isActive: true,
+      onToggle: () => setFilters((prev) => ({ ...prev, status: "all" })),
+    });
+  }
+
+  if (filters.minRating > 0 && filters.minRating !== 4) {
+    extra.push({
+      key: "active-rating-custom",
+      icon: <Star size={13} />,
+      label: `★ ${filters.minRating}.0以上`,
+      isActive: true,
+      onToggle: () => setFilters((prev) => ({ ...prev, minRating: 0 })),
+    });
+  }
+
+  if (filters.selectedArea && !popularAreas.includes(filters.selectedArea)) {
+    extra.push({
+      key: "active-area-custom",
+      icon: <MapPin size={13} />,
+      label: `エリア: ${filters.selectedArea}`,
+      isActive: true,
+      onToggle: () => setFilters((prev) => ({ ...prev, selectedArea: "" })),
+    });
+  }
+
+  if (filters.selectedTag && !popularTags.includes(filters.selectedTag)) {
+    extra.push({
+      key: "active-tag-custom",
+      icon: <Tag size={13} />,
+      label: `タグ: ${filters.selectedTag}`,
+      isActive: true,
+      onToggle: () => setFilters((prev) => ({ ...prev, selectedTag: "" })),
+    });
+  }
+
+  if (filters.filterByBounds) {
+    extra.push({
+      key: "active-bounds",
+      icon: <MapPin size={13} />,
+      label: "エリア内のみ",
+      isActive: true,
+      onToggle: () => setFilters((prev) => ({ ...prev, filterByBounds: false })),
+    });
+  }
+
+  return extra;
+}
+
 export function QuickFilterChips({
   filters,
   setFilters,
@@ -34,71 +105,10 @@ export function QuickFilterChips({
    * 検索やステータス、マップ範囲内絞り込みなど、
    * 通常のクイックフィルター候補に含まれない有効なフィルター条件を個別チップとして集約する。
    */
-  const activeExtraChips: ChipItem[] = useMemo(() => {
-    const extra: ChipItem[] = [];
-
-    if (filters.search.trim().length > 0) {
-      extra.push({
-        key: "active-search",
-        icon: <Search size={13} />,
-        label: `検索: "${filters.search}"`,
-        isActive: true,
-        onToggle: () => setFilters((prev) => ({ ...prev, search: "" })),
-      });
-    }
-
-    if (filters.status !== "all") {
-      extra.push({
-        key: "active-status",
-        icon: <SlidersHorizontal size={13} />,
-        label: `ステータス: ${filters.status === "visited" ? "行った" : "行きたい"}`,
-        isActive: true,
-        onToggle: () => setFilters((prev) => ({ ...prev, status: "all" })),
-      });
-    }
-
-    if (filters.minRating > 0 && filters.minRating !== 4) {
-      extra.push({
-        key: "active-rating-custom",
-        icon: <Star size={13} />,
-        label: `★ ${filters.minRating}.0以上`,
-        isActive: true,
-        onToggle: () => setFilters((prev) => ({ ...prev, minRating: 0 })),
-      });
-    }
-
-    if (filters.selectedArea && !popularAreas.includes(filters.selectedArea)) {
-      extra.push({
-        key: "active-area-custom",
-        icon: <MapPin size={13} />,
-        label: `エリア: ${filters.selectedArea}`,
-        isActive: true,
-        onToggle: () => setFilters((prev) => ({ ...prev, selectedArea: "" })),
-      });
-    }
-
-    if (filters.selectedTag && !popularTags.includes(filters.selectedTag)) {
-      extra.push({
-        key: "active-tag-custom",
-        icon: <Tag size={13} />,
-        label: `タグ: ${filters.selectedTag}`,
-        isActive: true,
-        onToggle: () => setFilters((prev) => ({ ...prev, selectedTag: "" })),
-      });
-    }
-
-    if (filters.filterByBounds) {
-      extra.push({
-        key: "active-bounds",
-        icon: <MapPin size={13} />,
-        label: "エリア内のみ",
-        isActive: true,
-        onToggle: () => setFilters((prev) => ({ ...prev, filterByBounds: false })),
-      });
-    }
-
-    return extra;
-  }, [filters, popularAreas, popularTags, setFilters]);
+  const activeExtraChips: ChipItem[] = useMemo(
+    () => getActiveExtraChips(filters, popularAreas, popularTags, setFilters),
+    [filters, popularAreas, popularTags, setFilters]
+  );
 
   /*
    * プリセットのクイックフィルター候補。
