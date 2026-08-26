@@ -13,6 +13,66 @@ class VisitWritableTest < ActiveSupport::TestCase
     @valid_base64_gif = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs="
   end
 
+  test "assign_visit_attributes correctly maps standard frontend attributes to the model" do
+    attributes = {
+      name: "Super Sauna",
+      lat: 35.681236,
+      lng: 139.767125,
+      area: "Tokyo",
+      status: "active",
+      tags: [ "tag1", "tag2" ],
+      visitCount: 5
+    }
+
+    visit = SaunaVisit.new
+    @controller.send(:assign_visit_attributes, visit, attributes)
+
+    assert_equal "Super Sauna", visit.name
+    assert_equal 35.681236, visit.latitude
+    assert_equal 139.767125, visit.longitude
+    assert_equal "Tokyo", visit.area
+    assert_equal "active", visit.status
+    assert_equal [ "tag1", "tag2" ], visit.tags
+    assert_equal 5, visit.legacy_visit_count
+  end
+
+  test "assign_visit_attributes stringifies tags correctly" do
+    attributes = {
+      tags: [ 1, :tag2, "tag3" ]
+    }
+
+    visit = SaunaVisit.new
+    @controller.send(:assign_visit_attributes, visit, attributes)
+
+    assert_equal [ "1", "tag2", "tag3" ], visit.tags
+  end
+
+  test "assign_visit_attributes correctly maps nil or empty tags to an empty array" do
+    # Scenario: nil
+    visit = SaunaVisit.new
+    @controller.send(:assign_visit_attributes, visit, { tags: nil })
+    assert_equal [], visit.tags
+
+    # Scenario: empty array
+    visit = SaunaVisit.new
+    @controller.send(:assign_visit_attributes, visit, { tags: [] })
+    assert_equal [], visit.tags
+  end
+
+  test "assign_visit_attributes preserves existing legacy_visit_count if visitCount is omitted" do
+    visit = SaunaVisit.new
+    visit.legacy_visit_count = 10
+
+    attributes = {
+      name: "Another Sauna"
+    }
+
+    @controller.send(:assign_visit_attributes, visit, attributes)
+
+    assert_equal "Another Sauna", visit.name
+    assert_equal 10, visit.legacy_visit_count
+  end
+
   test "apply_history_image returns early if :image key is not present" do
     stale_blobs = []
     @controller.send(:apply_history_image, @entry, { other: "value" }, stale_blobs)
@@ -84,3 +144,4 @@ class VisitWritableTest < ActiveSupport::TestCase
     assert_equal "画像URLが不正です。", error.message
   end
 end
+

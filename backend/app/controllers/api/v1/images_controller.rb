@@ -7,7 +7,11 @@ module Api
 
       def show
         blob = ActiveStorage::Blob.find_signed!(params[:signed_id])
-        attachment = ActiveStorage::Attachment.find_by!(blob_id: blob.id, name: "image", record_type: "VisitHistoryEntry")
+        attachment = ActiveStorage::Attachment.find_by!(
+          blob_id: blob.id,
+          name: "image",
+          record_type: "VisitHistoryEntry"
+        )
         current_user.sauna_visits.joins(:visit_history_entries)
           .find_by!(visit_history_entries: { id: attachment.record_id })
 

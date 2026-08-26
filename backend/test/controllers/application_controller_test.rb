@@ -6,6 +6,12 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
       render json: { user_id: current_user&.id }
     end
 
+    def memoized_user
+      current_user
+      current_user
+      render json: { user_id: current_user&.id }
+    end
+
     def raise_csrf
       raise ActionController::InvalidAuthenticityToken
     end
@@ -18,6 +24,7 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
   setup do
     Rails.application.routes.draw do
       get "/dummy_index", to: "application_controller_test/dummy#index"
+      get "/dummy_memoized", to: "application_controller_test/dummy#memoized_user"
       get "/dummy_raise_csrf", to: "application_controller_test/dummy#raise_csrf"
       get "/dummy_custom_error", to: "application_controller_test/dummy#custom_error"
 
@@ -45,6 +52,45 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
 
     get "/dummy_login/#{user.id}"
     get "/dummy_index"
+
+    json = JSON.parse(response.body)
+    assert_equal user.id, json["user_id"]
+  end
+
+  test "returns nil for current_user if session user_id is stale (user deleted)" do
+    user = User.create!(google_subject: "123", email: "test@example.com")
+
+    get "/dummy_login/#{user.id}"
+
+    # Delete the user from the database directly, bypassing callbacks
+    user.delete
+
+    get "/dummy_index"
+
+    json = JSON.parse(response.body)
+    assert_nil json["user_id"]
+  end
+
+  test "current_user is memoized to avoid multiple database queries" do
+    user = User.create!(google_subject: "123", email: "test@example.com")
+
+    get "/dummy_login/#{user.id}"
+
+    queries = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*args|
+      event = ActiveSupport::Notifications::Event.new(*args)
+      # ignore internal rails queries like SAVEPOINT
+      queries << event.payload[:sql] unless event.payload[:name] == "SCHEMA" || event.payload[:sql].match?(/BEGIN|COMMIT|SAVEPOINT|RELEASE/i)
+    end
+
+    begin
+      get "/dummy_memoized"
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscriber)
+    end
+
+    # It should only query the users table once
+    assert_equal 1, queries.count { |q| q.match?(/SELECT.*FROM.*users/i) }
 
     json = JSON.parse(response.body)
     assert_equal user.id, json["user_id"]
