@@ -15,6 +15,9 @@ module Api
       rescue_from ActionController::ParameterMissing do |error|
         render_error("validation_error", "#{error.param}が指定されていません。", :unprocessable_content)
       end
+      rescue_from ActionController::BadRequest do |error|
+        render_error("validation_error", error.message, :unprocessable_content)
+      end
 
       private
 

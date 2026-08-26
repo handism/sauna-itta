@@ -3,17 +3,9 @@ module Api
     class ImportsController < BaseController
       include VisitWritable
 
-      # ペイロードの形が不正なとき（ActionController::ParameterMissing が KeyError の
-      # サブクラスであるため、fetch の KeyError をそのまま拾うと取り違えます）
-      class InvalidPayload < StandardError; end
-
-      rescue_from InvalidPayload do |error|
-        render_error("validation_error", error.message, :unprocessable_content)
-      end
-
       def create
         payload = params.require(:saunaVisits)
-        raise InvalidPayload, "取り込むデータは記録の配列で指定してください。" unless payload.is_a?(Array)
+        raise ActionController::BadRequest, "取り込むデータは記録の配列で指定してください。" unless payload.is_a?(Array)
         return render_error("batch_too_large", "一度に取り込めるのは10件までです。", :unprocessable_content) if payload.size > 10
 
         existing_external_ids = find_existing_external_ids(payload)
@@ -44,7 +36,7 @@ module Api
 
         SaunaVisit.transaction do
           payload.each do |raw|
-            raise InvalidPayload, "取り込むデータは記録の配列で指定してください。" unless raw.is_a?(ActionController::Parameters)
+            raise ActionController::BadRequest, "取り込むデータは記録の配列で指定してください。" unless raw.is_a?(ActionController::Parameters)
 
             # 許可キーは SaunaVisitsController#visit_params と揃える（エクスポートしたJSONを
             # そのまま取り込むため、lockVersion / appendHistory も届く）
@@ -55,7 +47,7 @@ module Api
             ).to_h.deep_symbolize_keys
 
             external_id = attributes[:id].to_s
-            raise InvalidPayload, "IDがない記録は取り込めません。" if external_id.blank?
+            raise ActionController::BadRequest, "IDがない記録は取り込めません。" if external_id.blank?
 
             if existing_external_ids.include?(external_id)
               skipped += 1
