@@ -13,6 +13,27 @@ class SaunaVisitTest < ActiveSupport::TestCase
     assert visit.errors[:status].present?
   end
 
+  test "tagsが文字列の配列であることを検証する" do
+    # 文字列の配列なら有効
+    valid_visit = @user.sauna_visits.build(name: "テスト", latitude: 35, longitude: 139, status: "visited", tags: ["ロウリュ", "水風呂"])
+    assert valid_visit.valid?
+
+    # 配列でない場合（文字列）は無効
+    invalid_visit_string = @user.sauna_visits.build(name: "テスト", latitude: 35, longitude: 139, status: "visited", tags: "ロウリュ")
+    assert_not invalid_visit_string.valid?
+    assert_equal ["は文字列の配列で指定してください"], invalid_visit_string.errors[:tags]
+
+    # 配列でない場合（nil）は無効
+    invalid_visit_nil = @user.sauna_visits.build(name: "テスト", latitude: 35, longitude: 139, status: "visited", tags: nil)
+    assert_not invalid_visit_nil.valid?
+    assert_equal ["は文字列の配列で指定してください"], invalid_visit_nil.errors[:tags]
+
+    # 文字列以外の要素が含まれる配列は無効
+    invalid_visit_mixed = @user.sauna_visits.build(name: "テスト", latitude: 35, longitude: 139, status: "visited", tags: ["ロウリュ", 123])
+    assert_not invalid_visit_mixed.valid?
+    assert_equal ["は文字列の配列で指定してください"], invalid_visit_mixed.errors[:tags]
+  end
+
   test "履歴件数と旧形式の下限の大きい方を訪問回数にする" do
     visit = @user.sauna_visits.create!(name: "テスト", latitude: 35, longitude: 139, status: "visited", legacy_visit_count: 3)
     visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 1), comment: "よい")
