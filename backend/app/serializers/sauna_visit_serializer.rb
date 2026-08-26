@@ -4,7 +4,7 @@ class SaunaVisitSerializer
   end
 
   def as_json(*)
-    latest = @visit.visit_history_entries.last
+    latest = @visit.visit_history_entries[-1]
     {
       id: @visit.external_id,
       name: @visit.name,
