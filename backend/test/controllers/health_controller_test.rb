@@ -29,4 +29,25 @@ class HealthControllerTest < ActionDispatch::IntegrationTest
       end
     end
   end
+
+  test "should return service unavailable when database connection is not established" do
+    ActiveRecord::Base.singleton_class.class_eval do
+      alias_method :original_connection, :connection
+      define_method(:connection) do |*|
+        raise ActiveRecord::ConnectionNotEstablished
+      end
+    end
+
+    begin
+      get "/up"
+      assert_response :service_unavailable
+      assert_equal "database unavailable", response.body
+    ensure
+      ActiveRecord::Base.singleton_class.class_eval do
+        remove_method(:connection)
+        alias_method :connection, :original_connection
+        remove_method(:original_connection)
+      end
+    end
+  end
 end
