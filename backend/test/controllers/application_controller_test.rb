@@ -13,6 +13,14 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
     def custom_error
       render_error("custom_code", "Custom message", :bad_request, details: "Custom details")
     end
+
+    def custom_error_no_details
+      render_error("custom_code", "Custom message", :bad_request)
+    end
+
+    def custom_error_blank_details
+      render_error("custom_code", "Custom message", :bad_request, details: "")
+    end
   end
 
   setup do
@@ -20,6 +28,8 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
       get "/dummy_index", to: "application_controller_test/dummy#index"
       get "/dummy_raise_csrf", to: "application_controller_test/dummy#raise_csrf"
       get "/dummy_custom_error", to: "application_controller_test/dummy#custom_error"
+      get "/dummy_custom_error_no_details", to: "application_controller_test/dummy#custom_error_no_details"
+      get "/dummy_custom_error_blank_details", to: "application_controller_test/dummy#custom_error_blank_details"
 
       # Mock route to set session
       get "/dummy_login/:id", to: ->(env) {
@@ -67,18 +77,17 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Custom details", json["error"]["details"]
   end
 
-  class DummyNoDetailsController < ApplicationController
-    def custom_error_no_details
-      render_error("custom_code", "Custom message", :bad_request)
-    end
+  test "render_error formats correctly without details" do
+    get "/dummy_custom_error_no_details"
+    assert_response :bad_request
+    json = JSON.parse(response.body)
+    assert_equal "custom_code", json["error"]["code"]
+    assert_equal "Custom message", json["error"]["message"]
+    assert_nil json["error"]["details"]
   end
 
-  test "render_error formats correctly without details" do
-    Rails.application.routes.draw do
-      get "/dummy_custom_error_no_details", to: "application_controller_test/dummy_no_details#custom_error_no_details"
-    end
-
-    get "/dummy_custom_error_no_details"
+  test "render_error omits details if they are blank" do
+    get "/dummy_custom_error_blank_details"
     assert_response :bad_request
     json = JSON.parse(response.body)
     assert_equal "custom_code", json["error"]["code"]
