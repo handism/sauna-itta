@@ -25,7 +25,7 @@ class VisitWritableTest < ActiveSupport::TestCase
     original_logger = Rails.logger
     begin
       Rails.define_singleton_method(:logger) { dummy_logger }
-      @controller.send(:purge_stale_image_blobs, [blob])
+      @controller.send(:purge_stale_image_blobs, [ blob ])
     ensure
       Rails.define_singleton_method(:logger) { original_logger }
     end
