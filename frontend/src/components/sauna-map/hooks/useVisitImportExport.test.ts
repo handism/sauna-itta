@@ -261,8 +261,7 @@ describe("useVisitImportExport", () => {
     );
   });
 
-  test("APIインポート失敗後の再読み込みにも失敗した場合はコンソールにエラーを出力する", async () => {
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  test("APIインポート失敗後の再読み込みにも失敗した場合はエラーメッセージに追記する", async () => {
     const importBatch = vi.fn().mockRejectedValueOnce(new Error("サーバーへ接続できません。"));
     const reloadError = new Error("再読み込み失敗");
     const reload = vi.fn().mockRejectedValueOnce(reloadError);
@@ -287,11 +286,10 @@ describe("useVisitImportExport", () => {
     });
 
     expect(reload).toHaveBeenCalledOnce();
-    expect(consoleErrorSpy).toHaveBeenCalledWith(
-      "インポート失敗後の再読み込みにも失敗しました。",
-      reloadError,
+    expect(showToast).toHaveBeenCalledWith(
+      "データの取り込みに失敗しました。サーバーへ接続できません。（再読み込みにも失敗しました）",
+      "error",
     );
-    consoleErrorSpy.mockRestore();
   });
 
   test("保存に失敗した場合はエラートーストを表示する", async () => {
