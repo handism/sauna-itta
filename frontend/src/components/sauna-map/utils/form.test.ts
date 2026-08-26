@@ -1,8 +1,41 @@
 import { describe, it, expect } from "vitest";
-import { getSubmitBlockedReason, toFormState, validateVisitForm } from "./form";
+import { getDefaultForm, getSubmitBlockedReason, toFormState, validateVisitForm } from "./form";
 import { getTodayDate } from "./date";
 import { buildHistoryUpdate } from "./visitHistory";
 import { SaunaVisit, VisitFormState } from "../types";
+
+describe("getDefaultForm", () => {
+  it("returns the default form state with an empty date when no date is provided", () => {
+    const form = getDefaultForm();
+    expect(form).toEqual({
+      name: "",
+      comment: "",
+      image: "",
+      date: "",
+      rating: 0,
+      tagsText: "",
+      status: "visited",
+      area: "",
+      appendHistory: false,
+    });
+  });
+
+  it("returns the default form state with the provided date", () => {
+    const date = "2024-03-15";
+    const form = getDefaultForm(date);
+    expect(form).toEqual({
+      name: "",
+      comment: "",
+      image: "",
+      date: "2024-03-15",
+      rating: 0,
+      tagsText: "",
+      status: "visited",
+      area: "",
+      appendHistory: false,
+    });
+  });
+});
 
 describe("buildHistoryUpdate", () => {
   it("should append a new history entry when appendHistory is true", () => {
