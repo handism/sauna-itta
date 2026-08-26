@@ -19,7 +19,7 @@ class VisitWritableTest < ActionController::TestCase
       lng: 139.767125,
       area: "Tokyo",
       status: "active",
-      tags: ["tag1", "tag2"],
+      tags: [ "tag1", "tag2" ],
       visitCount: 5
     }
 
@@ -30,18 +30,18 @@ class VisitWritableTest < ActionController::TestCase
     assert_equal 139.767125, @visit.longitude
     assert_equal "Tokyo", @visit.area
     assert_equal "active", @visit.status
-    assert_equal ["tag1", "tag2"], @visit.tags
+    assert_equal [ "tag1", "tag2" ], @visit.tags
     assert_equal 5, @visit.legacy_visit_count
   end
 
   test "assign_visit_attributes stringifies tags correctly" do
     attributes = {
-      tags: [1, :tag2, "tag3"]
+      tags: [ 1, :tag2, "tag3" ]
     }
 
     @controller.send(:assign_visit_attributes, @visit, attributes)
 
-    assert_equal ["1", "tag2", "tag3"], @visit.tags
+    assert_equal [ "1", "tag2", "tag3" ], @visit.tags
   end
 
   test "assign_visit_attributes correctly maps nil or empty tags to an empty array" do
