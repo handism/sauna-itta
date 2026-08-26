@@ -78,12 +78,12 @@ export async function performBatchImport(
       }
     }
   } catch (error) {
+    let message = error instanceof Error ? error.message : "サーバーへの取り込みに失敗しました。";
     try {
       await reload?.();
-    } catch (reloadError) {
-      console.error("インポート失敗後の再読み込みにも失敗しました。", reloadError);
+    } catch {
+      message += "（再読み込みにも失敗しました）";
     }
-    const message = error instanceof Error ? error.message : "サーバーへの取り込みに失敗しました。";
     throw new ImportProgressError(added, message, { cause: error });
   }
   await reload?.();
@@ -162,7 +162,6 @@ export function useVisitImportExport(
           showToast?.(`データを${added}件取り込みました。${skippedNote}`, "success");
         }
       } catch (error) {
-        console.error(error);
         if (error instanceof ImportProgressError) {
           const progress = error.added > 0 ? `${error.added}件は取り込み済みです。` : "";
           showToast?.(`データの取り込みに失敗しました。${progress}${error.message}`, "error");
