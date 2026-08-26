@@ -34,34 +34,7 @@ interface NominatimRawResult {
 
 const DEFAULT_GEOCODING_ENDPOINT = "https://nominatim.openstreetmap.org/search";
 
-class LRUCache<K, V> {
-  private max: number;
-  private cache: Map<K, V>;
-
-  constructor(max = 100) {
-    this.max = max;
-    this.cache = new Map<K, V>();
-  }
-
-  get(key: K): V | undefined {
-    if (!this.cache.has(key)) return undefined;
-    const val = this.cache.get(key)!;
-    this.cache.delete(key);
-    this.cache.set(key, val);
-    return val;
-  }
-
-  set(key: K, val: V) {
-    if (this.cache.has(key)) {
-      this.cache.delete(key);
-    } else if (this.cache.size >= this.max) {
-      this.cache.delete(this.cache.keys().next().value!);
-    }
-    this.cache.set(key, val);
-  }
-}
-
-const resultCache = new LRUCache<string, GeocodingResult[]>(100);
+const resultCache = new Map<string, GeocodingResult[]>();
 
 /**
  * Formats a raw Nominatim address object into a human-readable Japanese address string.
@@ -135,6 +108,10 @@ export async function searchLocation(
         addressText: formattedAddress || displayName,
       };
     });
+
+    if (resultCache.size >= 100) {
+      resultCache.delete(resultCache.keys().next().value!);
+    }
     resultCache.set(cacheKey, results);
     return results;
   } catch (error: unknown) {
