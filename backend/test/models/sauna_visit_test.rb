@@ -96,16 +96,18 @@ class SaunaVisitTest < ActiveSupport::TestCase
 
     original_logger = Rails.logger
     begin
-      mock_logger = Class.new do
-        def initialize(messages)
-          @messages = messages
+      mock_logger = Class.new(Logger) do
+        def initialize
+          super(nil)
         end
         def error(msg)
-          @messages << msg
+          @error_messages ||= []
+          @error_messages << msg
         end
-        def method_missing(*args, &block)
+        def error_messages
+          @error_messages || []
         end
-      end.new(messages)
+      end.new
 
       Rails.logger = mock_logger
 
@@ -116,6 +118,6 @@ class SaunaVisitTest < ActiveSupport::TestCase
       Rails.logger = original_logger
     end
 
-    assert_includes messages, "サウナ記録の履歴画像削除に失敗しました: StandardError: Test Error"
+    assert_includes mock_logger.error_messages, "サウナ記録の履歴画像削除に失敗しました: StandardError: Test Error"
   end
 end
