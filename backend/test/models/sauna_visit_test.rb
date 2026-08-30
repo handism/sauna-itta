@@ -90,9 +90,8 @@ class SaunaVisitTest < ActiveSupport::TestCase
     mock_blob = Object.new
     mock_blob.define_singleton_method(:purge_later) { raise StandardError, "Test Error" }
 
-    visit.define_singleton_method(:capture_history_image_blobs) do
-      @history_image_blobs = [ mock_blob ]
-    end
+    visit.instance_variable_set(:@history_image_blobs, [ mock_blob ])
+    visit.define_singleton_method(:capture_history_image_blobs) {}
 
     original_logger = Rails.logger
     begin
@@ -104,6 +103,9 @@ class SaunaVisitTest < ActiveSupport::TestCase
           @messages << msg
         end
         def method_missing(*args, &block)
+        end
+        def respond_to_missing?(*args)
+          true
         end
       end.new(messages)
 
