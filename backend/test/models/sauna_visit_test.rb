@@ -1,4 +1,5 @@
 require "test_helper"
+require "minitest/mock"
 
 class SaunaVisitTest < ActiveSupport::TestCase
   setup do
