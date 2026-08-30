@@ -23,7 +23,7 @@ module Api
       def find_existing_external_ids(payload)
         # 重複判定を記録ごとの exists? で回さないよう、既存の external_id をまとめて引いておく。
         # 取り込み済みの分もループ内で足していくため、ペイロード内の重複も従来どおり弾ける。
-        payload_external_ids = payload.filter_map { |raw| raw[:id].to_s if raw.is_a?(ActionController::Parameters) }
+        payload_external_ids = payload.filter_map { |raw| raw[:id]&.to_s if raw.is_a?(ActionController::Parameters) }
         current_user.sauna_visits
           .where(external_id: payload_external_ids)
           .pluck(:external_id)
