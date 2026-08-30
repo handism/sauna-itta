@@ -1,0 +1,26 @@
+--- frontend/src/components/sauna-map/types/domain.test.ts
++++ frontend/src/components/sauna-map/types/domain.test.ts
+@@ -23,8 +23,8 @@
+
+   describe("name field", () => {
+     it("fails when name is missing", () => {
+-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+-      const { name, ...invalidData } = validData;
++      const invalidData = { ...validData } as Record<string, unknown>;
++      delete invalidData.name;
+       const result = VisitFormInputSchema.safeParse(invalidData);
+       expect(result.success).toBe(false);
+     });
+@@ -95,8 +95,10 @@
+
+   describe("required and optional fields", () => {
+     it("requires comment, tagsText, and status", () => {
+-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+-      const { comment, tagsText, status, ...incompleteData } = validData;
++      const incompleteData = { ...validData } as Record<string, unknown>;
++      delete incompleteData.comment;
++      delete incompleteData.tagsText;
++      delete incompleteData.status;
+       const result = VisitFormInputSchema.safeParse(incompleteData);
+       expect(result.success).toBe(false);
+       if (!result.success) {
