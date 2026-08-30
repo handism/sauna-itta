@@ -192,8 +192,11 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
         prefectureSet.add(pref);
       }
 
-      const history = getVisitHistoryEntries(visit);
-      for (const entry of history) {
+      if (!Array.isArray(visit.history)) {
+        visit.history = getVisitHistoryEntries(visit);
+      }
+
+      for (const entry of visit.history) {
         if (firstDate === null || entry.date < firstDate) {
           firstDate = entry.date;
         }
