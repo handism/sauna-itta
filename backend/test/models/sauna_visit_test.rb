@@ -91,7 +91,7 @@ class SaunaVisitTest < ActiveSupport::TestCase
     mock_blob.define_singleton_method(:purge_later) { raise StandardError, "Test Error" }
 
     visit.instance_variable_set(:@history_image_blobs, [ mock_blob ])
-    visit.define_singleton_method(:capture_history_image_blobs) {}
+    visit.define_singleton_method(:capture_history_image_blobs) { }
 
     original_logger = Rails.logger
     begin
