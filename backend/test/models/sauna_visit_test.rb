@@ -100,7 +100,8 @@ class SaunaVisitTest < ActiveSupport::TestCase
         def initialize
           super(nil)
         end
-        def error(msg)
+        def error(msg = nil, &block)
+          msg = yield if block_given?
           @error_messages ||= []
           @error_messages << msg
         end
