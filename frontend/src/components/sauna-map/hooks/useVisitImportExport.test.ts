@@ -135,7 +135,7 @@ describe("useVisitImportExport", () => {
     const { result } = renderHook(() =>
       useVisitImportExport(mockVisits, undefined, showToast, importBatch, vi.fn()),
     );
-    const imported = Array.from({ length: 25 }, (_, index) => ({
+    const imported = Array.from({ length: 65 }, (_, index) => ({
       id: `chunk-${index}`,
       name: `Sauna ${index}`,
       lat: 35,
@@ -151,11 +151,10 @@ describe("useVisitImportExport", () => {
       await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
     });
 
-    // 3チャンク送っても途中経過は2回まで。最後は完了トーストが伝える
+    // 並行処理のバッチ単位で進捗トーストが出る。最後は完了トーストが伝える
     expect(showToast.mock.calls).toEqual([
-      ["10/25件を取り込み中です...", "info"],
-      ["20/25件を取り込み中です...", "info"],
-      ["データを25件取り込みました。", "success"],
+      ["50/65件を取り込み中です...", "info"],
+      ["データを65件取り込みました。", "success"],
     ]);
   });
 
@@ -231,6 +230,15 @@ describe("useVisitImportExport", () => {
 
   test("APIインポートが途中で失敗した場合は確定済み件数を通知して再読み込みする", async () => {
     const importBatch = vi.fn()
+      // CONCURRENCY_LIMIT (5) chunks (50 items) per batch. To test partial failure within or across batches,
+      // we can reject the first chunk. If it rejects in Promise.all, `added` remains 0.
+      // If we want it to report some added, we need a previous batch to succeed, or for some parallel tasks to succeed.
+      // Promise.all rejects immediately, so results of parallel successes are lost in that batch.
+      // We will make the first batch of 5 chunks succeed, and the second batch fail.
+      .mockResolvedValueOnce({ added: 10, skipped: 0 })
+      .mockResolvedValueOnce({ added: 10, skipped: 0 })
+      .mockResolvedValueOnce({ added: 10, skipped: 0 })
+      .mockResolvedValueOnce({ added: 10, skipped: 0 })
       .mockResolvedValueOnce({ added: 10, skipped: 0 })
       .mockRejectedValueOnce(new Error("サーバーへ接続できません。"));
     const reload = vi.fn().mockResolvedValue(undefined);
@@ -238,7 +246,7 @@ describe("useVisitImportExport", () => {
     const { result } = renderHook(() =>
       useVisitImportExport(mockVisits, undefined, showToast, importBatch, reload),
     );
-    const imported = Array.from({ length: 15 }, (_, index) => ({
+    const imported = Array.from({ length: 65 }, (_, index) => ({
       id: `partial-${index}`,
       name: `Sauna ${index}`,
       lat: 35,
@@ -256,7 +264,7 @@ describe("useVisitImportExport", () => {
 
     expect(reload).toHaveBeenCalledOnce();
     expect(showToast).toHaveBeenLastCalledWith(
-      "データの取り込みに失敗しました。10件は取り込み済みです。サーバーへ接続できません。",
+      "データの取り込みに失敗しました。50件は取り込み済みです。サーバーへ接続できません。",
       "error",
     );
   });

@@ -6,6 +6,7 @@ import type { ImportResult } from "../repositories";
 
 // Rails 側の ImportsController が 1 リクエストあたり 10 件までしか受け付けません
 const CHUNK_SIZE = 10;
+const CONCURRENCY_LIMIT = 5;
 
 const REVOKE_OBJECT_URL_DELAY_MS = 1000;
 
@@ -66,15 +67,28 @@ export async function performBatchImport(
 ): Promise<{ added: number; skipped: number; success: boolean }> {
   let added = 0;
   let skipped = alreadyKnown;
+  let processedCount = 0;
   try {
     const total = normalizedImported.length;
+    const chunks: SaunaVisit[][] = [];
     for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
-      const result = await importBatch(normalizedImported.slice(offset, offset + CHUNK_SIZE));
-      added += result.added;
-      skipped += result.skipped;
-      // 最終チャンクの結果は完了トーストで伝えるため、残りがある間だけ途中経過を出す
-      if (offset + CHUNK_SIZE < total) {
-        showToast?.(`${added}/${total}件を取り込み中です...`, "info");
+      chunks.push(normalizedImported.slice(offset, offset + CHUNK_SIZE));
+    }
+
+    for (let i = 0; i < chunks.length; i += CONCURRENCY_LIMIT) {
+      const batchChunks = chunks.slice(i, i + CONCURRENCY_LIMIT);
+      const results = await Promise.all(batchChunks.map((chunk) => importBatch(chunk)));
+
+      for (const result of results) {
+        added += result.added;
+        skipped += result.skipped;
+      }
+
+      processedCount += batchChunks.reduce((acc, chunk) => acc + chunk.length, 0);
+
+      // 最終チャンク群の結果は完了トーストで伝えるため、残りがある間だけ途中経過を出す
+      if (processedCount < total) {
+        showToast?.(`${processedCount}/${total}件を取り込み中です...`, "info");
       }
     }
   } catch (error) {
