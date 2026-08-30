@@ -103,6 +103,7 @@ class SaunaVisitTest < ActiveSupport::TestCase
         def error(msg)
           @messages << msg
         end
+        def respond_to_missing?(method_name, include_private = false); true; end
         def method_missing(*args, &block)
         end
       end.new(messages)
