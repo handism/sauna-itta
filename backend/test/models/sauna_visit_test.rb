@@ -85,8 +85,6 @@ class SaunaVisitTest < ActiveSupport::TestCase
     )
     entry.image.attach(io: StringIO.new(png), filename: "visit.png", content_type: "image/png")
 
-    messages = []
-
     mock_blob = Object.new
     mock_blob.define_singleton_method(:purge_later) { raise StandardError, "Test Error" }
 
@@ -94,19 +92,13 @@ class SaunaVisitTest < ActiveSupport::TestCase
       @history_image_blobs = [ mock_blob ]
     end
 
+    mock_logger = Minitest::Mock.new
+    mock_logger.expect(:error, nil) do |msg|
+      msg == "サウナ記録の履歴画像削除に失敗しました: StandardError: Test Error"
+    end
+
     original_logger = Rails.logger
     begin
-      mock_logger = Class.new do
-        def initialize(messages)
-          @messages = messages
-        end
-        def error(msg)
-          @messages << msg
-        end
-        def method_missing(*args, &block)
-        end
-      end.new(messages)
-
       Rails.logger = mock_logger
 
       perform_enqueued_jobs do
@@ -116,6 +108,6 @@ class SaunaVisitTest < ActiveSupport::TestCase
       Rails.logger = original_logger
     end
 
-    assert_includes messages, "サウナ記録の履歴画像削除に失敗しました: StandardError: Test Error"
+    mock_logger.verify
   end
 end
