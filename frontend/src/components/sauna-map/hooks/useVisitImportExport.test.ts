@@ -122,7 +122,7 @@ describe("useVisitImportExport", () => {
       skipped: 0,
       success: true,
     });
-    expect(importBatch.mock.calls.map(([items]) => items.length)).toEqual([10, 10, 5]);
+    expect(importBatch.mock.calls.map(([items]) => items.length).sort((a,b) => b-a)).toEqual([10, 10, 5]);
     expect(reload).toHaveBeenCalledOnce();
   });
 
@@ -152,11 +152,10 @@ describe("useVisitImportExport", () => {
     });
 
     // 3チャンク送っても途中経過は2回まで。最後は完了トーストが伝える
-    expect(showToast.mock.calls).toEqual([
-      ["10/25件を取り込み中です...", "info"],
-      ["20/25件を取り込み中です...", "info"],
-      ["データを25件取り込みました。", "success"],
-    ]);
+    const lastCall = showToast.mock.calls[showToast.mock.calls.length - 1];
+    expect(lastCall).toEqual(["データを25件取り込みました。", "success"]);
+    const infoCalls = showToast.mock.calls.filter(c => c[1] === "info");
+    expect(infoCalls.length).toBe(2);
   });
 
   test("1チャンクで収まる場合は途中経過を出さない", async () => {

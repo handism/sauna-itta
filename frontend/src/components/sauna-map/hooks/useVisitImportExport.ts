@@ -6,6 +6,8 @@ import type { ImportResult } from "../repositories";
 
 // Rails 側の ImportsController が 1 リクエストあたり 10 件までしか受け付けません
 const CHUNK_SIZE = 10;
+// 同時実行数の上限
+const MAX_CONCURRENCY = 5;
 
 const REVOKE_OBJECT_URL_DELAY_MS = 1000;
 
@@ -68,15 +70,45 @@ export async function performBatchImport(
   let skipped = alreadyKnown;
   try {
     const total = normalizedImported.length;
+    const totalChunks = Math.ceil(total / CHUNK_SIZE);
+    let completedChunks = 0;
+
+    // チャンクに分割
+    const chunks: SaunaVisit[][] = [];
     for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
-      const result = await importBatch(normalizedImported.slice(offset, offset + CHUNK_SIZE));
+      chunks.push(normalizedImported.slice(offset, offset + CHUNK_SIZE));
+    }
+
+    // limit concurrency wrapper
+    const runWithConcurrency = async (items: SaunaVisit[][], limit: number, asyncCallback: (chunk: SaunaVisit[]) => Promise<void>) => {
+      let index = 0;
+
+      const worker = async () => {
+        while (index < items.length) {
+          const currentIndex = index++;
+          await asyncCallback(items[currentIndex]);
+        }
+      };
+
+      const workers = [];
+      for (let i = 0; i < Math.min(limit, items.length); i++) {
+        workers.push(worker());
+      }
+
+      await Promise.all(workers);
+    };
+
+    await runWithConcurrency(chunks, MAX_CONCURRENCY, async (chunk) => {
+      const result = await importBatch(chunk);
       added += result.added;
       skipped += result.skipped;
+      completedChunks++;
       // 最終チャンクの結果は完了トーストで伝えるため、残りがある間だけ途中経過を出す
-      if (offset + CHUNK_SIZE < total) {
+      if (completedChunks < totalChunks) {
         showToast?.(`${added}/${total}件を取り込み中です...`, "info");
       }
-    }
+    });
+
   } catch (error) {
     let message = error instanceof Error ? error.message : "サーバーへの取り込みに失敗しました。";
     try {
