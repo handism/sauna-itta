@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useInitialVisits } from "./useInitialVisits";
 import * as utils from "../utils";
 import type { VisitRepository } from "../repositories";
+import type { SaunaVisit } from "../types";
 
 const mocks = vi.hoisted(() => ({
   DATA_SOURCE: "api",
@@ -28,7 +29,7 @@ describe("useInitialVisits", () => {
 
     it("should initialize visits from storage synchronously", () => {
       const mockVisits = [{ id: "1", name: "Sauna 1" }];
-      vi.spyOn(utils, "getInitialVisits").mockReturnValue(mockVisits as any);
+      vi.spyOn(utils, "getInitialVisits").mockReturnValue(mockVisits as unknown as SaunaVisit[]);
 
       const { result } = renderHook(() => useInitialVisits());
 
@@ -85,7 +86,7 @@ describe("useInitialVisits", () => {
     expect(result.current.visits).toEqual([]);
 
     act(() => {
-      result.current.setVisits([{ id: "2", name: "Sauna 2" }] as any);
+      result.current.setVisits([{ id: "2", name: "Sauna 2" }] as unknown as SaunaVisit[]);
     });
 
     expect(result.current.visits).toEqual([{ id: "2", name: "Sauna 2" }]);
