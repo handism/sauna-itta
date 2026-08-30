@@ -258,20 +258,19 @@ export function countTags(
   visits: SaunaVisit[],
   { excludeWishlist = false }: { excludeWishlist?: boolean } = {},
 ): TagCount[] {
-  const tagCounts = new Map<string, number>();
+  const rawCounts = visits
+    .filter((visit) => !(excludeWishlist && isWishlist(visit)))
+    .flatMap((visit) => (Array.isArray(visit.tags) ? visit.tags : []))
+    .reduce((acc, tag) => {
+      acc.set(tag, (acc.get(tag) ?? 0) + 1);
+      return acc;
+    }, new Map<string, number>());
 
-  for (const visit of visits) {
-    if (excludeWishlist && isWishlist(visit)) {
-      continue;
-    }
-    if (!Array.isArray(visit.tags)) {
-      continue;
-    }
-    for (const tag of visit.tags) {
-      const trimmed = tag.trim();
-      if (trimmed) {
-        tagCounts.set(trimmed, (tagCounts.get(trimmed) ?? 0) + 1);
-      }
+  const tagCounts = new Map<string, number>();
+  for (const [tag, count] of rawCounts.entries()) {
+    const trimmed = tag.trim();
+    if (trimmed) {
+      tagCounts.set(trimmed, (tagCounts.get(trimmed) ?? 0) + count);
     }
   }
 
