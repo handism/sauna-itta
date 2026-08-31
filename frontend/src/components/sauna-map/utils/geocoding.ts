@@ -41,12 +41,15 @@ const resultCache = new Map<string, GeocodingResult[]>();
  */
 function formatJapaneseAddress(address?: NominatimRawAddress): string {
   if (!address) return "";
-  const state = address.state ?? address.province ?? "";
-  const city = address.city ?? address.town ?? address.village ?? "";
-  const suburb = address.suburb ?? address.city_district ?? address.quarter ?? address.neighbourhood ?? "";
-  const road = address.road ?? "";
-  const house_number = address.house_number ?? "";
-  return `${state}${city}${suburb}${road}${house_number}`;
+  return [
+    address.state ?? address.province,
+    address.city ?? address.town ?? address.village,
+    address.suburb ?? address.city_district ?? address.quarter ?? address.neighbourhood,
+    address.road,
+    address.house_number,
+  ]
+    .filter(Boolean)
+    .join("");
 }
 
 /**
