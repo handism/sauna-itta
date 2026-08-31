@@ -8,9 +8,160 @@ import {
   getPopularAreas,
   countTags,
   rankVisitsByCount,
+  flattenVisitHistory,
 } from "./visitHistory";
 import { toNormalizedTags } from "./form";
 import { SaunaVisit } from "../types";
+
+describe("flattenVisitHistory", () => {
+  it("should return empty array for empty visits", () => {
+    expect(flattenVisitHistory([])).toEqual([]);
+  });
+
+  it("should flatten a visited sauna with implicit history (no history array)", () => {
+    const visits: SaunaVisit[] = [
+      {
+        id: "1",
+        name: "Test Sauna",
+        lat: 0,
+        lng: 0,
+        comment: "Great sauna",
+        date: "2023-01-01",
+        rating: 4,
+        image: "test.jpg",
+        status: "visited",
+      },
+    ];
+
+    const result = flattenVisitHistory(visits);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      visitId: "1",
+      status: "visited",
+      date: "2023-01-01",
+      comment: "Great sauna",
+      rating: 4,
+      image: "test.jpg",
+    });
+  });
+
+  it("should flatten a wishlist sauna with implicit history", () => {
+    const visits: SaunaVisit[] = [
+      {
+        id: "2",
+        name: "Wishlist Sauna",
+        lat: 0,
+        lng: 0,
+        comment: "Want to go",
+        date: "2023-02-01",
+        status: "wishlist",
+      },
+    ];
+
+    const result = flattenVisitHistory(visits);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual({
+      visitId: "2",
+      status: "wishlist",
+      date: "2023-02-01",
+      comment: "Want to go",
+      rating: 0, // Fallback for undefined rating
+      image: undefined,
+    });
+  });
+
+  it("should flatten a sauna with explicit history array", () => {
+    const visits: SaunaVisit[] = [
+      {
+        id: "3",
+        name: "Multiple Visits Sauna",
+        lat: 0,
+        lng: 0,
+        comment: "Overall good",
+        date: "2023-01-01",
+        status: "visited",
+        history: [
+          { date: "2023-01-01", comment: "First time", rating: 3 },
+          { date: "2023-02-01", comment: "Second time", rating: 5, image: "visit2.jpg" },
+        ],
+      },
+    ];
+
+    const result = flattenVisitHistory(visits);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toEqual({
+      visitId: "3",
+      status: "visited",
+      date: "2023-01-01",
+      comment: "First time",
+      rating: 3,
+      image: undefined,
+    });
+    expect(result[1]).toEqual({
+      visitId: "3",
+      status: "visited",
+      date: "2023-02-01",
+      comment: "Second time",
+      rating: 5,
+      image: "visit2.jpg",
+    });
+  });
+
+  it("should flatten multiple sauna visits correctly", () => {
+    const visits: SaunaVisit[] = [
+      {
+        id: "1",
+        name: "Sauna 1",
+        lat: 0,
+        lng: 0,
+        comment: "Implicit",
+        date: "2023-01-01",
+        status: "visited",
+      },
+      {
+        id: "2",
+        name: "Sauna 2",
+        lat: 0,
+        lng: 0,
+        comment: "Explicit",
+        date: "2023-02-01",
+        status: "visited",
+        history: [
+          { date: "2023-02-01", comment: "H1", rating: 4 },
+          { date: "2023-03-01", comment: "H2", rating: 5 },
+        ],
+      },
+      {
+        id: "3",
+        name: "Sauna 3",
+        lat: 0,
+        lng: 0,
+        comment: "Wishlist",
+        date: "2023-04-01",
+        status: "wishlist",
+      }
+    ];
+
+    const result = flattenVisitHistory(visits);
+    expect(result).toHaveLength(4);
+
+    expect(result[0].visitId).toBe("1");
+    expect(result[0].comment).toBe("Implicit");
+    expect(result[0].status).toBe("visited");
+
+    expect(result[1].visitId).toBe("2");
+    expect(result[1].comment).toBe("H1");
+    expect(result[1].status).toBe("visited");
+
+    expect(result[2].visitId).toBe("2");
+    expect(result[2].comment).toBe("H2");
+    expect(result[2].status).toBe("visited");
+
+    expect(result[3].visitId).toBe("3");
+    expect(result[3].comment).toBe("Wishlist");
+    expect(result[3].status).toBe("wishlist");
+  });
+});
 
 describe("calculateStats", () => {
   it("should calculate correctly for empty visits", () => {
