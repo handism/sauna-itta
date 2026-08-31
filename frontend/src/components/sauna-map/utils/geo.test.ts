@@ -237,8 +237,10 @@ describe("getDirectionsUrl", () => {
   });
 
   it("should handle string inputs correctly by coercing to numbers", () => {
-    // @ts-expect-error - intentional invalid type to test runtime behaviour
-    const url = getDirectionsUrl("35.6812", "139.7671");
+    const url = getDirectionsUrl(
+      "35.6812" as unknown as number,
+      "139.7671" as unknown as number
+    );
     expect(url).toBe("https://www.google.com/maps/dir/?api=1&destination=35.6812,139.7671");
   });
 });
