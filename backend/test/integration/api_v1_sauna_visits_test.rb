@@ -261,6 +261,22 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "conflict", response.parsed_body.dig("error", "code")
   end
 
+  test "更新時に不正な画像を拒否する" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    visit = response.parsed_body.fetch("saunaVisit")
+    id = visit.fetch("id")
+
+    patch "/api/v1/sauna_visits/#{id}", params: {
+      saunaVisit: valid_attributes.merge(image: "data:image/svg+xml;base64,PHN2Zz4=", lockVersion: visit.fetch("lockVersion"))
+    }, headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "invalid_image", response.parsed_body.dig("error", "code")
+  end
+
   test "SVGを拒否し写真を所有者だけへ配信する" do
     csrf = sign_in
     post "/api/v1/sauna_visits", params: {
