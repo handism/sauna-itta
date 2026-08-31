@@ -247,6 +247,28 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_not visit.visit_history_entries.first.image.attached?
   end
 
+  test "画像保存中にStandardErrorが発生した場合は画像をスキップして取り込みを完了する" do
+    csrf = sign_in
+    imported = valid_attributes.merge(id: "legacy-broken-storage-standard-error", image: "data:image/png;base64,iVBORw0KGgo=")
+
+    singleton = (class << DataUrlImage; self; end)
+    original_method = DataUrlImage.method(:decode)
+    singleton.define_method(:decode) { |_| raise StandardError, "不明なエラー" }
+    begin
+      post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+        headers: csrf_header(csrf), as: :json
+    ensure
+      singleton.define_method(:decode, original_method)
+    end
+
+    assert_response :success
+    assert_equal 1, response.parsed_body["added"]
+    assert_equal 0, response.parsed_body["skipped"]
+    visit = owner.sauna_visits.find_by!(external_id: "legacy-broken-storage-standard-error")
+    assert_equal "北欧", visit.name
+    assert_not visit.visit_history_entries.first.image.attached?
+  end
+
   private
 
   def owner
