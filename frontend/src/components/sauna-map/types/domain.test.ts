@@ -22,8 +22,8 @@ describe("VisitFormInputSchema", () => {
 
   describe("name field", () => {
     it("fails when name is missing", () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { name, ...invalidData } = validData;
+      const invalidData: Record<string, unknown> = { ...validData };
+      delete invalidData.name;
       const result = VisitFormInputSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
     });
@@ -103,8 +103,10 @@ describe("VisitFormInputSchema", () => {
 
   describe("required and optional fields", () => {
     it("requires comment, tagsText, and status", () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { comment, tagsText, status, ...incompleteData } = validData;
+      const incompleteData: Record<string, unknown> = { ...validData };
+      delete incompleteData.comment;
+      delete incompleteData.tagsText;
+      delete incompleteData.status;
       const result = VisitFormInputSchema.safeParse(incompleteData);
       expect(result.success).toBe(false);
       if (!result.success) {
