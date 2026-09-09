@@ -11,6 +11,57 @@ import {
   WishlistChip,
 } from "../common/common";
 
+
+type VisitCardHeaderProps = Pick<VisitItemProps, "visit" | "isSelected" | "onSelectVisit" | "onDeselectVisit" | "onEdit">;
+
+function VisitCardHeader({ visit, isSelected, onSelectVisit, onDeselectVisit, onEdit }: VisitCardHeaderProps) {
+  return (
+    <div className="sauna-card-header">
+      <h3 className="sauna-card-title">
+        <button
+          type="button"
+          className="sauna-card-select-btn"
+          aria-pressed={isSelected}
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelectVisit?.(visit);
+          }}
+        >
+          {visit.name}
+          {isWishlist(visit) && <WishlistChip />}
+        </button>
+      </h3>
+      <div className="sauna-card-actions">
+        {isSelected && onDeselectVisit && (
+          <button
+            type="button"
+            className="sauna-card-deselect-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeselectVisit();
+            }}
+            title="選択を解除"
+            aria-label="選択を解除"
+          >
+            <X size={13} /> 解除
+          </button>
+        )}
+        <button
+          type="button"
+          className="sauna-card-edit-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(visit);
+          }}
+          title="記録を編集"
+        >
+          <Pencil size={14} /> 編集
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function VisitCardItemComponent({
   visit,
   isHovered,
@@ -36,49 +87,13 @@ function VisitCardItemComponent({
       onMouseEnter={() => onHoverVisit?.(visit.id)}
       onMouseLeave={() => onHoverVisit?.(null)}
     >
-      <div className="sauna-card-header">
-        <h3 className="sauna-card-title">
-          <button
-            type="button"
-            className="sauna-card-select-btn"
-            aria-pressed={isSelected}
-            onClick={(e) => {
-              e.stopPropagation();
-              onSelectVisit?.(visit);
-            }}
-          >
-            {visit.name}
-            {isWishlist(visit) && <WishlistChip />}
-          </button>
-        </h3>
-        <div className="sauna-card-actions">
-          {isSelected && onDeselectVisit && (
-            <button
-              type="button"
-              className="sauna-card-deselect-btn"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDeselectVisit();
-              }}
-              title="選択を解除"
-              aria-label="選択を解除"
-            >
-              <X size={13} /> 解除
-            </button>
-          )}
-          <button
-            type="button"
-            className="sauna-card-edit-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(visit);
-            }}
-            title="記録を編集"
-          >
-            <Pencil size={14} /> 編集
-          </button>
-        </div>
-      </div>
+      <VisitCardHeader
+        visit={visit}
+        isSelected={isSelected}
+        onSelectVisit={onSelectVisit}
+        onDeselectVisit={onDeselectVisit}
+        onEdit={onEdit}
+      />
       {visit.area && <div className="sauna-card-area">{visit.area}</div>}
       <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" />
       <VisitTagList
