@@ -27,6 +27,14 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
     def custom_error_blank_details
       render_error("custom_code", "Custom message", :bad_request, details: "")
     end
+
+    def custom_error_hash_details
+      render_error("custom_code", "Custom message", :bad_request, details: { field: "is invalid" })
+    end
+
+    def custom_error_long_message
+      render_error("custom_code", "A" * 1000, :bad_request, details: "Very long message details")
+    end
   end
 
   setup do
@@ -37,6 +45,8 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
       get "/dummy_custom_error", to: "application_controller_test/dummy#custom_error"
       get "/dummy_custom_error_no_details", to: "application_controller_test/dummy#custom_error_no_details"
       get "/dummy_custom_error_blank_details", to: "application_controller_test/dummy#custom_error_blank_details"
+      get "/dummy_custom_error_hash_details", to: "application_controller_test/dummy#custom_error_hash_details"
+      get "/dummy_custom_error_long_message", to: "application_controller_test/dummy#custom_error_long_message"
 
       # Mock route to set session
       get "/dummy_login/:id", to: ->(env) {
@@ -139,5 +149,23 @@ class ApplicationControllerTest < ActionDispatch::IntegrationTest
     assert_equal "custom_code", json["error"]["code"]
     assert_equal "Custom message", json["error"]["message"]
     assert_nil json["error"]["details"]
+  end
+
+  test "render_error formats correctly with non-string details" do
+    get "/dummy_custom_error_hash_details"
+    assert_response :bad_request
+    json = JSON.parse(response.body)
+    assert_equal "custom_code", json["error"]["code"]
+    assert_equal "Custom message", json["error"]["message"]
+    assert_equal({ "field" => "is invalid" }, json["error"]["details"])
+  end
+
+  test "render_error formats correctly with a very long message" do
+    get "/dummy_custom_error_long_message"
+    assert_response :bad_request
+    json = JSON.parse(response.body)
+    assert_equal "custom_code", json["error"]["code"]
+    assert_equal "A" * 1000, json["error"]["message"]
+    assert_equal "Very long message details", json["error"]["details"]
   end
 end

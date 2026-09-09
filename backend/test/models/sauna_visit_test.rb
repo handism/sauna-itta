@@ -95,17 +95,13 @@ class SaunaVisitTest < ActiveSupport::TestCase
 
     original_logger = Rails.logger
     begin
-      mock_logger = Class.new do
+      mock_logger = Class.new(Logger) do
         def initialize(messages)
+          super(nil)
           @messages = messages
         end
         def error(msg)
           @messages << msg
-        end
-        def method_missing(*args, &block)
-        end
-        def respond_to_missing?(*args)
-          true
         end
       end.new(messages)
 
