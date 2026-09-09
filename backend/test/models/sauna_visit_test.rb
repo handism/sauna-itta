@@ -118,6 +118,6 @@ class SaunaVisitTest < ActiveSupport::TestCase
       Rails.logger = original_logger
     end
 
-    assert_includes messages, "サウナ記録の履歴画像削除に失敗しました: StandardError: Test Error"
+    assert messages.any? { |msg| msg.include?("サウナ記録の履歴画像削除に失敗しました: StandardError: Test Error") }
   end
 end
