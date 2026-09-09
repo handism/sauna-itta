@@ -5,7 +5,7 @@ class SaunaVisit < ApplicationRecord
   has_many :visit_history_entries, -> { order(:visited_on, :created_at) }, dependent: :destroy
 
   validates :external_id, :name, :status, presence: true
-  validates :external_id, uniqueness: { scope: :user_id }
+  validates :external_id, uniqueness: { scope: :user_id }, unless: -> { validation_context == :import }
   validates :latitude, numericality: { in: -90..90 }
   validates :longitude, numericality: { in: -180..180 }
   validates :status, inclusion: { in: STATUSES }

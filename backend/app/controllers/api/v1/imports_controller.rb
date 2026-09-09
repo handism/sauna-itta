@@ -82,7 +82,7 @@ module Api
           end
           entry.public_id = normalized[:id] if normalized[:id].present?
         end
-        visit.save!
+        visit.save!(context: :import)
       end
     end
   end
