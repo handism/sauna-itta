@@ -18,7 +18,7 @@ const defaultFilters: VisitFilters = {
 
 // モック化してプロパティの関数を直接呼び出してカバレッジを確保する
 vi.mock("./FilterPanel", () => ({
-  FilterPanel: (props: any) => {
+  FilterPanel: (props: { onClearFilters?: () => void }) => {
     return (
       <div data-testid="mock-filter-panel">
         <button
