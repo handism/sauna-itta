@@ -27,8 +27,8 @@ services:
       SECRET_KEY_BASE: local-development-secret-key-base-change-me
       DB_HOST: postgres
       POSTGRES_DB: sauna_itta_development
-      POSTGRES_USER: sauna_itta
-      POSTGRES_PASSWORD: sauna_itta
+      POSTGRES_USER: ${POSTGRES_USER:-sauna_itta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sauna_itta}
       ACTIVE_STORAGE_ROOT: /app/storage
       ALLOWED_GOOGLE_EMAIL: ${ALLOWED_GOOGLE_EMAIL:-developer@example.com}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-development-client-id}
@@ -54,14 +54,14 @@ services:
     image: postgres:17-bookworm
     environment:
       POSTGRES_DB: sauna_itta_development
-      POSTGRES_USER: sauna_itta
-      POSTGRES_PASSWORD: sauna_itta
+      POSTGRES_USER: ${POSTGRES_USER:-sauna_itta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sauna_itta}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sauna_itta -d sauna_itta_development"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sauna_itta} -d sauna_itta_development"]
       interval: 5s
       timeout: 5s
       retries: 10
