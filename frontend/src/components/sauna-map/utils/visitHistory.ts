@@ -269,8 +269,7 @@ export function countTags(
       continue;
     }
 
-    for (let i = 0; i < visit.tags.length; i++) {
-      const tag = visit.tags[i];
+    for (const tag of visit.tags) {
       const trimmed = tag.trim();
       if (trimmed) {
         tagCounts.set(trimmed, (tagCounts.get(trimmed) ?? 0) + 1);
