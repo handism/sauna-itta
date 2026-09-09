@@ -67,6 +67,15 @@ export function useVisitFilters(visits: SaunaVisit[]) {
       return true;
     });
 
+    if (filters.sort === "visitCountDesc") {
+      // history.length と visitCount の両方を考慮する必要があるため getVisitCount() を使う
+      // Schwartzian transform で計算結果をキャッシュしてソートを高速化
+      return result
+        .map((v) => ({ v, count: getVisitCount(v) }))
+        .sort((a, b) => b.count - a.count || b.v.date.localeCompare(a.v.date))
+        .map((item) => item.v);
+    }
+
     return result.toSorted((a, b) => {
       switch (filters.sort) {
         case "oldest":
@@ -75,9 +84,6 @@ export function useVisitFilters(visits: SaunaVisit[]) {
           return (b.rating ?? 0) - (a.rating ?? 0) || b.date.localeCompare(a.date);
         case "ratingAsc":
           return (a.rating ?? 0) - (b.rating ?? 0) || b.date.localeCompare(a.date);
-        case "visitCountDesc":
-          // history.length と visitCount の両方を考慮する必要があるため getVisitCount() を使う
-          return getVisitCount(b) - getVisitCount(a) || b.date.localeCompare(a.date);
         case "nameAsc":
           return a.name.localeCompare(b.name, "ja");
         case "recent":
