@@ -37,11 +37,20 @@ export type FlatVisitHistoryEntry = VisitHistoryEntry & {
   status: "visited" | "wishlist";
 };
 
-export function flattenVisitHistory(visits: SaunaVisit[]): FlatVisitHistoryEntry[] {
+export function flattenVisitHistory(
+  visits: SaunaVisit[],
+  filterStatus?: "visited" | "wishlist",
+): FlatVisitHistoryEntry[] {
   const entries: FlatVisitHistoryEntry[] = [];
 
   for (const visit of visits) {
     const status = getVisitStatus(visit);
+
+    // Skip processing if filterStatus is provided and doesn't match
+    if (filterStatus && status !== filterStatus) {
+      continue;
+    }
+
     const visitId = visit.id;
     for (const entry of getVisitHistoryEntries(visit)) {
       entries.push({
