@@ -148,8 +148,7 @@ export function getInitialVisits(): SaunaVisit[] {
      * 同梱JSONは保存がまだ無いときの初期データとしてのみ使うこと。
      */
     return normalizeVisits(validSaved);
-  } catch (e) {
-    console.error("Failed to parse saved visits:", e);
+  } catch {
     return baseVisits;
   }
 }
