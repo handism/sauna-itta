@@ -56,7 +56,7 @@ export function useStatsData() {
    * これだけを見るため、ここで一度だけ平坦化して各コンポーネントへ渡す。
    */
   const visitedEntries = useMemo(
-    () => flattenVisitHistory(visits).filter((entry) => entry.status === "visited"),
+    () => flattenVisitHistory(visits, "visited"),
     [visits],
   );
 
