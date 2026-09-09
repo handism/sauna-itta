@@ -37,11 +37,24 @@ export type FlatVisitHistoryEntry = VisitHistoryEntry & {
   status: "visited" | "wishlist";
 };
 
-export function flattenVisitHistory(visits: SaunaVisit[]): FlatVisitHistoryEntry[] {
+/**
+ * 訪問記録を履歴エントリ単位へ平坦化する。
+ * @param filterStatus 指定した場合、そのステータスの記録だけを対象にする
+ *   （平坦化してから絞り込むと、除外する分まで配列を作ることになるため走査中に弾く）
+ */
+export function flattenVisitHistory(
+  visits: SaunaVisit[],
+  filterStatus?: "visited" | "wishlist",
+): FlatVisitHistoryEntry[] {
   const entries: FlatVisitHistoryEntry[] = [];
 
   for (const visit of visits) {
     const status = getVisitStatus(visit);
+
+    if (filterStatus && status !== filterStatus) {
+      continue;
+    }
+
     const visitId = visit.id;
     for (const entry of getVisitHistoryEntries(visit)) {
       entries.push({

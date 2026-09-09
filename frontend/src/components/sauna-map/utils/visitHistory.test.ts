@@ -161,6 +161,47 @@ describe("flattenVisitHistory", () => {
     expect(result[3].comment).toBe("Wishlist");
     expect(result[3].status).toBe("wishlist");
   });
+
+  it("should filter visits by status when filterStatus is provided", () => {
+    const visits: SaunaVisit[] = [
+      {
+        id: "1",
+        name: "Visited Sauna 1",
+        lat: 0,
+        lng: 0,
+        comment: "Great sauna",
+        date: "2023-01-01",
+        status: "visited",
+      },
+      {
+        id: "2",
+        name: "Wishlist Sauna",
+        lat: 0,
+        lng: 0,
+        comment: "Want to go",
+        date: "2023-02-01",
+        status: "wishlist",
+      },
+      {
+        id: "3",
+        name: "Visited Sauna 2",
+        lat: 0,
+        lng: 0,
+        comment: "Awesome",
+        date: "2023-03-01",
+        status: "visited",
+      },
+    ];
+
+    const visitedResult = flattenVisitHistory(visits, "visited");
+    expect(visitedResult).toHaveLength(2);
+    expect(visitedResult[0].visitId).toBe("1");
+    expect(visitedResult[1].visitId).toBe("3");
+
+    const wishlistResult = flattenVisitHistory(visits, "wishlist");
+    expect(wishlistResult).toHaveLength(1);
+    expect(wishlistResult[0].visitId).toBe("2");
+  });
 });
 
 describe("calculateStats", () => {
