@@ -151,18 +151,8 @@ class VisitWritableTest < ActiveSupport::TestCase
       raise StandardError, "Purge failed"
     end
 
-    logger_messages = []
-    dummy_logger = Object.new
-    dummy_logger.define_singleton_method(:error) do |msg|
-      logger_messages << msg
-    end
-
-    original_logger = Rails.logger
-    begin
-      Rails.define_singleton_method(:logger) { dummy_logger }
+    logger_messages = capture_rails_logger_errors do
       @controller.send(:purge_stale_image_blobs, [ blob ])
-    ensure
-      Rails.define_singleton_method(:logger) { original_logger }
     end
 
     assert_includes logger_messages, "古い訪問画像の削除に失敗しました: StandardError: Purge failed"
