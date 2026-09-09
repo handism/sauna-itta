@@ -11,7 +11,7 @@ module Api
         # 親レコードをロックして件数確認と削除を直列化する。別タブから同時に
         # 2件の履歴を削除しても、最後の1件が消えないようにする。
         visit.with_lock do
-          if visit.visit_history_entries.count <= 1
+          if visit.visit_history_entries.size <= 1
             last_history = true
             next
           end
