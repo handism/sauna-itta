@@ -179,4 +179,17 @@ describe("useStatsData", () => {
     expect(result.current.mounted).toBe(true);
     expect(result.current.loadError).toBe("ネットワークエラー");
   });
+
+  it("初期読み込み時にError以外のエラーが発生した場合、デフォルトのloadErrorが設定されること", async () => {
+    vi.mocked(getVisitRepository).mockReturnValueOnce({
+      dataSource: "local",
+      getSession: vi.fn().mockResolvedValue({ authenticated: true, user: null, csrfToken: null }),
+      list: vi.fn().mockRejectedValue("不明なエラー"), // Not an Error object
+    } as unknown as ReturnType<typeof getVisitRepository>);
+
+    const { result } = await renderMounted();
+
+    expect(result.current.mounted).toBe(true);
+    expect(result.current.loadError).toBe("記録の読み込みに失敗しました。");
+  });
 });
