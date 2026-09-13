@@ -50,4 +50,44 @@ describe("matchesSearchKeyword", () => {
   it("returns false when keyword does not match any field", () => {
     expect(matchesSearchKeyword(visit, createSearchRegex("北海道"))).toBe(false);
   });
+
+  it("handles visits with missing optional fields without errors", () => {
+    const minimalVisit: SaunaVisit = {
+      id: "2",
+      name: "シンプルサウナ",
+      lat: 35.0,
+      lng: 138.0,
+      date: "2026-07-25",
+      comment: "",
+      // area and tags are omitted
+    };
+    expect(matchesSearchKeyword(minimalVisit, createSearchRegex("シンプル"))).toBe(true);
+    expect(matchesSearchKeyword(minimalVisit, createSearchRegex("水風呂"))).toBe(false);
+  });
+
+  it("matches keywords case-insensitively", () => {
+    const englishVisit: SaunaVisit = {
+      id: "3",
+      name: "Tokyo Sauna",
+      lat: 35.0,
+      lng: 139.0,
+      date: "2026-07-25",
+      comment: "Great SPA",
+      area: "Tokyo",
+      tags: ["RELAX"],
+    };
+    expect(matchesSearchKeyword(englishVisit, createSearchRegex("tokyo"))).toBe(true);
+    expect(matchesSearchKeyword(englishVisit, createSearchRegex("spa"))).toBe(true);
+    expect(matchesSearchKeyword(englishVisit, createSearchRegex("relax"))).toBe(true);
+  });
+
+  it("matches using complex custom RegExp objects", () => {
+    // Tests a regex that matches either "しきじ" or "サウナ" followed by any characters and "最高"
+    const complexRegex = /しきじ|サウナ.*最高/;
+    expect(matchesSearchKeyword(visit, complexRegex)).toBe(true);
+
+    // Visit doesn't match this complex pattern
+    const notMatchingRegex = /^しきじ$/;
+    expect(matchesSearchKeyword(visit, notMatchingRegex)).toBe(false);
+  });
 });
