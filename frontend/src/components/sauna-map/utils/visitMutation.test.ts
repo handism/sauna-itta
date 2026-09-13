@@ -49,6 +49,26 @@ describe("visitMutation - Pure Functions", () => {
       );
     });
 
+
+    it("日付が未指定の場合は本日の日付を設定する", () => {
+      const selected = { lat: 35.71, lng: 139.77 };
+      const formWithoutDate = { ...sampleForm, date: "" };
+      const result = createNewVisit(selected, formWithoutDate);
+
+      // getTodayDate() is used, so it should be a valid YYYY-MM-DD
+      expect(result.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(result.history?.[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    });
+
+    it("評価が未指定の場合は0を設定する", () => {
+      const selected = { lat: 35.71, lng: 139.77 };
+      // TypeScript might complain if rating isn't a number, but at runtime it can be missing/falsy
+      const formWithoutRating = { ...sampleForm, rating: 0 };
+      const result = createNewVisit(selected, formWithoutRating);
+
+      expect(result.rating).toBe(0);
+      expect(result.history?.[0].rating).toBe(0);
+    });
     it("連続して呼んでも重複しない ID を生成する", () => {
       const selected = { lat: 35.71, lng: 139.77 };
       const ids = new Set(
@@ -85,6 +105,29 @@ describe("visitMutation - Pure Functions", () => {
     });
   });
 
+
+    it("対象ID以外の訪問記録は変更しない", () => {
+      const existing: SaunaVisit[] = [
+        {
+          id: "visit-other",
+          name: "他の店",
+          lat: 36.0,
+          lng: 140.0,
+          comment: "他のコメント",
+          date: "2025-01-01",
+          status: "visited",
+          visitCount: 1,
+          history: [{ date: "2025-01-01", comment: "他", rating: 4 }],
+        },
+      ];
+
+      const selected = { lat: 35.71, lng: 139.77 };
+      const updatedList = getUpdatedVisits(existing, "visit-1", selected, sampleForm);
+
+      expect(updatedList).toHaveLength(1);
+      expect(updatedList[0]).toEqual(existing[0]);
+    });
+
   describe("getVisitsWithRemovedHistory", () => {
     it("履歴が2件以上ある場合、指定インデックスの履歴を削除し最新情報で更新する", () => {
       const existing: SaunaVisit[] = [
@@ -112,6 +155,29 @@ describe("visitMutation - Pure Functions", () => {
       expect(result[0].visitCount).toBe(1);
     });
 
+
+    it("対象ID以外の訪問記録は変更しない", () => {
+      const existing: SaunaVisit[] = [
+        {
+          id: "v1",
+          name: "サウナしきじ",
+          lat: 34.9,
+          lng: 138.4,
+          comment: "2回目",
+          date: "2026-02-01",
+          visitCount: 2,
+          history: [
+            { date: "2026-01-01", comment: "1回目", rating: 4 },
+            { date: "2026-02-01", comment: "2回目", rating: 5 },
+          ],
+        },
+      ];
+
+      // 違うIDを渡す
+      const result = getVisitsWithRemovedHistory(existing, "v2", 1);
+      expect(result).toEqual(existing);
+    });
+
     it("履歴が1件以下の場合は削除を行わない", () => {
       const existing: SaunaVisit[] = [
         {
@@ -128,6 +194,25 @@ describe("visitMutation - Pure Functions", () => {
 
       const result = getVisitsWithRemovedHistory(existing, "v1", 0);
       expect(result[0].history).toHaveLength(1);
+    });
+
+    it("履歴が存在しない訪問記録の場合でも安全に処理する", () => {
+      const existing: SaunaVisit[] = [
+        {
+          id: "v1",
+          name: "サウナしきじ",
+          lat: 34.9,
+          lng: 138.4,
+          comment: "履歴なし",
+          date: "2026-01-01",
+          visitCount: 1,
+          history: undefined,
+        },
+      ];
+
+      // 履歴がない場合は削除せずそのまま返す
+      const result = getVisitsWithRemovedHistory(existing, "v1", 0);
+      expect(result[0].history).toBeUndefined(); // historyEntriesはフォールバックを返すかもしれないが、この関数の構造として length <= 1 で return v するので undefined のまま
     });
   });
 });
