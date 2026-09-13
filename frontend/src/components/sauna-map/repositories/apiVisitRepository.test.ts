@@ -72,13 +72,18 @@ describe("ApiVisitRepository", () => {
   });
 
   it("通信自体の失敗はnetwork_errorとして案内する", async () => {
-    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+    const error = new TypeError("Failed to fetch");
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(error);
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
     const repository = new ApiVisitRepository();
 
     await expect(repository.list()).rejects.toMatchObject({
       code: "network_error",
       message: "サーバーへ接続できません。通信状態を確認してください。",
     });
+
+    expect(consoleSpy).toHaveBeenCalledWith("Failed to fetch visits:", error);
   });
 
   it("エラー本文がJSONでなくても既定のメッセージを返す", async () => {
