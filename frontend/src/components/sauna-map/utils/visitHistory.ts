@@ -263,6 +263,12 @@ export interface TagCount {
   count: number;
 }
 
+const COUNT_TAGS_CACHE_MAX_SIZE = 10;
+const countTagsCache = new Map<
+  SaunaVisit[],
+  { all?: TagCount[]; excludeWishlist?: TagCount[] }
+>();
+
 /**
  * タグごとの出現回数を、件数の多い順（同数ならタグ名の五十音順）で返す。
  * @param excludeWishlist true の場合「行きたい」の記録を集計対象から外す
@@ -271,6 +277,20 @@ export function countTags(
   visits: SaunaVisit[],
   { excludeWishlist = false }: { excludeWishlist?: boolean } = {},
 ): TagCount[] {
+  let cacheEntry = countTagsCache.get(visits);
+  if (!cacheEntry) {
+    if (countTagsCache.size >= COUNT_TAGS_CACHE_MAX_SIZE) {
+      countTagsCache.delete(countTagsCache.keys().next().value!);
+    }
+    cacheEntry = {};
+    countTagsCache.set(visits, cacheEntry);
+  }
+
+  const cacheKey = excludeWishlist ? "excludeWishlist" : "all";
+  if (cacheEntry[cacheKey]) {
+    return cacheEntry[cacheKey]!;
+  }
+
   const tagCounts = new Map<string, number>();
 
   for (const visit of visits) {
@@ -290,9 +310,12 @@ export function countTags(
     }
   }
 
-  return Array.from(tagCounts.entries())
+  const result = Array.from(tagCounts.entries())
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"))
     .map(([name, count]) => ({ name, count }));
+
+  cacheEntry[cacheKey] = result;
+  return result;
 }
 
 export function getPopularTags(visits: SaunaVisit[], limit = 5): string[] {
