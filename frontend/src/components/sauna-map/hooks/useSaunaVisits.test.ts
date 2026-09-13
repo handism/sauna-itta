@@ -118,4 +118,17 @@ describe("useSaunaVisits", () => {
     expect(showToast).toHaveBeenCalledWith("ネットワークエラー", "error");
     expect(addResult).toEqual({ success: false, newVisit: undefined });
   });
+
+  it("初期データ取得 (fetch) 時にエラーが発生した場合、loadErrorにエラーメッセージが設定されること", async () => {
+    const errorMsg = "Failed to load visits";
+    const source = repository({
+      list: vi.fn().mockRejectedValue(new Error(errorMsg)),
+    });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.loadError).toBe(errorMsg);
+    expect(result.current.visits).toEqual([]);
+    expect(source.list).toHaveBeenCalledOnce();
+  });
 });
