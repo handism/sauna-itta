@@ -324,4 +324,86 @@ describe("useVisitImportExport", () => {
     });
     expect(showToast).toHaveBeenCalledWith("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
   });
+
+  test("ファイルの読み込みに失敗した場合はエラートーストを表示する", async () => {
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, saveVisitsMock, showToast)
+    );
+
+    // FileReader をモック化してエラーを発生させる
+    const originalFileReader = window.FileReader;
+    class MockFileReader {
+      onload: () => void = () => {};
+      onerror: () => void = () => {};
+      error = new Error("Failed to read file");
+      readAsText() {
+        setTimeout(() => {
+          this.onerror();
+        }, 0);
+      }
+    }
+    Object.defineProperty(window, "FileReader", { value: MockFileReader, writable: true, configurable: true });
+
+    try {
+      const file = new File(["dummy"], "test.json", { type: "application/json" });
+      const input = document.createElement("input");
+      Object.defineProperty(input, "files", { value: [file] });
+
+      await act(async () => {
+        await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+      });
+
+      expect(showToast).toHaveBeenCalledWith("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
+    } finally {
+      window.FileReader = originalFileReader;
+    }
+  });
+
+  test("ファイルが選択されていない場合は何もしない", async () => {
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, saveVisitsMock, showToast)
+    );
+    const input = document.createElement("input");
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(showToast).not.toHaveBeenCalled();
+    expect(result.current.importing).toBe(false);
+  });
+
+  test("APIインポートが途中で失敗し、エラーが Error インスタンスでない場合のメッセージを確認する", async () => {
+    const importBatch = vi.fn()
+      .mockResolvedValueOnce({ added: 10, skipped: 0 })
+      .mockRejectedValueOnce("Not an error object");
+    const reload = vi.fn().mockResolvedValue(undefined);
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(mockVisits, undefined, showToast, importBatch, reload),
+    );
+    const imported = Array.from({ length: 15 }, (_, index) => ({
+      id: `partial-${index}`,
+      name: `Sauna ${index}`,
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+    }));
+    const file = new File([JSON.stringify(imported)], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(reload).toHaveBeenCalledOnce();
+    expect(showToast).toHaveBeenLastCalledWith(
+      "データの取り込みに失敗しました。10件は取り込み済みです。サーバーへの取り込みに失敗しました。",
+      "error",
+    );
+  });
 });
