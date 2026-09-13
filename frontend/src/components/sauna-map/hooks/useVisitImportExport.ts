@@ -50,8 +50,19 @@ export async function parseImportFile(file: File): Promise<SaunaVisit[]> {
 }
 
 export function filterNewVisits(validVisits: SaunaVisit[], existingVisits: SaunaVisit[]): { normalizedImported: SaunaVisit[]; alreadyKnown: number } {
-  const existingIds = new Set(existingVisits.map((v) => v.id));
-  const normalizedImported = normalizeVisits(validVisits.filter((v) => !existingIds.has(v.id)));
+  const existingIds = new Set<string>();
+  for (let i = 0; i < existingVisits.length; i++) {
+    existingIds.add(existingVisits[i].id);
+  }
+
+  const filtered: SaunaVisit[] = [];
+  for (let i = 0; i < validVisits.length; i++) {
+    if (!existingIds.has(validVisits[i].id)) {
+      filtered.push(validVisits[i]);
+    }
+  }
+
+  const normalizedImported = normalizeVisits(filtered);
   // 画面に出ている記録と重複した分。サーバー側で弾かれた分は importBatch の skipped に乗る
   const alreadyKnown = validVisits.length - normalizedImported.length;
   return { normalizedImported, alreadyKnown };
