@@ -40,6 +40,14 @@ class SaunaVisitTest < ActiveSupport::TestCase
     assert_equal 3, visit.visit_count
   end
 
+  test "履歴件数が旧形式の下限を上回る場合は履歴件数を訪問回数にする" do
+    visit = @user.sauna_visits.create!(name: "テスト", latitude: 35, longitude: 139, status: "visited", legacy_visit_count: 1)
+    visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 1), comment: "1回目")
+    visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 2), comment: "2回目")
+    visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 3), comment: "3回目")
+    assert_equal 3, visit.visit_count
+  end
+
   test "記録削除時に履歴写真のblobも削除する" do
     visit = @user.sauna_visits.create!(name: "テスト", latitude: 35, longitude: 139, status: "visited")
     entry = visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 1), comment: "写真あり")
