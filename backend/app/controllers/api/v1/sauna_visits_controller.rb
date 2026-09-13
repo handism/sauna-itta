@@ -13,15 +13,7 @@ module Api
         visit = current_user.sauna_visits.build
         attributes = visit_params
 
-        SaunaVisit.transaction do
-          assign_visit_attributes(visit, attributes)
-          entry = apply_history(visit, attributes, append: true, apply_image: false)
-          visit.save!
-          raise ActiveRecord::RecordInvalid.new(entry) unless entry.valid?
-
-          apply_history_image(entry, attributes, [])
-          entry.save!
-        end
+        save_visit_in_transaction(visit, attributes, append: true)
         render json: { saunaVisit: serialized(visit) }, status: :created
       rescue ActiveRecord::RecordInvalid => error
         render_validation_error(error.record)
@@ -34,21 +26,13 @@ module Api
         attributes = visit_params
         stale_image_blobs = []
 
-        SaunaVisit.transaction do
-          visit.lock_version = attributes[:lockVersion] if attributes[:lockVersion].present?
-          assign_visit_attributes(visit, attributes)
-          entry = apply_history(
-            visit,
-            attributes,
-            append: ActiveModel::Type::Boolean.new.cast(attributes[:appendHistory]),
-            apply_image: false
-          )
-          visit.save!
-          raise ActiveRecord::RecordInvalid.new(entry) unless entry.valid?
-
-          apply_history_image(entry, attributes, stale_image_blobs)
-          entry.save!
-        end
+        visit.lock_version = attributes[:lockVersion] if attributes[:lockVersion].present?
+        save_visit_in_transaction(
+          visit,
+          attributes,
+          append: ActiveModel::Type::Boolean.new.cast(attributes[:appendHistory]),
+          stale_image_blobs: stale_image_blobs
+        )
         purge_stale_image_blobs(stale_image_blobs)
         render json: { saunaVisit: serialized(visit) }
       rescue ActiveRecord::RecordInvalid => error
@@ -63,6 +47,18 @@ module Api
       end
 
       private
+
+      def save_visit_in_transaction(visit, attributes, append:, stale_image_blobs: [])
+        SaunaVisit.transaction do
+          assign_visit_attributes(visit, attributes)
+          entry = apply_history(visit, attributes, append: append, apply_image: false)
+          visit.save!
+          raise ActiveRecord::RecordInvalid.new(entry) unless entry.valid?
+
+          apply_history_image(entry, attributes, stale_image_blobs)
+          entry.save!
+        end
+      end
 
       def scoped_visit
         current_user.sauna_visits.find_by!(external_id: params[:id])
