@@ -389,13 +389,19 @@ describe("getSubmitBlockedReason", () => {
     expect(getSubmitBlockedReason(null, "サウナしきじ", false)).toBe(
       "地図上をクリックして場所を選択してください",
     );
+    expect(getSubmitBlockedReason(undefined, "サウナしきじ", false)).toBe(
+      "地図上をクリックして場所を選択してください",
+    );
   });
 
-  it("returns reason when name is empty", () => {
+  it("returns reason when name is empty or undefined", () => {
     expect(getSubmitBlockedReason(sampleLocation, "", false)).toBe(
       "サウナ名を入力してください",
     );
     expect(getSubmitBlockedReason(sampleLocation, "   ", false)).toBe(
+      "サウナ名を入力してください",
+    );
+    expect(getSubmitBlockedReason(sampleLocation, undefined, false)).toBe(
       "サウナ名を入力してください",
     );
   });
