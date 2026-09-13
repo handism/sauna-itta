@@ -68,15 +68,27 @@ export async function performBatchImport(
   let skipped = alreadyKnown;
   try {
     const total = normalizedImported.length;
+    const totalChunks = Math.ceil(total / CHUNK_SIZE);
+    let completedChunks = 0;
+
+    const chunks = [];
     for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
-      const result = await importBatch(normalizedImported.slice(offset, offset + CHUNK_SIZE));
-      added += result.added;
-      skipped += result.skipped;
-      // 最終チャンクの結果は完了トーストで伝えるため、残りがある間だけ途中経過を出す
-      if (offset + CHUNK_SIZE < total) {
-        showToast?.(`${added}/${total}件を取り込み中です...`, "info");
-      }
+      chunks.push(normalizedImported.slice(offset, offset + CHUNK_SIZE));
     }
+
+    await Promise.all(
+      chunks.map(async (chunk) => {
+        const result = await importBatch(chunk);
+        added += result.added;
+        skipped += result.skipped;
+        completedChunks++;
+
+        // 最終チャンクの結果は完了トーストで伝えるため、残りがある間だけ途中経過を出す
+        if (completedChunks < totalChunks) {
+          showToast?.(`${added}/${total}件を取り込み中です...`, "info");
+        }
+      })
+    );
   } catch (error) {
     let message = error instanceof Error ? error.message : "サーバーへの取り込みに失敗しました。";
     try {
