@@ -56,6 +56,29 @@ class SaunaVisitTest < ActiveSupport::TestCase
     assert_not ActiveStorage::Blob.exists?(blob_id)
   end
 
+  test "capture_history_image_blobsは画像が添付された履歴の写真blobのみを抽出する" do
+    visit = @user.sauna_visits.create!(name: "テスト", latitude: 35, longitude: 139, status: "visited")
+
+    entry1 = visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 1), comment: "写真あり")
+    png1 = Base64.decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+    entry1.image.attach(io: StringIO.new(png1), filename: "visit1.png", content_type: "image/png")
+
+    entry2 = visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 2), comment: "写真なし")
+
+    entry3 = visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 3), comment: "写真あり2")
+    png3 = Base64.decode64("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=")
+    entry3.image.attach(io: StringIO.new(png3), filename: "visit3.png", content_type: "image/png")
+
+    visit.send(:capture_history_image_blobs)
+
+    blobs = visit.instance_variable_get(:@history_image_blobs)
+
+    assert_not_nil blobs
+    assert_equal 2, blobs.size
+    assert_includes blobs, entry1.image.blob
+    assert_includes blobs, entry3.image.blob
+  end
+
   test "記録削除がロールバックされたときは履歴写真のblobを残す" do
     visit = @user.sauna_visits.create!(name: "テスト", latitude: 35, longitude: 139, status: "visited")
     entry = visit.visit_history_entries.create!(visited_on: Date.new(2026, 8, 1), comment: "写真あり")
