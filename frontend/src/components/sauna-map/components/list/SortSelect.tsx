@@ -90,36 +90,45 @@ function useSortSelectBehavior(value: VisitFilters["sort"], onChange: (value: Vi
 
   const handleListKeyDown = (e: React.KeyboardEvent<HTMLUListElement>) => {
     const lastIndex = SORT_OPTIONS.length - 1;
-    switch (e.key) {
-      case "ArrowDown":
+
+    const keyHandlers: Record<string, () => void> = {
+      ArrowDown: () => {
         e.preventDefault();
         setActiveIndex((prev) => (prev >= lastIndex ? 0 : prev + 1));
-        break;
-      case "ArrowUp":
+      },
+      ArrowUp: () => {
         e.preventDefault();
         setActiveIndex((prev) => (prev <= 0 ? lastIndex : prev - 1));
-        break;
-      case "Home":
+      },
+      Home: () => {
         e.preventDefault();
         setActiveIndex(0);
-        break;
-      case "End":
+      },
+      End: () => {
         e.preventDefault();
         setActiveIndex(lastIndex);
-        break;
-      case "Enter":
-      case " ":
+      },
+      Enter: () => {
         e.preventDefault();
         handleSelect(SORT_OPTIONS[activeIndex].value);
-        break;
-      case "Escape":
+      },
+      " ": () => {
+        e.preventDefault();
+        handleSelect(SORT_OPTIONS[activeIndex].value);
+      },
+      Escape: () => {
         e.preventDefault();
         closeMenu(true);
-        break;
-      case "Tab":
+      },
+      Tab: () => {
         // 確定せずに閉じる。フォーカスは Tab の既定動作に委ねる
         closeMenu(false);
-        break;
+      },
+    };
+
+    const handler = keyHandlers[e.key];
+    if (handler) {
+      handler();
     }
   };
 
