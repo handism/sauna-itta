@@ -136,12 +136,12 @@ class VisitWritableTest < ActiveSupport::TestCase
     assert_empty stale_blobs
   end
 
-  test "apply_history_image raises ArgumentError if :image is invalid URL" do
+  test "apply_history_image ignores invalid URL without raising error or modifying attachment" do
     stale_blobs = []
-    error = assert_raises(ArgumentError) do
-      @controller.send(:apply_history_image, @entry, { image: "http://example.com/image.jpg" }, stale_blobs)
-    end
-    assert_equal "画像URLが不正です。", error.message
+    @controller.send(:apply_history_image, @entry, { image: "http://example.com/image.jpg" }, stale_blobs)
+
+    assert_not @entry.image.attached?
+    assert_empty stale_blobs
   end
 
   test "purge_stale_image_blobs handles StandardError during purge_later and logs the error" do

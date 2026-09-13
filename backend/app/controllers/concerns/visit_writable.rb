@@ -28,10 +28,20 @@ module VisitWritable
   end
 
   def apply_history_image(entry, attributes, stale_image_blobs)
-    return unless attributes.key?(:image)
+    return unless attributes.key?(:image) || attributes.key?('image')
+    image_value = attributes[:image] || attributes['image']
 
-    stale_blob = apply_image(entry, attributes[:image])
-    stale_image_blobs << stale_blob if stale_blob
+    if image_value.blank? || image_value == 'DELETE'
+      stale_image_blobs << entry.image.blob if entry.image.attached?
+      entry.image.purge
+    elsif image_value.is_a?(String) && image_value.start_with?('data:')
+      stale_blob = apply_image(entry, image_value)
+      stale_image_blobs << stale_blob if stale_blob
+    elsif image_value.is_a?(String) && image_value.start_with?('/api/v1/images/')
+      # No action needed, keep existing image
+    else
+      # Invalid URL or unexpected format, do nothing
+    end
   end
 
   def apply_image(entry, value)
