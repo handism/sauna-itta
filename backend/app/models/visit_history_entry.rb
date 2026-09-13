@@ -2,7 +2,7 @@ class VisitHistoryEntry < ApplicationRecord
   ALLOWED_IMAGE_TYPES = %w[image/jpeg image/png image/webp image/gif].freeze
   MAX_IMAGE_BYTES = 1.megabyte
 
-  belongs_to :sauna_visit
+  belongs_to :sauna_visit, touch: true
   has_one_attached :image
 
   validates :public_id, :visited_on, presence: true

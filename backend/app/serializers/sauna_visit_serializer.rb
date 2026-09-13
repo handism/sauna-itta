@@ -4,23 +4,25 @@ class SaunaVisitSerializer
   end
 
   def as_json(*)
-    latest = @visit.visit_history_entries[-1]
-    {
-      id: @visit.external_id,
-      name: @visit.name,
-      lat: @visit.latitude.to_f,
-      lng: @visit.longitude.to_f,
-      area: @visit.area,
-      status: @visit.status,
-      tags: @visit.tags,
-      visitCount: @visit.visit_count,
-      lockVersion: @visit.lock_version,
-      date: latest&.visited_on&.iso8601 || "",
-      comment: latest&.comment || "",
-      rating: latest&.rating&.to_f,
-      image: image_url(latest),
-      history: @visit.visit_history_entries.map { |entry| history_json(entry) }
-    }.compact
+    Rails.cache.fetch([ "sauna_visit", @visit.cache_key_with_version ]) do
+      latest = @visit.visit_history_entries[-1]
+      {
+        id: @visit.external_id,
+        name: @visit.name,
+        lat: @visit.latitude.to_f,
+        lng: @visit.longitude.to_f,
+        area: @visit.area,
+        status: @visit.status,
+        tags: @visit.tags,
+        visitCount: @visit.visit_count,
+        lockVersion: @visit.lock_version,
+        date: latest&.visited_on&.iso8601 || "",
+        comment: latest&.comment || "",
+        rating: latest&.rating&.to_f,
+        image: image_url(latest),
+        history: @visit.visit_history_entries.map { |entry| history_json(entry) }
+      }.compact
+    end
   end
 
   private
