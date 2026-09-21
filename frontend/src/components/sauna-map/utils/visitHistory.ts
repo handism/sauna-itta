@@ -205,16 +205,31 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
         prefectureSet.add(pref);
       }
 
-      const history = getVisitHistoryEntries(visit);
-      for (const entry of history) {
-        if (firstDate === null || entry.date < firstDate) {
-          firstDate = entry.date;
+      const history = visit.history;
+      if (Array.isArray(history) && history.length > 0) {
+        for (const entry of history) {
+          if (firstDate === null || entry.date < firstDate) {
+            firstDate = entry.date;
+          }
+          if (lastDate === null || entry.date > lastDate) {
+            lastDate = entry.date;
+          }
+
+          const rating = entry.rating ?? 0;
+          if (rating > 0) {
+            ratingSum += rating;
+            ratingCount++;
+          }
         }
-        if (lastDate === null || entry.date > lastDate) {
-          lastDate = entry.date;
+      } else {
+        if (firstDate === null || visit.date < firstDate) {
+          firstDate = visit.date;
+        }
+        if (lastDate === null || visit.date > lastDate) {
+          lastDate = visit.date;
         }
 
-        const rating = entry.rating ?? 0;
+        const rating = visit.rating ?? 0;
         if (rating > 0) {
           ratingSum += rating;
           ratingCount++;
