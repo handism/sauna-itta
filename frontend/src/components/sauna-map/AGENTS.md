@@ -15,6 +15,7 @@
 - **地図のディープリンク選択は `queueMicrotask` 経由で行うこと**: 統計ページ等から `/?id=xxx` で遷移した際の初期自動選択（`useMapViewState`）は、カスケードレンダリング防止ルール (`eslint react-hooks/set-state-in-effect`) を満たすため `queueMicrotask` 内で `setSelectedId` / `setMapTargetOverride` を呼び出し、モバイル時はシートを最小化 (`"min"`) します。
 - **モバイルのシート位置制御は Context 側に集約**: 編集の開始／終了に伴う `snapPosition` の切り替えは `MapStateContext` の `handleEditVisit` / `handleCancelEditing` / `handleEditingFinished` が担います。画面コンポーネント側で `startEditing` + `setSnapPosition` を組み合わせて再実装しないでください。
 - **編集の終了は必ず `MapStateContext` 経由にすること**: `VisitForm` のキャンセルは `EditorContext` の `cancelEditing` ではなく `handleCancelEditing()` を呼びます。保存の完了は `handleSubmit(e, handleEditingFinished)` のように完了コールバックを渡して伝えること（`EditorProvider` は `MapStateProvider` の親でシート位置を直接触れないため、`useVisitForm` の `handleSubmit` は保存成功時だけ `onCompleted` を呼ぶ設計にしてあります）。ここを `editor.cancelEditing()` の直接呼び出しに戻すと、モバイルで保存・キャンセルしてもシートが `full` のまま地図が隠れます。
+- **保存失敗のトーストを二重に出さないこと**: CRUD の失敗通知は `useSaunaVisits` の `runMutation` がRepository のエラー文言（409 競合・通信障害・localStorage の容量超過）で出す唯一の担当です。`useVisitCrud` 側で `if (!success) showToast(...)` を足すと、`useToast` は単一 state のため後勝ちで上書きされ、競合や通信障害まで別の原因にすり替わって表示されます（`useVisitCrud.test.ts` の「トーストを重ねないこと」が検査しています）。成功時の通知だけ呼び出し側で行うこと。
 - **訪問履歴の削除は確認後だけ実行すること**: `VisitHistorySection` は削除候補の index をローカル state に保持し、`ConfirmModal` で対象日を確認してから `onDeleteEntry` を呼びます。削除ボタンから `removeHistoryEntry()` を直接呼ぶ実装へ戻すと、スクロール中の誤タップで履歴が即時消去されます。
 
 ## 2. ディレクトリ ＆ コンポーネント構造
