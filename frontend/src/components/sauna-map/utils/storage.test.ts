@@ -42,21 +42,15 @@ describe("readStorage / writeStorage", () => {
     expect(readStorage("missing")).toBeNull();
   });
 
-  it("読み取りが例外になっても落ちず、警告を出して null を返すこと", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("読み取りが例外になっても落ちずに null を返すこと", () => {
     mockLocalStorage.getItem.mockImplementation(() => {
       throw new Error("SecurityError");
     });
 
     expect(readStorage("key")).toBeNull();
-    expect(warn).toHaveBeenCalledWith(
-      'Failed to read "key" from localStorage:',
-      expect.any(Error),
-    );
   });
 
   it("読み取り例外時の戻り値を指定できること（テーマ判定がこれに依存している）", () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
     mockLocalStorage.getItem.mockImplementation(() => {
       throw new Error("SecurityError");
     });
@@ -93,14 +87,9 @@ describe("readStorage / writeStorage", () => {
       configurable: true,
     });
 
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(readStorage("key")).toBeNull();
-    expect(warn).toHaveBeenCalledWith(
-      'Failed to read "key" from localStorage:',
-      expect.any(Error),
-    );
 
     expect(writeStorage("key", "value")).toBe(false);
     expect(error).toHaveBeenCalledWith(
@@ -115,14 +104,9 @@ describe("readStorage / writeStorage", () => {
       configurable: true,
     });
 
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(readStorage("key")).toBeNull();
-    expect(warn).toHaveBeenCalledWith(
-      'Failed to read "key" from localStorage:',
-      expect.any(TypeError),
-    );
 
     expect(writeStorage("key", "value")).toBe(false);
     expect(error).toHaveBeenCalledWith(

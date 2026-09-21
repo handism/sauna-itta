@@ -568,8 +568,7 @@ describe("getInitialVisits", () => {
     for (const key in store) delete store[key];
   });
 
-  it("should catch localStorage errors when reading visits, log warning and return baseVisits", () => {
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("should catch localStorage errors when reading visits and return baseVisits", () => {
     vi.spyOn(mockLocalStorage, "getItem").mockImplementation(() => {
       throw new Error("QuotaExceededError");
     });
@@ -577,10 +576,6 @@ describe("getInitialVisits", () => {
     const visits = getInitialVisits();
     expect(Array.isArray(visits)).toBe(true);
     expect(visits.length).toBeGreaterThan(0);
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      'Failed to read "sauna-itta_visits" from localStorage:',
-      expect.any(Error),
-    );
   });
 
   it("should catch JSON.parse errors, log error and return baseVisits", () => {

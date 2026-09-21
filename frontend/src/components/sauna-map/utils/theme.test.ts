@@ -56,17 +56,12 @@ describe("getInitialTheme", () => {
     vi.stubGlobal("localStorage", mockLocalStorage);
   });
 
-  it("should catch localStorage errors and log warning, returning 'dark'", () => {
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("should catch localStorage errors and return 'dark'", () => {
     vi.spyOn(mockLocalStorage, "getItem").mockImplementation(() => {
       throw new Error("SecurityError: Access denied");
     });
 
     expect(getInitialTheme()).toBe("dark");
-    expect(consoleWarnSpy).toHaveBeenCalledWith(
-      `Failed to read "${THEME_STORAGE_KEY}" from localStorage:`,
-      expect.any(Error),
-    );
   });
 });
 

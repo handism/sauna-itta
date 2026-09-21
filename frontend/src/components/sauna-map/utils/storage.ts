@@ -18,8 +18,7 @@ export function readStorage(key: string, onErrorValue: string | null = null): st
   }
   try {
     return localStorage.getItem(key);
-  } catch (error) {
-    console.warn(`Failed to read "${key}" from localStorage:`, error);
+  } catch {
     return onErrorValue;
   }
 }
