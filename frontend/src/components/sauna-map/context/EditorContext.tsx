@@ -67,7 +67,7 @@ const EditorFormContext = createContext<EditorFormContextType | null>(null);
 const EditorStateContext = createContext<EditorStateContextType | null>(null);
 const EditorActionsContext = createContext<EditorActionsContextType | null>(null);
 
-export function EditorProvider({ children }: { children: ReactNode }) {
+export function useEditorContextValues() {
   const { isMobile } = useSaunaViewport();
   const { showToast, openDeleteConfirm, closeDeleteConfirm } =
     useSaunaUIActions();
@@ -216,6 +216,12 @@ export function EditorProvider({ children }: { children: ReactNode }) {
       startCreate,
     ],
   );
+
+  return { stateValue, actionsValue, formValue };
+}
+
+export function EditorProvider({ children }: { children: ReactNode }) {
+  const { stateValue, actionsValue, formValue } = useEditorContextValues();
 
   return (
     <EditorStateContext.Provider value={stateValue}>
