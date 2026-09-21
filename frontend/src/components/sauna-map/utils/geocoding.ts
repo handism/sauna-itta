@@ -121,7 +121,6 @@ export async function searchLocation(
     if (error instanceof Error && error.name === "AbortError") {
       return [];
     }
-    console.error("Geocoding search failed:", error);
     throw error;
   }
 }
