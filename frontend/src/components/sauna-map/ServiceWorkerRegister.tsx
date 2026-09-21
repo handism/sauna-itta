@@ -16,9 +16,7 @@ export function ServiceWorkerRegister() {
     const registerServiceWorker = () => {
       navigator.serviceWorker
         .register(swUrl, { scope: `${basePath}/` })
-        .catch((err) => {
-          console.warn("ServiceWorker registration failed:", err);
-        });
+        .catch(() => {});
     };
 
     if (document.readyState === "complete") {

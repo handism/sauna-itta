@@ -41,31 +41,4 @@ describe("ServiceWorkerRegister", () => {
 
     expect(registerMock).toHaveBeenCalledWith("/sauna-itta/sw.js", { scope: "/sauna-itta/" });
   });
-
-  it("logs a warning when service worker registration fails", async () => {
-    const error = new Error("Registration failed");
-    const registerMock = vi.fn().mockRejectedValue(error);
-    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    Object.defineProperty(global, "navigator", {
-      value: {
-        serviceWorker: {
-          register: registerMock,
-        },
-      },
-      writable: true,
-    });
-
-    render(<ServiceWorkerRegister />);
-
-    // Dispatch load event to trigger registration callback
-    window.dispatchEvent(new Event("load"));
-
-    // Allow promise rejection to propagate
-    await new Promise(process.nextTick);
-
-    expect(consoleWarnSpy).toHaveBeenCalledWith("ServiceWorker registration failed:", error);
-
-    consoleWarnSpy.mockRestore();
-  });
 });
