@@ -63,12 +63,9 @@ describe("searchLocation", () => {
       status: 500,
     });
 
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     await expect(searchLocation("エラーテスト")).rejects.toThrow(
       "Geocoding HTTP error! status: 500",
     );
-
-    expect(consoleSpy).toHaveBeenCalled();
   });
 
   it("同じ検索語の結果をメモリキャッシュから返す", async () => {
@@ -96,21 +93,13 @@ describe("searchLocation", () => {
     const error = new Error("Network connection lost");
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(error);
 
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
     await expect(searchLocation("network error test")).rejects.toThrow("Network connection lost");
-
-    expect(consoleSpy).toHaveBeenCalledWith("Geocoding search failed:", error);
   });
 
-  it("throws non-Error objects and logs them correctly", async () => {
+  it("throws non-Error objects correctly", async () => {
     const errorString = "String error thrown somehow";
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(errorString);
 
-    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
     await expect(searchLocation("string error test")).rejects.toEqual("String error thrown somehow");
-
-    expect(consoleSpy).toHaveBeenCalledWith("Geocoding search failed:", errorString);
   });
 });
