@@ -65,17 +65,12 @@ describe("readStorage / writeStorage", () => {
     expect(readStorage("key", "dark")).toBe("dark");
   });
 
-  it("書き込みが例外になったら false を返し、エラーとして記録すること", () => {
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+  it("書き込みが例外になったら false を返すこと", () => {
     mockLocalStorage.setItem.mockImplementation(() => {
       throw new Error("QuotaExceeded");
     });
 
     expect(writeStorage("key", "value")).toBe(false);
-    expect(error).toHaveBeenCalledWith(
-      'Failed to save "key" to localStorage:',
-      expect.any(Error),
-    );
   });
 
   it("localStorage が存在しない環境（SSR）でも例外にならないこと", () => {
@@ -94,7 +89,6 @@ describe("readStorage / writeStorage", () => {
     });
 
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(readStorage("key")).toBeNull();
     expect(warn).toHaveBeenCalledWith(
@@ -103,10 +97,6 @@ describe("readStorage / writeStorage", () => {
     );
 
     expect(writeStorage("key", "value")).toBe(false);
-    expect(error).toHaveBeenCalledWith(
-      'Failed to save "key" to localStorage:',
-      expect.any(Error),
-    );
   });
 
   it("localStorage が undefined の環境でも落ちないこと", () => {
@@ -116,7 +106,6 @@ describe("readStorage / writeStorage", () => {
     });
 
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
     expect(readStorage("key")).toBeNull();
     expect(warn).toHaveBeenCalledWith(
@@ -125,9 +114,5 @@ describe("readStorage / writeStorage", () => {
     );
 
     expect(writeStorage("key", "value")).toBe(false);
-    expect(error).toHaveBeenCalledWith(
-      'Failed to save "key" to localStorage:',
-      expect.any(TypeError),
-    );
   });
 });

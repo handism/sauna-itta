@@ -32,9 +32,7 @@ export function writeStorage(key: string, value: string): boolean {
   try {
     localStorage.setItem(key, value);
     return true;
-  } catch (error) {
-    // 書き込み失敗は記録が残らないことを意味するため、読み取り失敗より重く扱う
-    console.error(`Failed to save "${key}" to localStorage:`, error);
+  } catch {
     return false;
   }
 }

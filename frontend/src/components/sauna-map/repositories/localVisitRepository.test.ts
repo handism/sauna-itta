@@ -144,7 +144,6 @@ describe("LocalVisitRepository", () => {
   it("保存に失敗した場合は理由の分かるエラーを投げる", async () => {
     seed([existing]);
     // 容量超過時に localStorage が例外を投げる状況を再現する
-    const error = vi.spyOn(console, "error").mockImplementation(() => {});
     mockLocalStorage.setItem.mockImplementation(() => {
       throw new Error("QuotaExceededError");
     });
@@ -153,7 +152,6 @@ describe("LocalVisitRepository", () => {
       "ブラウザへの保存に失敗しました。",
     );
     await expect(repository.delete("existing-1")).rejects.toThrow("ブラウザへの保存に失敗しました。");
-    expect(error).toHaveBeenCalled();
     mockLocalStorage.setItem.mockImplementation((key: string, value: string) => {
       store[key] = value;
     });
