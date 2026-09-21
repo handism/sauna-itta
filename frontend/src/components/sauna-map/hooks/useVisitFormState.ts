@@ -59,7 +59,6 @@ export function useVisitFormState({
         const base64 = await compressAndGetBase64(file);
         setForm((prev) => ({ ...prev, image: base64 }));
       } catch (error) {
-        console.error(error);
         showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
       } finally {
         setImageUploading(false);
