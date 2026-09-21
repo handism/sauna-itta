@@ -273,22 +273,19 @@ export function countTags(
 ): TagCount[] {
   const tagCounts = new Map<string, number>();
 
-  for (const visit of visits) {
-    if (excludeWishlist && isWishlist(visit)) {
-      continue;
-    }
-
-    if (!Array.isArray(visit.tags)) {
-      continue;
-    }
-
-    for (const tag of visit.tags) {
+  visits
+    .flatMap((visit) => {
+      if (excludeWishlist && isWishlist(visit)) {
+        return [];
+      }
+      return Array.isArray(visit.tags) ? visit.tags : [];
+    })
+    .forEach((tag) => {
       const trimmed = tag.trim();
       if (trimmed) {
         tagCounts.set(trimmed, (tagCounts.get(trimmed) ?? 0) + 1);
       }
-    }
-  }
+    });
 
   return Array.from(tagCounts.entries())
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"))
