@@ -96,6 +96,45 @@ describe("useVisitCrud", () => {
     expect(options.closeDeleteConfirm).toHaveBeenCalled();
   });
 
+  /*
+   * 保存・削除の失敗は useSaunaVisits の runMutation が Repository のエラー文言で通知済み。
+   * Toast は単一 state のため、ここで重ねると後勝ちで上書きされ、409 競合や通信障害まで
+   * 別の原因（保存容量）にすり替わって表示される。
+   */
+  it("handleSubmit の保存失敗時はトーストを重ねないこと", async () => {
+    const options = {
+      ...defaultOptions,
+      addVisit: vi.fn().mockResolvedValue({ success: false }),
+    };
+    mockForm.name = "サウナ北欧";
+    const { result } = renderHook(() => useVisitCrud(options));
+
+    await act(async () => {
+      const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      await result.current.handleSubmit(e);
+    });
+
+    expect(options.addVisit).toHaveBeenCalled();
+    expect(options.showToast).not.toHaveBeenCalled();
+  });
+
+  it("confirmDelete の削除失敗時はトーストを重ねず、確認モーダルは閉じること", async () => {
+    const options = {
+      ...defaultOptions,
+      editingId: "v1",
+      deleteVisit: vi.fn().mockResolvedValue({ success: false }),
+    };
+    const { result } = renderHook(() => useVisitCrud(options));
+
+    await act(async () => {
+      await result.current.confirmDelete();
+    });
+
+    expect(options.deleteVisit).toHaveBeenCalledWith("v1");
+    expect(options.showToast).not.toHaveBeenCalled();
+    expect(options.closeDeleteConfirm).toHaveBeenCalled();
+  });
+
   it("handleSubmit でサウナ名未入力時にバリデーションエラーのトーストが表示され登録がキャンセルされること", async () => {
     const { result } = renderHook(() => useVisitCrud(defaultOptions));
 

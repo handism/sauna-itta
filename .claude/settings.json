@@ -18,7 +18,12 @@
       "Bash(bundle exec *)",
       "Bash(git branch *)",
       "Bash(git rm *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(rm -rf frontend/.next)",
+      "Bash(rm -rf frontend/out)",
+      "Bash(rm -rf frontend/.next frontend/out)",
+      "Bash(colima status)",
+      "Bash(colima start)"
     ]
   }
 }

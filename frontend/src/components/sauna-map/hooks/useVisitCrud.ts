@@ -2,9 +2,6 @@ import { useCallback, FormEvent, MutableRefObject } from "react";
 import { VisitFormState, LatLng, VisitHistoryEntry } from "../types";
 import { validateVisitForm } from "../utils";
 
-const STORAGE_ERROR_MSG =
-  "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
-
 export interface UseVisitCrudOptions {
   editingId: string | null;
   selectedLocation: LatLng | null;
@@ -44,9 +41,10 @@ export function useVisitCrud({
   const confirmDelete = useCallback(async () => {
     if (!editingId) return;
     const { success } = await deleteVisit(editingId);
-    if (!success) {
-      showToast(STORAGE_ERROR_MSG, "error");
-    } else {
+    // 失敗時のトーストは useSaunaVisits の runMutation が Repository のエラーで既に出している。
+    // ここで重ねると、Toast は単一 state のため後勝ちで上書きされ、
+    // 409 競合や通信障害まで保存容量の話にすり替わる。成功時だけ通知すること。
+    if (success) {
       showToast("記録を削除しました。", "success");
     }
     closeDeleteConfirm();
@@ -82,10 +80,8 @@ export function useVisitCrud({
         success = result.success;
       }
 
-      if (!success) {
-        showToast(STORAGE_ERROR_MSG, "error");
-        return;
-      }
+      // 失敗時のトーストは runMutation が Repository のエラーで既に出している（上書きしないこと）
+      if (!success) return;
 
       cancelEditing(true);
       onCompleted?.();
