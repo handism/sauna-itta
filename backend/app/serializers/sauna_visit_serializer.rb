@@ -36,7 +36,7 @@ class SaunaVisitSerializer
   end
 
   def image_url(entry)
-    return unless entry&.image&.attached?
-    "/api/v1/images/#{entry.image.blob.signed_id}"
+    return unless entry&.image_attachment.present?
+    "/api/v1/images/#{entry.image_attachment.blob.signed_id}"
   end
 end
