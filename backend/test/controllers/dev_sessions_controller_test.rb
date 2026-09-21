@@ -20,7 +20,7 @@ class DevSessionsControllerTest < ActionDispatch::IntegrationTest
 
   def with_rails_env(environment)
     original_env = Rails.env
-    Rails.env = environment
+    Rails.env = ActiveSupport::StringInquirer.new(environment)
     yield
   ensure
     Rails.env = original_env
