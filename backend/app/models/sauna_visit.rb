@@ -27,7 +27,7 @@ class SaunaVisit < ApplicationRecord
   end
 
   def capture_history_image_blobs
-    @history_image_blobs = visit_history_entries.filter_map do |entry|
+    @history_image_blobs = visit_history_entries.includes(image_attachment: :blob).filter_map do |entry|
       entry.image.blob if entry.image.attached?
     end
   end
