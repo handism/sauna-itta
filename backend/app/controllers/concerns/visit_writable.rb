@@ -51,11 +51,12 @@ module VisitWritable
   end
 
   def purge_stale_image_blobs(blobs)
-    blobs.uniq(&:id).each do |blob|
-      blob.purge_later
-    rescue StandardError => error
-      Rails.logger.error("古い訪問画像の削除に失敗しました: #{error.class}: #{error.message}")
-    end
+    return if blobs.empty?
+
+    jobs = blobs.uniq(&:id).map { |blob| ActiveStorage::PurgeJob.new(blob) }
+    ActiveJob.perform_all_later(jobs)
+  rescue StandardError => error
+    Rails.logger.error("古い訪問画像の削除に失敗しました: #{error.class}: #{error.message}")
   end
 
   # 書き込み後の再読み込み。SaunaVisitSerializer は履歴ごとに image を参照するため、

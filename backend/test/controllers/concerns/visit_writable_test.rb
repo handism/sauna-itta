@@ -144,17 +144,20 @@ class VisitWritableTest < ActiveSupport::TestCase
     assert_equal "画像URLが不正です。", error.message
   end
 
-  test "purge_stale_image_blobs handles StandardError during purge_later and logs the error" do
-    blob = Object.new
-    def blob.id; 1; end
-    def blob.purge_later
-      raise StandardError, "Purge failed"
-    end
+  test "purge_stale_image_blobs handles StandardError during perform_all_later and logs the error" do
+    blob = ActiveStorage::Blob.new(id: 1)
 
-    logger_messages = capture_rails_logger_errors do
-      @controller.send(:purge_stale_image_blobs, [ blob ])
-    end
+    # ActiveJob.perform_all_later (or mock it)
+    original_method = ActiveJob.method(:perform_all_later)
+    begin
+      ActiveJob.define_singleton_method(:perform_all_later) { |*| raise StandardError, "Perform failed" }
+      logger_messages = capture_rails_logger_errors do
+        @controller.send(:purge_stale_image_blobs, [ blob ])
+      end
 
-    assert_includes logger_messages, "古い訪問画像の削除に失敗しました: StandardError: Purge failed"
+      assert_includes logger_messages, "古い訪問画像の削除に失敗しました: StandardError: Perform failed"
+    ensure
+      ActiveJob.define_singleton_method(:perform_all_later, &original_method)
+    end
   end
 end
