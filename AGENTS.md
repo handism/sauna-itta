@@ -46,6 +46,7 @@
 
 - APIインポートは最大10件のチャンクを維持し、既存`external_id`をスキップして再実行可能にします。途中のチャンクで失敗した場合は必ず再読み込みし、確定済み件数とRepositoryのエラー理由を利用者へ通知します。JSON形式エラーとして一律表示しないでください。JSONエクスポートは両モードで維持します。
 - インポートの結果は `ImportResult` の `added` と `skipped` を両方とも利用者へ伝えます。チャンクごとの途中経過トーストは残りのチャンクがある間だけ出し、最後のチャンクの結果は完了トーストにまとめること（チャンク数と同じ回数トーストを出すと、大量取り込みで通知が連続します）。`skipped` にはサーバーが弾いた重複と、画面上の記録と重複してリクエスト前に除外した分の両方を含めます。
+- 履歴エントリを1件削除したときの訪問回数は、両モードとも残りの履歴件数まで切り下げます（localは`getVisitsWithRemovedHistory`、apiは`HistoryEntriesController#truncate_legacy_visit_count`）。旧形式から引き継いだ回数（localの`visitCount`／apiの`legacy_visit_count`）を維持する実装へ戻すと、インポートした記録だけ「履歴を消したのに訪問回数が減らない」状態がモード間で食い違います。
 - Google OAuthのrequest phaseはPOSTだけを許可し、`GET /api/v1/session`のCSRFトークンを`authenticity_token`として送信します。通常リンクやGET許可へ戻さないでください。
 - Playwright E2Eは開発者が`frontend/`で任意実行する確認であり、GitHub Actionsの必須CIへ追加しません。通常CIの所要時間を増やさず、主要導線を実ブラウザで確認したいときに`npm run test:e2e`を実行します。
 

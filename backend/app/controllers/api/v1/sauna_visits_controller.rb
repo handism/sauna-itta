@@ -15,10 +15,6 @@ module Api
 
         save_visit_in_transaction(visit, attributes, append: true)
         render json: { saunaVisit: serialized(visit) }, status: :created
-      rescue ActiveRecord::RecordInvalid => error
-        render_validation_error(error.record)
-      rescue ArgumentError => error
-        render_error("invalid_image", error.message, :unprocessable_content)
       end
 
       def update
@@ -35,10 +31,6 @@ module Api
         )
         purge_stale_image_blobs(stale_image_blobs)
         render json: { saunaVisit: serialized(visit) }
-      rescue ActiveRecord::RecordInvalid => error
-        render_validation_error(error.record)
-      rescue ArgumentError => error
-        render_error("invalid_image", error.message, :unprocessable_content)
       end
 
       def destroy

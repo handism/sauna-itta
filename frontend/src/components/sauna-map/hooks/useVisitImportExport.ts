@@ -9,8 +9,7 @@ const CHUNK_SIZE = 10;
 
 const REVOKE_OBJECT_URL_DELAY_MS = 1000;
 
-const STORAGE_ERROR_MSG =
-  "画像サイズが大きすぎるため保存に失敗しました。画像を小さくして再度お試しください。";
+type Toast = (message: string, type: "success" | "error" | "info") => void;
 
 export class ImportProgressError extends Error {
   constructor(
@@ -57,13 +56,17 @@ export function filterNewVisits(validVisits: SaunaVisit[], existingVisits: Sauna
   return { normalizedImported, alreadyKnown };
 }
 
+/**
+ * 取り込みは Repository の importBatch へ委ねる（localモードは localStorage、
+ * apiモードは Rails への POST）。保存の失敗は例外で伝わるため、戻り値に成否は持たせない。
+ */
 export async function performBatchImport(
   normalizedImported: SaunaVisit[],
   alreadyKnown: number,
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
-  reload?: () => Promise<void>,
-  showToast?: (message: string, type: "success" | "error" | "info") => void,
-): Promise<{ added: number; skipped: number; success: boolean }> {
+  reload: () => Promise<void>,
+  showToast?: Toast,
+): Promise<{ added: number; skipped: number }> {
   let added = 0;
   let skipped = alreadyKnown;
   try {
@@ -80,14 +83,14 @@ export async function performBatchImport(
   } catch (error) {
     let message = error instanceof Error ? error.message : "サーバーへの取り込みに失敗しました。";
     try {
-      await reload?.();
+      await reload();
     } catch {
       message += "（再読み込みにも失敗しました）";
     }
     throw new ImportProgressError(added, message, { cause: error });
   }
-  await reload?.();
-  return { added, skipped, success: true };
+  await reload();
+  return { added, skipped };
 }
 
 export function downloadVisitsAsJson(visits: SaunaVisit[]): void {
@@ -107,12 +110,16 @@ export function downloadVisitsAsJson(visits: SaunaVisit[]): void {
   setTimeout(() => URL.revokeObjectURL(objectUrl), REVOKE_OBJECT_URL_DELAY_MS);
 }
 
+/**
+ * @param importBatch Repository の importBatch。両モードともこれが唯一の保存経路のため必須。
+ *   「Repository を通さず visits 配列を丸ごと保存する」引数を足し戻さないこと
+ *   （localモードでも Repository 経由に統一されています。frontend/AGENTS.md 参照）。
+ */
 export function useVisitImportExport(
   visits: SaunaVisit[],
-  saveVisits: ((visits: SaunaVisit[]) => boolean) | undefined,
-  showToast?: (message: string, type: "success" | "error" | "info") => void,
-  importBatch?: (visits: SaunaVisit[]) => Promise<ImportResult>,
-  reload?: () => Promise<void>,
+  importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
+  reload: () => Promise<void>,
+  showToast?: Toast,
 ) {
   const [importing, setImporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
@@ -123,18 +130,12 @@ export function useVisitImportExport(
       const { normalizedImported, alreadyKnown } = filterNewVisits(validVisits, visits);
 
       if (normalizedImported.length === 0) {
-        return { added: 0, skipped: alreadyKnown, success: true };
+        return { added: 0, skipped: alreadyKnown };
       }
 
-      if (importBatch) {
-        return performBatchImport(normalizedImported, alreadyKnown, importBatch, reload, showToast);
-      }
-
-      const nextVisits = [...normalizedImported, ...visits];
-      const success = saveVisits?.(nextVisits) ?? false;
-      return { added: normalizedImported.length, skipped: alreadyKnown, success };
+      return performBatchImport(normalizedImported, alreadyKnown, importBatch, reload, showToast);
     },
-    [visits, saveVisits, importBatch, reload, showToast],
+    [visits, importBatch, reload, showToast],
   );
 
   const handleImportData = useCallback(
@@ -144,7 +145,7 @@ export function useVisitImportExport(
 
       setImporting(true);
       try {
-        const { added, skipped, success } = await importVisitsFromFile(file);
+        const { added, skipped } = await importVisitsFromFile(file);
         if (added === 0) {
           showToast?.(
             skipped > 0
@@ -155,12 +156,8 @@ export function useVisitImportExport(
           return;
         }
 
-        if (!success) {
-          showToast?.(STORAGE_ERROR_MSG, "error");
-        } else {
-          const skippedNote = skipped > 0 ? `（${skipped}件はすでに登録済みのためスキップしました）` : "";
-          showToast?.(`データを${added}件取り込みました。${skippedNote}`, "success");
-        }
+        const skippedNote = skipped > 0 ? `（${skipped}件はすでに登録済みのためスキップしました）` : "";
+        showToast?.(`データを${added}件取り込みました。${skippedNote}`, "success");
       } catch (error) {
         if (error instanceof ImportProgressError) {
           const progress = error.added > 0 ? `${error.added}件は取り込み済みです。` : "";

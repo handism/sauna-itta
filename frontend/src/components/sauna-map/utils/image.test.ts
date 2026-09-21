@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import imageCompression from "browser-image-compression";
-import { compressAndGetBase64, sanitizeImageUrl } from "./image";
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  IMAGE_INPUT_ACCEPT,
+  compressAndGetBase64,
+  isAllowedImageFile,
+  sanitizeImageUrl,
+} from "./image";
 
 vi.mock("browser-image-compression", () => ({
   default: vi.fn(),
@@ -184,5 +190,24 @@ describe("sanitizeImageUrl", () => {
     expect(sanitizeImageUrl("data:text/html,<script>")).toBeUndefined();
 
     vi.unstubAllGlobals();
+  });
+});
+
+describe("isAllowedImageFile", () => {
+  it.each(ALLOWED_IMAGE_MIME_TYPES)("%s を受け付けること", (type) => {
+    expect(isAllowedImageFile(new File([""], "sauna", { type }))).toBe(true);
+  });
+
+  it.each(["image/bmp", "image/heic", "image/svg+xml", "application/pdf", ""])(
+    "バックエンドが弾く %s を取り込み前に拒否すること",
+    (type) => {
+      expect(isAllowedImageFile(new File([""], "sauna", { type }))).toBe(false);
+    },
+  );
+});
+
+describe("IMAGE_INPUT_ACCEPT", () => {
+  it("accept 属性として許可 MIME だけを列挙すること（image/* へ戻すと保存時まで気づけない）", () => {
+    expect(IMAGE_INPUT_ACCEPT).toBe("image/jpeg,image/png,image/webp,image/gif");
   });
 });

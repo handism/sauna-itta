@@ -3,6 +3,7 @@ import {
   getTodayDate,
   buildHistoryUpdate,
   getVisitHistoryEntries,
+  syncLatestFromHistory,
   toNormalizedTags,
 } from "../utils";
 
@@ -69,15 +70,9 @@ export function getVisitsWithRemovedHistory(
     const history = getVisitHistoryEntries(v);
     if (history.length <= 1) return v;
     const trimmed = history.filter((_, i) => i !== index);
-    const latest = trimmed[trimmed.length - 1];
-    return {
-      ...v,
-      history: trimmed,
-      date: latest.date,
-      comment: latest.comment,
-      rating: latest.rating,
-      image: latest.image,
-      visitCount: Math.max(1, trimmed.length),
-    };
+    // visitCount を渡さないことで、旧形式から引き継いだ回数ごと残件数へ揃える。
+    // 引き継ぐ実装へ戻すと、同じ操作なのにapiモード
+    // (HistoryEntriesController#truncate_legacy_visit_count) と訪問回数が食い違う。
+    return { ...v, ...syncLatestFromHistory(trimmed) };
   });
 }

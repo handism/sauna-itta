@@ -71,6 +71,34 @@ export function flattenVisitHistory(
   return entries;
 }
 
+/**
+ * 履歴の末尾（最新の訪問）を記録本体の date / comment / rating / image へ写し、
+ * 訪問回数を揃えた差分を返す。
+ *
+ * 記録本体のこれらの値は最新履歴の写しであり、履歴を足す・直す・消すどの経路でも
+ * 同じ形に保つ必要がある。経路ごとに書き写すと 1 箇所の直し忘れで、一覧に出る本体の値と
+ * 履歴の中身がずれる。履歴を触る処理は必ずこれを通すこと。
+ *
+ * @param history 1 件以上の履歴。`getVisitHistoryEntries()` は必ず 1 件以上返す
+ * @param visitCount 引き継ぐ訪問回数。履歴を削除する経路では渡さないこと
+ *   （旧形式から引き継いだ回数ごと残件数へ揃える。ルートの AGENTS.md のデータソース規約を参照）
+ */
+export function syncLatestFromHistory(
+  history: VisitHistoryEntry[],
+  visitCount?: number,
+): Pick<SaunaVisit, "history" | "date" | "comment" | "rating" | "image" | "visitCount"> {
+  const latest = history[history.length - 1];
+
+  return {
+    history,
+    date: latest.date,
+    comment: latest.comment,
+    rating: latest.rating,
+    image: latest.image,
+    visitCount: Math.max(1, visitCount ?? 1, history.length),
+  };
+}
+
 export function buildHistoryUpdate(
   v: SaunaVisit,
   form: { date?: string; comment: string; rating?: number; image?: string; appendHistory?: boolean },
@@ -86,38 +114,14 @@ export function buildHistoryUpdate(
   const history = form.appendHistory
     ? [...baseHistory, nextEntry]
     : [...baseHistory.slice(0, -1), nextEntry];
-  const latest = history[history.length - 1];
-  return {
-    history,
-    comment: latest.comment,
-    image: latest.image,
-    date: latest.date,
-    rating: latest.rating,
-    visitCount: Math.max(1, v.visitCount ?? 1, history.length),
-  };
-}
 
-function applyHistoryNormalization(visit: SaunaVisit): Pick<
-  SaunaVisit,
-  "history" | "date" | "comment" | "rating" | "image" | "visitCount"
-> {
-  const history = getVisitHistoryEntries(visit);
-  const latest = history[history.length - 1];
-
-  return {
-    history,
-    date: latest.date,
-    comment: latest.comment,
-    rating: latest.rating,
-    image: latest.image,
-    visitCount: Math.max(1, visit.visitCount ?? 1, history.length),
-  };
+  return syncLatestFromHistory(history, v.visitCount);
 }
 
 export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
   return visits.map((v) => ({
     ...v,
-    ...applyHistoryNormalization(v),
+    ...syncLatestFromHistory(getVisitHistoryEntries(v), v.visitCount),
     tags: v.tags ?? [],
     status: getVisitStatus(v),
     area: v.area ?? "",

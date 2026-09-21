@@ -1,5 +1,14 @@
 class VisitHistoryEntry < ApplicationRecord
-  ALLOWED_IMAGE_TYPES = %w[image/jpeg image/png image/webp image/gif].freeze
+  # 許可する画像形式と、保存時に付ける拡張子。DataUrlImage も data URL の
+  # パターンと拡張子をここから組み立てるため、形式を増減するときはここだけを変える
+  # （フロントの ALLOWED_IMAGE_MIME_TYPES とも同じ集合に保つこと）。
+  IMAGE_TYPE_EXTENSIONS = {
+    "image/jpeg" => "jpg",
+    "image/png" => "png",
+    "image/webp" => "webp",
+    "image/gif" => "gif"
+  }.freeze
+  ALLOWED_IMAGE_TYPES = IMAGE_TYPE_EXTENSIONS.keys.freeze
   MAX_IMAGE_BYTES = 1.megabyte
 
   belongs_to :sauna_visit

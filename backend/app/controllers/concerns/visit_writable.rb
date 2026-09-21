@@ -1,6 +1,23 @@
 module VisitWritable
   extend ActiveSupport::Concern
 
+  # 書き込み系で共通のエラー応答。アクションごとに rescue を書き写すと、
+  # 新しい書き込みアクションを足したときだけ 500 になる。
+  #
+  # ArgumentError を握るのは apply_image / DataUrlImage.decode が data URL の不正を
+  # これで弾くため。Api::V1::BaseController ではなくこの concern に置くことで、
+  # 画像を書き込まない ImagesController / SessionsController までは広げない。
+  # render_validation_error は Api::V1::BaseController が持つため、include 先はその配下に限ること。
+  included do
+    rescue_from ActiveRecord::RecordInvalid do |error|
+      render_validation_error(error.record)
+    end
+
+    rescue_from ArgumentError do |error|
+      render_error("invalid_image", error.message, :unprocessable_content)
+    end
+  end
+
   private
 
   def assign_visit_attributes(visit, attributes)

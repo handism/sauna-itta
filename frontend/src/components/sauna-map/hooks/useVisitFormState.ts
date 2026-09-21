@@ -1,6 +1,12 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { SaunaVisit, VisitFormState } from "../types";
-import { getDefaultForm, getTodayDate, toFormState, compressAndGetBase64 } from "../utils";
+import {
+  getDefaultForm,
+  getTodayDate,
+  toFormState,
+  compressAndGetBase64,
+  isAllowedImageFile,
+} from "../utils";
 
 export interface UseVisitFormStateOptions {
   startCreate: () => void;
@@ -54,6 +60,13 @@ export function useVisitFormState({
 
   const handleImageFile = useCallback(
     async (file: File) => {
+      // accept 属性はドラッグ&ドロップに効かないため、取り込み側でも形式を確かめる。
+      // ここを通さないと、apiモードでは保存時まで非対応形式に気づけない。
+      if (!isAllowedImageFile(file)) {
+        showToast("対応していない画像形式です。JPEG / PNG / WebP / GIF を選んでください。", "error");
+        return;
+      }
+
       setImageUploading(true);
       try {
         const base64 = await compressAndGetBase64(file);
