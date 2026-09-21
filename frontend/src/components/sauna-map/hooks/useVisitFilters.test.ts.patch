@@ -1,0 +1,35 @@
+--- frontend/src/components/sauna-map/hooks/useVisitFilters.test.ts
++++ frontend/src/components/sauna-map/hooks/useVisitFilters.test.ts
+@@ -107,6 +107,31 @@
+
+     expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["多い", "少ない"]);
+   });
++
++  it("should filter by selectedArea using prefix match (startsWith)", () => {
++    const areaVisits: SaunaVisit[] = [
++      { ...mockVisits[0], id: "a", name: "新宿", area: "東京都 新宿区" },
++      { ...mockVisits[0], id: "b", name: "港区", area: "東京都 港区" },
++      { ...mockVisits[0], id: "c", name: "横浜", area: "神奈川県 横浜市" },
++    ];
++
++    const { result } = renderHook(() => useVisitFilters(areaVisits));
++
++    act(() => {
++      result.current.setFilters((prev) => ({ ...prev, selectedArea: "東京都" }));
++    });
++    expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["新宿", "港区"]);
++
++    act(() => {
++      result.current.setFilters((prev) => ({ ...prev, selectedArea: "神奈川県" }));
++    });
++    expect(result.current.filteredVisits.map((v) => v.name)).toEqual(["横浜"]);
++
++    act(() => {
++      result.current.setFilters((prev) => ({ ...prev, selectedArea: "新宿" }));
++    });
++    // "新宿" does not start with "新宿" for "東京都 新宿区", so it should return []
++    expect(result.current.filteredVisits.map((v) => v.name)).toEqual([]);
++  });
+ });
+
+ describe("getInitialFilters", () => {

@@ -52,7 +52,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
         return false;
       }
 
-      if (filters.selectedArea && (!v.area || !v.area.includes(filters.selectedArea))) {
+      if (filters.selectedArea && (!v.area || !v.area.startsWith(filters.selectedArea))) {
         return false;
       }
 
