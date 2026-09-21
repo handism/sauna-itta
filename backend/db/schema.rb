@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_02_000006) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_071559) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -57,6 +57,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_02_000006) do
     t.jsonb "tags", default: [], null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
+    t.integer "visit_history_entries_count", default: 0, null: false
     t.index ["user_id", "external_id"], name: "index_sauna_visits_on_user_id_and_external_id", unique: true
     t.index ["user_id"], name: "index_sauna_visits_on_user_id"
     t.check_constraint "latitude >= '-90'::integer::numeric AND latitude <= 90::numeric", name: "sauna_visits_latitude_range"
