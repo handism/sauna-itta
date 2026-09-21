@@ -134,7 +134,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     [repository],
   );
 
-  const importExport = useVisitImportExport(visits, undefined, showToast, importBatch, reload);
+  const importExport = useVisitImportExport(visits, importBatch, reload, showToast);
 
   const logout = useCallback(async () => {
     await repository.logout();

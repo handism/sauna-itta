@@ -1,6 +1,6 @@
 import { DragEvent, useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
-import { sanitizeImageUrl } from "../../utils";
+import { IMAGE_INPUT_ACCEPT, sanitizeImageUrl } from "../../utils";
 import { ImageLightbox, VisitImagePreview } from "../common/common";
 import { useImageLightbox } from "../../hooks/useImageLightbox";
 
@@ -42,7 +42,7 @@ export function VisitImageField({
         id="visit-image"
         type="file"
         className="visually-hidden-file-input"
-        accept="image/*"
+        accept={IMAGE_INPUT_ACCEPT}
         onChange={(e) => {
           handleFiles(e.target.files);
           e.target.value = "";

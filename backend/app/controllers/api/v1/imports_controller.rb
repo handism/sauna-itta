@@ -12,10 +12,6 @@ module Api
         result = process_payload(payload, existing_external_ids)
 
         render json: result
-      rescue ActiveRecord::RecordInvalid => error
-        render_validation_error(error.record)
-      rescue ArgumentError => error
-        render_error("invalid_image", error.message, :unprocessable_content)
       end
 
       private

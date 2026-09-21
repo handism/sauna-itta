@@ -19,11 +19,25 @@ module Api
           entry = visit.visit_history_entries.find_by!(public_id: params[:history_id])
           stale_image_blobs << entry.image.blob if entry.image.attached?
           entry.destroy!
+          truncate_legacy_visit_count(visit)
         end
         return render_error("last_history", "最後の履歴は削除できません。", :unprocessable_content) if last_history
 
         purge_stale_image_blobs(stale_image_blobs)
         render json: { saunaVisit: serialized(visit) }
+      end
+
+      private
+
+      # 旧形式から引き継いだ訪問回数 (legacy_visit_count) が残りの履歴より多いままだと、
+      # 履歴を消したのに画面の「訪問回数」が減らない。localモードの
+      # getVisitsWithRemovedHistory は残件数へ揃えるため、api側も同じ扱いにする
+      # （両モードで同じ操作の結果が変わらないようにすること）。
+      def truncate_legacy_visit_count(visit)
+        remaining = visit.visit_history_entries.count
+        return if visit.legacy_visit_count <= remaining
+
+        visit.update!(legacy_visit_count: remaining)
       end
     end
   end

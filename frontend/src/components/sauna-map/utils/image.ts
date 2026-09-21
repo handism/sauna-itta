@@ -1,6 +1,38 @@
 import imageCompression from "browser-image-compression";
 
-/** 許可する data URL の MIME タイプ。SVG はスクリプトを埋め込めるため意図的に除く */
+/**
+ * アップロードを受け付ける画像の MIME タイプ。
+ *
+ * バックエンドの `VisitHistoryEntry::ALLOWED_IMAGE_TYPES` と同じ集合を保つこと。
+ * ここだけ広げると、apiモードではフォームを全部埋めて保存した時点で初めて
+ * 「画像形式が許可されていません。」と弾かれ、入力内容が無駄になる。
+ */
+export const ALLOWED_IMAGE_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+] as const;
+
+/** `<input type="file">` の accept 属性値。`image/*` へ戻すと上記の集合と食い違う */
+export const IMAGE_INPUT_ACCEPT = ALLOWED_IMAGE_MIME_TYPES.join(",");
+
+/**
+ * 選択・ドロップされたファイルを受け付けてよいかを判定する。
+ * accept 属性はドラッグ&ドロップには効かないため、取り込み側でも必ず通すこと。
+ */
+export function isAllowedImageFile(file: File): boolean {
+  return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(file.type);
+}
+
+/**
+ * 表示してよい data URL か判定する。SVG はスクリプトを埋め込めるため意図的に除く。
+ *
+ * ALLOWED_IMAGE_MIME_TYPES より広いのは意図的。こちらは「すでに保存されている値を
+ * 描画してよいか」の判定で、過去の版が受け付けた形式 (image/jpg・image/bmp) の記録が
+ * localStorage に残っていても表示は続けたい。新しく保存できる形式を変えるときは
+ * ALLOWED_IMAGE_MIME_TYPES だけを変えること。
+ */
 const SAFE_DATA_IMAGE = /^data:image\/(?:jpeg|jpg|png|gif|webp|bmp)[;,]/i;
 
 export function sanitizeImageUrl(url: string | undefined): string | undefined {

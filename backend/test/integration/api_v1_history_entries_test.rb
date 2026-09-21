@@ -95,6 +95,30 @@ class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
     assert_equal 2, owner.sauna_visits.sole.visit_history_entries.count
   end
 
+  test "履歴を削除すると旧形式から引き継いだ訪問回数も残件数まで下がる" do
+    csrf = sign_in
+    # localモードの getVisitsWithRemovedHistory と同じ扱いにする。維持する実装へ戻すと、
+    # 同じ記録の同じ操作でapiモードだけ訪問回数が減らない。
+    visit = legacy_visit(legacy_visit_count: 5, entries: 3)
+
+    delete legacy_history_path(visit), headers: csrf_header(csrf)
+
+    assert_response :success
+    assert_equal 2, response.parsed_body.dig("saunaVisit", "visitCount")
+    assert_equal 2, visit.reload.legacy_visit_count
+  end
+
+  test "引き継いだ訪問回数が残件数以下なら書き換えない" do
+    csrf = sign_in
+    visit = legacy_visit(legacy_visit_count: 1, entries: 3)
+
+    delete legacy_history_path(visit), headers: csrf_header(csrf)
+
+    assert_response :success
+    assert_equal 2, response.parsed_body.dig("saunaVisit", "visitCount")
+    assert_equal 1, visit.reload.legacy_visit_count
+  end
+
   test "他ユーザーの履歴は削除できない" do
     csrf = sign_in
     other = User.create!(google_subject: "other", email: "other@example.com")
@@ -143,6 +167,20 @@ class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
     yield
   ensure
     VisitHistoryEntry.skip_callback(:destroy, :before, failure, raise: false)
+  end
+
+  # 旧形式からインポートした記録（履歴より訪問回数が多い）を直接組み立てる
+  def legacy_visit(legacy_visit_count:, entries:)
+    visit = owner.sauna_visits.create!(
+      name: "旧形式", latitude: 35, longitude: 139, status: "visited",
+      legacy_visit_count: legacy_visit_count
+    )
+    entries.times { |index| visit.visit_history_entries.create!(visited_on: Date.new(2026, 7, index + 1)) }
+    visit
+  end
+
+  def legacy_history_path(visit)
+    "/api/v1/sauna_visits/#{visit.external_id}/history_entries/#{visit.visit_history_entries.first.public_id}"
   end
 
   def history_path(visit, history_id)

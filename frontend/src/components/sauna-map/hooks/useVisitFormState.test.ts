@@ -61,11 +61,31 @@ describe("useVisitFormState", () => {
     const spy = vi.spyOn(utils, "compressAndGetBase64").mockRejectedValue(new Error("compression failed"));
 
     await act(async () => {
-      await result.current.handleImageFile(new File([""], "test.png"));
+      await result.current.handleImageFile(new File([""], "test.png", { type: "image/png" }));
     });
 
     expect(spy).toHaveBeenCalledTimes(1);
     expect(defaultOptions.showToast).toHaveBeenCalledWith("画像の圧縮に失敗しました。別の画像で試してください。", "error");
+    expect(result.current.imageUploading).toBe(false);
+
+    spy.mockRestore();
+  });
+
+  it("handleImageFile は許可していない画像形式を圧縮まで進めずに拒否すること", async () => {
+    const { result } = renderHook(() => useVisitFormState(defaultOptions));
+
+    const spy = vi.spyOn(utils, "compressAndGetBase64");
+
+    await act(async () => {
+      await result.current.handleImageFile(new File([""], "test.bmp", { type: "image/bmp" }));
+    });
+
+    expect(spy).not.toHaveBeenCalled();
+    expect(defaultOptions.showToast).toHaveBeenCalledWith(
+      "対応していない画像形式です。JPEG / PNG / WebP / GIF を選んでください。",
+      "error",
+    );
+    expect(result.current.form.image).toBe("");
     expect(result.current.imageUploading).toBe(false);
 
     spy.mockRestore();

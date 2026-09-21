@@ -13,6 +13,19 @@ class VisitWritableTest < ActiveSupport::TestCase
     @valid_base64_gif = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs="
   end
 
+  # アクションごとに rescue を書き写す実装へ戻すと、あとから足した書き込みアクションだけ
+  # 500 になる。include だけで共通のエラー応答が付くことを固定する。
+  test "include するだけで書き込み系の共通エラー応答が登録される" do
+    handled = DummyController.rescue_handlers.map(&:first)
+
+    assert_includes handled, "ActiveRecord::RecordInvalid"
+    assert_includes handled, "ArgumentError"
+  end
+
+  test "書き込み系以外のコントローラへは広げない" do
+    assert_not_includes Api::V1::ImagesController.rescue_handlers.map(&:first), "ArgumentError"
+  end
+
   test "assign_visit_attributes correctly maps standard frontend attributes to the model" do
     attributes = {
       name: "Super Sauna",

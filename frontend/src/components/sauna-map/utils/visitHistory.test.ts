@@ -9,6 +9,7 @@ import {
   countTags,
   rankVisitsByCount,
   flattenVisitHistory,
+  syncLatestFromHistory,
 } from "./visitHistory";
 import { toNormalizedTags } from "./form";
 import { SaunaVisit } from "../types";
@@ -741,5 +742,33 @@ describe("rankVisitsByCount", () => {
 
   it("訪問済みが無い場合は空配列を返すこと", () => {
     expect(rankVisitsByCount([])).toEqual([]);
+  });
+});
+
+describe("syncLatestFromHistory", () => {
+  const history = [
+    { date: "2026-01-01", comment: "1回目", rating: 3, image: "data:image/png;base64,AAA" },
+    { date: "2026-02-01", comment: "2回目", rating: 5 },
+  ];
+
+  it("末尾の履歴を記録本体の date / comment / rating / image へ写すこと", () => {
+    const result = syncLatestFromHistory(history);
+
+    expect(result.history).toBe(history);
+    expect(result.date).toBe("2026-02-01");
+    expect(result.comment).toBe("2回目");
+    expect(result.rating).toBe(5);
+    // 末尾に写真が無ければ本体からも消す（1件前の写真を残さない）
+    expect(result.image).toBeUndefined();
+  });
+
+  it("visitCount を渡すと履歴件数との大きい方を採ること", () => {
+    expect(syncLatestFromHistory(history, 5).visitCount).toBe(5);
+    expect(syncLatestFromHistory(history, 1).visitCount).toBe(2);
+  });
+
+  it("visitCount を渡さないと履歴件数へ揃えること（履歴削除の経路）", () => {
+    expect(syncLatestFromHistory(history).visitCount).toBe(2);
+    expect(syncLatestFromHistory(history.slice(0, 1)).visitCount).toBe(1);
   });
 });

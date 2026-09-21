@@ -2,13 +2,12 @@ require "base64"
 require "stringio"
 
 class DataUrlImage
-  PATTERN = %r{\Adata:(image/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=\r\n]+)\z}.freeze
-  EXTENSIONS = {
-    "image/jpeg" => "jpg",
-    "image/png" => "png",
-    "image/webp" => "webp",
-    "image/gif" => "gif"
-  }.freeze
+  # 許可形式は VisitHistoryEntry::IMAGE_TYPE_EXTENSIONS を唯一の正とする。
+  # ここへ一覧を書き写すと、モデルのバリデーションと data URL の受け口がずれる。
+  SUBTYPE_PATTERN = Regexp.union(
+    VisitHistoryEntry::ALLOWED_IMAGE_TYPES.map { |type| type.delete_prefix("image/") }
+  ).freeze
+  PATTERN = %r{\Adata:(image/(?:#{SUBTYPE_PATTERN.source}));base64,([A-Za-z0-9+/=\r\n]+)\z}.freeze
 
   def self.decode(value)
     match = PATTERN.match(value.to_s)
@@ -23,7 +22,7 @@ class DataUrlImage
 
     {
       io: StringIO.new(bytes),
-      filename: "visit-#{SecureRandom.uuid}.#{EXTENSIONS.fetch(content_type)}",
+      filename: "visit-#{SecureRandom.uuid}.#{VisitHistoryEntry::IMAGE_TYPE_EXTENSIONS.fetch(content_type)}",
       content_type: content_type
     }
   rescue ArgumentError => error
