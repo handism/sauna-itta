@@ -66,7 +66,6 @@ export function LocationSearchInput({
       setActiveIndex(-1);
     } catch (error) {
       if (controller.signal.aborted) return;
-      console.error("Search failed:", error);
       setResults([]);
       setErrorMessage("場所を検索できませんでした。通信環境を確認して再度お試しください。");
       setIsOpen(true);
