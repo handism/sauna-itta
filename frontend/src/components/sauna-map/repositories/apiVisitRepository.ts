@@ -42,8 +42,7 @@ export class ApiVisitRepository implements VisitRepository {
     let response: Response;
     try {
       response = await fetch(path, { ...init, headers, credentials: "same-origin" });
-    } catch (error) {
-      console.error("Failed to fetch visits:", error);
+    } catch {
       throw new RepositoryError("サーバーへ接続できません。通信状態を確認してください。", "network_error");
     }
 

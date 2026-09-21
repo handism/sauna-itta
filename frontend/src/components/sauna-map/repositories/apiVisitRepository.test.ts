@@ -96,8 +96,6 @@ describe("ApiVisitRepository", () => {
       code: "network_error",
       message: "サーバーへ接続できません。通信状態を確認してください。",
     });
-
-    expect(consoleSpy).toHaveBeenCalledWith("Failed to fetch visits:", error);
   });
 
   it("エラー本文がJSONでなくても既定のメッセージを返す", async () => {
