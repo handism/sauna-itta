@@ -36,6 +36,16 @@ export function getInitialFilters(): VisitFilters {
 export function useVisitFilters(visits: SaunaVisit[]) {
   const [filters, setFilters] = useState<VisitFilters>(getInitialFilters);
 
+  const tagsCache = useMemo(() => {
+    const cache = new Map<string, Set<string>>();
+    visits.forEach((v) => {
+      if (v.tags) {
+        cache.set(v.id, new Set(v.tags));
+      }
+    });
+    return cache;
+  }, [visits]);
+
   const filteredVisits = useMemo(() => {
     const searchRegex = createSearchRegex(filters.search);
 
@@ -48,8 +58,11 @@ export function useVisitFilters(visits: SaunaVisit[]) {
         return false;
       }
 
-      if (filters.selectedTag && (!v.tags || !v.tags.includes(filters.selectedTag))) {
-        return false;
+      if (filters.selectedTag) {
+        const visitTags = tagsCache.get(v.id);
+        if (!visitTags || !visitTags.has(filters.selectedTag)) {
+          return false;
+        }
       }
 
       if (filters.selectedArea && (!v.area || !v.area.includes(filters.selectedArea))) {
@@ -85,7 +98,7 @@ export function useVisitFilters(visits: SaunaVisit[]) {
           return b.date.localeCompare(a.date);
       }
     });
-  }, [visits, filters]);
+  }, [visits, filters, tagsCache]);
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
 
