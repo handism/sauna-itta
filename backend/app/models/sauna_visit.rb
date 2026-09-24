@@ -33,10 +33,11 @@ class SaunaVisit < ApplicationRecord
   end
 
   def purge_history_image_blobs
-    @history_image_blobs&.each do |blob|
-      blob.purge_later
-    rescue StandardError => error
-      Rails.logger.error("サウナ記録の履歴画像削除に失敗しました: #{error.class}: #{error.message}")
-    end
+    return unless @history_image_blobs
+
+    jobs = @history_image_blobs.map { |blob| ActiveStorage::PurgeJob.new(blob) }
+    ActiveJob.perform_all_later(jobs)
+  rescue StandardError => error
+    Rails.logger.error("サウナ記録の履歴画像削除に失敗しました: #{error.class}: #{error.message}")
   end
 end
