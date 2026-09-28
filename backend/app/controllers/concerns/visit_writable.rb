@@ -27,7 +27,7 @@ module VisitWritable
       longitude: attributes[:lng],
       area: attributes[:area],
       status: attributes[:status],
-      tags: Array(attributes[:tags]).map(&:to_s),
+      tags: (tags = attributes[:tags]).blank? ? [] : Array(tags).map(&:to_s),
       legacy_visit_count: attributes[:visitCount] || visit.legacy_visit_count
     )
   end
