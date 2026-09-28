@@ -56,6 +56,15 @@ describe("getInitialTheme", () => {
     vi.stubGlobal("localStorage", mockLocalStorage);
   });
 
+  it("should return 'dark' if matchMedia is undefined", () => {
+    vi.stubGlobal("matchMedia", undefined);
+
+    expect(getInitialTheme()).toBe("dark");
+
+    vi.unstubAllGlobals();
+    vi.stubGlobal("localStorage", mockLocalStorage);
+  });
+
   it("should catch localStorage errors and log warning, returning 'dark'", () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(mockLocalStorage, "getItem").mockImplementation(() => {
