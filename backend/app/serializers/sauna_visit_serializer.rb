@@ -26,17 +26,19 @@ class SaunaVisitSerializer
   private
 
   def history_json(entry)
-    {
-      id: entry.public_id,
-      date: entry.visited_on.iso8601,
-      comment: entry.comment,
-      rating: entry.rating&.to_f,
-      image: image_url(entry)
-    }.compact
+    Rails.cache.fetch([entry, "history_json"]) do
+      {
+        id: entry.public_id,
+        date: entry.visited_on.iso8601,
+        comment: entry.comment,
+        rating: entry.rating&.to_f,
+        image: image_url(entry)
+      }.compact
+    end
   end
 
   def image_url(entry)
-    return unless entry&.image&.attached?
-    "/api/v1/images/#{entry.image.blob.signed_id}"
+    return unless entry&.image_attachment&.present?
+    "/api/v1/images/#{entry.image_attachment.blob.signed_id}"
   end
 end
