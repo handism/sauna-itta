@@ -257,8 +257,12 @@ export interface RankedVisit {
  */
 export function rankVisitsByCount(visits: SaunaVisit[]): RankedVisit[] {
   return visits
-    .filter(isVisited)
-    .map((visit) => ({ visit, count: getVisitCount(visit) }))
+    .reduce<RankedVisit[]>((acc, visit) => {
+      if (isVisited(visit)) {
+        acc.push({ visit, count: getVisitCount(visit) });
+      }
+      return acc;
+    }, [])
     .sort((a, b) => b.count - a.count || a.visit.name.localeCompare(b.visit.name, "ja"));
 }
 
