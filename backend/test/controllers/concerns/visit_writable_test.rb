@@ -157,6 +157,13 @@ class VisitWritableTest < ActiveSupport::TestCase
     assert_equal "画像URLが不正です。", error.message
   end
 
+  test "apply_image raises ArgumentError if value is invalid URL" do
+    error = assert_raises(ArgumentError) do
+      @controller.send(:apply_image, @entry, "http://example.com/image.jpg")
+    end
+    assert_equal "画像URLが不正です。", error.message
+  end
+
   test "purge_stale_image_blobs handles StandardError during purge_later and logs the error" do
     blob = Object.new
     def blob.id; 1; end
