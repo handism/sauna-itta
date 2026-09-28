@@ -27,17 +27,20 @@ export default function MonthlyVisitsChart({
   theme,
 }: MonthlyVisitsChartProps) {
   const data = useMemo(() => {
-    const monthlyCounts: { [key: string]: number } = {};
+    const chartData: { month: string; visits: number }[] = [];
+    const monthToIndex = new Map<string, number>();
 
-    entries.forEach((entry) => {
-      const month = entry.date.substring(0, 7); // YYYY-MM
-      monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
-    });
+    for (let i = 0; i < entries.length; i++) {
+      const month = entries[i].date.substring(0, 7); // YYYY-MM
+      const index = monthToIndex.get(month);
 
-    const chartData = Object.keys(monthlyCounts).map((month) => ({
-      month,
-      visits: monthlyCounts[month],
-    }));
+      if (index !== undefined) {
+        chartData[index].visits++;
+      } else {
+        monthToIndex.set(month, chartData.length);
+        chartData.push({ month, visits: 1 });
+      }
+    }
 
     chartData.sort((a, b) => a.month.localeCompare(b.month));
     return chartData;
