@@ -26,7 +26,7 @@ class SaunaVisitSerializer
   private
 
   def history_json(entry)
-    Rails.cache.fetch([entry, "history_json"]) do
+    Rails.cache.fetch([ entry, "history_json" ]) do
       {
         id: entry.public_id,
         date: entry.visited_on.iso8601,
