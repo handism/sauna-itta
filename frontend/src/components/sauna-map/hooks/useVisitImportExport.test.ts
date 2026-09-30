@@ -36,19 +36,19 @@ describe("useVisitImportExport", () => {
   });
 
   test("importVisitsFromFile handles invalid JSON", async () => {
-    const { result } = renderHook(() => useVisitImportExport(mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
     const file = new File(["invalid json"], "test.json", { type: "application/json" });
     await expect(result.current.importVisitsFromFile(file)).rejects.toThrow("Invalid JSON file");
   });
 
   test("importVisitsFromFile handles invalid schema", async () => {
-    const { result } = renderHook(() => useVisitImportExport(mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
     const file = new File(['[{"invalid": "schema"}]'], "test.json", { type: "application/json" });
     await expect(result.current.importVisitsFromFile(file)).rejects.toThrow(/Imported data is not in the correct format/);
   });
 
   test("importVisitsFromFile imports new valid visits", async () => {
-    const { result } = renderHook(() => useVisitImportExport(mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
     const newVisit = { id: "2", name: "Sauna B", lat: 35.1, lng: 139.1, comment: "nice", date: "2023-01-02" };
     const file = new File([JSON.stringify([newVisit])], "test.json", { type: "application/json" });
     const res = await result.current.importVisitsFromFile(file);
@@ -58,7 +58,7 @@ describe("useVisitImportExport", () => {
   });
 
   test("importVisitsFromFile ignores duplicate visits", async () => {
-    const { result } = renderHook(() => useVisitImportExport(mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
     const duplicateVisit = { id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2023-01-01" };
     const file = new File([JSON.stringify([duplicateVisit])], "test.json", { type: "application/json" });
     const res = await result.current.importVisitsFromFile(file);
@@ -67,7 +67,7 @@ describe("useVisitImportExport", () => {
   });
 
   test("exportVisits creates a download link", async () => {
-    const { result } = renderHook(() => useVisitImportExport(mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click");
     const appendSpy = vi.spyOn(document.body, "appendChild");
     const removeSpy = vi.spyOn(document.body, "removeChild");
@@ -109,7 +109,7 @@ describe("useVisitImportExport", () => {
     }));
     const reload = vi.fn().mockResolvedValue(undefined);
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, reload),
+      useVisitImportExport(() => mockVisits, importBatch, reload),
     );
     const imported = Array.from({ length: 25 }, (_, index) => ({
       id: `api-${index}`,
@@ -136,7 +136,7 @@ describe("useVisitImportExport", () => {
     }));
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, vi.fn(), showToast),
+      useVisitImportExport(() => mockVisits, importBatch, vi.fn(), showToast),
     );
     const imported = Array.from({ length: 25 }, (_, index) => ({
       id: `chunk-${index}`,
@@ -166,7 +166,7 @@ describe("useVisitImportExport", () => {
     const importBatch = vi.fn().mockResolvedValue({ added: 1, skipped: 0 });
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, vi.fn(), showToast),
+      useVisitImportExport(() => mockVisits, importBatch, vi.fn(), showToast),
     );
     const file = new File(
       [JSON.stringify([{ id: "single", name: "Sauna", lat: 35, lng: 139, comment: "", date: "2026-08-02" }])],
@@ -187,7 +187,7 @@ describe("useVisitImportExport", () => {
     const importBatch = vi.fn().mockResolvedValue({ added: 1, skipped: 1 });
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, vi.fn(), showToast),
+      useVisitImportExport(() => mockVisits, importBatch, vi.fn(), showToast),
     );
     const imported = [
       { id: "new-1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2026-08-02" },
@@ -211,7 +211,7 @@ describe("useVisitImportExport", () => {
     const importBatch = vi.fn();
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, vi.fn(), showToast),
+      useVisitImportExport(() => mockVisits, importBatch, vi.fn(), showToast),
     );
     const file = new File(
       [JSON.stringify([{ id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2023-01-01" }])],
@@ -239,7 +239,7 @@ describe("useVisitImportExport", () => {
     const reload = vi.fn().mockResolvedValue(undefined);
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, reload, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, reload, showToast),
     );
     const imported = Array.from({ length: 15 }, (_, index) => ({
       id: `partial-${index}`,
@@ -270,7 +270,7 @@ describe("useVisitImportExport", () => {
     const reload = vi.fn().mockRejectedValueOnce(reloadError);
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, reload, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, reload, showToast),
     );
     const imported = Array.from({ length: 1 }, (_, index) => ({
       id: `fail-${index}`,
@@ -301,7 +301,7 @@ describe("useVisitImportExport", () => {
     const importBatch = vi.fn().mockRejectedValue(new Error("ブラウザへの保存に失敗しました。"));
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, reloadMock, showToast)
+      useVisitImportExport(() => mockVisits, importBatch, reloadMock, showToast)
     );
 
     const newVisit = { id: "3", name: "Sauna C", lat: 35.2, lng: 139.2, comment: "failed", date: "2023-01-03" };
@@ -322,7 +322,7 @@ describe("useVisitImportExport", () => {
   test("JSONの読み込みなどそれ以外のエラーの場合はエラートーストを表示する", async () => {
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatchMock, reloadMock, showToast)
+      useVisitImportExport(() => mockVisits, importBatchMock, reloadMock, showToast)
     );
     const file = new File(["invalid json"], "test.json", { type: "application/json" });
     const input = document.createElement("input");
@@ -336,7 +336,7 @@ describe("useVisitImportExport", () => {
   test("ファイルの読み込みに失敗した場合はエラートーストを表示する", async () => {
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatchMock, reloadMock, showToast)
+      useVisitImportExport(() => mockVisits, importBatchMock, reloadMock, showToast)
     );
 
     // FileReader をモック化してエラーを発生させる
@@ -371,7 +371,7 @@ describe("useVisitImportExport", () => {
   test("ファイルが選択されていない場合は何もしない", async () => {
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatchMock, reloadMock, showToast)
+      useVisitImportExport(() => mockVisits, importBatchMock, reloadMock, showToast)
     );
     const input = document.createElement("input");
 
@@ -390,7 +390,7 @@ describe("useVisitImportExport", () => {
     const reload = vi.fn().mockResolvedValue(undefined);
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(mockVisits, importBatch, reload, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, reload, showToast),
     );
     const imported = Array.from({ length: 15 }, (_, index) => ({
       id: `partial-${index}`,

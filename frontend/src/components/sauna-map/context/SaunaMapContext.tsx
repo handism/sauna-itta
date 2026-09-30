@@ -27,8 +27,9 @@ export function SaunaMapProvider({ children }: { children: ReactNode }) {
 }
 
 // 各 Context / Hook の再エクスポート。
-// 消費側は責務ごとの専用フック（useSaunaUI / useVisitsCRUD /
-// useVisitFiltersContext / useSaunaEditor / useSaunaMapState）を直接使うこと。
+// 消費側は責務ごとの専用フック（useSaunaUI / useVisitsData / useVisitsStatus /
+// useVisitsActions / useVisitFiltersContext / useSaunaEditorState / useSaunaEditorActions /
+// useSaunaMapState）を直接使うこと。
 // 複数の Context を束ねる統合フックを復活させると、どれか 1 つの状態変化で
 // 全消費側が再レンダリングされる。
 export {
@@ -38,7 +39,12 @@ export {
   useSaunaViewport,
   UIProvider,
 } from "./UIContext";
-export { useVisitsCRUD, VisitsCRUDProvider } from "./VisitsCRUDContext";
+export {
+  useVisitsData,
+  useVisitsStatus,
+  useVisitsActions,
+  VisitsCRUDProvider,
+} from "./VisitsCRUDContext";
 export {
   useVisitFiltersContext,
   useVisitFiltersState,
@@ -46,7 +52,6 @@ export {
   VisitFiltersProvider,
 } from "./VisitFiltersContext";
 export {
-  useSaunaEditor,
   useSaunaEditorState,
   useSaunaEditorActions,
   useSaunaEditorForm,

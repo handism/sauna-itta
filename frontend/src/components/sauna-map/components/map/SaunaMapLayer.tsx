@@ -11,7 +11,8 @@ import { CurrentLocation } from "../../types";
 import {
   useSaunaUI,
   useVisitFiltersContext,
-  useSaunaEditor,
+  useSaunaEditorState,
+  useSaunaEditorActions,
   useSaunaMapState,
 } from "../../context";
 
@@ -26,13 +27,8 @@ export function SaunaMapLayer({
 }: SaunaMapLayerProps) {
   const { isMobile, showToast } = useSaunaUI();
   const { filteredVisits } = useVisitFiltersContext();
-  const {
-    editingId,
-    selectedLocation,
-    isCreating,
-    handleLocationSelect,
-    handleBoundsChange,
-  } = useSaunaEditor();
+  const { editingId, selectedLocation, isCreating } = useSaunaEditorState();
+  const { handleLocationSelect, handleBoundsChange } = useSaunaEditorActions();
   const {
     hoveredId,
     selectedId,

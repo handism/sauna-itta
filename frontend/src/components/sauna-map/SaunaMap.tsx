@@ -16,9 +16,11 @@ import {
   SaunaMapProvider,
   useSaunaUI,
   useVisitFiltersContext,
-  useSaunaEditor,
+  useSaunaEditorState,
+  useSaunaEditorActions,
   useSaunaMapState,
-  useVisitsCRUD,
+  useVisitsStatus,
+  useVisitsActions,
 } from "./context";
 import { CurrentLocation } from "./types";
 import { MobilePinHint } from "./components/map/MobilePinHint";
@@ -40,13 +42,13 @@ function SaunaMapContent() {
   } = useSaunaUI();
 
   const { filteredVisits, isFilterActive } = useVisitFiltersContext();
-  const { dataSource, loading, authenticated, csrfToken, loadError, reload } = useVisitsCRUD();
+  // 記録本体（useVisitsData）は購読しない。ここは画面全体の親なので、記録が 1 件変わる
+  // たびに再レンダリングされると子の比較コストまで毎回かかる
+  const { dataSource, loading, authenticated, csrfToken, loadError } = useVisitsStatus();
+  const { reload } = useVisitsActions();
 
-  const {
-    isAdding,
-    isMobilePickingLocation,
-    confirmDelete,
-  } = useSaunaEditor();
+  const { isAdding, isMobilePickingLocation } = useSaunaEditorState();
+  const { confirmDelete } = useSaunaEditorActions();
 
   const {
     snapPosition,

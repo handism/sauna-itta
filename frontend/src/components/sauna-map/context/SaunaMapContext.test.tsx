@@ -7,10 +7,11 @@ import {
   useSaunaUIState,
   useSaunaUIActions,
   useSaunaViewport,
-  useVisitsCRUD,
+  useVisitsData,
+  useVisitsStatus,
+  useVisitsActions,
   useVisitFiltersContext,
   useVisitFilterActions,
-  useSaunaEditor,
   useSaunaEditorState,
   useSaunaEditorActions,
   useSaunaEditorForm,
@@ -76,12 +77,38 @@ describe("SaunaMap Contexts", () => {
     expect(result.current.isShareViewOpen).toBe(true);
   });
 
-  it("useVisitsCRUD が VisitsCRUDProvider 内で正常に動作すること", () => {
-    const { result } = renderHook(() => useVisitsCRUD(), { wrapper });
+  it("useVisitsData / useVisitsStatus が VisitsCRUDProvider 内で正常に動作すること", () => {
+    const { result } = renderHook(
+      () => ({ data: useVisitsData(), status: useVisitsStatus() }),
+      { wrapper },
+    );
 
-    expect(result.current.visits).toBeDefined();
-    expect(Array.isArray(result.current.visits)).toBe(true);
-    expect(result.current.importing).toBe(false);
+    expect(Array.isArray(result.current.data.visits)).toBe(true);
+    expect(result.current.status.importing).toBe(false);
+    expect(result.current.status.dataSource).toBe("local");
+  });
+
+  it("記録が変わっても VisitsStatus / VisitsActions の参照が変わらないこと", async () => {
+    const { result } = renderHook(
+      () => ({ data: useVisitsData(), status: useVisitsStatus(), actions: useVisitsActions() }),
+      { wrapper },
+    );
+    // 初回のセッション確認（queueMicrotask）で loading が落ち着くのを待つ
+    await act(async () => {});
+
+    const statusBefore = result.current.status;
+    const actionsBefore = result.current.actions;
+    const target = result.current.data.visits[0];
+
+    await act(async () => {
+      await result.current.actions.deleteVisit(target.id);
+    });
+
+    expect(result.current.data.visits.some((visit) => visit.id === target.id)).toBe(false);
+    // 操作関数を visits に依存させると、インポートボタンしか使わない
+    // DesktopSidebar まで記録の変化ごとに再レンダリングされる
+    expect(result.current.actions).toBe(actionsBefore);
+    expect(result.current.status).toBe(statusBefore);
   });
 
   it("useVisitFiltersContext が VisitFiltersProvider 内で正常に動作すること", () => {
@@ -94,11 +121,16 @@ describe("SaunaMap Contexts", () => {
 
   it("フィルター変更で CRUD 側の Context 値が作り直されないこと", () => {
     const { result } = renderHook(
-      () => ({ crud: useVisitsCRUD(), filters: useVisitFiltersContext() }),
+      () => ({
+        data: useVisitsData(),
+        status: useVisitsStatus(),
+        actions: useVisitsActions(),
+        filters: useVisitFiltersContext(),
+      }),
       { wrapper },
     );
 
-    const crudBefore = result.current.crud;
+    const { data, status, actions } = result.current;
 
     act(() => {
       result.current.filters.setFilters((prev) => ({ ...prev, search: "サウナ" }));
@@ -106,21 +138,26 @@ describe("SaunaMap Contexts", () => {
 
     expect(result.current.filters.isFilterActive).toBe(true);
     // CRUD 側は同一参照のままであること（束ねるフックを復活させると壊れる）
-    expect(result.current.crud).toBe(crudBefore);
+    expect(result.current.data).toBe(data);
+    expect(result.current.status).toBe(status);
+    expect(result.current.actions).toBe(actions);
   });
 
-  it("useSaunaEditor が EditorProvider 内で正常に動作すること", () => {
-    const { result } = renderHook(() => useSaunaEditor(), { wrapper });
-
-    expect(result.current.mode).toBe("list");
-    expect(result.current.isAdding).toBe(false);
+  it("編集状態の変化で EditorActions の参照が変わらないこと", () => {
+    const { result } = renderHook(
+      () => ({ state: useSaunaEditorState(), actions: useSaunaEditorActions() }),
+      { wrapper },
+    );
+    const actionsBefore = result.current.actions;
 
     act(() => {
-      result.current.startNewVisit();
+      result.current.actions.startNewVisit();
     });
 
-    expect(result.current.mode).toBe("creating:pick");
-    expect(result.current.isAdding).toBe(true);
+    expect(result.current.state.mode).toBe("creating:pick");
+    expect(result.current.state.isAdding).toBe(true);
+    // 操作関数だけを使う消費側（VisitList / DesktopSidebar 等）はモード変更で再レンダリングされない
+    expect(result.current.actions).toBe(actionsBefore);
   });
 
   it("useSaunaMapState が MapStateProvider 内で正常に動作すること", () => {
@@ -140,8 +177,8 @@ describe("SaunaMap Contexts", () => {
     const { result } = renderHook(
       () => ({
         mapState: useSaunaMapState(),
-        editor: useSaunaEditor(),
-        crud: useVisitsCRUD(),
+        editor: useSaunaEditorState(),
+        crud: useVisitsData(),
       }),
       { wrapper },
     );
@@ -172,7 +209,7 @@ describe("SaunaMap Contexts", () => {
 
     try {
       const { result } = renderHook(
-        () => ({ mapState: useSaunaMapState(), crud: useVisitsCRUD() }),
+        () => ({ mapState: useSaunaMapState(), crud: useVisitsData() }),
         { wrapper },
       );
 

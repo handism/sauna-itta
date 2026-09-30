@@ -14,6 +14,7 @@ describe("useVisitCrud", () => {
     mockFormRef = { current: mockForm };
     defaultOptions = {
       editingId: null,
+      editingVisit: null,
       selectedLocation: { lat: 34.95, lng: 138.4 },
       historyEntries: [],
       formRef: mockFormRef,
@@ -145,6 +146,38 @@ describe("useVisitCrud", () => {
 
     expect(defaultOptions.showToast).toHaveBeenCalledWith("サウナ名を入力してください。", "error");
     expect(defaultOptions.addVisit).not.toHaveBeenCalled();
+  });
+
+  it("handleSubmit の更新では編集中の記録（lockVersion込み）を editVisit へ渡すこと", async () => {
+    const editingVisit = { id: "v1", name: "北欧", lat: 35, lng: 139, comment: "", date: "2026-08-02", lockVersion: 3 };
+    const options = { ...defaultOptions, editingId: "v1", editingVisit };
+    mockForm.name = "サウナ北欧";
+    const { result } = renderHook(() => useVisitCrud(options));
+
+    await act(async () => {
+      const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      await result.current.handleSubmit(e);
+    });
+
+    expect(options.editVisit).toHaveBeenCalledWith(
+      editingVisit,
+      { lat: 34.95, lng: 138.4 },
+      expect.objectContaining({ name: "サウナ北欧" }),
+    );
+  });
+
+  it("handleSubmit で編集中の記録が一覧から消えていたら保存せず再読み込みを案内すること", async () => {
+    const options = { ...defaultOptions, editingId: "v1", editingVisit: null };
+    mockForm.name = "サウナ北欧";
+    const { result } = renderHook(() => useVisitCrud(options));
+
+    await act(async () => {
+      const e = { preventDefault: vi.fn() } as unknown as React.FormEvent;
+      await result.current.handleSubmit(e);
+    });
+
+    expect(options.editVisit).not.toHaveBeenCalled();
+    expect(options.showToast).toHaveBeenCalledWith(expect.stringContaining("再読み込み"), "error");
   });
 
   it("handleSubmit で場所未選択時にエラーのトーストが表示されること", async () => {

@@ -9,7 +9,8 @@ import {
 } from "lucide-react";
 import {
   useSaunaUI,
-  useVisitsCRUD,
+  useVisitsStatus,
+  useVisitsActions,
   useSaunaEditorState,
   useSaunaEditorActions,
 } from "../context";
@@ -127,7 +128,9 @@ export function DesktopSidebar({ children }: { children: ReactNode }) {
     toggleTheme,
     openShareView,
   } = useSaunaUI();
-  const { importInputRef, exportVisits, importing, handleImportData } = useVisitsCRUD();
+  // 記録本体は購読しない（エクスポートはクリック時点の記録を読む）
+  const { importInputRef, exportVisits, handleImportData } = useVisitsActions();
+  const { importing } = useVisitsStatus();
   const { isSidebarExpanded, isAdding } = useSaunaEditorState();
   const { toggleSidebar, startNewVisit } = useSaunaEditorActions();
 

@@ -51,14 +51,14 @@ describe("useSaunaVisits", () => {
     expect(result.current.visits[0].id).toBe("2");
   });
 
-  it("更新は画面に表示中の記録（lockVersion込み）をRepositoryへ渡す", async () => {
+  it("更新は渡された記録（lockVersion込み）をRepositoryへ渡し、成功後に画面状態を置き換える", async () => {
     const loaded = [{ ...initialVisits[0], lockVersion: 4 }];
     const source = repository({ list: vi.fn().mockResolvedValue(loaded) });
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.editVisit("1", { lat: 35, lng: 139 }, {
+      await result.current.editVisit(loaded[0], { lat: 35, lng: 139 }, {
         name: "更新", comment: "", image: "", date: "2026-08-02", rating: 4,
         tagsText: "", status: "visited", area: "東京", appendHistory: false,
       });
@@ -76,7 +76,7 @@ describe("useSaunaVisits", () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
-      await result.current.editVisit("1", { lat: 35, lng: 139 }, {
+      await result.current.editVisit(initialVisits[0], { lat: 35, lng: 139 }, {
         name: "更新", comment: "", image: "", date: "2026-08-02", rating: 4,
         tagsText: "", status: "visited", area: "東京", appendHistory: false,
       });

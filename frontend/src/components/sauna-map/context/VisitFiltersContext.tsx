@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useMemo, ReactNode } from "react";
 import { useVisitFilters } from "../hooks/useVisitFilters";
-import { useVisitsCRUD } from "./VisitsCRUDContext";
+import { useVisitsData } from "./VisitsCRUDContext";
 
 interface VisitFiltersContextType {
   filters: ReturnType<typeof useVisitFilters>["filters"];
@@ -22,7 +22,7 @@ const VisitFilterActionsContext =
   createContext<VisitFilterActionsContextType | null>(null);
 
 export function VisitFiltersProvider({ children }: { children: ReactNode }) {
-  const { visits } = useVisitsCRUD();
+  const { visits } = useVisitsData();
 
   const {
     filters,

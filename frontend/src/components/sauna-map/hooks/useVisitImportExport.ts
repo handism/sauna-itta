@@ -111,12 +111,14 @@ export function downloadVisitsAsJson(visits: SaunaVisit[]): void {
 }
 
 /**
+ * @param getVisits 画面に表示中の記録を返す関数。重複判定とエクスポートの時点で読む
+ *   （配列を直接受け取ると、返す操作関数が記録の変化ごとに作り直される）
  * @param importBatch Repository の importBatch。両モードともこれが唯一の保存経路のため必須。
  *   「Repository を通さず visits 配列を丸ごと保存する」引数を足し戻さないこと
  *   （localモードでも Repository 経由に統一されています。frontend/AGENTS.md 参照）。
  */
 export function useVisitImportExport(
-  visits: SaunaVisit[],
+  getVisits: () => SaunaVisit[],
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
   reload: () => Promise<void>,
   showToast?: Toast,
@@ -127,7 +129,7 @@ export function useVisitImportExport(
   const importVisitsFromFile = useCallback(
     async (file: File) => {
       const validVisits = await parseImportFile(file);
-      const { normalizedImported, alreadyKnown } = filterNewVisits(validVisits, visits);
+      const { normalizedImported, alreadyKnown } = filterNewVisits(validVisits, getVisits());
 
       if (normalizedImported.length === 0) {
         return { added: 0, skipped: alreadyKnown };
@@ -135,7 +137,7 @@ export function useVisitImportExport(
 
       return performBatchImport(normalizedImported, alreadyKnown, importBatch, reload, showToast);
     },
-    [visits, importBatch, reload, showToast],
+    [getVisits, importBatch, reload, showToast],
   );
 
   const handleImportData = useCallback(
@@ -174,8 +176,8 @@ export function useVisitImportExport(
   );
 
   const exportVisits = useCallback(() => {
-    downloadVisitsAsJson(visits);
-  }, [visits]);
+    downloadVisitsAsJson(getVisits());
+  }, [getVisits]);
 
   return {
     importing,

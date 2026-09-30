@@ -15,7 +15,12 @@ import {
   CommentField,
   FormActions,
 } from "./VisitFormFields";
-import { useSaunaEditor, useSaunaEditorForm, useSaunaMapActions } from "../../context";
+import {
+  useSaunaEditorState,
+  useSaunaEditorActions,
+  useSaunaEditorForm,
+  useSaunaMapActions,
+} from "../../context";
 import { GeocodingResult } from "../../utils/geocoding";
 import { getSubmitBlockedReason } from "../../utils/form";
 
@@ -156,7 +161,15 @@ export function VisitFormView({
 
 /** Context から値を集めて View へ渡すだけのコンテナ（テストは VisitFormView を描画する） */
 export function VisitForm() {
-  const editor = useSaunaEditor();
+  const { selectedLocation, editingId, historyEntries } = useSaunaEditorState();
+  const {
+    handleSubmit,
+    handleImageFile,
+    handleRemoveImage,
+    handleDelete,
+    handleDeleteHistoryEntry,
+    handleLocationSelect,
+  } = useSaunaEditorActions();
   // 入力値は専用 Context から。ここだけが 1 文字ごとの更新を購読する
   const { form, setForm, imageUploading, saving } = useSaunaEditorForm();
   /*
@@ -170,16 +183,16 @@ export function VisitForm() {
     <VisitFormView
       form={form}
       setForm={setForm}
-      selectedLocation={editor.selectedLocation}
-      editingId={editor.editingId}
-      historyEntries={editor.historyEntries}
-      onSubmit={(e) => editor.handleSubmit(e, handleEditingFinished)}
-      onImageFile={editor.handleImageFile}
-      onRemoveImage={editor.handleRemoveImage}
-      onDelete={editor.handleDelete}
+      selectedLocation={selectedLocation}
+      editingId={editingId}
+      historyEntries={historyEntries}
+      onSubmit={(e) => handleSubmit(e, handleEditingFinished)}
+      onImageFile={handleImageFile}
+      onRemoveImage={handleRemoveImage}
+      onDelete={handleDelete}
       onCancel={() => handleCancelEditing()}
-      onDeleteHistoryEntry={editor.editingId ? editor.handleDeleteHistoryEntry : undefined}
-      onLocationSelect={editor.handleLocationSelect}
+      onDeleteHistoryEntry={editingId ? handleDeleteHistoryEntry : undefined}
+      onLocationSelect={handleLocationSelect}
       imageUploading={imageUploading}
       saving={saving}
     />

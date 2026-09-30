@@ -10,7 +10,7 @@ import { VisitListSearch } from "./VisitListSearch";
 import { VisitListEmpty } from "./VisitListEmpty";
 import { readStorage, writeStorage } from "../../utils/storage";
 import {
-  useVisitsCRUD,
+  useVisitsData,
   useVisitFiltersContext,
   useSaunaMapState,
   useSaunaEditorActions,
@@ -167,7 +167,7 @@ export function VisitListView({
  * テストは props を直接渡せる `VisitListView` を描画すること。
  */
 export function VisitList() {
-  const { visits } = useVisitsCRUD();
+  const { visits } = useVisitsData();
   const { filteredVisits, filters, setFilters, isFilterActive, activeFilterCount, clearFilters } =
     useVisitFiltersContext();
   const { selectedId, hoveredId, setHoveredId, handleEditVisit, handleListSelectVisit, handleDeselectVisit } =

@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useMapViewState } from "../hooks/useMapViewState";
 import { useSaunaViewport } from "./UIContext";
-import { useVisitsCRUD } from "./VisitsCRUDContext";
+import { useVisitsData } from "./VisitsCRUDContext";
 import { useSaunaEditorActions } from "./EditorContext";
 import { SheetSnapPosition, SaunaVisit, LatLng, MobileTab } from "../types";
 
@@ -46,8 +46,8 @@ const MapStateActionsContext = createContext<MapStateActionsType | null>(null);
 
 export function MapStateProvider({ children }: { children: ReactNode }) {
   const { isMobile } = useSaunaViewport();
-  const { visits } = useVisitsCRUD();
-  // 必要なのは操作関数だけ。useSaunaEditor()（state + actions）を購読すると
+  const { visits } = useVisitsData();
+  // 必要なのは操作関数だけ。useSaunaEditorState() まで購読すると
   // サイドバーの開閉や場所選択のたびに Provider ごと再レンダリングされる
   const { startEditing, cancelEditing, startCreate } = useSaunaEditorActions();
 

@@ -12,7 +12,7 @@ import { useEditorState } from "../hooks/useEditorState";
 import { useVisitFormState } from "../hooks/useVisitFormState";
 import { useVisitCrud } from "../hooks/useVisitCrud";
 import { useSaunaUIActions, useSaunaViewport } from "./UIContext";
-import { useVisitsCRUD } from "./VisitsCRUDContext";
+import { useVisitsActions, useVisitsData, useVisitsStatus } from "./VisitsCRUDContext";
 import { useVisitFilterActions } from "./VisitFiltersContext";
 import { getVisitHistoryEntries } from "../utils";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
@@ -61,8 +61,6 @@ export interface EditorActionsContextType {
   startCreate: ReturnType<typeof useEditorState>["startCreate"];
 }
 
-export type EditorContextType = EditorStateContextType & EditorActionsContextType;
-
 const EditorFormContext = createContext<EditorFormContextType | null>(null);
 const EditorStateContext = createContext<EditorStateContextType | null>(null);
 const EditorActionsContext = createContext<EditorActionsContextType | null>(null);
@@ -71,7 +69,9 @@ export function EditorProvider({ children }: { children: ReactNode }) {
   const { isMobile } = useSaunaViewport();
   const { showToast, openDeleteConfirm, closeDeleteConfirm } =
     useSaunaUIActions();
-  const { visits, saving, addVisit, editVisit, deleteVisit, removeHistoryEntry } = useVisitsCRUD();
+  const { visits } = useVisitsData();
+  const { saving } = useVisitsStatus();
+  const { addVisit, editVisit, deleteVisit, removeHistoryEntry } = useVisitsActions();
   // 地図の表示範囲フィルターを更新するために setFilters のみ利用する
   const { setFilters } = useVisitFilterActions();
 
@@ -137,6 +137,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
     handleDeleteHistoryEntry,
   } = useVisitCrud({
     editingId,
+    editingVisit,
     selectedLocation,
     historyEntries,
     formRef,
@@ -251,14 +252,4 @@ export function useSaunaEditorActions() {
     throw new Error("useSaunaEditorActions must be used within an EditorProvider");
   }
   return context;
-}
-
-/**
- * 編集状態と操作をまとめて受け取る。フォームの値は含まれないので、
- * 入力値が必要な場合は `useSaunaEditorForm()` を併用すること。
- */
-export function useSaunaEditor(): EditorContextType {
-  const state = useSaunaEditorState();
-  const actions = useSaunaEditorActions();
-  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 import {
 
@@ -96,18 +96,20 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     [repository, runMutation, setVisits],
   );
 
+  /*
+   * 更新系は対象の記録そのものを受け取る（楽観ロックの版 lockVersion も記録が持つ）。
+   * ID から visits を引く形にすると操作関数が visits に依存し、記録が 1 件変わるたびに
+   * VisitsActionsContext の参照が変わって、操作関数しか使わない消費側まで再レンダリングされる。
+   */
   const editVisit = useCallback(
-    async (id: string, location: LatLng, form: VisitFormState) => {
-      // 楽観ロックの版（lockVersion）は画面に表示中の記録から渡す
-      const current = visits.find((visit) => visit.id === id);
-      if (!current) return { success: false };
-      const result = await runMutation(() => repository.update(current, location, form));
+    async (target: SaunaVisit, location: LatLng, form: VisitFormState) => {
+      const result = await runMutation(() => repository.update(target, location, form));
       if (result.value) {
-        setVisits((items) => items.map((visit) => (visit.id === id ? result.value as SaunaVisit : visit)));
+        setVisits((items) => items.map((visit) => (visit.id === target.id ? result.value as SaunaVisit : visit)));
       }
       return { success: result.success };
     },
-    [repository, runMutation, setVisits, visits],
+    [repository, runMutation, setVisits],
   );
 
   const deleteVisit = useCallback(
@@ -120,16 +122,14 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
   );
 
   const removeHistoryEntry = useCallback(
-    async (id: string, index: number) => {
-      const current = visits.find((visit) => visit.id === id);
-      if (!current) return { success: false };
-      const result = await runMutation(() => repository.deleteHistoryEntry(current, index));
+    async (target: SaunaVisit, index: number) => {
+      const result = await runMutation(() => repository.deleteHistoryEntry(target, index));
       if (result.value) {
-        setVisits((items) => items.map((visit) => (visit.id === id ? result.value as SaunaVisit : visit)));
+        setVisits((items) => items.map((visit) => (visit.id === target.id ? result.value as SaunaVisit : visit)));
       }
       return { success: result.success };
     },
-    [repository, runMutation, setVisits, visits],
+    [repository, runMutation, setVisits],
   );
 
   const importBatch = useCallback(
@@ -137,7 +137,16 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     [repository],
   );
 
-  const importExport = useVisitImportExport(visits, importBatch, reload, showToast);
+  // インポートの重複判定とエクスポートはクリック時点の visits を読めれば足りる。
+  // visits を直接渡すと操作関数が記録の変化ごとに作り直されるため、ref 経由で渡す
+  // （ref の更新はコミット後のエフェクトで行い、レンダリング中には触らない）。
+  const visitsRef = useRef(visits);
+  useEffect(() => {
+    visitsRef.current = visits;
+  }, [visits]);
+  const getVisits = useCallback(() => visitsRef.current, []);
+
+  const importExport = useVisitImportExport(getVisits, importBatch, reload, showToast);
 
   const logout = useCallback(async () => {
     await repository.logout();

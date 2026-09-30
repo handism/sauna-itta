@@ -1,17 +1,19 @@
 import { useCallback, FormEvent, MutableRefObject } from "react";
-import { VisitFormState, LatLng, VisitHistoryEntry } from "../types";
+import { VisitFormState, LatLng, VisitHistoryEntry, SaunaVisit } from "../types";
 import { validateVisitForm } from "../utils";
 
 export interface UseVisitCrudOptions {
   editingId: string | null;
+  /** 編集中の記録。更新・履歴削除は ID ではなくこれを渡す（lockVersion を含むため） */
+  editingVisit: SaunaVisit | null;
   selectedLocation: LatLng | null;
   historyEntries: VisitHistoryEntry[];
   formRef: MutableRefObject<VisitFormState>;
   setForm: React.Dispatch<React.SetStateAction<VisitFormState>>;
   addVisit: (location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
-  editVisit: (id: string, location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
+  editVisit: (visit: SaunaVisit, location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
   deleteVisit: (id: string) => Promise<{ success: boolean }>;
-  removeHistoryEntry: (visitId: string, entryIndex: number) => Promise<{ success: boolean }>;
+  removeHistoryEntry: (visit: SaunaVisit, entryIndex: number) => Promise<{ success: boolean }>;
   openDeleteConfirm: () => void;
   closeDeleteConfirm: () => void;
   showToast: (message: string, type: "success" | "error" | "info") => void;
@@ -20,6 +22,7 @@ export interface UseVisitCrudOptions {
 
 export function useVisitCrud({
   editingId,
+  editingVisit,
   selectedLocation,
   historyEntries,
   formRef,
@@ -73,7 +76,12 @@ export function useVisitCrud({
 
       let success = false;
       if (editingId) {
-        const result = await editVisit(editingId, selectedLocation, currentForm);
+        // 編集中に別の操作（再読み込み・削除）で一覧から消えた場合
+        if (!editingVisit) {
+          showToast("編集中の記録が見つかりません。再読み込みしてからもう一度お試しください。", "error");
+          return;
+        }
+        const result = await editVisit(editingVisit, selectedLocation, currentForm);
         success = result.success;
       } else {
         const result = await addVisit(selectedLocation, currentForm);
@@ -86,14 +94,14 @@ export function useVisitCrud({
       cancelEditing(true);
       onCompleted?.();
     },
-    [selectedLocation, editingId, editVisit, addVisit, showToast, cancelEditing, formRef],
+    [selectedLocation, editingId, editingVisit, editVisit, addVisit, showToast, cancelEditing, formRef],
   );
 
   const handleDeleteHistoryEntry = useCallback(
     async (index: number) => {
-      if (!editingId) return;
+      if (!editingVisit) return;
 
-      const { success } = await removeHistoryEntry(editingId, index);
+      const { success } = await removeHistoryEntry(editingVisit, index);
       if (!success) return;
 
       const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
@@ -108,7 +116,7 @@ export function useVisitCrud({
         }));
       }
     },
-    [editingId, removeHistoryEntry, historyEntries, setForm],
+    [editingVisit, removeHistoryEntry, historyEntries, setForm],
   );
 
   return {
