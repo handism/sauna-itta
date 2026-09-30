@@ -35,7 +35,11 @@ export interface VisitRepository {
   logout(): Promise<void>;
   list(): Promise<SaunaVisit[]>;
   create(location: LatLng, form: VisitFormState): Promise<SaunaVisit>;
-  update(id: string, location: LatLng, form: VisitFormState): Promise<SaunaVisit>;
+  /**
+   * @param visit 画面に表示中の記録。apiモードは `lockVersion` を楽観ロックの版として送るため、
+   *   IDだけで呼べる形へ戻さないこと（Repository 側に版を覚えさせると、画面の状態と食い違う）
+   */
+  update(visit: SaunaVisit, location: LatLng, form: VisitFormState): Promise<SaunaVisit>;
   delete(id: string): Promise<void>;
   deleteHistoryEntry(visit: SaunaVisit, index: number): Promise<SaunaVisit>;
   importBatch(visits: SaunaVisit[]): Promise<ImportResult>;

@@ -51,6 +51,22 @@ describe("useSaunaVisits", () => {
     expect(result.current.visits[0].id).toBe("2");
   });
 
+  it("更新は画面に表示中の記録（lockVersion込み）をRepositoryへ渡す", async () => {
+    const loaded = [{ ...initialVisits[0], lockVersion: 4 }];
+    const source = repository({ list: vi.fn().mockResolvedValue(loaded) });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.editVisit("1", { lat: 35, lng: 139 }, {
+        name: "更新", comment: "", image: "", date: "2026-08-02", rating: 4,
+        tagsText: "", status: "visited", area: "東京", appendHistory: false,
+      });
+    });
+    expect(source.update).toHaveBeenCalledWith(loaded[0], { lat: 35, lng: 139 }, expect.anything());
+    expect(result.current.visits[0].name).toBe("更新済み");
+  });
+
   it("409競合時は再読み込みを案内して状態を変更しない", async () => {
     const showToast = vi.fn();
     const source = repository({

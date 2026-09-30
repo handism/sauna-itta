@@ -28,7 +28,6 @@ function formPayload(location: LatLng, form: VisitFormState, lockVersion?: numbe
 export class ApiVisitRepository implements VisitRepository {
   readonly dataSource = "api" as const;
   private csrfToken: string | null = null;
-  private visits = new Map<string, SaunaVisit>();
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const method = init.method ?? "GET";
@@ -70,12 +69,10 @@ export class ApiVisitRepository implements VisitRepository {
   async logout(): Promise<void> {
     await this.request<void>("/api/v1/session", { method: "DELETE" });
     this.csrfToken = null;
-    this.visits.clear();
   }
 
   async list(): Promise<SaunaVisit[]> {
     const result = await this.request<{ saunaVisits: SaunaVisit[] }>("/api/v1/sauna_visits");
-    this.visits = new Map(result.saunaVisits.map((visit) => [visit.id, visit]));
     return result.saunaVisits;
   }
 
@@ -84,23 +81,26 @@ export class ApiVisitRepository implements VisitRepository {
       method: "POST",
       body: JSON.stringify(formPayload(location, form)),
     });
-    this.visits.set(result.saunaVisit.id, result.saunaVisit);
     return result.saunaVisit;
   }
 
-  async update(id: string, location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
-    const current = this.visits.get(id);
-    const result = await this.request<{ saunaVisit: SaunaVisit }>(`/api/v1/sauna_visits/${encodeURIComponent(id)}`, {
+  async update(visit: SaunaVisit, location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
+    // サーバーは lockVersion の無い更新を拒否する。送る前に弾いて、原因を利用者へ正しく伝える
+    if (visit.lockVersion === undefined) {
+      throw new RepositoryError(
+        "記録の版情報がありません。再読み込みしてからもう一度お試しください。",
+        "missing_lock_version",
+      );
+    }
+    const result = await this.request<{ saunaVisit: SaunaVisit }>(`/api/v1/sauna_visits/${encodeURIComponent(visit.id)}`, {
       method: "PATCH",
-      body: JSON.stringify(formPayload(location, form, current?.lockVersion)),
+      body: JSON.stringify(formPayload(location, form, visit.lockVersion)),
     });
-    this.visits.set(id, result.saunaVisit);
     return result.saunaVisit;
   }
 
   async delete(id: string): Promise<void> {
     await this.request<void>(`/api/v1/sauna_visits/${encodeURIComponent(id)}`, { method: "DELETE" });
-    this.visits.delete(id);
   }
 
   async deleteHistoryEntry(visit: SaunaVisit, index: number): Promise<SaunaVisit> {
@@ -110,7 +110,6 @@ export class ApiVisitRepository implements VisitRepository {
       `/api/v1/sauna_visits/${encodeURIComponent(visit.id)}/history_entries/${encodeURIComponent(historyId)}`,
       { method: "DELETE" },
     );
-    this.visits.set(visit.id, result.saunaVisit);
     return result.saunaVisit;
   }
 

@@ -20,6 +20,9 @@ module Api
           stale_image_blobs << entry.image.blob if entry.image.attached?
           entry.destroy!
           truncate_legacy_visit_count(visit)
+          # 履歴の削除も記録の変更として lock_version を進める。進めないと、削除前の版を
+          # 持つ別タブが本体の値（最新履歴の写し）を古い内容で上書きできてしまう。
+          visit.touch
         end
         return render_error("last_history", "最後の履歴は削除できません。", :unprocessable_content) if last_history
 

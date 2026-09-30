@@ -48,12 +48,12 @@ export class LocalVisitRepository implements VisitRepository {
     return visit;
   }
 
-  async update(id: string, location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
-    const next = getUpdatedVisits(this.getCache(), id, location, form);
-    const visit = next.find((item) => item.id === id);
-    if (!visit) throw new Error("更新対象が見つかりません。");
+  async update(visit: SaunaVisit, location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
+    const next = getUpdatedVisits(this.getCache(), visit.id, location, form);
+    const updated = next.find((item) => item.id === visit.id);
+    if (!updated) throw new Error("更新対象が見つかりません。");
     this.persist(next);
-    return visit;
+    return updated;
   }
 
   async delete(id: string): Promise<void> {

@@ -61,6 +61,22 @@ class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
     assert_not ActiveStorage::Blob.exists?(blob.id), "削除した履歴の写真blobが残っています"
   end
 
+  test "履歴を削除するとlockVersionが進み、削除前の版からの更新は競合になる" do
+    csrf = sign_in
+    visit = create_visit(csrf)
+    visit = append_history(csrf, visit, comment: "2回目")
+    stale_lock = visit.fetch("lockVersion")
+
+    delete history_path(visit, visit.fetch("history").last.fetch("id")), headers: csrf_header(csrf)
+    assert_response :success
+    assert_operator response.parsed_body.dig("saunaVisit", "lockVersion"), :>, stale_lock
+
+    patch "/api/v1/sauna_visits/#{visit.fetch('id')}", params: {
+      saunaVisit: valid_attributes.merge(comment: "削除前の画面からの上書き", lockVersion: stale_lock)
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :conflict
+  end
+
   test "履歴の件数確認と削除を親レコードのロック内で行う" do
     csrf = sign_in
     visit = create_visit(csrf)

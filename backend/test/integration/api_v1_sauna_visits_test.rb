@@ -129,7 +129,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     visit_c = response.parsed_body.fetch("saunaVisit")
 
     patch "/api/v1/sauna_visits/#{visit_c['id']}", params: {
-      saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url)
+      saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url, lockVersion: visit_c["lockVersion"])
     }, headers: csrf_header(csrf), as: :json
     assert_response :success
 
@@ -261,6 +261,43 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "conflict", response.parsed_body.dig("error", "code")
   end
 
+  test "lockVersionのない更新は楽観ロックを経ずに通さない" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    id = response.parsed_body.dig("saunaVisit", "id")
+
+    patch "/api/v1/sauna_visits/#{id}",
+      params: { saunaVisit: valid_attributes.merge(name: "ロックなしの更新") },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+    assert_equal valid_attributes[:name], SaunaVisit.find_by!(external_id: id).name
+  end
+
+  test "履歴だけを変える更新でもlockVersionが進み、古い版からの更新は競合になる" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    visit = response.parsed_body.fetch("saunaVisit")
+    id = visit.fetch("id")
+    original_lock = visit.fetch("lockVersion")
+
+    # 親の列（名前・タグ等）は同じままコメントだけを変える
+    patch "/api/v1/sauna_visits/#{id}",
+      params: { saunaVisit: valid_attributes.merge(comment: "先のコメント", lockVersion: original_lock) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :success
+    assert_operator response.parsed_body.dig("saunaVisit", "lockVersion"), :>, original_lock
+
+    patch "/api/v1/sauna_visits/#{id}",
+      params: { saunaVisit: valid_attributes.merge(comment: "古いコメント", lockVersion: original_lock) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :conflict
+    assert_equal "先のコメント", SaunaVisit.find_by!(external_id: id).visit_history_entries.sole.comment
+  end
+
   test "更新時に不正な画像を拒否する" do
     csrf = sign_in
     post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
@@ -335,27 +372,26 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
       headers: csrf_header(csrf), as: :json
     assert_response :created
     id = response.parsed_body.dig("saunaVisit", "id")
+    lock_version = response.parsed_body.dig("saunaVisit", "lockVersion")
+    append_with_photo = lambda do
+      patch "/api/v1/sauna_visits/#{id}",
+        params: { saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url, lockVersion: lock_version) },
+        headers: csrf_header(csrf), as: :json
+      assert_response :success
+      lock_version = response.parsed_body.dig("saunaVisit", "lockVersion")
+    end
 
     # 履歴を積み増して、件数が変わってもクエリ数が変わらないことを比較できるようにする
     single_history_queries = count_attachment_queries do
-      patch "/api/v1/sauna_visits/#{id}",
-        params: { saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url) },
-        headers: csrf_header(csrf), as: :json
-      assert_response :success
+      append_with_photo.call
     end
 
     2.times do
-      patch "/api/v1/sauna_visits/#{id}",
-        params: { saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url) },
-        headers: csrf_header(csrf), as: :json
-      assert_response :success
+      append_with_photo.call
     end
 
     many_history_queries = count_attachment_queries do
-      patch "/api/v1/sauna_visits/#{id}",
-        params: { saunaVisit: valid_attributes.merge(appendHistory: true, image: png_data_url) },
-        headers: csrf_header(csrf), as: :json
-      assert_response :success
+      append_with_photo.call
     end
 
     assert_equal 5, response.parsed_body.dig("saunaVisit", "history").size

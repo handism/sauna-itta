@@ -112,35 +112,35 @@ describe("ApiVisitRepository", () => {
     });
   });
 
-  it("更新時に一覧で受け取ったlockVersionを送る", async () => {
+  it("更新時は渡された記録のlockVersionを送る", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(jsonResponse({ saunaVisits: [visitJson({ lockVersion: 7 })] }))
       .mockResolvedValueOnce(jsonResponse({ saunaVisit: visitJson({ lockVersion: 8 }) }));
     const repository = new ApiVisitRepository();
 
-    await repository.list();
-    await repository.update("sauna-1", { lat: 35, lng: 139 }, form);
+    const updated = await repository.update(visitJson({ lockVersion: 7 }), { lat: 35, lng: 139 }, form);
 
-    const body = JSON.parse(String(fetchMock.mock.calls[1][1]?.body));
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
     expect(body.saunaVisit.lockVersion).toBe(7);
     expect(body.saunaVisit.tags).toEqual(["外気浴", "水風呂"]);
-    expect(fetchMock.mock.calls[1][0]).toBe("/api/v1/sauna_visits/sauna-1");
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/v1/sauna_visits/sauna-1");
+    expect(updated.lockVersion).toBe(8);
   });
 
-  it("削除は204を本文なしとして扱い、キャッシュからも落とす", async () => {
-    const fetchMock = vi.spyOn(globalThis, "fetch")
-      .mockResolvedValueOnce(jsonResponse({ saunaVisits: [visitJson({ lockVersion: 3 })] }))
-      .mockResolvedValueOnce(new Response(null, { status: 204 }))
-      .mockResolvedValueOnce(jsonResponse({ saunaVisit: visitJson({}) }));
+  it("lockVersionの無い記録の更新はリクエストを送らない", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch");
     const repository = new ApiVisitRepository();
 
-    await repository.list();
-    await expect(repository.delete("sauna-1")).resolves.toBeUndefined();
+    await expect(
+      repository.update(visitJson({ lockVersion: undefined }), { lat: 35, lng: 139 }, form),
+    ).rejects.toMatchObject({ code: "missing_lock_version" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
 
-    // 削除済みなので lockVersion のキャッシュは残っていない
-    await repository.update("sauna-1", { lat: 35, lng: 139 }, form);
-    const body = JSON.parse(String(fetchMock.mock.calls[2][1]?.body));
-    expect(body.saunaVisit.lockVersion).toBeUndefined();
+  it("削除は204を本文なしとして扱う", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(new Response(null, { status: 204 }));
+    const repository = new ApiVisitRepository();
+
+    await expect(repository.delete("sauna-1")).resolves.toBeUndefined();
   });
 
   it("履歴IDが無い記録の履歴削除はリクエストを送らない", async () => {

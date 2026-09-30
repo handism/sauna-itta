@@ -6,6 +6,7 @@
 
 - `NEXT_PUBLIC_DATA_SOURCE=local|api` で配布形態を切り替えます。localはGitHub Pages用の`/sauna-itta`、同梱JSON、`localStorage`、PWAを維持し、apiはbasePathなし・Rails API・オンライン必須でService Workerを登録しません。
 - `NEXT_PUBLIC_DATA_SOURCE`は未指定（local扱い）・`local`・`api`だけを許可し、それ以外はビルド時に失敗させます。各コンポーネントで独自にフォールバックせず、`frontend/dataSource.ts`の`DATA_SOURCE`を参照してください（判定がずれるとbasePathとRepositoryが異なる混在構成になります）。
+- `VisitRepository.update` は ID ではなく画面に表示中の記録（`SaunaVisit`）を受け取り、apiモードはその `lockVersion` を送ります。Repository の内部に記録のキャッシュを持たせて版を引く実装へ戻さないでください（画面の状態と版が食い違い、ロックが効かない更新が生まれます）。
 - フロントの永続化は `repositories/` の `VisitRepository` 経由にします。Contextや画面から`fetch`または`localStorage`を直接呼ばないでください。CRUDは非同期で、Repository成功後だけ画面状態を更新します。
 - JSONエクスポートは `Blob` + `URL.createObjectURL` で書き出します（`data:` URLへ戻さないこと。写真は最大1MBのBase64で含まれるため、数十件でURL長の上限に当たって無言で失敗します）。APIモードのエクスポートは写真を画像エンドポイントのURLとして書き出すため、localモードへ取り込んでも写真は復元されません。
 

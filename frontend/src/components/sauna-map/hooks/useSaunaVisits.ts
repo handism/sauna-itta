@@ -98,13 +98,16 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
 
   const editVisit = useCallback(
     async (id: string, location: LatLng, form: VisitFormState) => {
-      const result = await runMutation(() => repository.update(id, location, form));
+      // 楽観ロックの版（lockVersion）は画面に表示中の記録から渡す
+      const current = visits.find((visit) => visit.id === id);
+      if (!current) return { success: false };
+      const result = await runMutation(() => repository.update(current, location, form));
       if (result.value) {
-        setVisits((current) => current.map((visit) => (visit.id === id ? result.value as SaunaVisit : visit)));
+        setVisits((items) => items.map((visit) => (visit.id === id ? result.value as SaunaVisit : visit)));
       }
       return { success: result.success };
     },
-    [repository, runMutation, setVisits],
+    [repository, runMutation, setVisits, visits],
   );
 
   const deleteVisit = useCallback(

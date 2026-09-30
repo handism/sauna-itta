@@ -4,7 +4,7 @@
 
 ## API 設計・認可
 - Railsの全記録取得は必ず`current_user.sauna_visits`からスコープし、他ユーザーの記録・履歴・写真は404にします。APIはcamelCase、エラーは`{ error: { code, message, details? } }`形式です。
-- 変更系APIはセッション認証とCSRFを必須にし、`lock_version`競合は409を返します。開発ログインはdevelopmentかつ`ENABLE_DEV_LOGIN=true`の場合だけ許可し、本番ルートを追加しないでください。
+- 変更系APIはセッション認証とCSRFを必須にし、`lock_version`競合は409を返します。記録の更新（`PATCH`）は`lockVersion`を必須とし、無ければ422にします（黙って通すとロック確認を経ずに上書きされます）。更新は`updated_at`を必ず書き換え、履歴の削除は`visit.touch`して、履歴（コメント・評価・写真）だけの変更でも親の`lock_version`を進めてください。親の列が変わらないと`UPDATE`が発行されず、同じ版を持つ別タブの更新が競合として検出されません。開発ログインはdevelopmentかつ`ENABLE_DEV_LOGIN=true`の場合だけ許可し、本番ルートを追加しないでください。
 - Googleログインは`ALLOWED_GOOGLE_EMAIL`との一致に加えて、確認済みメール（`extra.raw_info.email_verified`、無ければ`info.email_verified`）であることも必須にします。メール一致がこのアプリ唯一の認可境界のため、片方だけの判定へ戻さないでください。テストの`google_auth_hash`は`email_verified:`を差し替えられます。
 - Google OAuthのrequest phaseはOmniAuth 2の既定どおりPOSTだけを許可し、`omniauth-rails_csrf_protection`でRailsの`authenticity_token`を検証します。`allowed_request_methods`へGETを追加したり警告を抑制したりしないでください。Googleからのcallbackは従来どおりGETです。
 - 書き込み系の共通エラー応答（`ActiveRecord::RecordInvalid`→422 `validation_error`、画像の`ArgumentError`→422 `invalid_image`）は`VisitWritable`の`included do`が`rescue_from`で登録します。アクションごとに`rescue`を書き写す実装へ戻さないでください（あとから足した書き込みアクションだけ500になります）。`render_validation_error`は`Api::V1::BaseController`が持つため、`VisitWritable`のinclude先はその配下に限ること。`ArgumentError`を`BaseController`側で握ると、画像を書き込まない`ImagesController`まで`invalid_image`になります。

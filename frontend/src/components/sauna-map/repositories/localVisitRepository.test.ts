@@ -84,7 +84,7 @@ describe("LocalVisitRepository", () => {
   it("更新は対象の記録だけを書き換えて返す", async () => {
     seed([existing]);
 
-    const updated = await repository.update("existing-1", { lat: 34.9, lng: 138.3 }, {
+    const updated = await repository.update(existing, { lat: 34.9, lng: 138.3 }, {
       ...form,
       name: "サウナしきじ（改）",
       appendHistory: true,
@@ -98,7 +98,7 @@ describe("LocalVisitRepository", () => {
   it("存在しないIDの更新は保存せずにエラーにする", async () => {
     seed([existing]);
 
-    await expect(repository.update("missing", { lat: 35, lng: 139 }, form)).rejects.toThrow(
+    await expect(repository.update({ ...existing, id: "missing" }, { lat: 35, lng: 139 }, form)).rejects.toThrow(
       "更新対象が見つかりません。",
     );
     expect(storedVisits()).toHaveLength(1);
