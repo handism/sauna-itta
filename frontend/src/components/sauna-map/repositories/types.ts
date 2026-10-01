@@ -1,6 +1,8 @@
 import type { LatLng, SaunaVisit, VisitFormState } from "../types";
+// 配布形態の型は判定（resolveDataSource）と同じ場所を唯一の出所にする
+import type { DataSource } from "../../../../dataSource";
 
-export type DataSource = "local" | "api";
+export type { DataSource };
 
 export interface SessionUser {
   email: string;

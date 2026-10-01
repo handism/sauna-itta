@@ -3,7 +3,7 @@ import type { ChangeEvent } from "react";
 import { expect, test, vi, describe, afterEach, beforeEach, type MockedFunction } from "vitest";
 import { useVisitImportExport } from "./useVisitImportExport";
 import { SaunaVisit } from "../types";
-import type { ImportResult } from "../repositories";
+import { RepositoryError, type ImportResult } from "../repositories";
 
 /** jsdom は URL.createObjectURL を実装しないため、エクスポートの検証用に差し替える */
 function stubObjectUrl() {
@@ -261,6 +261,32 @@ describe("useVisitImportExport", () => {
     expect(reload).toHaveBeenCalledOnce();
     expect(showToast).toHaveBeenLastCalledWith(
       "データの取り込みに失敗しました。10件は取り込み済みです。サーバーへ接続できません。",
+      "error",
+    );
+  });
+
+  test("同時に行われた別の操作との競合 (409) は他の保存操作と同じ案内で伝える", async () => {
+    const importBatch = vi.fn().mockRejectedValue(
+      new RepositoryError("同時に行われた別の操作と重複したため保存できませんでした。", "conflict", 409),
+    );
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(() => mockVisits, importBatch, vi.fn().mockResolvedValue(true), showToast),
+    );
+    const file = new File(
+      [JSON.stringify([{ id: "conflict-1", name: "Sauna", lat: 35, lng: 139, comment: "", date: "2026-08-02" }])],
+      "test.json",
+      { type: "application/json" },
+    );
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(showToast).toHaveBeenLastCalledWith(
+      "データの取り込みに失敗しました。別の画面で記録が更新されました。再読み込みしてからもう一度お試しください。",
       "error",
     );
   });

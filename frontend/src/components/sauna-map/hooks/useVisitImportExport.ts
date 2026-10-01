@@ -4,6 +4,7 @@ import { SaunaVisit, SaunaVisitSchema } from "../types";
 import { normalizeVisits } from "../utils";
 import type { ImportResult } from "../repositories";
 import type { ShowToast } from "../components/common/Toast";
+import { toUserMessage } from "./useVisitSession";
 
 // Rails 側の ImportsController::MAX_BATCH_SIZE と揃えること（1 リクエストあたり 10 件まで）
 const CHUNK_SIZE = 10;
@@ -90,7 +91,8 @@ export async function performBatchImport(
       }
     }
   } catch (error) {
-    let message = error instanceof Error ? error.message : "サーバーへの取り込みに失敗しました。";
+    // 409（同時に行われた別の操作との競合）は他の保存操作と同じ案内へ変換する
+    let message = toUserMessage(error, "サーバーへの取り込みに失敗しました。");
     if (!(await reload())) {
       message += "（再読み込みにも失敗しました）";
     }
