@@ -87,11 +87,25 @@ export function useVisitSession(
     }
   }, [repository, onVisitsLoaded]);
 
-  /** ログアウト後の状態へ戻す（Repository の logout 自体は呼び出し側で行う） */
-  const clearSession = useCallback(() => {
+  /**
+   * ログアウト後の状態へ戻す（Repository の logout 自体は呼び出し側で行う）。
+   * Rails は reset_session で CSRF トークンを作り直すため、セッションを取り直して
+   * 新しいトークンへ差し替える。ログイン前のトークンを持ち続けると、ログイン画面の
+   * POST（/auth/google_oauth2）が invalid_csrf で失敗する。
+   */
+  const resetSession = useCallback(async (): Promise<void> => {
     setAuthenticated(false);
     setUser(null);
-  }, []);
+    setCsrfToken(null);
+    try {
+      const session = await repository.getSession();
+      setAuthenticated(session.authenticated);
+      setUser(session.user);
+      setCsrfToken(session.csrfToken);
+    } catch (error) {
+      setLoadError(toUserMessage(error, LOAD_ERROR_FALLBACK));
+    }
+  }, [repository]);
 
-  return { loading, loadError, authenticated, csrfToken, user, reload, clearSession };
+  return { loading, loadError, authenticated, csrfToken, user, reload, resetSession };
 }

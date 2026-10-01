@@ -29,7 +29,10 @@ export interface DesktopSidebarViewProps {
   onToggleTheme: () => void;
   onOpenShareView: () => void;
   onExportVisits: () => void;
+  exporting: boolean;
   importing: boolean;
+  onLogout?: () => void;
+  userEmail?: string | null;
   importInputRef: RefObject<HTMLInputElement | null>;
   onImportClick: () => void;
   onImportChange: (e: ChangeEvent<HTMLInputElement>) => void;
@@ -49,7 +52,10 @@ export function DesktopSidebarView({
   onToggleTheme,
   onOpenShareView,
   onExportVisits,
+  exporting,
   importing,
+  onLogout,
+  userEmail,
   importInputRef,
   onImportClick,
   onImportChange,
@@ -99,8 +105,11 @@ export function DesktopSidebarView({
           onToggleTheme={onToggleTheme}
           onOpenShareView={onOpenShareView}
           onExportVisits={onExportVisits}
+          exporting={exporting}
           importing={importing}
           onImportClick={onImportClick}
+          onLogout={onLogout}
+          userEmail={userEmail}
         />
 
         <div className="sidebar-content">{children}</div>
@@ -129,8 +138,8 @@ export function DesktopSidebar({ children }: { children: ReactNode }) {
     openShareView,
   } = useSaunaUI();
   // 記録本体は購読しない（エクスポートはクリック時点の記録を読む）
-  const { importInputRef, exportVisits, handleImportData } = useVisitsActions();
-  const { importing } = useVisitsStatus();
+  const { importInputRef, exportVisits, handleImportData, logout } = useVisitsActions();
+  const { importing, exporting, dataSource, user } = useVisitsStatus();
   const { isSidebarExpanded, isAdding } = useSaunaEditorState();
   const { toggleSidebar, startNewVisit } = useSaunaEditorActions();
 
@@ -147,8 +156,11 @@ export function DesktopSidebar({ children }: { children: ReactNode }) {
       theme={theme}
       onToggleTheme={toggleTheme}
       onOpenShareView={openShareView}
-      onExportVisits={exportVisits}
+      onExportVisits={() => void exportVisits()}
+      exporting={exporting}
       importing={importing}
+      onLogout={dataSource === "api" ? () => void logout() : undefined}
+      userEmail={user?.email}
       importInputRef={importInputRef}
       onImportClick={() => importInputRef.current?.click()}
       onImportChange={handleImportData}

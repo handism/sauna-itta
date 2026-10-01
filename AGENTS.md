@@ -48,7 +48,7 @@
 - インポートの結果は `ImportResult` の `added` と `skipped` を両方とも利用者へ伝えます。チャンクごとの途中経過トーストは残りのチャンクがある間だけ出し、最後のチャンクの結果は完了トーストにまとめること（チャンク数と同じ回数トーストを出すと、大量取り込みで通知が連続します）。`skipped` にはサーバーが弾いた重複と、画面上の記録と重複してリクエスト前に除外した分の両方を含めます。
 - 履歴エントリを1件削除したときの訪問回数は、両モードとも残りの履歴件数まで切り下げます（localは`getVisitsWithRemovedHistory`、apiは`HistoryEntriesController#truncate_legacy_visit_count`）。旧形式から引き継いだ回数（localの`visitCount`／apiの`legacy_visit_count`）を維持する実装へ戻すと、インポートした記録だけ「履歴を消したのに訪問回数が減らない」状態がモード間で食い違います。
 - 409 の応答は `error.code` で2種類を区別します。楽観ロックの競合（`StaleObjectError`）は`conflict`、一意制約の重複（`RecordNotUnique`）は`duplicate`です。フロントの`toUserMessage`は`conflict`だけを「再読み込みしてからもう一度」の案内へ置き換え、`duplicate`はサーバーの文言をそのまま表示します。同じcodeへ戻したり、statusの409で一律に判定したりすると、重複の文言が画面に一度も出なくなります。Repositoryの失敗は両モードとも`RepositoryError`で投げます（localモードも`not_found`／`storage_failed`のcodeを持ちます）。
-- Google OAuthのrequest phaseはPOSTだけを許可し、`GET /api/v1/session`のCSRFトークンを`authenticity_token`として送信します。通常リンクやGET許可へ戻さないでください。
+- Google OAuthのrequest phaseはPOSTだけを許可し、`GET /api/v1/session`のCSRFトークンを`authenticity_token`として送信します。通常リンクやGET許可へ戻さないでください。ログアウト（`DELETE /api/v1/session`）はRailsの`reset_session`でCSRFトークンを作り直すため、フロントはログアウト後に`useVisitSession`の`resetSession`でセッションを取り直し、新しいトークンへ差し替えます（ログイン前のトークンを持ち続けると、ログイン画面のPOSTが`invalid_csrf`で失敗します）。
 - Playwright E2Eは開発者が`frontend/`で任意実行する確認であり、GitHub Actionsの必須CIへ追加しません。通常CIの所要時間を増やさず、主要導線を実ブラウザで確認したいときに`npm run test:e2e`を実行します。
 
 ---

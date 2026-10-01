@@ -11,7 +11,7 @@
 - apiモードの応答は `apiVisitRepository.ts` で `SaunaVisitSchema` などの zod スキーマに通し、形式が合わなければ `RepositoryError`（`invalid_response`）にします。`response.json() as T` の型注釈だけで信用する形へ戻さないでください（localモードと検証の有無が食い違い、シリアライザ変更が描画中の実行時エラーとして表面化します）。
 - `VisitRepository.update` は ID ではなく画面に表示中の記録（`SaunaVisit`）を受け取り、apiモードはその `lockVersion` を送ります。Repository の内部に記録のキャッシュを持たせて版を引く実装へ戻さないでください（画面の状態と版が食い違い、ロックが効かない更新が生まれます）。
 - フロントの永続化は `repositories/` の `VisitRepository` 経由にします。Contextや画面から`fetch`または`localStorage`を直接呼ばないでください。CRUDは非同期で、Repository成功後だけ画面状態を更新します。
-- JSONエクスポートは `Blob` + `URL.createObjectURL` で書き出します（`data:` URLへ戻さないこと。写真は最大1MBのBase64で含まれるため、数十件でURL長の上限に当たって無言で失敗します）。APIモードのエクスポートは写真を画像エンドポイントのURLとして書き出すため、localモードへ取り込んでも写真は復元されません。
+- JSONエクスポートは `Blob` + `URL.createObjectURL` で書き出します（`data:` URLへ戻さないこと。写真は最大1MBのBase64で含まれるため、数十件でURL長の上限に当たって無言で失敗します）。書き出す前に必ず`VisitRepository.prepareExport`を通します。apiモードは写真を画像エンドポイント（`/api/v1/images/...`）から取得してdata URLへ置き換え、1枚でも取得できなければ欠けたバックアップを作らずにエクスポートごと失敗させます（URLのまま書き出すと、取り込み直しても写真が復元されません。サーバーはこのURLを「既存の写真を据え置く」指示として扱うため、新しい記録には添付されません）。以前の版で書き出した画像URL入りのJSONは、取り込み時に`dropApiImageUrls`で写真だけを外し、外した枚数を完了トーストで伝えます。
 
 ## Service Worker（localモード）
 

@@ -59,12 +59,18 @@ export function sanitizeImageUrl(url: string | undefined): string | undefined {
   return undefined;
 }
 
-export async function compressAndGetBase64(file: File): Promise<string> {
-  const compressedFile = await imageCompression(file, {
-    maxSizeMB: 1,
-    maxWidthOrHeight: 1024,
-  });
+/**
+ * apiモードの画像エンドポイントの接頭辞。サーバーの `VisitWritable#apply_image` は、
+ * この形の値を「保存済みの写真を据え置く」指示として扱い、新しく添付はしない。
+ * そのため、この URL のまま書き出した JSON を取り込んでも写真は復元されない。
+ */
+export const API_IMAGE_PATH_PREFIX = "/api/v1/images/";
 
+export function isApiImageUrl(url: string | undefined): url is string {
+  return typeof url === "string" && url.startsWith(API_IMAGE_PATH_PREFIX);
+}
+
+export function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -73,6 +79,15 @@ export async function compressAndGetBase64(file: File): Promise<string> {
     reader.onerror = () => {
       reject(reader.error ?? new Error("Failed to read file"));
     };
-    reader.readAsDataURL(compressedFile);
+    reader.readAsDataURL(blob);
   });
+}
+
+export async function compressAndGetBase64(file: File): Promise<string> {
+  const compressedFile = await imageCompression(file, {
+    maxSizeMB: 1,
+    maxWidthOrHeight: 1024,
+  });
+
+  return blobToDataUrl(compressedFile);
 }

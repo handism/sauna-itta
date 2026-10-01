@@ -45,4 +45,10 @@ export interface VisitRepository {
   delete(id: string): Promise<void>;
   deleteHistoryEntry(visit: SaunaVisit, index: number): Promise<SaunaVisit>;
   importBatch(visits: SaunaVisit[]): Promise<ImportResult>;
+  /**
+   * JSONエクスポート用に、写真を記録だけで完結する data URL へ置き換えた記録を返す。
+   * apiモードの写真は画像エンドポイントの URL のため、そのまま書き出すと取り込み直しても
+   * 写真が復元されない。写真を1枚でも取得できなければ、欠けたバックアップを作らないよう失敗させる。
+   */
+  prepareExport(visits: SaunaVisit[]): Promise<SaunaVisit[]>;
 }

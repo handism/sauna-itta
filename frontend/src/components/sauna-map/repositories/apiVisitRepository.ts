@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { SaunaVisitSchema, type LatLng, type SaunaVisit, type VisitFormState } from "../types";
-import { toNormalizedTags } from "../utils";
+import { blobToDataUrl, isApiImageUrl, toNormalizedTags } from "../utils";
 import type { ImportResult, SessionState, VisitRepository } from "./types";
 import { RepositoryError } from "./types";
 
@@ -26,6 +26,11 @@ function parseResponse<T>(schema: z.ZodType<T>, body: unknown): T {
   }
   return result.data;
 }
+
+/** エクスポート時に写真を同時に取得する数。1枚最大1MBのため、多く並べても回線を詰まらせるだけ */
+const EXPORT_IMAGE_CONCURRENCY = 4;
+
+const EXPORT_IMAGE_FAILED_MESSAGE = "写真を取得できなかったため、エクスポートを中止しました。";
 
 interface ErrorEnvelope {
   error?: { code?: string; message?: string; details?: unknown };
@@ -145,5 +150,53 @@ export class ApiVisitRepository implements VisitRepository {
       body: JSON.stringify({ saunaVisits: visits }),
     });
     return parseResponse(ImportResultSchema, body);
+  }
+
+  async prepareExport(visits: SaunaVisit[]): Promise<SaunaVisit[]> {
+    // 記録本体の image は最新履歴の写しのため、同じ URL を二度取得しないよう集合にまとめる
+    const pending = new Set<string>();
+    for (const visit of visits) {
+      if (isApiImageUrl(visit.image)) pending.add(visit.image);
+      for (const entry of visit.history ?? []) {
+        if (isApiImageUrl(entry.image)) pending.add(entry.image);
+      }
+    }
+
+    const queue = [...pending];
+    const dataUrls = new Map<string, string>();
+    const worker = async () => {
+      for (let url = queue.shift(); url !== undefined; url = queue.shift()) {
+        dataUrls.set(url, await this.fetchImageAsDataUrl(url));
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(EXPORT_IMAGE_CONCURRENCY, queue.length) }, worker));
+
+    const inline = (image: string | undefined) => (image !== undefined && dataUrls.get(image)) || image;
+    return visits.map((visit) => ({
+      ...visit,
+      image: inline(visit.image),
+      ...(visit.history && {
+        history: visit.history.map((entry) => ({ ...entry, image: inline(entry.image) })),
+      }),
+    }));
+  }
+
+  private async fetchImageAsDataUrl(url: string): Promise<string> {
+    let response: Response;
+    try {
+      response = await fetch(url, { credentials: "same-origin" });
+    } catch (error) {
+      console.error(`Failed to request GET ${url}:`, error);
+      throw new RepositoryError("サーバーへ接続できません。通信状態を確認してください。", "network_error");
+    }
+    if (!response.ok) {
+      throw new RepositoryError(EXPORT_IMAGE_FAILED_MESSAGE, "export_image_failed", response.status);
+    }
+    try {
+      return await blobToDataUrl(await response.blob());
+    } catch (error) {
+      console.error(`Failed to read image ${url}:`, error);
+      throw new RepositoryError(EXPORT_IMAGE_FAILED_MESSAGE, "export_image_failed");
+    }
   }
 }

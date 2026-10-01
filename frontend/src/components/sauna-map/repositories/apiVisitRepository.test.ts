@@ -232,4 +232,68 @@ describe("ApiVisitRepository", () => {
 
     await expect(repository.importBatch([visitJson({})])).rejects.toMatchObject({ code: "invalid_response" });
   });
+
+  describe("prepareExport", () => {
+    const API_IMAGE = "/api/v1/images/signed-1";
+
+    function imageResponse(bytes: string, status = 200) {
+      return new Response(bytes, { status, headers: { "Content-Type": "image/png" } });
+    }
+
+    it("画像エンドポイントの写真を data URL へ置き換え、同じ URL は一度だけ取得する", async () => {
+      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(imageResponse("png-bytes"));
+      const repository = new ApiVisitRepository();
+      const visit = visitJson({
+        image: API_IMAGE,
+        history: [
+          { id: "h1", date: "2026-08-01", comment: "", image: "data:image/png;base64,AAAA" },
+          { id: "h2", date: "2026-08-02", comment: "", image: API_IMAGE },
+        ],
+      });
+
+      const [exported] = await repository.prepareExport([visit]);
+
+      // 記録本体の image は最新履歴の写しのため、取得は1回で足りる
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(fetchMock.mock.calls[0][0]).toBe(API_IMAGE);
+      expect(fetchMock.mock.calls[0][1]?.credentials).toBe("same-origin");
+      expect(exported.image).toMatch(/^data:image\/png;base64,/);
+      expect(exported.history?.[1].image).toBe(exported.image);
+      // もともと data URL の写真には触らない
+      expect(exported.history?.[0].image).toBe("data:image/png;base64,AAAA");
+      // 元の記録（画面の状態）は書き換えない
+      expect(visit.image).toBe(API_IMAGE);
+    });
+
+    it("写真のない記録は取得せずにそのまま返す", async () => {
+      const fetchMock = vi.spyOn(globalThis, "fetch");
+      const repository = new ApiVisitRepository();
+      const visit = visitJson({});
+
+      await expect(repository.prepareExport([visit])).resolves.toEqual([visit]);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("写真を1枚でも取得できなければ、欠けたバックアップを作らずに失敗する", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(imageResponse("", 404));
+      const repository = new ApiVisitRepository();
+
+      await expect(repository.prepareExport([visitJson({ image: API_IMAGE })])).rejects.toMatchObject({
+        code: "export_image_failed",
+        status: 404,
+      });
+    });
+
+    it("通信できないときは network_error にする", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));
+      const repository = new ApiVisitRepository();
+
+      await expect(repository.prepareExport([visitJson({ image: API_IMAGE })])).rejects.toBeInstanceOf(RepositoryError);
+      await expect(repository.prepareExport([visitJson({ image: API_IMAGE })])).rejects.toMatchObject({
+        code: "network_error",
+      });
+    });
+  });
 });
+

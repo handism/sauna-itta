@@ -18,6 +18,7 @@ function renderSidebar(overrides: Partial<DesktopSidebarViewProps> = {}) {
     onToggleTheme: vi.fn(),
     onOpenShareView: vi.fn(),
     onExportVisits: vi.fn(),
+    exporting: false,
     importing: false,
     importInputRef: { current: null } as RefObject<HTMLInputElement | null>,
     onImportClick: vi.fn(),

@@ -26,6 +26,7 @@ export interface VisitsStatusContextType {
   loading: boolean;
   saving: boolean;
   importing: boolean;
+  exporting: boolean;
   loadError: string | null;
   authenticated: boolean;
   csrfToken: string | null;
@@ -38,12 +39,14 @@ export interface VisitsActionsContextType {
   editVisit: (visit: SaunaVisit, location: LatLng, form: VisitFormState) => Promise<{ success: boolean }>;
   deleteVisit: (id: string) => Promise<{ success: boolean }>;
   removeHistoryEntry: (visit: SaunaVisit, index: number) => Promise<{ success: boolean }>;
-  exportVisits: () => void;
+  /** apiモードは写真の取得を待つ。失敗はトーストで伝えるため reject しない */
+  exportVisits: () => Promise<void>;
   handleImportData: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
   importInputRef: RefObject<HTMLInputElement | null>;
   /** 再読み込みが成功したか。失敗の内容は loadError に入る */
   reload: () => Promise<boolean>;
-  logout: () => Promise<void>;
+  /** ログアウトに成功したか。失敗はトーストで伝える */
+  logout: () => Promise<boolean>;
 }
 
 const VisitsDataContext = createContext<VisitsDataContextType | null>(null);
@@ -62,6 +65,7 @@ export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
     exportVisits,
     handleImportData,
     importing,
+    exporting,
     importInputRef,
     loading,
     saving,
@@ -77,8 +81,8 @@ export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
   const dataValue = useMemo(() => ({ visits }), [visits]);
 
   const statusValue = useMemo(
-    () => ({ loading, saving, importing, loadError, authenticated, csrfToken, user, dataSource }),
-    [loading, saving, importing, loadError, authenticated, csrfToken, user, dataSource],
+    () => ({ loading, saving, importing, exporting, loadError, authenticated, csrfToken, user, dataSource }),
+    [loading, saving, importing, exporting, loadError, authenticated, csrfToken, user, dataSource],
   );
 
   const actionsValue = useMemo(

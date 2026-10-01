@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, ChangeEvent } from "react";
 import { z } from "zod";
 import { SaunaVisit, SaunaVisitSchema } from "../types";
-import { normalizeVisits } from "../utils";
+import { isApiImageUrl, normalizeVisits, syncLatestFromHistory } from "../utils";
 import type { ImportResult } from "../repositories";
 import type { ShowToast } from "../components/common/Toast";
 import { toUserMessage } from "./useVisitSession";
@@ -13,9 +13,13 @@ const REVOKE_OBJECT_URL_DELAY_MS = 1000;
 
 const RELOAD_FAILED_NOTE = "（画面の再読み込みに失敗したため、表示が最新でない可能性があります）";
 
+const EXPORT_FAILED_FALLBACK = "エクスポートに失敗しました。";
+
 export interface BatchImportResult extends ImportResult {
   /** 取り込み後の再読み込みに成功したか。失敗しても取り込み自体は確定している */
   reloaded: boolean;
+  /** 画像エンドポイントの URL だったため取り込めなかった写真の枚数（dropApiImageUrls 参照） */
+  droppedImages: number;
 }
 
 export class ImportProgressError extends Error {
@@ -64,6 +68,30 @@ export function filterNewVisits(validVisits: SaunaVisit[], existingVisits: Sauna
 }
 
 /**
+ * 写真が apiモードの画像エンドポイントの URL のままになっている履歴から、写真だけを外す。
+ * 以前の版の apiモードのエクスポートはこの形で書き出していた。サーバーはこの URL を
+ * 「既存の写真を据え置く」指示として扱い新しい記録には添付せず、localモードでは
+ * 表示できない相対 URL として残るため、どちらのモードでも外したうえで枚数を利用者へ伝える。
+ *
+ * @param visits normalizeVisits 済みの記録（history を必ず持つ）
+ */
+export function dropApiImageUrls(visits: SaunaVisit[]): { visits: SaunaVisit[]; droppedImages: number } {
+  let droppedImages = 0;
+  const cleaned = visits.map((visit) => {
+    const history = visit.history ?? [];
+    if (!history.some((entry) => isApiImageUrl(entry.image))) return visit;
+
+    const nextHistory = history.map((entry) => {
+      if (!isApiImageUrl(entry.image)) return entry;
+      droppedImages += 1;
+      return { ...entry, image: undefined };
+    });
+    return { ...visit, ...syncLatestFromHistory(nextHistory, visit.visitCount) };
+  });
+  return { visits: cleaned, droppedImages };
+}
+
+/**
  * 取り込みは Repository の importBatch へ委ねる（localモードは localStorage、
  * apiモードは Rails への POST）。保存の失敗は例外で伝わるため、戻り値に成否は持たせない。
  *
@@ -76,7 +104,7 @@ export async function performBatchImport(
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
   reload: () => Promise<boolean>,
   showToast?: ShowToast,
-): Promise<BatchImportResult> {
+): Promise<Omit<BatchImportResult, "droppedImages">> {
   let added = 0;
   let skipped = alreadyKnown;
   try {
@@ -125,14 +153,18 @@ export function downloadVisitsAsJson(visits: SaunaVisit[]): void {
  * @param importBatch Repository の importBatch。両モードともこれが唯一の保存経路のため必須。
  *   「Repository を通さず visits 配列を丸ごと保存する」引数を足し戻さないこと
  *   （localモードでも Repository 経由に統一されています。frontend/AGENTS.md 参照）。
+ * @param prepareExport Repository の prepareExport。apiモードの写真を data URL へ置き換える。
+ *   省略可能にしたり記録をそのまま書き出したりすると、apiモードのエクスポートから写真が抜ける。
  */
 export function useVisitImportExport(
   getVisits: () => SaunaVisit[],
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
+  prepareExport: (visits: SaunaVisit[]) => Promise<SaunaVisit[]>,
   reload: () => Promise<boolean>,
   showToast?: ShowToast,
 ) {
   const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const importVisitsFromFile = useCallback(
@@ -141,10 +173,12 @@ export function useVisitImportExport(
       const { normalizedImported, alreadyKnown } = filterNewVisits(validVisits, getVisits());
 
       if (normalizedImported.length === 0) {
-        return { added: 0, skipped: alreadyKnown, reloaded: true };
+        return { added: 0, skipped: alreadyKnown, reloaded: true, droppedImages: 0 };
       }
 
-      return performBatchImport(normalizedImported, alreadyKnown, importBatch, reload, showToast);
+      const { visits: importable, droppedImages } = dropApiImageUrls(normalizedImported);
+      const result = await performBatchImport(importable, alreadyKnown, importBatch, reload, showToast);
+      return { ...result, droppedImages };
     },
     [getVisits, importBatch, reload, showToast],
   );
@@ -156,7 +190,7 @@ export function useVisitImportExport(
 
       setImporting(true);
       try {
-        const { added, skipped, reloaded } = await importVisitsFromFile(file);
+        const { added, skipped, reloaded, droppedImages } = await importVisitsFromFile(file);
         const reloadNote = reloaded ? "" : RELOAD_FAILED_NOTE;
         if (added === 0) {
           showToast?.(
@@ -169,7 +203,11 @@ export function useVisitImportExport(
         }
 
         const skippedNote = skipped > 0 ? `（${skipped}件はすでに登録済みのためスキップしました）` : "";
-        showToast?.(`データを${added}件取り込みました。${skippedNote}${reloadNote}`, "success");
+        const droppedNote =
+          droppedImages > 0
+            ? `（写真${droppedImages}枚は画像URLとして書き出されていたため取り込めませんでした。最新の版でエクスポートし直してください）`
+            : "";
+        showToast?.(`データを${added}件取り込みました。${skippedNote}${droppedNote}${reloadNote}`, "success");
       } catch (error) {
         if (error instanceof ImportProgressError) {
           const progress = error.added > 0 ? `${error.added}件は取り込み済みです。` : "";
@@ -185,12 +223,20 @@ export function useVisitImportExport(
     [importVisitsFromFile, showToast],
   );
 
-  const exportVisits = useCallback(() => {
-    downloadVisitsAsJson(getVisits());
-  }, [getVisits]);
+  const exportVisits = useCallback(async () => {
+    setExporting(true);
+    try {
+      downloadVisitsAsJson(await prepareExport(getVisits()));
+    } catch (error) {
+      showToast?.(toUserMessage(error, EXPORT_FAILED_FALLBACK), "error");
+    } finally {
+      setExporting(false);
+    }
+  }, [getVisits, prepareExport, showToast]);
 
   return {
     importing,
+    exporting,
     importInputRef,
     handleImportData,
     importVisitsFromFile,

@@ -21,6 +21,7 @@ function repository(overrides: Partial<VisitRepository> = {}): VisitRepository {
     delete: vi.fn().mockResolvedValue(undefined),
     deleteHistoryEntry: vi.fn().mockResolvedValue(initialVisits[0]),
     importBatch: vi.fn().mockResolvedValue({ added: 0, skipped: 0 }),
+    prepareExport: vi.fn(async (visits: SaunaVisit[]) => visits),
     ...overrides,
   };
 }
@@ -209,5 +210,71 @@ describe("useSaunaVisits", () => {
       window.dispatchEvent(new StorageEvent("storage", { key: VISITS_STORAGE_KEY }));
     });
     expect(source.list).toHaveBeenCalledOnce();
+  });
+
+  it("ログアウト後は記録を消し、セッションを取り直して新しい CSRF トークンを持つ", async () => {
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "before-logout" })
+      .mockResolvedValueOnce({ authenticated: false, user: null, csrfToken: "after-logout" });
+    const source = repository({ getSession });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.visits).toEqual(initialVisits));
+
+    let loggedOut: boolean | undefined;
+    await act(async () => {
+      loggedOut = await result.current.logout();
+    });
+
+    expect(loggedOut).toBe(true);
+    expect(source.logout).toHaveBeenCalledOnce();
+    expect(result.current.visits).toEqual([]);
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.csrfToken).toBe("after-logout");
+  });
+
+  it("ログアウトに失敗したらトーストで伝え、ログイン状態と記録を残す", async () => {
+    const showToast = vi.fn();
+    const source = repository({ logout: vi.fn().mockRejectedValue(new Error("通信失敗")) });
+    const { result } = renderHook(() => useSaunaVisits(showToast, source));
+    await waitFor(() => expect(result.current.visits).toEqual(initialVisits));
+
+    let loggedOut: boolean | undefined;
+    await act(async () => {
+      loggedOut = await result.current.logout();
+    });
+
+    expect(loggedOut).toBe(false);
+    expect(showToast).toHaveBeenCalledWith("通信失敗", "error");
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.visits).toEqual(initialVisits);
+  });
+
+  it("エクスポートは Repository の prepareExport を通した記録を書き出す", async () => {
+    const prepareExport = vi.fn(async (visits: SaunaVisit[]) =>
+      visits.map((visit) => ({ ...visit, image: "data:image/png;base64,AAAA" })),
+    );
+    const createObjectURL = vi.fn<(blob: Blob) => string>(() => "blob:sauna-itta/export");
+    Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() });
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+    const source = repository({ prepareExport });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.visits).toEqual(initialVisits));
+    // Blob URL の遅延解放を、スタブを外す前に済ませる
+    vi.useFakeTimers();
+
+    await act(async () => {
+      await result.current.exportVisits();
+    });
+    vi.runAllTimers();
+    vi.useRealTimers();
+
+    expect(prepareExport).toHaveBeenCalledWith(initialVisits);
+    await expect(createObjectURL.mock.calls[0][0].text()).resolves.toContain("data:image/png;base64,AAAA");
+    expect(result.current.exporting).toBe(false);
+
+    clickSpy.mockRestore();
+    Reflect.deleteProperty(URL, "createObjectURL");
+    Reflect.deleteProperty(URL, "revokeObjectURL");
   });
 });

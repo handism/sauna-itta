@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import type { ChangeEvent } from "react";
 import { expect, test, vi, describe, afterEach, beforeEach, type MockedFunction } from "vitest";
-import { useVisitImportExport } from "./useVisitImportExport";
+import { dropApiImageUrls, useVisitImportExport } from "./useVisitImportExport";
 import { SaunaVisit } from "../types";
 import { RepositoryError, type ImportResult } from "../repositories";
 
@@ -13,6 +13,9 @@ function stubObjectUrl() {
   vi.useFakeTimers();
   return { createObjectURL, revokeObjectURL };
 }
+
+/** localモードと同じく記録をそのまま書き出す prepareExport */
+const passThroughExport = async (visits: SaunaVisit[]) => visits;
 
 describe("useVisitImportExport", () => {
   const mockVisits: SaunaVisit[] = [
@@ -36,46 +39,46 @@ describe("useVisitImportExport", () => {
   });
 
   test("importVisitsFromFile handles invalid JSON", async () => {
-    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
     const file = new File(["invalid json"], "test.json", { type: "application/json" });
     await expect(result.current.importVisitsFromFile(file)).rejects.toThrow("Invalid JSON file");
   });
 
   test("importVisitsFromFile handles invalid schema", async () => {
-    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
     const file = new File(['[{"invalid": "schema"}]'], "test.json", { type: "application/json" });
     await expect(result.current.importVisitsFromFile(file)).rejects.toThrow(/Imported data is not in the correct format/);
   });
 
   test("importVisitsFromFile imports new valid visits", async () => {
-    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
     const newVisit = { id: "2", name: "Sauna B", lat: 35.1, lng: 139.1, comment: "nice", date: "2023-01-02" };
     const file = new File([JSON.stringify([newVisit])], "test.json", { type: "application/json" });
     const res = await result.current.importVisitsFromFile(file);
-    expect(res).toEqual({ added: 1, skipped: 0, reloaded: true });
+    expect(res).toEqual({ added: 1, skipped: 0, reloaded: true, droppedImages: 0 });
     expect(importBatchMock).toHaveBeenCalledWith([expect.objectContaining({ id: "2" })]);
     expect(reloadMock).toHaveBeenCalledOnce();
   });
 
   test("importVisitsFromFile ignores duplicate visits", async () => {
-    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
     const duplicateVisit = { id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2023-01-01" };
     const file = new File([JSON.stringify([duplicateVisit])], "test.json", { type: "application/json" });
     const res = await result.current.importVisitsFromFile(file);
-    expect(res).toEqual({ added: 0, skipped: 1, reloaded: true });
+    expect(res).toEqual({ added: 0, skipped: 1, reloaded: true, droppedImages: 0 });
     expect(importBatchMock).not.toHaveBeenCalled();
   });
 
   test("exportVisits creates a download link", async () => {
-    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, reloadMock));
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click");
     const appendSpy = vi.spyOn(document.body, "appendChild");
     const removeSpy = vi.spyOn(document.body, "removeChild");
     const setAttributeSpy = vi.spyOn(HTMLAnchorElement.prototype, "setAttribute");
     const { createObjectURL, revokeObjectURL } = stubObjectUrl();
 
-    act(() => {
-      result.current.exportVisits();
+    await act(async () => {
+      await result.current.exportVisits();
     });
 
     expect(clickSpy).toHaveBeenCalled();
@@ -109,7 +112,7 @@ describe("useVisitImportExport", () => {
     }));
     const reload = vi.fn().mockResolvedValue(true);
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reload),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reload),
     );
     const imported = Array.from({ length: 25 }, (_, index) => ({
       id: `api-${index}`,
@@ -125,6 +128,7 @@ describe("useVisitImportExport", () => {
       added: 25,
       skipped: 0,
       reloaded: true,
+      droppedImages: 0,
     });
     expect(importBatch.mock.calls.map(([items]) => items.length)).toEqual([10, 10, 5]);
     expect(reload).toHaveBeenCalledOnce();
@@ -137,7 +141,7 @@ describe("useVisitImportExport", () => {
     }));
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reloadMock, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reloadMock, showToast),
     );
     const imported = Array.from({ length: 25 }, (_, index) => ({
       id: `chunk-${index}`,
@@ -167,7 +171,7 @@ describe("useVisitImportExport", () => {
     const importBatch = vi.fn().mockResolvedValue({ added: 1, skipped: 0 });
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reloadMock, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reloadMock, showToast),
     );
     const file = new File(
       [JSON.stringify([{ id: "single", name: "Sauna", lat: 35, lng: 139, comment: "", date: "2026-08-02" }])],
@@ -188,7 +192,7 @@ describe("useVisitImportExport", () => {
     const importBatch = vi.fn().mockResolvedValue({ added: 1, skipped: 1 });
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reloadMock, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reloadMock, showToast),
     );
     const imported = [
       { id: "new-1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2026-08-02" },
@@ -212,7 +216,7 @@ describe("useVisitImportExport", () => {
     const importBatch = vi.fn();
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reloadMock, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reloadMock, showToast),
     );
     const file = new File(
       [JSON.stringify([{ id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2023-01-01" }])],
@@ -240,7 +244,7 @@ describe("useVisitImportExport", () => {
     const reload = vi.fn().mockResolvedValue(true);
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reload, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reload, showToast),
     );
     const imported = Array.from({ length: 15 }, (_, index) => ({
       id: `partial-${index}`,
@@ -271,7 +275,7 @@ describe("useVisitImportExport", () => {
     );
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, vi.fn().mockResolvedValue(true), showToast),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, vi.fn().mockResolvedValue(true), showToast),
     );
     const file = new File(
       [JSON.stringify([{ id: "conflict-1", name: "Sauna", lat: 35, lng: 139, comment: "", date: "2026-08-02" }])],
@@ -297,7 +301,7 @@ describe("useVisitImportExport", () => {
     const reload = vi.fn().mockResolvedValueOnce(false);
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reload, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reload, showToast),
     );
     const imported = Array.from({ length: 1 }, (_, index) => ({
       id: `fail-${index}`,
@@ -326,7 +330,7 @@ describe("useVisitImportExport", () => {
     const reload = vi.fn().mockResolvedValueOnce(false);
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatchMock, reload, showToast),
+      useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reload, showToast),
     );
     const newVisit = { id: "2", name: "Sauna B", lat: 35.1, lng: 139.1, comment: "", date: "2023-01-02" };
     const file = new File([JSON.stringify([newVisit])], "test.json", { type: "application/json" });
@@ -349,7 +353,7 @@ describe("useVisitImportExport", () => {
     const importBatch = vi.fn().mockRejectedValue(new Error("ブラウザへの保存に失敗しました。"));
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reloadMock, showToast)
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reloadMock, showToast)
     );
 
     const newVisit = { id: "3", name: "Sauna C", lat: 35.2, lng: 139.2, comment: "failed", date: "2023-01-03" };
@@ -370,7 +374,7 @@ describe("useVisitImportExport", () => {
   test("JSONの読み込みなどそれ以外のエラーの場合はエラートーストを表示する", async () => {
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatchMock, reloadMock, showToast)
+      useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock, showToast)
     );
     const file = new File(["invalid json"], "test.json", { type: "application/json" });
     const input = document.createElement("input");
@@ -384,7 +388,7 @@ describe("useVisitImportExport", () => {
   test("ファイルの読み込みに失敗した場合はエラートーストを表示する", async () => {
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatchMock, reloadMock, showToast)
+      useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock, showToast)
     );
 
     // FileReader をモック化してエラーを発生させる
@@ -419,7 +423,7 @@ describe("useVisitImportExport", () => {
   test("ファイルが選択されていない場合は何もしない", async () => {
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatchMock, reloadMock, showToast)
+      useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock, showToast)
     );
     const input = document.createElement("input");
 
@@ -438,7 +442,7 @@ describe("useVisitImportExport", () => {
     const reload = vi.fn().mockResolvedValue(true);
     const showToast = vi.fn();
     const { result } = renderHook(() =>
-      useVisitImportExport(() => mockVisits, importBatch, reload, showToast),
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reload, showToast),
     );
     const imported = Array.from({ length: 15 }, (_, index) => ({
       id: `partial-${index}`,
@@ -462,4 +466,92 @@ describe("useVisitImportExport", () => {
       "error",
     );
   });
+
+  test("エクスポートに失敗したらトーストで伝え、ファイルは書き出さない", async () => {
+    const showToast = vi.fn();
+    const prepareExport = vi.fn().mockRejectedValue(
+      new RepositoryError("写真を取得できなかったため、エクスポートを中止しました。", "export_image_failed", 404),
+    );
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click");
+    const { result } = renderHook(() =>
+      useVisitImportExport(() => mockVisits, importBatchMock, prepareExport, reloadMock, showToast),
+    );
+
+    await act(async () => {
+      await result.current.exportVisits();
+    });
+
+    expect(clickSpy).not.toHaveBeenCalled();
+    expect(showToast).toHaveBeenCalledWith("写真を取得できなかったため、エクスポートを中止しました。", "error");
+    expect(result.current.exporting).toBe(false);
+    clickSpy.mockRestore();
+  });
+
+  test("画像URLのまま書き出された写真は外して取り込み、枚数を完了トーストで伝える", async () => {
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock, showToast),
+    );
+    const imported = {
+      id: "with-api-image",
+      name: "Sauna C",
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+      image: "/api/v1/images/signed-1",
+      history: [{ date: "2026-08-02", comment: "", image: "/api/v1/images/signed-1" }],
+    };
+    const file = new File([JSON.stringify([imported])], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    const [sent] = importBatchMock.mock.calls[0][0];
+    expect(sent.image).toBeUndefined();
+    expect(sent.history?.[0].image).toBeUndefined();
+    expect(showToast).toHaveBeenCalledWith(expect.stringContaining("写真1枚は画像URLとして書き出されていた"), "success");
+  });
 });
+
+describe("dropApiImageUrls", () => {
+  test("画像エンドポイントの URL だけを外し、記録本体の写しも最新履歴へ揃える", () => {
+    const visit: SaunaVisit = {
+      id: "1",
+      name: "Sauna A",
+      lat: 35,
+      lng: 139,
+      comment: "latest",
+      date: "2026-08-02",
+      image: "/api/v1/images/latest",
+      visitCount: 3,
+      history: [
+        { date: "2026-08-01", comment: "first", image: "data:image/png;base64,AAAA" },
+        { date: "2026-08-02", comment: "latest", image: "/api/v1/images/latest" },
+      ],
+    };
+
+    const { visits, droppedImages } = dropApiImageUrls([visit]);
+
+    expect(droppedImages).toBe(1);
+    expect(visits[0].image).toBeUndefined();
+    expect(visits[0].history?.[0].image).toBe("data:image/png;base64,AAAA");
+    expect(visits[0].history?.[1].image).toBeUndefined();
+    // 旧形式から引き継いだ訪問回数は取り込みでは維持する
+    expect(visits[0].visitCount).toBe(3);
+  });
+
+  test("外す写真がない記録は同じ参照のまま返す", () => {
+    const visit: SaunaVisit = {
+      id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2026-08-02",
+      history: [{ date: "2026-08-02", comment: "" }],
+    };
+    const { visits, droppedImages } = dropApiImageUrls([visit]);
+    expect(droppedImages).toBe(0);
+    expect(visits[0]).toBe(visit);
+  });
+});
+

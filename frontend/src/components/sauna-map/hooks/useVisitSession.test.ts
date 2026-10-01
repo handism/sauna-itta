@@ -19,6 +19,7 @@ function repository(overrides: Partial<VisitRepository> = {}): VisitRepository {
     delete: vi.fn(),
     deleteHistoryEntry: vi.fn(),
     importBatch: vi.fn(),
+    prepareExport: vi.fn(async (visits: SaunaVisit[]) => visits),
     ...overrides,
   };
 }
@@ -116,15 +117,44 @@ describe("useVisitSession", () => {
     expect(result.current.loadError).toBe("通信失敗");
   });
 
-  it("clearSession で未ログイン状態へ戻すこと", async () => {
-    const source = repository();
+  it("resetSession でセッションを取り直し、ログアウト後の CSRF トークンへ差し替えること", async () => {
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "before-logout" })
+      .mockResolvedValueOnce({ authenticated: false, user: null, csrfToken: "after-logout" });
+    const source = repository({ getSession });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.csrfToken).toBe("before-logout");
+
+    await act(async () => {
+      await result.current.resetSession();
+    });
+
+    // reset_session で古いトークンは無効になる。持ち続けるとログインの POST が invalid_csrf になる
+    expect(result.current.csrfToken).toBe("after-logout");
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.user).toBeNull();
+  });
+
+  it("resetSession でセッションを取り直せないときは未ログインにしたうえで loadError へ入れること", async () => {
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "before-logout" })
+      .mockRejectedValueOnce(new RepositoryError("通信失敗", "network_error"));
+    const source = repository({ getSession });
+    // 参照が変わると初回読み込みをやり直すため、安定した関数を渡す
     const onVisitsLoaded = vi.fn();
     const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    act(() => result.current.clearSession());
+    await act(async () => {
+      await result.current.resetSession();
+    });
 
     expect(result.current.authenticated).toBe(false);
-    expect(result.current.user).toBeNull();
+    expect(result.current.csrfToken).toBeNull();
+    expect(result.current.loadError).toBe("通信失敗");
   });
 });

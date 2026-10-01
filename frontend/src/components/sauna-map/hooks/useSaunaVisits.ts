@@ -12,6 +12,7 @@ import { useInitialVisits } from "./useInitialVisits";
 import { toUserMessage, useVisitSession } from "./useVisitSession";
 
 const SAVE_ERROR_FALLBACK = "保存に失敗しました。";
+const LOGOUT_ERROR_FALLBACK = "ログアウトに失敗しました。";
 
 type MutationResult<T> = { success: true; value: T } | { success: false };
 
@@ -29,7 +30,7 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
     // 初回の list() は初期値と同じ localStorage の読み込み＋zod検証になるため省く
     skipInitialList: seedFromStorage,
   });
-  const { reload, clearSession } = session;
+  const { reload, resetSession } = session;
 
   // 実行中の更新系操作の数。真偽値 1 つで持つと、並行した操作の片方が終わった時点で
   // もう片方の実行中に saving が false へ戻ってしまう
@@ -136,13 +137,25 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
   }, [visits]);
   const getVisits = useCallback(() => visitsRef.current, []);
 
-  const importExport = useVisitImportExport(getVisits, importBatch, reload, showToast);
+  const prepareExport = useCallback(
+    async (items: SaunaVisit[]): Promise<SaunaVisit[]> => repository.prepareExport(items),
+    [repository],
+  );
 
-  const logout = useCallback(async () => {
-    await repository.logout();
-    clearSession();
+  const importExport = useVisitImportExport(getVisits, importBatch, prepareExport, reload, showToast);
+
+  /** 失敗はトーストで伝え、成否だけを返す（メニューから結果を待たずに呼ぶため例外にしない） */
+  const logout = useCallback(async (): Promise<boolean> => {
+    try {
+      await repository.logout();
+    } catch (error) {
+      showToast?.(toUserMessage(error, LOGOUT_ERROR_FALLBACK), "error");
+      return false;
+    }
     setVisits([]);
-  }, [repository, clearSession, setVisits]);
+    await resetSession();
+    return true;
+  }, [repository, resetSession, setVisits, showToast]);
 
   return {
     visits,

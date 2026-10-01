@@ -87,4 +87,9 @@ export class LocalVisitRepository implements VisitRepository {
     if (additions.length > 0) this.persist([...additions, ...current]);
     return { added: additions.length, skipped: visits.length - additions.length };
   }
+
+  /** localモードの写真は保存時から data URL のため、そのまま書き出せる */
+  async prepareExport(visits: SaunaVisit[]): Promise<SaunaVisit[]> {
+    return visits;
+  }
 }

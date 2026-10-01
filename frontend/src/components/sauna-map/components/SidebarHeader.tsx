@@ -13,6 +13,7 @@ import {
   Sun,
   Moon,
   Loader2,
+  LogOut,
 } from "lucide-react";
 
 export interface SidebarHeaderViewProps {
@@ -28,8 +29,12 @@ export interface SidebarHeaderViewProps {
   onToggleTheme: () => void;
   onOpenShareView: () => void;
   onExportVisits: () => void;
+  exporting: boolean;
   importing: boolean;
   onImportClick: () => void;
+  /** apiモードでだけ渡す。localモードにはログインの概念がないため項目ごと出さない */
+  onLogout?: () => void;
+  userEmail?: string | null;
 }
 
 export function SidebarHeaderView({
@@ -45,8 +50,11 @@ export function SidebarHeaderView({
   onToggleTheme,
   onOpenShareView,
   onExportVisits,
+  exporting,
   importing,
   onImportClick,
+  onLogout,
+  userEmail,
 }: SidebarHeaderViewProps) {
   return (
     <div className="sidebar-header">
@@ -126,12 +134,21 @@ export function SidebarHeaderView({
             <button
               type="button"
               role="menuitem"
+              disabled={exporting}
               onClick={() => {
                 onExportVisits();
                 onCloseMobileMenu();
               }}
             >
-              <Download size={15} /> エクスポート
+              {exporting ? (
+                <>
+                  <Loader2 size={15} className="spin-icon" /> 書き出し中...
+                </>
+              ) : (
+                <>
+                  <Download size={15} /> エクスポート
+                </>
+              )}
             </button>
             <button
               type="button"
@@ -152,6 +169,23 @@ export function SidebarHeaderView({
                 </>
               )}
             </button>
+            {onLogout && (
+              <button
+                type="button"
+                role="menuitem"
+                title={userEmail ?? undefined}
+                onClick={() => {
+                  onLogout();
+                  onCloseMobileMenu();
+                }}
+              >
+                <LogOut size={15} />
+                <span className="mobile-menu-item-label">
+                  ログアウト
+                  {userEmail && <span className="mobile-menu-item-subtext">{userEmail}</span>}
+                </span>
+              </button>
+            )}
           </div>
         )}
       </div>

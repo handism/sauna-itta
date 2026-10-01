@@ -19,6 +19,7 @@ describe("SidebarHeaderView", () => {
     onToggleTheme: vi.fn(),
     onOpenShareView: vi.fn(),
     onExportVisits: vi.fn(),
+    exporting: false,
     importing: false,
     onImportClick: vi.fn(),
   };
@@ -35,5 +36,24 @@ describe("SidebarHeaderView", () => {
     fireEvent.click(plusBtn);
     expect(defaultProps.onStartNewVisit).toHaveBeenCalledTimes(1);
     expect(defaultProps.onCloseMobileMenu).toHaveBeenCalledTimes(1);
+  });
+
+  it("ログアウトは onLogout を渡したときだけ表示し、アカウントのメールアドレスを添える", () => {
+    const { rerender } = render(<SidebarHeaderView {...defaultProps} isMobileMenuOpen />);
+    expect(screen.queryByRole("menuitem", { name: /ログアウト/ })).not.toBeInTheDocument();
+
+    const onLogout = vi.fn();
+    rerender(
+      <SidebarHeaderView {...defaultProps} isMobileMenuOpen onLogout={onLogout} userEmail="owner@example.com" />,
+    );
+    const logoutItem = screen.getByRole("menuitem", { name: /ログアウト/ });
+    expect(logoutItem).toHaveTextContent("owner@example.com");
+    fireEvent.click(logoutItem);
+    expect(onLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it("書き出し中はエクスポートを押せない", () => {
+    render(<SidebarHeaderView {...defaultProps} isMobileMenuOpen exporting />);
+    expect(screen.getByRole("menuitem", { name: /書き出し中/ })).toBeDisabled();
   });
 });
