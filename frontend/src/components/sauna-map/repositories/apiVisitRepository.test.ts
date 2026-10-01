@@ -194,4 +194,30 @@ describe("ApiVisitRepository", () => {
 
     await expect(repository.importBatch([visitJson({})])).resolves.toEqual({ added: 2, skipped: 3 });
   });
+
+  it("一覧の応答が記録の形式でなければinvalid_responseとして扱う", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ saunaVisits: [{ id: "sauna-1", name: "北欧" }] }));
+    const repository = new ApiVisitRepository();
+
+    await expect(repository.list()).rejects.toMatchObject({ code: "invalid_response" });
+  });
+
+  it("作成の応答にsaunaVisitが無ければinvalid_responseとして扱う", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({}));
+    const repository = new ApiVisitRepository();
+
+    const promise = repository.create({ lat: 35, lng: 139 }, form);
+    await expect(promise).rejects.toBeInstanceOf(RepositoryError);
+    await expect(promise).rejects.toMatchObject({ code: "invalid_response" });
+  });
+
+  it("インポート結果に件数が無ければinvalid_responseとして扱う", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(jsonResponse({ added: 1 }));
+    const repository = new ApiVisitRepository();
+
+    await expect(repository.importBatch([visitJson({})])).rejects.toMatchObject({ code: "invalid_response" });
+  });
 });

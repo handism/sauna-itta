@@ -27,10 +27,10 @@ const mockVisits: SaunaVisit[] = [
 ];
 
 vi.mock("../utils", () => ({
-  getInitialVisits: vi.fn(() => mockVisits),
+  loadSavedVisits: vi.fn(() => ({ visits: mockVisits, unreadable: [{ broken: true }] })),
 }));
 
-import { getInitialVisits } from "../utils";
+import { loadSavedVisits } from "../utils";
 
 describe("useInitialVisits", () => {
   beforeEach(() => {
@@ -43,8 +43,9 @@ describe("useInitialVisits", () => {
     const { result } = renderHook(() => useInitialVisits());
 
     expect(result.current.seededFromStorage).toBe(true);
-    expect(getInitialVisits).toHaveBeenCalledTimes(1);
+    expect(loadSavedVisits).toHaveBeenCalledTimes(1);
     expect(result.current.visits).toEqual(mockVisits);
+    expect(result.current.unreadableCount).toBe(1);
   });
 
   it("should not seed from storage when repository is injected", () => {
@@ -53,7 +54,7 @@ describe("useInitialVisits", () => {
     const { result } = renderHook(() => useInitialVisits(mockRepo));
 
     expect(result.current.seededFromStorage).toBe(false);
-    expect(getInitialVisits).not.toHaveBeenCalled();
+    expect(loadSavedVisits).not.toHaveBeenCalled();
     expect(result.current.visits).toEqual([]);
   });
 
@@ -62,7 +63,7 @@ describe("useInitialVisits", () => {
     const { result } = renderHook(() => useInitialVisits());
 
     expect(result.current.seededFromStorage).toBe(false);
-    expect(getInitialVisits).not.toHaveBeenCalled();
+    expect(loadSavedVisits).not.toHaveBeenCalled();
     expect(result.current.visits).toEqual([]);
   });
 });

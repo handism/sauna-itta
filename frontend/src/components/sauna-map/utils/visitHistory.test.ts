@@ -4,6 +4,7 @@ import {
   getVisitCount,
   getVisitHistoryEntries,
   getInitialVisits,
+  loadSavedVisits,
   getPopularTags,
   getPopularAreas,
   countTags,
@@ -622,6 +623,17 @@ describe("getInitialVisits", () => {
 
     expect(visits).toHaveLength(1);
     expect(visits[0].name).toBe("編集後の名前");
+  });
+
+  it("検証に通らない要素は unreadable として生の値のまま返すこと", () => {
+    const valid = { id: "ok-1", name: "OK", lat: 35, lng: 139, date: "2026-01-01", comment: "" };
+    const broken = { id: "broken-1", lat: "35" };
+    store["sauna-itta_visits"] = JSON.stringify([valid, broken]);
+
+    const { visits, unreadable } = loadSavedVisits();
+
+    expect(visits.map((visit) => visit.id)).toEqual(["ok-1"]);
+    expect(unreadable).toEqual([broken]);
   });
 
   it("すべて削除した状態を保存していれば空のまま復元すること", () => {

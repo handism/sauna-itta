@@ -1,6 +1,25 @@
-import type { LatLng, SaunaVisit, VisitFormState } from "../types";
+import { z } from "zod";
+import { SaunaVisitSchema, type LatLng, type SaunaVisit, type VisitFormState } from "../types";
 import type { ImportResult, SessionState, VisitRepository } from "./types";
 import { RepositoryError } from "./types";
+
+/*
+ * サーバーの応答は型注釈だけで信用せず、localモードと同じ SaunaVisitSchema で検証する。
+ * シリアライザの変更などで形がずれたときに、描画中の実行時エラーではなく
+ * Repository のエラーとして利用者へ伝えるため。
+ */
+const VisitEnvelopeSchema = z.object({ saunaVisit: SaunaVisitSchema });
+const VisitListEnvelopeSchema = z.object({ saunaVisits: z.array(SaunaVisitSchema) });
+const ImportResultSchema = z.object({ added: z.number().int(), skipped: z.number().int() });
+
+function parseResponse<T>(schema: z.ZodType<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    console.error("Unexpected API response:", result.error);
+    throw new RepositoryError("サーバーから想定外の形式のデータが返されました。", "invalid_response");
+  }
+  return result.data;
+}
 
 interface ErrorEnvelope {
   error?: { code?: string; message?: string; details?: unknown };
@@ -72,16 +91,16 @@ export class ApiVisitRepository implements VisitRepository {
   }
 
   async list(): Promise<SaunaVisit[]> {
-    const result = await this.request<{ saunaVisits: SaunaVisit[] }>("/api/v1/sauna_visits");
-    return result.saunaVisits;
+    const body = await this.request<unknown>("/api/v1/sauna_visits");
+    return parseResponse(VisitListEnvelopeSchema, body).saunaVisits;
   }
 
   async create(location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
-    const result = await this.request<{ saunaVisit: SaunaVisit }>("/api/v1/sauna_visits", {
+    const body = await this.request<unknown>("/api/v1/sauna_visits", {
       method: "POST",
       body: JSON.stringify(formPayload(location, form)),
     });
-    return result.saunaVisit;
+    return parseResponse(VisitEnvelopeSchema, body).saunaVisit;
   }
 
   async update(visit: SaunaVisit, location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
@@ -92,11 +111,11 @@ export class ApiVisitRepository implements VisitRepository {
         "missing_lock_version",
       );
     }
-    const result = await this.request<{ saunaVisit: SaunaVisit }>(`/api/v1/sauna_visits/${encodeURIComponent(visit.id)}`, {
+    const body = await this.request<unknown>(`/api/v1/sauna_visits/${encodeURIComponent(visit.id)}`, {
       method: "PATCH",
       body: JSON.stringify(formPayload(location, form, visit.lockVersion)),
     });
-    return result.saunaVisit;
+    return parseResponse(VisitEnvelopeSchema, body).saunaVisit;
   }
 
   async delete(id: string): Promise<void> {
@@ -106,17 +125,18 @@ export class ApiVisitRepository implements VisitRepository {
   async deleteHistoryEntry(visit: SaunaVisit, index: number): Promise<SaunaVisit> {
     const historyId = visit.history?.[index]?.id;
     if (!historyId) throw new RepositoryError("削除対象の履歴IDがありません。", "missing_history_id");
-    const result = await this.request<{ saunaVisit: SaunaVisit }>(
+    const body = await this.request<unknown>(
       `/api/v1/sauna_visits/${encodeURIComponent(visit.id)}/history_entries/${encodeURIComponent(historyId)}`,
       { method: "DELETE" },
     );
-    return result.saunaVisit;
+    return parseResponse(VisitEnvelopeSchema, body).saunaVisit;
   }
 
   async importBatch(visits: SaunaVisit[]): Promise<ImportResult> {
-    return this.request<ImportResult>("/api/v1/sauna_visits/imports", {
+    const body = await this.request<unknown>("/api/v1/sauna_visits/imports", {
       method: "POST",
       body: JSON.stringify({ saunaVisits: visits }),
     });
+    return parseResponse(ImportResultSchema, body);
   }
 }

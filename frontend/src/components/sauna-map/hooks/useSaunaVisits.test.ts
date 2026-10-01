@@ -147,4 +147,12 @@ describe("useSaunaVisits", () => {
     expect(result.current.visits).toEqual([]);
     expect(source.list).toHaveBeenCalledOnce();
   });
+
+  it("Error以外で読み込みに失敗した場合は、保存ではなく読み込みの失敗として伝える", async () => {
+    const source = repository({ list: vi.fn().mockRejectedValue("unknown") });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.loadError).toBe("記録の読み込みに失敗しました。");
+  });
 });

@@ -128,35 +128,49 @@ export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
   }));
 }
 
-function isValidVisit(v: unknown): v is SaunaVisit {
-  return SaunaVisitSchema.safeParse(v).success;
+export interface SavedVisits {
+  visits: SaunaVisit[];
+  /**
+   * 保存されていたが検証に通らなかった要素（生の値のまま）。
+   * 画面には出さないが、保存し直すときは必ず書き戻すこと（`LocalVisitRepository.persist` 参照）。
+   * 捨てたまま保存すると、読めなかった記録が localStorage から完全に消える。
+   */
+  unreadable: unknown[];
 }
 
-export function getInitialVisits(): SaunaVisit[] {
+export function loadSavedVisits(): SavedVisits {
   const parsedInitial = z.array(SaunaVisitSchema).safeParse(initialVisits);
   const rawBaseVisits = parsedInitial.success ? parsedInitial.data : [];
-  const baseVisits = normalizeVisits(rawBaseVisits);
+  const base: SavedVisits = { visits: normalizeVisits(rawBaseVisits), unreadable: [] };
 
   if (typeof window === "undefined") {
-    return baseVisits;
+    return base;
   }
 
   const savedVisits = readStorage(VISITS_STORAGE_KEY);
   if (!savedVisits) {
-    return baseVisits;
+    return base;
   }
 
   try {
     const parsedSaved = JSON.parse(savedVisits);
     if (!Array.isArray(parsedSaved)) {
-      return baseVisits;
+      return base;
     }
-    
-    // 高速な一括検証を実施。一部無効な要素が含まれる場合のみフォールバック
+
+    // 高速な一括検証を実施。一部無効な要素が含まれる場合のみ要素ごとに振り分ける
     const batchResult = z.array(SaunaVisitSchema).safeParse(parsedSaved);
-    const validSaved = batchResult.success
-      ? batchResult.data
-      : parsedSaved.filter(isValidVisit);
+    const validSaved: SaunaVisit[] = [];
+    const unreadable: unknown[] = [];
+    if (batchResult.success) {
+      validSaved.push(...batchResult.data);
+    } else {
+      for (const item of parsedSaved) {
+        const result = SaunaVisitSchema.safeParse(item);
+        if (result.success) validSaved.push(result.data);
+        else unreadable.push(item);
+      }
+    }
 
     /*
      * 保存があるときは保存側だけを正とする。同梱JSONを毎回足し戻す実装に戻すと、
@@ -164,11 +178,15 @@ export function getInitialVisits(): SaunaVisit[] {
      * （保存側の同一IDが捨てられ、削除した記録も同梱JSONから復活するため）。
      * 同梱JSONは保存がまだ無いときの初期データとしてのみ使うこと。
      */
-    return normalizeVisits(validSaved);
+    return { visits: normalizeVisits(validSaved), unreadable };
   } catch (e) {
     console.error("Failed to parse saved visits:", e);
-    return baseVisits;
+    return base;
   }
+}
+
+export function getInitialVisits(): SaunaVisit[] {
+  return loadSavedVisits().visits;
 }
 
 export function calculateStats(visits: SaunaVisit[]): VisitStats {

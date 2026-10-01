@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 import {
-
   getVisitRepository,
   RepositoryError,
   type ImportResult,
@@ -13,17 +12,20 @@ import { useInitialVisits } from "./useInitialVisits";
 
 type Toast = (message: string, type: "success" | "error" | "info") => void;
 
-function mutationErrorMessage(error: unknown): string {
+function errorMessage(error: unknown, fallback: string): string {
   if (error instanceof RepositoryError && error.status === 409) {
     return "別の画面で記録が更新されました。再読み込みしてからもう一度お試しください。";
   }
-  return error instanceof Error ? error.message : "保存に失敗しました。";
+  return error instanceof Error ? error.message : fallback;
 }
+
+const LOAD_ERROR_FALLBACK = "記録の読み込みに失敗しました。";
+const SAVE_ERROR_FALLBACK = "保存に失敗しました。";
 
 export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepository) {
   // useRef → useState でレンダリング中の ref アクセス (react-hooks/refs) を回避
   const [repository] = useState(() => injectedRepository ?? getVisitRepository());
-  const { visits, setVisits, seededFromStorage } = useInitialVisits(injectedRepository);
+  const { visits, setVisits, seededFromStorage, unreadableCount } = useInitialVisits(injectedRepository);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,7 +41,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
       const loaded = await repository.list();
       setVisits(loaded);
     } catch (error) {
-      setLoadError(mutationErrorMessage(error));
+      setLoadError(errorMessage(error, LOAD_ERROR_FALLBACK));
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,7 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
           if (active) setVisits(loaded);
         }
       } catch (error) {
-        if (active) setLoadError(mutationErrorMessage(error));
+        if (active) setLoadError(errorMessage(error, LOAD_ERROR_FALLBACK));
       } finally {
         if (active) setLoading(false);
       }
@@ -72,13 +74,23 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
     };
   }, [repository, seededFromStorage, setVisits]);
 
+  // 読めなかった記録は保存から消さずに残しているが、画面には出ないため存在を伝える
+  useEffect(() => {
+    if (unreadableCount > 0) {
+      showToast?.(
+        `保存データのうち${unreadableCount}件の記録を読み込めなかったため、表示から除外しています（データは削除せず残しています）。`,
+        "error",
+      );
+    }
+  }, [unreadableCount, showToast]);
+
   const runMutation = useCallback(
     async <T,>(operation: () => Promise<T>): Promise<{ success: boolean; value?: T }> => {
       setSaving(true);
       try {
         return { success: true, value: await operation() };
       } catch (error) {
-        showToast?.(mutationErrorMessage(error), "error");
+        showToast?.(errorMessage(error, SAVE_ERROR_FALLBACK), "error");
         return { success: false };
       } finally {
         setSaving(false);

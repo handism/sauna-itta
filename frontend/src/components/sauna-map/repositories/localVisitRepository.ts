@@ -1,7 +1,7 @@
 import type { LatLng, SaunaVisit, VisitFormState } from "../types";
 import {
   VISITS_STORAGE_KEY,
-  getInitialVisits,
+  loadSavedVisits,
   writeStorage,
   createNewVisit,
   getUpdatedVisits,
@@ -14,18 +14,30 @@ export class LocalVisitRepository implements VisitRepository {
 
   /**
    * list() で初期化し、以降の CRUD でも同じ配列を参照するキャッシュ。
-   * getInitialVisits() を毎回呼ぶと JSON パース + Zod 検証が走るうえ、
+   * loadSavedVisits() を毎回呼ぶと JSON パース + Zod 検証が走るうえ、
    * 別タブが同時に書き込んだ値を読んで競合する（TOCTOU）リスクがある。
    */
   private cache: SaunaVisit[] | null = null;
 
+  /**
+   * 保存されていたが検証に通らなかった要素。画面には出さないが、persist のたびに
+   * 末尾へ書き戻す（捨てて保存すると、読めなかった記録が復元できなくなるため）。
+   */
+  private unreadable: unknown[] = [];
+
+  private load(): SaunaVisit[] {
+    const { visits, unreadable } = loadSavedVisits();
+    this.cache = visits;
+    this.unreadable = unreadable;
+    return visits;
+  }
+
   private getCache(): SaunaVisit[] {
-    this.cache ??= getInitialVisits();
-    return this.cache;
+    return this.cache ?? this.load();
   }
 
   private persist(visits: SaunaVisit[]): void {
-    if (!writeStorage(VISITS_STORAGE_KEY, JSON.stringify(visits))) {
+    if (!writeStorage(VISITS_STORAGE_KEY, JSON.stringify([...visits, ...this.unreadable]))) {
       throw new Error("ブラウザへの保存に失敗しました。");
     }
     this.cache = visits;
@@ -38,8 +50,7 @@ export class LocalVisitRepository implements VisitRepository {
   async logout(): Promise<void> {}
 
   async list(): Promise<SaunaVisit[]> {
-    this.cache = getInitialVisits();
-    return this.cache;
+    return this.load();
   }
 
   async create(location: LatLng, form: VisitFormState): Promise<SaunaVisit> {

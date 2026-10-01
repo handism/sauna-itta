@@ -173,4 +173,18 @@ describe("LocalVisitRepository", () => {
 
     expect(visits.map((visit) => visit.id)).toContain("existing-1");
   });
+
+  it("検証に通らない保存済み要素は表示から外し、保存し直しても消さない", async () => {
+    const broken = { id: "broken-1", name: 123 };
+    store[VISITS_STORAGE_KEY] = JSON.stringify([existing, broken]);
+
+    const visits = await repository.list();
+    expect(visits.map((visit) => visit.id)).toEqual(["existing-1"]);
+
+    await repository.create({ lat: 35.71, lng: 139.77 }, form);
+
+    const saved: unknown[] = JSON.parse(store[VISITS_STORAGE_KEY]);
+    expect(saved).toHaveLength(3);
+    expect(saved).toContainEqual(broken);
+  });
 });
