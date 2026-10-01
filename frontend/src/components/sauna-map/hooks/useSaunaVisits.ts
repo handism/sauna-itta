@@ -6,6 +6,7 @@ import {
   type VisitRepository,
 } from "../repositories";
 import type { ShowToast } from "../components/common/Toast";
+import { VISITS_STORAGE_KEY } from "../utils";
 import { useVisitImportExport } from "./useVisitImportExport";
 import { useInitialVisits } from "./useInitialVisits";
 import { toUserMessage, useVisitSession } from "./useVisitSession";
@@ -107,6 +108,19 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
     },
     [repository, runMutation, replaceVisit],
   );
+
+  // localモードは別タブの保存を storage イベントで受け取り、表示を保存値へ揃える。
+  // 購読しないと、別タブで消した記録が残り続け、追加された記録も再読み込みまで出ない
+  // （保存自体は LocalVisitRepository が毎回最新値を読むため上書きでは消えない）。
+  useEffect(() => {
+    if (repository.dataSource !== "local") return;
+    const handleStorage = (event: StorageEvent) => {
+      // key が null なのは別タブで localStorage.clear() されたとき
+      if (event.key === VISITS_STORAGE_KEY || event.key === null) void reload();
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, [repository, reload]);
 
   const importBatch = useCallback(
     async (items: SaunaVisit[]): Promise<ImportResult> => repository.importBatch(items),

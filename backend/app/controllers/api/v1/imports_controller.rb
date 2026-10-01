@@ -3,10 +3,15 @@ module Api
     class ImportsController < BaseController
       include VisitWritable
 
+      # 1リクエストで受け付ける記録数。フロントの CHUNK_SIZE (useVisitImportExport.ts) と揃えること
+      MAX_BATCH_SIZE = 10
+
       def create
         payload = params.require(:saunaVisits)
         raise ActionController::BadRequest, "取り込むデータは記録の配列で指定してください。" unless payload.is_a?(Array)
-        return render_error("batch_too_large", "一度に取り込めるのは10件までです。", :unprocessable_content) if payload.size > 10
+        if payload.size > MAX_BATCH_SIZE
+          return render_error("batch_too_large", "一度に取り込めるのは#{MAX_BATCH_SIZE}件までです。", :unprocessable_content)
+        end
 
         existing_external_ids = find_existing_external_ids(payload)
         result = process_payload(payload, existing_external_ids)
@@ -48,13 +53,30 @@ module Api
               next
             end
 
-            import_visit(attributes.merge(external_id: external_id))
+            if import_visit_unless_concurrently_added(attributes.merge(external_id: external_id))
+              added += 1
+            else
+              skipped += 1
+            end
             existing_external_ids.add(external_id)
-            added += 1
           end
         end
 
         { added: added, skipped: skipped }
+      end
+
+      # 既存IDの確認 (find_existing_external_ids) から保存までの間に、同じ記録を取り込む
+      # 別リクエスト（別タブでの同時インポートなど）が先にコミットすると、モデルの
+      # uniqueness 検証は通っても DB の一意制約で RecordNotUnique になる。記録ごとに
+      # セーブポイントを張り、その記録だけを取り消して重複としてスキップする。
+      # 同じ external_id が保存済みでない一意制約違反（履歴IDの重複など）は握らずに上げる。
+      def import_visit_unless_concurrently_added(attributes)
+        SaunaVisit.transaction(requires_new: true) { import_visit(attributes) }
+        true
+      rescue ActiveRecord::RecordNotUnique
+        raise unless current_user.sauna_visits.exists?(external_id: attributes[:external_id])
+
+        false
       end
 
       def import_visit(attributes)

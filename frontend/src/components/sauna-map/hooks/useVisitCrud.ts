@@ -1,6 +1,7 @@
-import { useCallback, FormEvent, MutableRefObject } from "react";
+import { useCallback, FormEvent, RefObject } from "react";
 import { VisitFormState, LatLng, VisitHistoryEntry, SaunaVisit } from "../types";
 import { validateVisitForm } from "../utils";
+import type { ShowToast } from "../components/common/Toast";
 
 export interface UseVisitCrudOptions {
   editingId: string | null;
@@ -8,7 +9,7 @@ export interface UseVisitCrudOptions {
   editingVisit: SaunaVisit | null;
   selectedLocation: LatLng | null;
   historyEntries: VisitHistoryEntry[];
-  formRef: MutableRefObject<VisitFormState>;
+  formRef: RefObject<VisitFormState>;
   setForm: React.Dispatch<React.SetStateAction<VisitFormState>>;
   addVisit: (location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
   editVisit: (visit: SaunaVisit, location: LatLng, formState: VisitFormState) => Promise<{ success: boolean }>;
@@ -16,7 +17,7 @@ export interface UseVisitCrudOptions {
   removeHistoryEntry: (visit: SaunaVisit, entryIndex: number) => Promise<{ success: boolean }>;
   openDeleteConfirm: () => void;
   closeDeleteConfirm: () => void;
-  showToast: (message: string, type: "success" | "error" | "info") => void;
+  showToast: ShowToast;
   cancelEditing: (completed?: boolean) => void;
 }
 

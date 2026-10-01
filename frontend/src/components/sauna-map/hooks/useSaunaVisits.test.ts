@@ -4,6 +4,7 @@ import type { SaunaVisit } from "../types";
 import type { VisitRepository } from "../repositories";
 import { RepositoryError } from "../repositories";
 import { useSaunaVisits } from "./useSaunaVisits";
+import { VISITS_STORAGE_KEY } from "../utils";
 
 const initialVisits: SaunaVisit[] = [
   { id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2026-01-01" },
@@ -178,5 +179,35 @@ describe("useSaunaVisits", () => {
       await pendingDelete;
     });
     expect(result.current.saving).toBe(false);
+  });
+
+  it("localモードは別タブの保存 (storage イベント) を受けて記録を読み直す", async () => {
+    const reloaded = [...initialVisits, { ...initialVisits[0], id: "other-tab" }];
+    const list = vi.fn().mockResolvedValueOnce(initialVisits).mockResolvedValue(reloaded);
+    const source = repository({ dataSource: "local", list });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    // 無関係なキーの変更では読み直さない
+    act(() => {
+      window.dispatchEvent(new StorageEvent("storage", { key: "unrelated" }));
+    });
+    expect(list).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent("storage", { key: VISITS_STORAGE_KEY }));
+    });
+    await waitFor(() => expect(result.current.visits).toEqual(reloaded));
+  });
+
+  it("apiモードは storage イベントで読み直さない", async () => {
+    const source = repository();
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      window.dispatchEvent(new StorageEvent("storage", { key: VISITS_STORAGE_KEY }));
+    });
+    expect(source.list).toHaveBeenCalledOnce();
   });
 });

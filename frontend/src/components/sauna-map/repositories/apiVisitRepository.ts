@@ -12,6 +12,11 @@ import { RepositoryError } from "./types";
 const VisitEnvelopeSchema = z.object({ saunaVisit: SaunaVisitSchema });
 const VisitListEnvelopeSchema = z.object({ saunaVisits: z.array(SaunaVisitSchema) });
 const ImportResultSchema = z.object({ added: z.number().int(), skipped: z.number().int() });
+const SessionStateSchema = z.object({
+  authenticated: z.boolean(),
+  user: z.object({ email: z.string() }).nullable(),
+  csrfToken: z.string().nullable(),
+});
 
 function parseResponse<T>(schema: z.ZodType<T>, body: unknown): T {
   const result = schema.safeParse(body);
@@ -81,7 +86,8 @@ export class ApiVisitRepository implements VisitRepository {
   }
 
   async getSession(): Promise<SessionState> {
-    const session = await this.request<SessionState>("/api/v1/session");
+    const body = await this.request<unknown>("/api/v1/session");
+    const session: SessionState = parseResponse(SessionStateSchema, body);
     this.csrfToken = session.csrfToken;
     return session;
   }

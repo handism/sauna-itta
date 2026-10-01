@@ -5,7 +5,7 @@ import { normalizeVisits } from "../utils";
 import type { ImportResult } from "../repositories";
 import type { ShowToast } from "../components/common/Toast";
 
-// Rails 側の ImportsController が 1 リクエストあたり 10 件までしか受け付けません
+// Rails 側の ImportsController::MAX_BATCH_SIZE と揃えること（1 リクエストあたり 10 件まで）
 const CHUNK_SIZE = 10;
 
 const REVOKE_OBJECT_URL_DELAY_MS = 1000;

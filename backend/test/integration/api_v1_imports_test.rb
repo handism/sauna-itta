@@ -44,9 +44,9 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_equal "1件目", owner.sauna_visits.sole.name
   end
 
-  test "11件以上はbatch_too_largeで拒否する" do
+  test "MAX_BATCH_SIZEを超える件数はbatch_too_largeで拒否する" do
     csrf = sign_in
-    payload = Array.new(11) { |index| valid_attributes.merge(id: "legacy-#{index}") }
+    payload = Array.new(Api::V1::ImportsController::MAX_BATCH_SIZE + 1) { |index| valid_attributes.merge(id: "legacy-#{index}") }
 
     post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
       headers: csrf_header(csrf), as: :json
@@ -297,7 +297,64 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_not visit.visit_history_entries.first.image.attached?
   end
 
+  test "同時に別リクエストが同じ記録を取り込んでいた場合は500にせずスキップとして数える" do
+    csrf = sign_in
+    # 別リクエストが先にコミットした記録。既存IDの確認とモデルの uniqueness 検証は、
+    # 相手がまだコミットしていない時点で通過した状況を再現する
+    owner.sauna_visits.create!(external_id: "legacy-race", name: "先に取り込まれた記録",
+      latitude: 35, longitude: 139, status: "visited")
+    imported = [
+      valid_attributes.merge(id: "legacy-race", name: "後から取り込む記録"),
+      valid_attributes.merge(id: "legacy-race-other")
+    ]
+
+    simulate_import_race do
+      post "/api/v1/sauna_visits/imports", params: { saunaVisits: imported },
+        headers: csrf_header(csrf), as: :json
+    end
+
+    assert_response :success
+    assert_equal 1, response.parsed_body["added"]
+    assert_equal 1, response.parsed_body["skipped"]
+    assert_equal "先に取り込まれた記録", owner.sauna_visits.find_by!(external_id: "legacy-race").name
+    assert owner.sauna_visits.exists?(external_id: "legacy-race-other")
+  end
+
+  test "記録の重複以外で一意制約に違反した場合は500にせず409で返す" do
+    csrf = sign_in
+    imported = valid_attributes.merge(
+      id: "legacy-dup-history-race",
+      history: [
+        { id: "same-history-id", date: "2026-07-01" },
+        { id: "same-history-id", date: "2026-08-01" }
+      ]
+    )
+
+    simulate_import_race do
+      post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+        headers: csrf_header(csrf), as: :json
+    end
+
+    assert_response :conflict
+    assert_equal "conflict", response.parsed_body.dig("error", "code")
+    assert_equal 0, owner.sauna_visits.count
+  end
+
   private
+
+  # 既存IDの確認と uniqueness 検証を無効にして、同時リクエストの競合をDBの一意制約まで届かせる
+  def simulate_import_race
+    controller = Api::V1::ImportsController
+    validator = ActiveRecord::Validations::UniquenessValidator
+    original_find = controller.instance_method(:find_existing_external_ids)
+    original_validate = validator.instance_method(:validate_each)
+    controller.define_method(:find_existing_external_ids) { |_payload| Set.new }
+    validator.define_method(:validate_each) { |*| nil }
+    yield
+  ensure
+    controller.define_method(:find_existing_external_ids, original_find)
+    validator.define_method(:validate_each, original_validate)
+  end
 
   def owner
     User.find_by!(email: ApiAuthHelper::ALLOWED_EMAIL)

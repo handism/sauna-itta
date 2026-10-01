@@ -9,6 +9,11 @@ module Api
       rescue_from ActiveRecord::StaleObjectError do
         render_error("conflict", "別の画面で記録が更新されています。", :conflict)
       end
+      # モデルの uniqueness 検証は同時に走った別リクエストの未コミット分を見ないため、
+      # すり抜けた重複は DB の一意制約で RecordNotUnique になる。500 にせず競合として返す。
+      rescue_from ActiveRecord::RecordNotUnique do
+        render_error("conflict", "同時に行われた別の操作と重複したため保存できませんでした。", :conflict)
+      end
       rescue_from ActiveRecord::RecordNotDestroyed do
         render_error("delete_failed", "記録を削除できませんでした。", :unprocessable_content)
       end

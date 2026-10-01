@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { SaunaVisit, VisitFormState } from "../types";
+import type { ShowToast } from "../components/common/Toast";
 import {
   getDefaultForm,
   getTodayDate,
@@ -12,7 +13,7 @@ export interface UseVisitFormStateOptions {
   startCreate: () => void;
   startEdit: (visit: SaunaVisit) => void;
   cancelEdit: (completed?: boolean) => void;
-  showToast: (message: string, type: "success" | "error" | "info") => void;
+  showToast: ShowToast;
 }
 
 export function useVisitFormState({

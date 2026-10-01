@@ -188,6 +188,29 @@ describe("LocalVisitRepository", () => {
     expect(saved).toContainEqual(broken);
   });
 
+  it("読み込み後に別タブが保存した記録を、次の保存で上書きして消さない", async () => {
+    seed([existing]);
+    await repository.list();
+
+    const otherTab: SaunaVisit = { ...existing, id: "other-tab-1", name: "別タブの記録" };
+    seed([otherTab, existing]);
+
+    const created = await repository.create({ lat: 35.71, lng: 139.77 }, form);
+
+    expect(storedVisits().map((visit) => visit.id)).toEqual([created.id, "other-tab-1", "existing-1"]);
+  });
+
+  it("読み込み後に別タブで削除された記録は、更新しても復活させない", async () => {
+    seed([existing]);
+    await repository.list();
+    seed([]);
+
+    await expect(repository.update(existing, { lat: 34.9, lng: 138.3 }, form)).rejects.toThrow(
+      "更新対象が見つかりません。",
+    );
+    expect(storedVisits()).toEqual([]);
+  });
+
   it("JSONとして壊れた保存値は、保存し直しても上書きで消さない", async () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     store[VISITS_STORAGE_KEY] = "[{ broken";

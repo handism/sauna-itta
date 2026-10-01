@@ -57,6 +57,17 @@ describe("ApiVisitRepository", () => {
     expect(request?.credentials).toBe("same-origin");
   });
 
+  it("想定外の形式のセッション応答はRepositoryErrorにする", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      authenticated: "yes",
+      csrfToken: 1,
+    }), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const repository = new ApiVisitRepository();
+
+    await expect(repository.getSession()).rejects.toMatchObject({ code: "invalid_response" });
+  });
+
   it("共通エラー形式をRepositoryErrorへ変換する", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
       error: { code: "conflict", message: "競合しています。" },
