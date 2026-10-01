@@ -70,4 +70,17 @@ describe("SaunaMapLayer", () => {
     expect(screen.getByRole("button", { name: "縮小" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "現在地へ移動" })).toBeInTheDocument();
   });
+
+  it("loads map tiles with CORS so the service worker can cache them", () => {
+    const { container } = render(
+      <SaunaMapProvider>
+        <SaunaMapLayer currentLocation={null} setCurrentLocation={vi.fn()} />
+      </SaunaMapProvider>
+    );
+
+    // no-cors だと応答が opaque (status 0) になり、sw.js のタイルキャッシュに入らない
+    const tiles = container.querySelectorAll<HTMLImageElement>("img.leaflet-tile");
+    expect(tiles.length).toBeGreaterThan(0);
+    tiles.forEach((tile) => expect(tile.getAttribute("crossorigin")).toBe("anonymous"));
+  });
 });

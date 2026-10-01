@@ -56,9 +56,15 @@ export function SaunaMapLayer({
           onLocationFound={setCurrentLocation}
           onNotify={showToast}
         />
+        {/*
+         * crossOrigin を外さないこと。未指定だとタイルは no-cors で読まれ、Service Worker が
+         * 受け取る応答は status 0 の opaque になるため、sw.js のタイルキャッシュ
+         * （status 200 のみ保存）に一度も入らずオフラインで地図が出なくなる。
+         */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          crossOrigin="anonymous"
           className="dark-map-tiles"
         />
 
