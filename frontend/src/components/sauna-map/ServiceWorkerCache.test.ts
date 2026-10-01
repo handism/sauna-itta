@@ -38,13 +38,14 @@ function loadFetchHandler(options: {
     }),
     clients: { claim: vi.fn() },
     location: { origin: "https://example.com" },
+    registration: { scope: "https://example.com/sauna-itta/" },
     skipWaiting: vi.fn(),
   };
   const fetchMock = vi.fn().mockResolvedValue(options.networkResponse);
 
   new Function("self", "caches", "fetch", source)(selfMock, cachesMock, fetchMock);
 
-  return { handler: listeners.get("fetch")!, put, cache };
+  return { handler: listeners.get("fetch")!, install: listeners.get("install")!, put, cache };
 }
 
 describe("Service Workerのキャッシュ方針", () => {
@@ -66,11 +67,20 @@ describe("Service Workerのキャッシュ方針", () => {
     expect(source).toContain("cacheName.startsWith(CACHE_PREFIX)");
   });
 
-  it("統計画面を先読みしつつ、失敗してもinstallを落とさない", () => {
-    expect(source).toContain('OPTIONAL_PRECACHE_ASSETS = ["/sauna-itta/stats"]');
-    expect(source).toContain("Promise.allSettled(");
+  it("登録スコープの公開パスで先読みし、統計画面は失敗してもinstallを落とさない", async () => {
+    const { install, cache } = loadFetchHandler({ networkResponse: new Response("network") });
+    cache.add.mockRejectedValue(new Error("offline"));
+    const event = { waitUntil: vi.fn() } as unknown as ServiceWorkerEvent;
+
+    install(event);
+    await event.waitUntil.mock.calls[0][0];
+
+    const required = cache.addAll.mock.calls[0][0] as string[];
+    expect(required).toContain("/sauna-itta/");
+    expect(required).toContain("/sauna-itta/manifest.webmanifest");
     // 必須資産の addAll に統計画面を混ぜると、取得失敗でオフライン対応ごと失われる
-    expect(source).not.toContain('"/sauna-itta/stats",');
+    expect(required).not.toContain("/sauna-itta/stats");
+    expect(cache.add).toHaveBeenCalledWith("/sauna-itta/stats");
   });
 
   it("キャッシュ済みレスポンスのバックグラウンド更新をイベント完了まで待つ", async () => {

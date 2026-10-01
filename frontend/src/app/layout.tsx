@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import Script from "next/script";
-import { DATA_SOURCE } from "../../dataSource";
+import { BASE_PATH } from "../../dataSource";
 import "./globals.css";
-
-const isApiMode = DATA_SOURCE === "api";
-const publicBasePath = isApiMode ? "" : "/sauna-itta";
 
 // base.css の --font-main が参照するフォント。
 // next/font でセルフホストし、外部リクエスト（PWA オフライン時に失敗する）を無くす
@@ -26,11 +23,11 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: `${publicBasePath}/icon.svg`, type: "image/svg+xml" },
-      { url: `${publicBasePath}/icons/icon-192.png`, sizes: "192x192", type: "image/png" },
+      { url: `${BASE_PATH}/icon.svg`, type: "image/svg+xml" },
+      { url: `${BASE_PATH}/icons/icon-192.png`, sizes: "192x192", type: "image/png" },
     ],
     apple: [
-      { url: `${publicBasePath}/icons/apple-icon.png`, sizes: "180x180", type: "image/png" },
+      { url: `${BASE_PATH}/icons/apple-icon.png`, sizes: "180x180", type: "image/png" },
     ],
   },
 };

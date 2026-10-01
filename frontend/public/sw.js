@@ -13,22 +13,26 @@ const TILE_HOSTS = new Set([
   "c.tile.openstreetmap.org",
 ]);
 
+// 公開パスの接頭辞（localモードは "/sauna-itta"）。この資産はビルドを通らず dataSource.ts の
+// BASE_PATH を参照できないため、ServiceWorkerRegister が BASE_PATH から決めた登録スコープから求める
+const BASE_PATH = new URL(self.registration.scope).pathname.replace(/\/$/, "");
+
 // Cache core assets on install
 const PRECACHE_ASSETS = [
-  "/sauna-itta/",
-  "/sauna-itta/manifest.webmanifest",
-  "/sauna-itta/icon.svg",
-  "/sauna-itta/icons/icon-192.png",
-  "/sauna-itta/icons/icon-512.png",
-  "/sauna-itta/icons/icon-maskable-192.png",
-  "/sauna-itta/icons/icon-maskable-512.png",
-  "/sauna-itta/icons/apple-icon.png",
+  `${BASE_PATH}/`,
+  `${BASE_PATH}/manifest.webmanifest`,
+  `${BASE_PATH}/icon.svg`,
+  `${BASE_PATH}/icons/icon-192.png`,
+  `${BASE_PATH}/icons/icon-512.png`,
+  `${BASE_PATH}/icons/icon-maskable-192.png`,
+  `${BASE_PATH}/icons/icon-maskable-512.png`,
+  `${BASE_PATH}/icons/apple-icon.png`,
 ];
 
 // 統計画面は別ドキュメントのため、一度も開かずにオフラインへ入ると遷移できない。
 // ただし必須資産と同じ addAll に混ぜない：addAll は 1 つでも取得に失敗すると install
 // ごと失敗し、オフライン対応そのものが失われるため、ここは取得できた分だけ保存する。
-const OPTIONAL_PRECACHE_ASSETS = ["/sauna-itta/stats"];
+const OPTIONAL_PRECACHE_ASSETS = [`${BASE_PATH}/stats`];
 
 // 上限による削除の対象から外す資産。オフラインで最初に開く画面の土台のため、
 // 実行時に溜まった資産に押し出されて消えないようにする

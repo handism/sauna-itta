@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../../dataSource", () => ({
-  DATA_SOURCE: "api",
-}));
+vi.mock("../../dataSource", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../dataSource")>();
+  return { ...actual, DATA_SOURCE: "api", BASE_PATH: actual.resolveBasePath("api") };
+});
 
 import manifest from "./manifest";
 

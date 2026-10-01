@@ -32,7 +32,7 @@
 
 1. **静的サイト制約**:
    - localモードにはバックエンド API やサーバーサイド DB への依存を持ち込まないでください。apiモードの永続化は`VisitRepository`経由のRails APIに限定します。
-   - アセットパスや内部リンク生成時、localモードのGitHub Pages用`basePath` (`/sauna-itta`) とapiモードのbasePathなしを両立してください。
+   - アセットパスや内部リンク生成時、localモードのGitHub Pages用`basePath` (`/sauna-itta`) とapiモードのbasePathなしを両立してください。パスの接頭辞は`frontend/dataSource.ts`の`BASE_PATH`から取得し、直書きしないこと（詳細は`frontend/AGENTS.md`）。
 2. **パフォーマンス・画像圧縮**:
    - ユーザーがアップロードした画像は `browser-image-compression` で圧縮し、Base64 として `localStorage` に保持します（最大 1MB / 1024px）。
 3. **React Compiler**:

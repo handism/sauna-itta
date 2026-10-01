@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { DATA_SOURCE } from "../../../dataSource";
+import { BASE_PATH, DATA_SOURCE } from "../../../dataSource";
 
 export function ServiceWorkerRegister() {
   useEffect(() => {
@@ -10,12 +10,11 @@ export function ServiceWorkerRegister() {
       return;
     }
 
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "/sauna-itta";
-    const swUrl = `${basePath}/sw.js`;
+    const swUrl = `${BASE_PATH}/sw.js`;
 
     const registerServiceWorker = () => {
       navigator.serviceWorker
-        .register(swUrl, { scope: `${basePath}/` })
+        .register(swUrl, { scope: `${BASE_PATH}/` })
         .catch((err) => {
           console.warn("ServiceWorker registration failed:", err);
         });

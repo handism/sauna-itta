@@ -1,13 +1,13 @@
 import type { NextConfig } from "next";
-import { DATA_SOURCE } from "./dataSource";
+import { BASE_PATH, DATA_SOURCE } from "./dataSource";
 
 const isLocalMode = DATA_SOURCE === "local";
 const isDevelopment = process.env.NODE_ENV === "development";
 
 const nextConfig: NextConfig = {
   ...(!isDevelopment && { output: "export" as const }),
-  basePath: isLocalMode ? "/sauna-itta" : "",
-  assetPrefix: isLocalMode ? "/sauna-itta/" : "",
+  basePath: BASE_PATH,
+  assetPrefix: BASE_PATH ? `${BASE_PATH}/` : "",
   images: {
     unoptimized: true,
   },
