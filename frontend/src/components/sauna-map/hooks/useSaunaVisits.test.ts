@@ -33,8 +33,8 @@ describe("useSaunaVisits", () => {
     const source = repository();
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.authenticated).toBe(true);
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
+    expect(result.current.status.authenticated).toBe(true);
     expect(result.current.visits).toEqual(initialVisits);
     expect(source.list).toHaveBeenCalledOnce();
   });
@@ -42,10 +42,10 @@ describe("useSaunaVisits", () => {
   it("作成成功後だけ画面状態へ反映する", async () => {
     const source = repository();
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
     await act(async () => {
-      await result.current.addVisit({ lat: 35, lng: 139 }, {
+      await result.current.actions.addVisit({ lat: 35, lng: 139 }, {
         name: "新規", comment: "", image: "", date: "2026-08-02", rating: 4,
         tagsText: "", status: "visited", area: "東京", appendHistory: false,
       });
@@ -57,10 +57,10 @@ describe("useSaunaVisits", () => {
     const loaded = [{ ...initialVisits[0], lockVersion: 4 }];
     const source = repository({ list: vi.fn().mockResolvedValue(loaded) });
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
     await act(async () => {
-      await result.current.editVisit(loaded[0], { lat: 35, lng: 139 }, {
+      await result.current.actions.editVisit(loaded[0], { lat: 35, lng: 139 }, {
         name: "更新", comment: "", image: "", date: "2026-08-02", rating: 4,
         tagsText: "", status: "visited", area: "東京", appendHistory: false,
       });
@@ -75,10 +75,10 @@ describe("useSaunaVisits", () => {
       update: vi.fn().mockRejectedValue(new RepositoryError("競合", "conflict", 409)),
     });
     const { result } = renderHook(() => useSaunaVisits(showToast, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
     await act(async () => {
-      await result.current.editVisit(initialVisits[0], { lat: 35, lng: 139 }, {
+      await result.current.actions.editVisit(initialVisits[0], { lat: 35, lng: 139 }, {
         name: "更新", comment: "", image: "", date: "2026-08-02", rating: 4,
         tagsText: "", status: "visited", area: "東京", appendHistory: false,
       });
@@ -94,14 +94,14 @@ describe("useSaunaVisits", () => {
         .mockRejectedValueOnce(new Error("Network Error")), // Second call on reload
     });
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
     await act(async () => {
-      await result.current.reload();
+      await result.current.actions.reload();
     });
 
-    expect(result.current.loadError).toBe("Network Error");
-    expect(result.current.loading).toBe(false);
+    expect(result.current.status.loadError).toBe("Network Error");
+    expect(result.current.status.loading).toBe(false);
   });
 
   it("初期読み込み時にエラーが発生した場合、loadErrorが設定される", async () => {
@@ -110,9 +110,9 @@ describe("useSaunaVisits", () => {
     });
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
 
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
-    expect(result.current.loadError).toBe("Initial Load Error");
+    expect(result.current.status.loadError).toBe("Initial Load Error");
     expect(result.current.visits).toEqual([]); // since we default to empty array
   });
 
@@ -122,11 +122,11 @@ describe("useSaunaVisits", () => {
       create: vi.fn().mockRejectedValue(new Error("ネットワークエラー")),
     });
     const { result } = renderHook(() => useSaunaVisits(showToast, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
     let addResult;
     await act(async () => {
-      addResult = await result.current.addVisit({ lat: 35, lng: 139 }, {
+      addResult = await result.current.actions.addVisit({ lat: 35, lng: 139 }, {
         name: "新規", comment: "", image: "", date: "2026-08-02", rating: 4,
         tagsText: "", status: "visited", area: "東京", appendHistory: false,
       });
@@ -143,9 +143,9 @@ describe("useSaunaVisits", () => {
       list: vi.fn().mockRejectedValue(new Error(errorMsg)),
     });
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
-    expect(result.current.loadError).toBe(errorMsg);
+    expect(result.current.status.loadError).toBe(errorMsg);
     expect(result.current.visits).toEqual([]);
     expect(source.list).toHaveBeenCalledOnce();
   });
@@ -153,9 +153,9 @@ describe("useSaunaVisits", () => {
   it("Error以外で読み込みに失敗した場合は、保存ではなく読み込みの失敗として伝える", async () => {
     const source = repository({ list: vi.fn().mockRejectedValue("unknown") });
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
-    expect(result.current.loadError).toBe("記録の読み込みに失敗しました。");
+    expect(result.current.status.loadError).toBe("記録の読み込みに失敗しました。");
   });
 
   it("並行した保存の片方が終わっても、もう片方が終わるまで saving を保つこと", async () => {
@@ -164,22 +164,22 @@ describe("useSaunaVisits", () => {
       delete: vi.fn().mockReturnValue(new Promise<void>((resolve) => { finishDelete = resolve; })),
     });
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
     let pendingDelete!: Promise<unknown>;
     act(() => {
-      pendingDelete = result.current.deleteVisit("1");
+      pendingDelete = result.current.actions.deleteVisit("1");
     });
     await act(async () => {
-      await result.current.removeHistoryEntry(initialVisits[0], 0);
+      await result.current.actions.removeHistoryEntry(initialVisits[0], 0);
     });
-    expect(result.current.saving).toBe(true);
+    expect(result.current.status.saving).toBe(true);
 
     await act(async () => {
       finishDelete();
       await pendingDelete;
     });
-    expect(result.current.saving).toBe(false);
+    expect(result.current.status.saving).toBe(false);
   });
 
   it("localモードは別タブの保存 (storage イベント) を受けて記録を読み直す", async () => {
@@ -187,7 +187,7 @@ describe("useSaunaVisits", () => {
     const list = vi.fn().mockResolvedValueOnce(initialVisits).mockResolvedValue(reloaded);
     const source = repository({ dataSource: "local", list });
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
     // 無関係なキーの変更では読み直さない
     act(() => {
@@ -204,7 +204,7 @@ describe("useSaunaVisits", () => {
   it("apiモードは storage イベントで読み直さない", async () => {
     const source = repository();
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => expect(result.current.status.loading).toBe(false));
 
     await act(async () => {
       window.dispatchEvent(new StorageEvent("storage", { key: VISITS_STORAGE_KEY }));
@@ -223,14 +223,14 @@ describe("useSaunaVisits", () => {
 
     let loggedOut: boolean | undefined;
     await act(async () => {
-      loggedOut = await result.current.logout();
+      loggedOut = await result.current.actions.logout();
     });
 
     expect(loggedOut).toBe(true);
     expect(source.logout).toHaveBeenCalledOnce();
     expect(result.current.visits).toEqual([]);
-    expect(result.current.authenticated).toBe(false);
-    expect(result.current.csrfToken).toBe("after-logout");
+    expect(result.current.status.authenticated).toBe(false);
+    expect(result.current.status.csrfToken).toBe("after-logout");
   });
 
   it("ログアウトに失敗したらトーストで伝え、ログイン状態と記録を残す", async () => {
@@ -241,12 +241,12 @@ describe("useSaunaVisits", () => {
 
     let loggedOut: boolean | undefined;
     await act(async () => {
-      loggedOut = await result.current.logout();
+      loggedOut = await result.current.actions.logout();
     });
 
     expect(loggedOut).toBe(false);
     expect(showToast).toHaveBeenCalledWith("通信失敗", "error");
-    expect(result.current.authenticated).toBe(true);
+    expect(result.current.status.authenticated).toBe(true);
     expect(result.current.visits).toEqual(initialVisits);
   });
 
@@ -264,14 +264,14 @@ describe("useSaunaVisits", () => {
     vi.useFakeTimers();
 
     await act(async () => {
-      await result.current.exportVisits();
+      await result.current.actions.exportVisits();
     });
     vi.runAllTimers();
     vi.useRealTimers();
 
     expect(prepareExport).toHaveBeenCalledWith(initialVisits);
     await expect(createObjectURL.mock.calls[0][0].text()).resolves.toContain("data:image/png;base64,AAAA");
-    expect(result.current.exporting).toBe(false);
+    expect(result.current.status.exporting).toBe(false);
 
     clickSpy.mockRestore();
     Reflect.deleteProperty(URL, "createObjectURL");

@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type RefObject } from "react";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 import {
   getVisitRepository,
+  type DataSource,
   type ImportResult,
+  type SessionUser,
   type VisitRepository,
 } from "../repositories";
 import type { ShowToast } from "../components/common/Toast";
@@ -15,6 +17,41 @@ const SAVE_ERROR_FALLBACK = "保存に失敗しました。";
 const LOGOUT_ERROR_FALLBACK = "ログアウトに失敗しました。";
 
 type MutationResult<T> = { success: true; value: T } | { success: false };
+
+/** 読み込み・保存中・認証などの状態。保存の開始と終了で変わる */
+export interface VisitsStatus {
+  loading: boolean;
+  saving: boolean;
+  importing: boolean;
+  exporting: boolean;
+  loadError: string | null;
+  authenticated: boolean;
+  csrfToken: string | null;
+  user: SessionUser | null;
+  dataSource: DataSource;
+}
+
+/** 操作関数。visits に依存させず、記録が変わっても参照を変えないこと */
+export interface VisitsActions {
+  addVisit: (location: LatLng, form: VisitFormState) => Promise<{ success: boolean; newVisit?: SaunaVisit }>;
+  editVisit: (visit: SaunaVisit, location: LatLng, form: VisitFormState) => Promise<{ success: boolean }>;
+  deleteVisit: (id: string) => Promise<{ success: boolean }>;
+  removeHistoryEntry: (visit: SaunaVisit, index: number) => Promise<{ success: boolean }>;
+  /** apiモードは写真の取得を待つ。失敗はトーストで伝えるため reject しない */
+  exportVisits: () => Promise<void>;
+  handleImportData: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
+  importInputRef: RefObject<HTMLInputElement | null>;
+  /** 再読み込みが成功したか。失敗の内容は loadError に入る */
+  reload: () => Promise<boolean>;
+  /** ログアウトに成功したか。失敗はトーストで伝える */
+  logout: () => Promise<boolean>;
+}
+
+/**
+ * 記録本体・状態・操作関数を、変化の頻度ごとに分けて返す（VisitsCRUDProvider がそのまま
+ * 別々の Context へ配る）。平らな 1 つのオブジェクトで返すと、Provider 側で名前を
+ * 分割代入・詰め直し・依存配列と 3 回書き写すことになり、操作を足すたびに漏れが出る。
+ */
 
 export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: VisitRepository) {
   // useRef → useState でレンダリング中の ref アクセス (react-hooks/refs) を回避。
@@ -157,21 +194,30 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
     return true;
   }, [repository, resetSession, setVisits, showToast]);
 
-  return {
-    visits,
-    loading: session.loading,
-    saving: pendingMutations > 0,
-    loadError: session.loadError,
-    authenticated: session.authenticated,
-    csrfToken: session.csrfToken,
-    user: session.user,
-    dataSource: repository.dataSource,
-    reload,
-    logout,
-    addVisit,
-    editVisit,
-    deleteVisit,
-    removeHistoryEntry,
-    ...importExport,
-  };
+  const saving = pendingMutations > 0;
+  const { dataSource } = repository;
+  const { loading, loadError, authenticated, csrfToken, user } = session;
+  const { importing, exporting, exportVisits, handleImportData, importInputRef } = importExport;
+
+  const status = useMemo<VisitsStatus>(
+    () => ({ loading, saving, importing, exporting, loadError, authenticated, csrfToken, user, dataSource }),
+    [loading, saving, importing, exporting, loadError, authenticated, csrfToken, user, dataSource],
+  );
+
+  const actions = useMemo<VisitsActions>(
+    () => ({
+      addVisit,
+      editVisit,
+      deleteVisit,
+      removeHistoryEntry,
+      exportVisits,
+      handleImportData,
+      importInputRef,
+      reload,
+      logout,
+    }),
+    [addVisit, editVisit, deleteVisit, removeHistoryEntry, exportVisits, handleImportData, importInputRef, reload, logout],
+  );
+
+  return { visits, status, actions };
 }

@@ -7,13 +7,11 @@ module Api
 
       def show
         blob = ActiveStorage::Blob.find_signed!(params[:signed_id])
-        attachment = ActiveStorage::Attachment.find_by!(
-          blob_id: blob.id,
-          name: "image",
-          record_type: "VisitHistoryEntry"
-        )
-        current_user.sauna_visits.joins(:visit_history_entries)
-          .find_by!(visit_history_entries: { id: attachment.record_id })
+        # 添付先の履歴がログインユーザーの記録に属するかを1クエリで確かめる。
+        # image_attachment の関連が name / record_type の条件を付けるため、別の添付からは辿れない。
+        owned = VisitHistoryEntry.joins(:sauna_visit, :image_attachment)
+          .exists?(sauna_visits: { user_id: current_user.id }, active_storage_attachments: { blob_id: blob.id })
+        raise ActiveRecord::RecordNotFound unless owned
 
         # 所有者だけに配信するため共有キャッシュには載せない。あわせて条件付きGETへ
         # 対応し、変わっていない写真でGCSからのダウンロードが再発生しないようにする

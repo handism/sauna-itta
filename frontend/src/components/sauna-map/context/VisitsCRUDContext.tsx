@@ -1,10 +1,9 @@
 "use client";
 
-import { createContext, useContext, useMemo, ReactNode, ChangeEvent, RefObject } from "react";
-import { useSaunaVisits } from "../hooks/useSaunaVisits";
+import { createContext, useContext, useMemo, ReactNode } from "react";
+import { useSaunaVisits, type VisitsActions, type VisitsStatus } from "../hooks/useSaunaVisits";
 import { useSaunaUIActions } from "./UIContext";
-import type { SaunaVisit, LatLng, VisitFormState } from "../types";
-import type { DataSource, SessionUser } from "../repositories";
+import type { SaunaVisit } from "../types";
 
 /*
  * 訪問データは変化の頻度ごとに 3 つの Context へ分けている。
@@ -15,39 +14,16 @@ import type { DataSource, SessionUser } from "../repositories";
  *
  * 1 つにまとめると、インポートボタンしか使わない DesktopSidebar や、認証状態しか見ない
  * SaunaMapContent まで、記録が 1 件変わるたびに再レンダリング対象になる。
- * 操作関数は visits に依存させないこと（useSaunaVisits のコメント参照）。
+ * Status / Actions の組み立てと参照の安定化は useSaunaVisits が受け持つ
+ * （操作関数は visits に依存させないこと。useSaunaVisits のコメント参照）。
  */
 
 export interface VisitsDataContextType {
   visits: SaunaVisit[];
 }
 
-export interface VisitsStatusContextType {
-  loading: boolean;
-  saving: boolean;
-  importing: boolean;
-  exporting: boolean;
-  loadError: string | null;
-  authenticated: boolean;
-  csrfToken: string | null;
-  user: SessionUser | null;
-  dataSource: DataSource;
-}
-
-export interface VisitsActionsContextType {
-  addVisit: (location: LatLng, form: VisitFormState) => Promise<{ success: boolean; newVisit?: SaunaVisit }>;
-  editVisit: (visit: SaunaVisit, location: LatLng, form: VisitFormState) => Promise<{ success: boolean }>;
-  deleteVisit: (id: string) => Promise<{ success: boolean }>;
-  removeHistoryEntry: (visit: SaunaVisit, index: number) => Promise<{ success: boolean }>;
-  /** apiモードは写真の取得を待つ。失敗はトーストで伝えるため reject しない */
-  exportVisits: () => Promise<void>;
-  handleImportData: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
-  importInputRef: RefObject<HTMLInputElement | null>;
-  /** 再読み込みが成功したか。失敗の内容は loadError に入る */
-  reload: () => Promise<boolean>;
-  /** ログアウトに成功したか。失敗はトーストで伝える */
-  logout: () => Promise<boolean>;
-}
+export type VisitsStatusContextType = VisitsStatus;
+export type VisitsActionsContextType = VisitsActions;
 
 const VisitsDataContext = createContext<VisitsDataContextType | null>(null);
 const VisitsStatusContext = createContext<VisitsStatusContextType | null>(null);
@@ -55,64 +31,13 @@ const VisitsActionsContext = createContext<VisitsActionsContextType | null>(null
 
 export function VisitsCRUDProvider({ children }: { children: ReactNode }) {
   const { showToast } = useSaunaUIActions();
-
-  const {
-    visits,
-    addVisit,
-    editVisit,
-    deleteVisit,
-    removeHistoryEntry,
-    exportVisits,
-    handleImportData,
-    importing,
-    exporting,
-    importInputRef,
-    loading,
-    saving,
-    loadError,
-    authenticated,
-    csrfToken,
-    user,
-    dataSource,
-    reload,
-    logout,
-  } = useSaunaVisits(showToast);
+  const { visits, status, actions } = useSaunaVisits(showToast);
 
   const dataValue = useMemo(() => ({ visits }), [visits]);
 
-  const statusValue = useMemo(
-    () => ({ loading, saving, importing, exporting, loadError, authenticated, csrfToken, user, dataSource }),
-    [loading, saving, importing, exporting, loadError, authenticated, csrfToken, user, dataSource],
-  );
-
-  const actionsValue = useMemo(
-    () => ({
-      addVisit,
-      editVisit,
-      deleteVisit,
-      removeHistoryEntry,
-      exportVisits,
-      handleImportData,
-      importInputRef,
-      reload,
-      logout,
-    }),
-    [
-      addVisit,
-      editVisit,
-      deleteVisit,
-      removeHistoryEntry,
-      exportVisits,
-      handleImportData,
-      importInputRef,
-      reload,
-      logout,
-    ],
-  );
-
   return (
-    <VisitsActionsContext.Provider value={actionsValue}>
-      <VisitsStatusContext.Provider value={statusValue}>
+    <VisitsActionsContext.Provider value={actions}>
+      <VisitsStatusContext.Provider value={status}>
         <VisitsDataContext.Provider value={dataValue}>
           {children}
         </VisitsDataContext.Provider>

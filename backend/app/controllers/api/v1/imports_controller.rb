@@ -85,11 +85,11 @@ module Api
         histories = Array(attributes[:history])
         histories = [ attributes.slice(:date, :comment, :rating, :image) ] if histories.empty?
 
+        # attributes は permit 後に deep_symbolize_keys 済みのため、履歴もシンボルキーで読める
         histories.each do |history|
-          normalized = history.deep_symbolize_keys
-          entry = apply_history(visit, normalized, append: true)
-          entry.public_id = normalized[:id] if normalized[:id].present?
-          import_history_image(entry, normalized, attributes[:external_id])
+          entry = apply_history(visit, history, append: true)
+          entry.public_id = history[:id] if history[:id].present?
+          import_history_image(entry, history, attributes[:external_id])
         end
         visit.save!
       end

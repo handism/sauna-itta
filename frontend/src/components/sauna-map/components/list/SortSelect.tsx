@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useId } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import { Calendar, Star, Flame, ArrowDownAZ, ChevronDown } from "lucide-react";
 import { VisitFilters } from "../../types";
 
@@ -23,7 +23,7 @@ interface SortSelectProps {
   className?: string;
 }
 
-function useSortSelectBehavior(value: VisitFilters["sort"], onChange: (value: VisitFilters["sort"]) => void) {
+export function SortSelect({ value, onChange, className = "" }: SortSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   // キーボードでハイライト中の項目。フォーカスは listbox 本体に置いたまま
   // aria-activedescendant で位置を公開する（WAI-ARIA の Listbox パターン）
@@ -32,10 +32,11 @@ function useSortSelectBehavior(value: VisitFilters["sort"], onChange: (value: Vi
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const listboxId = useId();
-  const optionId = useCallback((index: number) => `${listboxId}-option-${index}`, [listboxId]);
+  const optionId = (index: number) => `${listboxId}-option-${index}`;
 
   const currentIndex = SORT_OPTIONS.findIndex((opt) => opt.value === value);
   const currentOption = SORT_OPTIONS[currentIndex] ?? SORT_OPTIONS[0];
+  const CurrentIcon = currentOption.Icon;
 
   // 開いたら listbox 自体にフォーカスを移す。個々の option は
   // フォーカスを持たず、aria-activedescendant で読み上げ位置だけを移動させる
@@ -45,38 +46,35 @@ function useSortSelectBehavior(value: VisitFilters["sort"], onChange: (value: Vi
     }
   }, [isOpen]);
 
-  const openMenu = useCallback(() => {
+  const openMenu = () => {
     setActiveIndex(currentIndex >= 0 ? currentIndex : 0);
     setIsOpen(true);
-  }, [currentIndex]);
+  };
 
   /** returnFocus: 外側クリックで閉じる場合はユーザーの操作先を奪わないため false */
-  const closeMenu = useCallback((returnFocus: boolean) => {
+  const closeMenu = (returnFocus: boolean) => {
     setIsOpen(false);
     if (returnFocus) {
       triggerRef.current?.focus();
     }
-  }, []);
+  };
 
-  // Outer click handler
+  // 外側クリックで閉じる。閉じるだけなら setIsOpen で足り、フォーカスも動かさない
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        closeMenu(false);
+        setIsOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen, closeMenu]);
+  }, [isOpen]);
 
-  const handleSelect = useCallback(
-    (sortValue: VisitFilters["sort"]) => {
-      onChange(sortValue);
-      closeMenu(true);
-    },
-    [onChange, closeMenu]
-  );
+  const handleSelect = (sortValue: VisitFilters["sort"]) => {
+    onChange(sortValue);
+    closeMenu(true);
+  };
 
   // 閉じている状態のトリガー。Enter / Space はネイティブの click で開くため、
   // ここでは矢印キーによる展開だけを受け持つ
@@ -123,160 +121,60 @@ function useSortSelectBehavior(value: VisitFilters["sort"], onChange: (value: Vi
     }
   };
 
-  return {
-    isOpen,
-    activeIndex,
-    setActiveIndex,
-    containerRef,
-    triggerRef,
-    listRef,
-    listboxId,
-    optionId,
-    currentOption,
-    openMenu,
-    closeMenu,
-    handleSelect,
-    handleTriggerKeyDown,
-    handleListKeyDown,
-  };
-}
-
-function SortSelectTrigger({
-  triggerRef,
-  isOpen,
-  listboxId,
-  currentOption,
-  openMenu,
-  closeMenu,
-  handleTriggerKeyDown,
-}: {
-  triggerRef: React.RefObject<HTMLButtonElement | null>;
-  isOpen: boolean;
-  listboxId: string;
-  currentOption: SortOption;
-  openMenu: () => void;
-  closeMenu: (returnFocus: boolean) => void;
-  handleTriggerKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
-}) {
-  const CurrentIcon = currentOption.Icon;
-  return (
-    <button
-      ref={triggerRef}
-      type="button"
-      className="quick-sort-trigger"
-      aria-label="並び順"
-      aria-haspopup="listbox"
-      aria-expanded={isOpen}
-      aria-controls={isOpen ? listboxId : undefined}
-      title="並び順"
-      onClick={() => (isOpen ? closeMenu(true) : openMenu())}
-      onKeyDown={handleTriggerKeyDown}
-    >
-      <span className="quick-sort-trigger-content">
-        <CurrentIcon size={14} className="quick-sort-icon" />
-        <span>{currentOption.label}</span>
-      </span>
-      <ChevronDown size={14} className={`quick-sort-chevron ${isOpen ? "is-open" : ""}`} />
-    </button>
-  );
-}
-
-function SortSelectMenu({
-  listRef,
-  listboxId,
-  activeIndex,
-  optionId,
-  value,
-  handleListKeyDown,
-  handleSelect,
-  setActiveIndex,
-}: {
-  listRef: React.RefObject<HTMLUListElement | null>;
-  listboxId: string;
-  activeIndex: number;
-  optionId: (index: number) => string;
-  value: VisitFilters["sort"];
-  handleListKeyDown: (e: React.KeyboardEvent<HTMLUListElement>) => void;
-  handleSelect: (sortValue: VisitFilters["sort"]) => void;
-  setActiveIndex: (index: number) => void;
-}) {
-  return (
-    <ul
-      ref={listRef}
-      id={listboxId}
-      className="quick-sort-menu"
-      role="listbox"
-      aria-label="並び順を選択"
-      aria-activedescendant={optionId(activeIndex)}
-      tabIndex={-1}
-      onKeyDown={handleListKeyDown}
-    >
-      {SORT_OPTIONS.map((option, index) => {
-        const OptionIcon = option.Icon;
-        const isSelected = option.value === value;
-        const isActive = index === activeIndex;
-
-        return (
-          <li
-            key={option.value}
-            id={optionId(index)}
-            role="option"
-            aria-selected={isSelected}
-            className={`quick-sort-option ${isSelected ? "is-selected" : ""} ${
-              isActive ? "is-active" : ""
-            }`}
-            onClick={() => handleSelect(option.value)}
-            onMouseEnter={() => setActiveIndex(index)}
-          >
-            <OptionIcon size={14} className="quick-sort-icon" />
-            <span>{option.label}</span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-export function SortSelect({ value, onChange, className = "" }: SortSelectProps) {
-  const {
-    isOpen,
-    activeIndex,
-    setActiveIndex,
-    containerRef,
-    triggerRef,
-    listRef,
-    listboxId,
-    optionId,
-    currentOption,
-    openMenu,
-    closeMenu,
-    handleSelect,
-    handleTriggerKeyDown,
-    handleListKeyDown,
-  } = useSortSelectBehavior(value, onChange);
-
   return (
     <div ref={containerRef} className={`quick-sort-dropdown ${className}`.trim()}>
-      <SortSelectTrigger
-        triggerRef={triggerRef}
-        isOpen={isOpen}
-        listboxId={listboxId}
-        currentOption={currentOption}
-        openMenu={openMenu}
-        closeMenu={closeMenu}
-        handleTriggerKeyDown={handleTriggerKeyDown}
-      />
+      <button
+        ref={triggerRef}
+        type="button"
+        className="quick-sort-trigger"
+        aria-label="並び順"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? listboxId : undefined}
+        title="並び順"
+        onClick={() => (isOpen ? closeMenu(true) : openMenu())}
+        onKeyDown={handleTriggerKeyDown}
+      >
+        <span className="quick-sort-trigger-content">
+          <CurrentIcon size={14} className="quick-sort-icon" />
+          <span>{currentOption.label}</span>
+        </span>
+        <ChevronDown size={14} className={`quick-sort-chevron ${isOpen ? "is-open" : ""}`} />
+      </button>
       {isOpen && (
-        <SortSelectMenu
-          listRef={listRef}
-          listboxId={listboxId}
-          activeIndex={activeIndex}
-          optionId={optionId}
-          value={value}
-          handleListKeyDown={handleListKeyDown}
-          handleSelect={handleSelect}
-          setActiveIndex={setActiveIndex}
-        />
+        <ul
+          ref={listRef}
+          id={listboxId}
+          className="quick-sort-menu"
+          role="listbox"
+          aria-label="並び順を選択"
+          aria-activedescendant={optionId(activeIndex)}
+          tabIndex={-1}
+          onKeyDown={handleListKeyDown}
+        >
+          {SORT_OPTIONS.map((option, index) => {
+            const OptionIcon = option.Icon;
+            const isSelected = option.value === value;
+            const isActive = index === activeIndex;
+
+            return (
+              <li
+                key={option.value}
+                id={optionId(index)}
+                role="option"
+                aria-selected={isSelected}
+                className={`quick-sort-option ${isSelected ? "is-selected" : ""} ${
+                  isActive ? "is-active" : ""
+                }`}
+                onClick={() => handleSelect(option.value)}
+                onMouseEnter={() => setActiveIndex(index)}
+              >
+                <OptionIcon size={14} className="quick-sort-icon" />
+                <span>{option.label}</span>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
