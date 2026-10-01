@@ -85,12 +85,30 @@ describe("useVisitSession", () => {
     const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
     await waitFor(() => expect(result.current.loadError).toBe("一時的な失敗"));
 
+    let reloaded: boolean | undefined;
     await act(async () => {
-      await result.current.reload();
+      reloaded = await result.current.reload();
     });
 
+    expect(reloaded).toBe(true);
     expect(result.current.loadError).toBeNull();
     expect(onVisitsLoaded).toHaveBeenCalledWith(loadedVisits);
+  });
+
+  it("reload は失敗を例外にせず false を返して loadError へ入れること", async () => {
+    const onVisitsLoaded = vi.fn();
+    const list = vi.fn().mockResolvedValueOnce(loadedVisits).mockRejectedValueOnce(new Error("通信失敗"));
+    const source = repository({ list });
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let reloaded: boolean | undefined;
+    await act(async () => {
+      reloaded = await result.current.reload();
+    });
+
+    expect(reloaded).toBe(false);
+    expect(result.current.loadError).toBe("通信失敗");
   });
 
   it("clearSession で未ログイン状態へ戻すこと", async () => {

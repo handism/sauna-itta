@@ -46,12 +46,25 @@ describe("loadSavedVisits", () => {
     consoleErrorSpy.mockRestore();
   });
 
+  it("JSONとして壊れた保存値は生の文字列のまま unreadable に残すこと", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    store["sauna-itta_visits"] = "{ invalid_json }";
+
+    expect(loadSavedVisits().unreadable).toEqual(["{ invalid_json }"]);
+  });
+
   it("should return baseVisits if parsed saved data is not an array", () => {
     store["sauna-itta_visits"] = JSON.stringify({ not: "an array" });
 
     const visits = loadSavedVisits().visits;
     expect(Array.isArray(visits)).toBe(true);
     expect(visits.length).toBeGreaterThan(0);
+  });
+
+  it("配列でない保存値は unreadable に残すこと", () => {
+    store["sauna-itta_visits"] = JSON.stringify({ not: "an array" });
+
+    expect(loadSavedVisits().unreadable).toEqual([{ not: "an array" }]);
   });
 
   it("保存がまだ無い場合は同梱JSONを返すこと", () => {

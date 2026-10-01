@@ -63,13 +63,21 @@ export function useVisitSession(
     };
   }, [repository, skipInitialList, onVisitsLoaded]);
 
-  const reload = useCallback(async () => {
+  /**
+   * 失敗は例外にせず loadError へ入れ、成否だけを返す。画面の再試行ボタンは
+   * 結果を待たずに呼ぶため例外にすると未処理の reject になる一方、インポートのように
+   * 再読み込みの失敗を利用者へ追記したい呼び出し側は戻り値で判定する
+   * （「例外が来たら失敗」と書くと、この関数では一度も通らない分岐になる）。
+   */
+  const reload = useCallback(async (): Promise<boolean> => {
     setLoading(true);
     setLoadError(null);
     try {
       onVisitsLoaded(await repository.list());
+      return true;
     } catch (error) {
       setLoadError(toUserMessage(error, LOAD_ERROR_FALLBACK));
+      return false;
     } finally {
       setLoading(false);
     }

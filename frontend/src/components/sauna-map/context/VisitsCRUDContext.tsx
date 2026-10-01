@@ -41,7 +41,8 @@ export interface VisitsActionsContextType {
   exportVisits: () => void;
   handleImportData: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
   importInputRef: RefObject<HTMLInputElement | null>;
-  reload: () => Promise<void>;
+  /** 再読み込みが成功したか。失敗の内容は loadError に入る */
+  reload: () => Promise<boolean>;
   logout: () => Promise<void>;
 }
 

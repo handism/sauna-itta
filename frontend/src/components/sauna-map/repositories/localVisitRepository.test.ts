@@ -187,4 +187,15 @@ describe("LocalVisitRepository", () => {
     expect(saved).toHaveLength(3);
     expect(saved).toContainEqual(broken);
   });
+
+  it("JSONとして壊れた保存値は、保存し直しても上書きで消さない", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    store[VISITS_STORAGE_KEY] = "[{ broken";
+
+    await repository.list();
+    await repository.create({ lat: 35.71, lng: 139.77 }, form);
+
+    const saved: unknown[] = JSON.parse(store[VISITS_STORAGE_KEY]);
+    expect(saved.at(-1)).toBe("[{ broken");
+  });
 });

@@ -10,6 +10,13 @@ const CHUNK_SIZE = 10;
 
 const REVOKE_OBJECT_URL_DELAY_MS = 1000;
 
+const RELOAD_FAILED_NOTE = "（画面の再読み込みに失敗したため、表示が最新でない可能性があります）";
+
+export interface BatchImportResult extends ImportResult {
+  /** 取り込み後の再読み込みに成功したか。失敗しても取り込み自体は確定している */
+  reloaded: boolean;
+}
+
 export class ImportProgressError extends Error {
   constructor(
     readonly added: number,
@@ -58,14 +65,17 @@ export function filterNewVisits(validVisits: SaunaVisit[], existingVisits: Sauna
 /**
  * 取り込みは Repository の importBatch へ委ねる（localモードは localStorage、
  * apiモードは Rails への POST）。保存の失敗は例外で伝わるため、戻り値に成否は持たせない。
+ *
+ * @param reload 失敗を例外ではなく戻り値 (false) で返す（useVisitSession の reload）。
+ *   try/catch で再読み込みの失敗を拾う形へ戻すと、その分岐は本番で一度も通らない。
  */
 export async function performBatchImport(
   normalizedImported: SaunaVisit[],
   alreadyKnown: number,
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
-  reload: () => Promise<void>,
+  reload: () => Promise<boolean>,
   showToast?: ShowToast,
-): Promise<{ added: number; skipped: number }> {
+): Promise<BatchImportResult> {
   let added = 0;
   let skipped = alreadyKnown;
   try {
@@ -81,15 +91,13 @@ export async function performBatchImport(
     }
   } catch (error) {
     let message = error instanceof Error ? error.message : "サーバーへの取り込みに失敗しました。";
-    try {
-      await reload();
-    } catch {
+    if (!(await reload())) {
       message += "（再読み込みにも失敗しました）";
     }
     throw new ImportProgressError(added, message, { cause: error });
   }
-  await reload();
-  return { added, skipped };
+  const reloaded = await reload();
+  return { added, skipped, reloaded };
 }
 
 export function downloadVisitsAsJson(visits: SaunaVisit[]): void {
@@ -119,19 +127,19 @@ export function downloadVisitsAsJson(visits: SaunaVisit[]): void {
 export function useVisitImportExport(
   getVisits: () => SaunaVisit[],
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
-  reload: () => Promise<void>,
+  reload: () => Promise<boolean>,
   showToast?: ShowToast,
 ) {
   const [importing, setImporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const importVisitsFromFile = useCallback(
-    async (file: File) => {
+    async (file: File): Promise<BatchImportResult> => {
       const validVisits = await parseImportFile(file);
       const { normalizedImported, alreadyKnown } = filterNewVisits(validVisits, getVisits());
 
       if (normalizedImported.length === 0) {
-        return { added: 0, skipped: alreadyKnown };
+        return { added: 0, skipped: alreadyKnown, reloaded: true };
       }
 
       return performBatchImport(normalizedImported, alreadyKnown, importBatch, reload, showToast);
@@ -146,19 +154,20 @@ export function useVisitImportExport(
 
       setImporting(true);
       try {
-        const { added, skipped } = await importVisitsFromFile(file);
+        const { added, skipped, reloaded } = await importVisitsFromFile(file);
+        const reloadNote = reloaded ? "" : RELOAD_FAILED_NOTE;
         if (added === 0) {
           showToast?.(
-            skipped > 0
+            (skipped > 0
               ? `${skipped}件はすでに登録済みのため、新しく追加されたデータはありません。`
-              : "新しく追加されるデータはありませんでした。",
+              : "新しく追加されるデータはありませんでした。") + reloadNote,
             "info",
           );
           return;
         }
 
         const skippedNote = skipped > 0 ? `（${skipped}件はすでに登録済みのためスキップしました）` : "";
-        showToast?.(`データを${added}件取り込みました。${skippedNote}`, "success");
+        showToast?.(`データを${added}件取り込みました。${skippedNote}${reloadNote}`, "success");
       } catch (error) {
         if (error instanceof ImportProgressError) {
           const progress = error.added > 0 ? `${error.added}件は取り込み済みです。` : "";
