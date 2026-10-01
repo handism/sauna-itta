@@ -6,6 +6,7 @@
 
 - `NEXT_PUBLIC_DATA_SOURCE=local|api` で配布形態を切り替えます。localはGitHub Pages用の`/sauna-itta`、同梱JSON、`localStorage`、PWAを維持し、apiはbasePathなし・Rails API・オンライン必須でService Workerを登録しません。
 - `NEXT_PUBLIC_DATA_SOURCE`は未指定（local扱い）・`local`・`api`だけを許可し、それ以外はビルド時に失敗させます。各コンポーネントで独自にフォールバックせず、`frontend/dataSource.ts`の`DATA_SOURCE`を参照してください（判定がずれるとbasePathとRepositoryが異なる混在構成になります）。
+- localモードのデモ記録（`src/data/sauna-visits.json`、約50KB）は、apiモードのビルドでは`next.config.ts`の`turbopack.resolveAlias`で空配列の`src/data/sauna-visits.api.json`へ差し替え、配信物に含めません。Repositoryの切り替えは実行時の分岐のため、静的importを分岐で囲んでもバンドラは外せません。`utils/savedVisits.ts`の`import initialVisits from "@/data/sauna-visits.json"`の書き方を変えるとエイリアスが無言で効かなくなるため、変える場合はエイリアスのキーも揃えてください（`next.config.test.ts`が両者の一致を検査しています）。
 - 公開パスの接頭辞は`frontend/dataSource.ts`の`BASE_PATH`（localは`/sauna-itta`、apiは空文字）が唯一の出所です。`next.config.ts`の`basePath`／`assetPrefix`、`layout.tsx`のアイコン、`manifest.ts`、`ServiceWorkerRegister`の登録先はすべてこれを参照し、`"/sauna-itta"`を直書きしないでください。ビルドを通らない`public/sw.js`だけは、`self.registration.scope`（＝`ServiceWorkerRegister`が`BASE_PATH`から決めた登録スコープ）から同じ値を求めます。
 - apiモードの応答は `apiVisitRepository.ts` で `SaunaVisitSchema` などの zod スキーマに通し、形式が合わなければ `RepositoryError`（`invalid_response`）にします。`response.json() as T` の型注釈だけで信用する形へ戻さないでください（localモードと検証の有無が食い違い、シリアライザ変更が描画中の実行時エラーとして表面化します）。
 - `VisitRepository.update` は ID ではなく画面に表示中の記録（`SaunaVisit`）を受け取り、apiモードはその `lockVersion` を送ります。Repository の内部に記録のキャッシュを持たせて版を引く実装へ戻さないでください（画面の状態と版が食い違い、ロックが効かない更新が生まれます）。

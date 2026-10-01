@@ -94,17 +94,26 @@ export function syncLatestFromHistory(
   };
 }
 
-export function buildHistoryUpdate(
-  v: SaunaVisit,
-  form: { date?: string; comment: string; rating?: number; image?: string; appendHistory?: boolean },
-): Pick<SaunaVisit, "history" | "comment" | "image" | "date" | "rating" | "visitCount"> {
-  const entryDate = form.date || getTodayDate();
-  const nextEntry = {
-    date: entryDate,
+type HistoryEntryInput = { date?: string; comment: string; rating?: number; image?: string };
+
+/**
+ * フォームの入力から履歴 1 件を組み立てる。新規作成（createNewVisit）と
+ * 更新（buildHistoryUpdate）で日付・評価の既定値を食い違わせないよう、ここに集約する。
+ */
+export function buildHistoryEntry(form: HistoryEntryInput): VisitHistoryEntry {
+  return {
+    date: form.date || getTodayDate(),
     comment: form.comment,
     rating: form.rating || 0,
     image: form.image,
   };
+}
+
+export function buildHistoryUpdate(
+  v: SaunaVisit,
+  form: HistoryEntryInput & { appendHistory?: boolean },
+): Pick<SaunaVisit, "history" | "comment" | "image" | "date" | "rating" | "visitCount"> {
+  const nextEntry = buildHistoryEntry(form);
   const baseHistory = getVisitHistoryEntries(v);
   const history = form.appendHistory
     ? [...baseHistory, nextEntry]

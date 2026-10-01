@@ -1,10 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
+  buildHistoryEntry,
   getVisitCount,
   getVisitHistoryEntries,
   flattenVisitHistory,
   syncLatestFromHistory,
 } from "./visitHistory";
+import { getTodayDate } from "./date";
 import { SaunaVisit } from "../types";
 
 describe("flattenVisitHistory", () => {
@@ -366,5 +368,25 @@ describe("syncLatestFromHistory", () => {
   it("visitCount を渡さないと履歴件数へ揃えること（履歴削除の経路）", () => {
     expect(syncLatestFromHistory(history).visitCount).toBe(2);
     expect(syncLatestFromHistory(history.slice(0, 1)).visitCount).toBe(1);
+  });
+});
+
+describe("buildHistoryEntry", () => {
+  it("フォームの値から履歴 1 件を組み立てる", () => {
+    expect(buildHistoryEntry({ date: "2026-01-01", comment: "最高", rating: 4, image: "data:x" })).toEqual({
+      date: "2026-01-01",
+      comment: "最高",
+      rating: 4,
+      image: "data:x",
+    });
+  });
+
+  it("日付が空なら今日、評価が未入力なら 0 を補う", () => {
+    expect(buildHistoryEntry({ date: "", comment: "" })).toEqual({
+      date: getTodayDate(),
+      comment: "",
+      rating: 0,
+      image: undefined,
+    });
   });
 });

@@ -1,38 +1,28 @@
 import { SaunaVisit, VisitFormState } from "../types";
+// 同じ utils 内は個別ファイルから直接読む。"../utils"（index.ts）経由にすると、
+// index.ts が本ファイルを再エクスポートしているため循環 import になる。
+import { toNormalizedTags } from "./form";
 import {
-  getTodayDate,
+  buildHistoryEntry,
   buildHistoryUpdate,
   getVisitHistoryEntries,
   syncLatestFromHistory,
-  toNormalizedTags,
-} from "../utils";
+} from "./visitHistory";
 
 export function createNewVisit(
   selected: { lat: number; lng: number },
   form: VisitFormState
 ): SaunaVisit {
-  const entryDate = form.date || getTodayDate();
-  const historyEntry = {
-    date: entryDate,
-    comment: form.comment,
-    rating: form.rating || 0,
-    image: form.image,
-  };
-
   return {
     id: crypto.randomUUID(),
     name: form.name,
     lat: selected.lat,
     lng: selected.lng,
-    comment: historyEntry.comment,
-    image: historyEntry.image,
-    date: historyEntry.date,
-    rating: historyEntry.rating,
+    // 本体の date / comment / rating / image と訪問回数は、更新・削除と同じく履歴から写す
+    ...syncLatestFromHistory([buildHistoryEntry(form)]),
     tags: toNormalizedTags(form.tagsText),
     status: form.status,
     area: form.area,
-    visitCount: 1,
-    history: [historyEntry],
   };
 }
 

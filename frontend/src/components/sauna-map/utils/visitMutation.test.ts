@@ -40,6 +40,18 @@ describe("visitMutation - Pure Functions", () => {
       });
     });
 
+    it("本体の日付・コメント・評価・写真を最新履歴の写しにする", () => {
+      const result = createNewVisit({ lat: 35, lng: 139 }, { ...sampleForm, date: "", rating: 0, image: "data:x" });
+      const [entry] = result.history ?? [];
+
+      expect(result.history).toHaveLength(1);
+      expect(result.date).toBe(entry.date);
+      expect(result.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(result.comment).toBe(entry.comment);
+      expect(result.rating).toBe(0);
+      expect(result.image).toBe("data:x");
+    });
+
     it("UUID 形式の ID を生成する", () => {
       const selected = { lat: 35.71, lng: 139.77 };
       const result = createNewVisit(selected, sampleForm);

@@ -12,6 +12,17 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   reactCompiler: true,
+  // localモードのデモ記録（同梱JSON、約50KB）は apiモードでは一度も読まないが、
+  // utils/savedVisits.ts の静的 import から両モードのバンドルへ入ってしまう。
+  // Repository の切り替えは実行時の分岐のため、バンドラは import を外せない。
+  // apiモードだけ空配列へ差し替え、配信物から除く。
+  ...(!isLocalMode && {
+    turbopack: {
+      resolveAlias: {
+        "@/data/sauna-visits.json": "./src/data/sauna-visits.api.json",
+      },
+    },
+  }),
   ...(!isLocalMode && isDevelopment && {
     async rewrites() {
       const backend = process.env.API_PROXY_TARGET ?? "http://localhost:3001";
