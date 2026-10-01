@@ -9,7 +9,8 @@ import { VisitMarkers } from "./VisitMarkers";
 import { ZoomObserver } from "./ZoomObserver";
 import { CurrentLocation } from "../../types";
 import {
-  useSaunaUI,
+  useSaunaViewport,
+  useSaunaUIActions,
   useVisitFiltersContext,
   useSaunaEditorState,
   useSaunaEditorActions,
@@ -25,7 +26,10 @@ export function SaunaMapLayer({
   currentLocation,
   setCurrentLocation,
 }: SaunaMapLayerProps) {
-  const { isMobile, showToast } = useSaunaUI();
+  // useSaunaUI() は UI 状態全体（トースト・モーダル・メニューの開閉）を購読するため、
+  // 通知 1 件でも地図とマーカー全体が再描画される。画面幅と操作関数だけを購読すること
+  const { isMobile } = useSaunaViewport();
+  const { showToast } = useSaunaUIActions();
   const { filteredVisits } = useVisitFiltersContext();
   const { editingId, selectedLocation, isCreating } = useSaunaEditorState();
   const { handleLocationSelect, handleBoundsChange } = useSaunaEditorActions();

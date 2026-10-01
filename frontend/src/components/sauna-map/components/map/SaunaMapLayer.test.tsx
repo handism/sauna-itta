@@ -1,7 +1,8 @@
-import { render, screen, cleanup } from "@testing-library/react";
+import { Profiler } from "react";
+import { render, screen, cleanup, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { SaunaMapProvider } from "../../context";
+import { SaunaMapProvider, useSaunaUIActions } from "../../context";
 import { SaunaMapLayer } from "./SaunaMapLayer";
 
 vi.mock("leaflet", async (importOriginal) => {
@@ -82,5 +83,29 @@ describe("SaunaMapLayer", () => {
     const tiles = container.querySelectorAll<HTMLImageElement>("img.leaflet-tile");
     expect(tiles.length).toBeGreaterThan(0);
     tiles.forEach((tile) => expect(tile.getAttribute("crossorigin")).toBe("anonymous"));
+  });
+
+  it("does not re-render the map when a toast is shown", () => {
+    let showToast: ReturnType<typeof useSaunaUIActions>["showToast"] = () => {};
+    function ToastTrigger() {
+      ({ showToast } = useSaunaUIActions());
+      return null;
+    }
+    const onRender = vi.fn();
+
+    render(
+      <SaunaMapProvider>
+        <ToastTrigger />
+        <Profiler id="map" onRender={onRender}>
+          <SaunaMapLayer currentLocation={null} setCurrentLocation={vi.fn()} />
+        </Profiler>
+      </SaunaMapProvider>
+    );
+    onRender.mockClear();
+
+    // UI 状態全体を購読すると、通知 1 件で地図とマーカー全体が再描画される
+    act(() => showToast("保存しました", "success"));
+
+    expect(onRender).not.toHaveBeenCalled();
   });
 });
