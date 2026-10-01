@@ -4,8 +4,9 @@ module VisitWritable
   # 書き込み系で共通のエラー応答。アクションごとに rescue を書き写すと、
   # 新しい書き込みアクションを足したときだけ 500 になる。
   #
-  # ArgumentError を握るのは apply_image / DataUrlImage.decode が data URL の不正を
-  # これで弾くため。Api::V1::BaseController ではなくこの concern に置くことで、
+  # 画像の不正は apply_image / DataUrlImage.decode が DataUrlImage::InvalidImage で伝える。
+  # ArgumentError のような汎用の例外を握ると、無関係なプログラムの誤りまで invalid_image の
+  # 422 として隠れてしまう。Api::V1::BaseController ではなくこの concern に置くことで、
   # 画像を書き込まない ImagesController / SessionsController までは広げない。
   # render_validation_error は Api::V1::BaseController が持つため、include 先はその配下に限ること。
   included do
@@ -13,10 +14,18 @@ module VisitWritable
       render_validation_error(error.record)
     end
 
-    rescue_from ArgumentError do |error|
+    rescue_from DataUrlImage::InvalidImage do |error|
       render_error("invalid_image", error.message, :unprocessable_content)
     end
   end
+
+  # 記録本体として受け付けるキー。作成・更新 (SaunaVisitsController) と取り込み
+  # (ImportsController) で共有する。エクスポートしたJSONをそのまま取り込むため、
+  # 取り込み側も lockVersion / appendHistory を受け取れる必要がある。
+  VISIT_PERMITTED_KEYS = [
+    :name, :lat, :lng, :area, :status, :date, :comment, :rating, :image,
+    :appendHistory, :lockVersion, :visitCount, { tags: [] }
+  ].freeze
 
   private
 
@@ -59,7 +68,7 @@ module VisitWritable
     elsif value.to_s.start_with?("data:")
       entry.image.attach(DataUrlImage.decode(value))
     elsif !value.to_s.start_with?("/api/v1/images/")
-      raise ArgumentError, "画像URLが不正です。"
+      raise DataUrlImage::InvalidImage, "画像URLが不正です。"
     else
       stale_blob = nil
     end

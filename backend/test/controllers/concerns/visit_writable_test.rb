@@ -19,11 +19,13 @@ class VisitWritableTest < ActiveSupport::TestCase
     handled = DummyController.rescue_handlers.map(&:first)
 
     assert_includes handled, "ActiveRecord::RecordInvalid"
-    assert_includes handled, "ArgumentError"
+    assert_includes handled, "DataUrlImage::InvalidImage"
+    # 汎用の ArgumentError を握ると、無関係なプログラムの誤りまで invalid_image として隠れる
+    assert_not_includes handled, "ArgumentError"
   end
 
   test "書き込み系以外のコントローラへは広げない" do
-    assert_not_includes Api::V1::ImagesController.rescue_handlers.map(&:first), "ArgumentError"
+    assert_not_includes Api::V1::ImagesController.rescue_handlers.map(&:first), "DataUrlImage::InvalidImage"
   end
 
   test "assign_visit_attributes correctly maps standard frontend attributes to the model" do
@@ -149,9 +151,9 @@ class VisitWritableTest < ActiveSupport::TestCase
     assert_empty stale_blobs
   end
 
-  test "apply_history_image raises ArgumentError if :image is invalid URL" do
+  test "apply_history_image raises InvalidImage if :image is invalid URL" do
     stale_blobs = []
-    error = assert_raises(ArgumentError) do
+    error = assert_raises(DataUrlImage::InvalidImage) do
       @controller.send(:apply_history_image, @entry, { image: "http://example.com/image.jpg" }, stale_blobs)
     end
     assert_equal "画像URLが不正です。", error.message

@@ -41,8 +41,11 @@ const mockVisits: SaunaVisit[] = [
 
 import { getVisitRepository } from "@/components/sauna-map/repositories";
 
-vi.mock("@/components/sauna-map/repositories", () => {
+vi.mock("@/components/sauna-map/repositories", async (importOriginal) => {
+  // RepositoryError など実装側が参照する値はそのまま残し、Repository の生成だけ差し替える
+  const actual = await importOriginal<typeof import("@/components/sauna-map/repositories")>();
   return {
+    ...actual,
     getVisitRepository: vi.fn(() => ({
       dataSource: "local",
       getSession: vi.fn().mockResolvedValue({ authenticated: true, user: null, csrfToken: null }),

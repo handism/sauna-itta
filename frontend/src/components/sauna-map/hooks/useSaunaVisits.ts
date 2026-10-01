@@ -2,77 +2,37 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SaunaVisit, VisitFormState, LatLng } from "../types";
 import {
   getVisitRepository,
-  RepositoryError,
   type ImportResult,
-  type SessionUser,
   type VisitRepository,
 } from "../repositories";
+import type { ShowToast } from "../components/common/Toast";
 import { useVisitImportExport } from "./useVisitImportExport";
 import { useInitialVisits } from "./useInitialVisits";
+import { toUserMessage, useVisitSession } from "./useVisitSession";
 
-type Toast = (message: string, type: "success" | "error" | "info") => void;
-
-function errorMessage(error: unknown, fallback: string): string {
-  if (error instanceof RepositoryError && error.status === 409) {
-    return "別の画面で記録が更新されました。再読み込みしてからもう一度お試しください。";
-  }
-  return error instanceof Error ? error.message : fallback;
-}
-
-const LOAD_ERROR_FALLBACK = "記録の読み込みに失敗しました。";
 const SAVE_ERROR_FALLBACK = "保存に失敗しました。";
 
-export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepository) {
-  // useRef → useState でレンダリング中の ref アクセス (react-hooks/refs) を回避
-  const [repository] = useState(() => injectedRepository ?? getVisitRepository());
-  const { visits, setVisits, seededFromStorage, unreadableCount } = useInitialVisits(injectedRepository);
+type MutationResult<T> = { success: true; value: T } | { success: false };
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [authenticated, setAuthenticated] = useState(repository.dataSource === "local");
-  const [csrfToken, setCsrfToken] = useState<string | null>(null);
-  const [user, setUser] = useState<SessionUser | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: VisitRepository) {
+  // useRef → useState でレンダリング中の ref アクセス (react-hooks/refs) を回避。
+  // localStorage から先読みするかも同じ Repository の dataSource で決め、判定の出所を 1 つにする
+  // （注入された Repository はテスト等で list() の結果を制御するため、保存からは先読みしない）。
+  const [{ repository, seedFromStorage }] = useState(() => {
+    const resolved = injectedRepository ?? getVisitRepository();
+    return { repository: resolved, seedFromStorage: !injectedRepository && resolved.dataSource === "local" };
+  });
+  const { visits, setVisits, unreadableCount } = useInitialVisits(seedFromStorage);
+  const session = useVisitSession(repository, {
+    onVisitsLoaded: setVisits,
+    // 初回の list() は初期値と同じ localStorage の読み込み＋zod検証になるため省く
+    skipInitialList: seedFromStorage,
+  });
+  const { reload, clearSession } = session;
 
-  const reload = useCallback(async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const loaded = await repository.list();
-      setVisits(loaded);
-    } catch (error) {
-      setLoadError(errorMessage(error, LOAD_ERROR_FALLBACK));
-    } finally {
-      setLoading(false);
-    }
-  }, [repository, setVisits]);
-
-  useEffect(() => {
-    let active = true;
-    // React 18/19 のエフェクト実行直後における状態不整合や「Cannot update a component while rendering」
-    // の警告を避けるため、マイクロタスクキューにスケジュールしてから非同期読み込み・状態更新を開始する
-    queueMicrotask(async () => {
-      try {
-        const session = await repository.getSession();
-        if (!active) return;
-        setAuthenticated(session.authenticated);
-        setCsrfToken(session.csrfToken);
-        setUser(session.user);
-        // 初回の list() は上の初期値と同じ localStorage の読み込み＋zod検証になるため省く
-        if (session.authenticated && !seededFromStorage) {
-          const loaded = await repository.list();
-          if (active) setVisits(loaded);
-        }
-      } catch (error) {
-        if (active) setLoadError(errorMessage(error, LOAD_ERROR_FALLBACK));
-      } finally {
-        if (active) setLoading(false);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [repository, seededFromStorage, setVisits]);
+  // 実行中の更新系操作の数。真偽値 1 つで持つと、並行した操作の片方が終わった時点で
+  // もう片方の実行中に saving が false へ戻ってしまう
+  const [pendingMutations, setPendingMutations] = useState(0);
 
   // 読めなかった記録は保存から消さずに残しているが、画面には出ないため存在を伝える
   useEffect(() => {
@@ -85,15 +45,15 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
   }, [unreadableCount, showToast]);
 
   const runMutation = useCallback(
-    async <T,>(operation: () => Promise<T>): Promise<{ success: boolean; value?: T }> => {
-      setSaving(true);
+    async <T,>(operation: () => Promise<T>): Promise<MutationResult<T>> => {
+      setPendingMutations((count) => count + 1);
       try {
         return { success: true, value: await operation() };
       } catch (error) {
-        showToast?.(errorMessage(error, SAVE_ERROR_FALLBACK), "error");
+        showToast?.(toUserMessage(error, SAVE_ERROR_FALLBACK), "error");
         return { success: false };
       } finally {
-        setSaving(false);
+        setPendingMutations((count) => count - 1);
       }
     },
     [showToast],
@@ -102,10 +62,18 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
   const addVisit = useCallback(
     async (location: LatLng, form: VisitFormState) => {
       const result = await runMutation(() => repository.create(location, form));
-      if (result.value) setVisits((current) => [result.value as SaunaVisit, ...current]);
-      return { success: result.success, newVisit: result.value };
+      if (!result.success) return { success: false, newVisit: undefined };
+      setVisits((current) => [result.value, ...current]);
+      return { success: true, newVisit: result.value };
     },
     [repository, runMutation, setVisits],
+  );
+
+  const replaceVisit = useCallback(
+    (id: string, updated: SaunaVisit) => {
+      setVisits((items) => items.map((visit) => (visit.id === id ? updated : visit)));
+    },
+    [setVisits],
   );
 
   /*
@@ -116,12 +84,10 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
   const editVisit = useCallback(
     async (target: SaunaVisit, location: LatLng, form: VisitFormState) => {
       const result = await runMutation(() => repository.update(target, location, form));
-      if (result.value) {
-        setVisits((items) => items.map((visit) => (visit.id === target.id ? result.value as SaunaVisit : visit)));
-      }
+      if (result.success) replaceVisit(target.id, result.value);
       return { success: result.success };
     },
-    [repository, runMutation, setVisits],
+    [repository, runMutation, replaceVisit],
   );
 
   const deleteVisit = useCallback(
@@ -136,12 +102,10 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
   const removeHistoryEntry = useCallback(
     async (target: SaunaVisit, index: number) => {
       const result = await runMutation(() => repository.deleteHistoryEntry(target, index));
-      if (result.value) {
-        setVisits((items) => items.map((visit) => (visit.id === target.id ? result.value as SaunaVisit : visit)));
-      }
+      if (result.success) replaceVisit(target.id, result.value);
       return { success: result.success };
     },
-    [repository, runMutation, setVisits],
+    [repository, runMutation, replaceVisit],
   );
 
   const importBatch = useCallback(
@@ -162,19 +126,18 @@ export function useSaunaVisits(showToast?: Toast, injectedRepository?: VisitRepo
 
   const logout = useCallback(async () => {
     await repository.logout();
-    setAuthenticated(false);
-    setUser(null);
+    clearSession();
     setVisits([]);
-  }, [repository, setVisits]);
+  }, [repository, clearSession, setVisits]);
 
   return {
     visits,
-    loading,
-    saving,
-    loadError,
-    authenticated,
-    csrfToken,
-    user,
+    loading: session.loading,
+    saving: pendingMutations > 0,
+    loadError: session.loadError,
+    authenticated: session.authenticated,
+    csrfToken: session.csrfToken,
+    user: session.user,
     dataSource: repository.dataSource,
     reload,
     logout,

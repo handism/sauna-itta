@@ -3,13 +3,12 @@ import { z } from "zod";
 import { SaunaVisit, SaunaVisitSchema } from "../types";
 import { normalizeVisits } from "../utils";
 import type { ImportResult } from "../repositories";
+import type { ShowToast } from "../components/common/Toast";
 
 // Rails 側の ImportsController が 1 リクエストあたり 10 件までしか受け付けません
 const CHUNK_SIZE = 10;
 
 const REVOKE_OBJECT_URL_DELAY_MS = 1000;
-
-type Toast = (message: string, type: "success" | "error" | "info") => void;
 
 export class ImportProgressError extends Error {
   constructor(
@@ -65,7 +64,7 @@ export async function performBatchImport(
   alreadyKnown: number,
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
   reload: () => Promise<void>,
-  showToast?: Toast,
+  showToast?: ShowToast,
 ): Promise<{ added: number; skipped: number }> {
   let added = 0;
   let skipped = alreadyKnown;
@@ -121,7 +120,7 @@ export function useVisitImportExport(
   getVisits: () => SaunaVisit[],
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
   reload: () => Promise<void>,
-  showToast?: Toast,
+  showToast?: ShowToast,
 ) {
   const [importing, setImporting] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);

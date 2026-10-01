@@ -34,11 +34,9 @@ module Api
           payload.each do |raw|
             raise ActionController::BadRequest, "取り込むデータは記録の配列で指定してください。" unless raw.is_a?(ActionController::Parameters)
 
-            # 許可キーは SaunaVisitsController#visit_params と揃える（エクスポートしたJSONを
-            # そのまま取り込むため、lockVersion / appendHistory も届く）
+            # 記録本体の許可キーは SaunaVisitsController と共有する (VisitWritable::VISIT_PERMITTED_KEYS)
             attributes = raw.permit(
-              :id, :name, :lat, :lng, :area, :status, :date, :comment, :rating, :image,
-              :appendHistory, :lockVersion, :visitCount, tags: [],
+              :id, *VISIT_PERMITTED_KEYS,
               history: [ :id, :date, :comment, :rating, :image ]
             ).to_h.deep_symbolize_keys
 
@@ -62,23 +60,29 @@ module Api
       def import_visit(attributes)
         visit = current_user.sauna_visits.build(external_id: attributes[:external_id])
         assign_visit_attributes(visit, attributes)
-        visit.legacy_visit_count = attributes[:visitCount].to_i if attributes[:visitCount]
         histories = Array(attributes[:history])
         histories = [ attributes.slice(:date, :comment, :rating, :image) ] if histories.empty?
 
         histories.each do |history|
           normalized = history.deep_symbolize_keys
-          entry = begin
-            apply_history(visit, normalized, append: true, apply_image: true)
-          rescue StandardError => error
-            raise if error.is_a?(ArgumentError) || error.is_a?(ActiveRecord::RecordInvalid)
-
-            Rails.logger.warn("画像インポートに失敗しました (ID: #{attributes[:external_id]}): #{error.message}")
-            apply_history(visit, normalized, append: true, apply_image: false)
-          end
+          entry = apply_history(visit, normalized, append: true, apply_image: false)
           entry.public_id = normalized[:id] if normalized[:id].present?
+          import_history_image(entry, normalized, attributes[:external_id])
         end
         visit.save!
+      end
+
+      # 履歴は先に画像なしで build し、画像だけを後から試す。画像込みで build してから
+      # 失敗時に build し直すと、失敗した側のエントリが関連に残って履歴が二重に保存される。
+      # 不正な画像 (InvalidImage) はチャンクごとロールバックさせるため握らない。
+      def import_history_image(entry, history, external_id)
+        return unless history.key?(:image)
+
+        apply_image(entry, history[:image])
+      rescue DataUrlImage::InvalidImage, ActiveRecord::RecordInvalid
+        raise
+      rescue StandardError => error
+        Rails.logger.warn("画像インポートに失敗しました (ID: #{external_id}): #{error.message}")
       end
     end
   end

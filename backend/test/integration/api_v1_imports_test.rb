@@ -136,6 +136,34 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_equal 0, owner.sauna_visits.count
   end
 
+  # 画像込みで build してから失敗時に build し直す実装へ戻すと、失敗した側の
+  # エントリが関連に残り、履歴が二重に保存される。
+  test "画像の保存以外の理由で添付に失敗しても履歴を重複させずに取り込む" do
+    csrf = sign_in
+    imported = valid_attributes.merge(
+      id: "legacy-image-failure",
+      history: [
+        { id: "history-1", date: "2026-07-01", comment: "写真あり", image: "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACwAAAAAAQABAAACAkQBADs=" },
+        { id: "history-2", date: "2026-08-01", comment: "写真なし" }
+      ]
+    )
+
+    original_decode = DataUrlImage.method(:decode)
+    DataUrlImage.define_singleton_method(:decode) { |_value| raise IOError, "ストレージに接続できません" }
+    begin
+      post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+        headers: csrf_header(csrf), as: :json
+    ensure
+      DataUrlImage.define_singleton_method(:decode, original_decode)
+    end
+
+    assert_response :success
+    assert_equal 1, response.parsed_body["added"]
+    entries = owner.sauna_visits.find_by!(external_id: "legacy-image-failure").visit_history_entries.order(:visited_on)
+    assert_equal %w[history-1 history-2], entries.map(&:public_id)
+    assert entries.none? { |entry| entry.image.attached? }
+  end
+
   test "履歴つきの記録は履歴IDと訪問回数を保持する" do
     csrf = sign_in
     imported = valid_attributes.merge(

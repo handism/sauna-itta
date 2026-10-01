@@ -64,10 +64,7 @@ module Api
       end
 
       def visit_params
-        params.require(:saunaVisit).permit(
-          :name, :lat, :lng, :area, :status, :date, :comment, :rating, :image,
-          :appendHistory, :lockVersion, :visitCount, tags: []
-        )
+        params.require(:saunaVisit).permit(*VISIT_PERMITTED_KEYS)
       end
     end
   end
