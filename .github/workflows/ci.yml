@@ -18,7 +18,8 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: 24
+          # バージョンはリポジトリの .nvmrc を唯一の出所にする
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
@@ -52,9 +53,9 @@ jobs:
       POSTGRES_PASSWORD: sauna_itta
     steps:
       - uses: actions/checkout@v7
+      # ruby-version を省略すると working-directory の .ruby-version を読む（バージョンの出所を1つにする）
       - uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.4.2
           bundler-cache: true
           working-directory: backend
       - run: bin/rails db:prepare
@@ -81,29 +82,38 @@ jobs:
       - run: terraform -chdir=infra fmt -check -recursive
       - run: terraform -chdir=infra init -backend=false
       - run: terraform -chdir=infra validate
+      # レイヤーを GitHub Actions のキャッシュへ保存し、依存が変わらない限り
+      # npm ci / bundle install を毎回やり直さない
+      - uses: docker/setup-buildx-action@v3
       - name: productionイメージをビルド
-        run: docker build -t sauna-itta:ci .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: sauna-itta:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      # DB準備とコンテナ起動で同じ値を渡すため、環境変数は1か所にまとめる
+      - name: スモークテスト用の環境変数を用意
+        run: |
+          cat > "$RUNNER_TEMP/smoke.env" <<'ENV'
+          RAILS_ENV=production
+          SECRET_KEY_BASE=ci-production-smoke-secret-key-base
+          DB_HOST=127.0.0.1
+          POSTGRES_DB=sauna_itta_production_smoke
+          POSTGRES_USER=sauna_itta
+          POSTGRES_PASSWORD=sauna_itta
+          ACTIVE_STORAGE_SERVICE=local
+          ENV
       - name: productionイメージでDBを準備
         run: >-
           docker run --rm --network host
-          -e RAILS_ENV=production
-          -e SECRET_KEY_BASE=ci-production-smoke-secret-key-base
-          -e DB_HOST=127.0.0.1
-          -e POSTGRES_DB=sauna_itta_production_smoke
-          -e POSTGRES_USER=sauna_itta
-          -e POSTGRES_PASSWORD=sauna_itta
-          -e ACTIVE_STORAGE_SERVICE=local
+          --env-file "$RUNNER_TEMP/smoke.env"
           sauna-itta:ci bundle exec rails db:prepare
       - name: productionコンテナのhealth check
         run: |
           container_id=$(docker run -d --network host \
-            -e RAILS_ENV=production \
-            -e SECRET_KEY_BASE=ci-production-smoke-secret-key-base \
-            -e DB_HOST=127.0.0.1 \
-            -e POSTGRES_DB=sauna_itta_production_smoke \
-            -e POSTGRES_USER=sauna_itta \
-            -e POSTGRES_PASSWORD=sauna_itta \
-            -e ACTIVE_STORAGE_SERVICE=local \
+            --env-file "$RUNNER_TEMP/smoke.env" \
             sauna-itta:ci)
           trap 'docker logs "$container_id"; docker rm -f "$container_id"' EXIT
           for _ in $(seq 1 30); do

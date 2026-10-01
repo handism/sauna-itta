@@ -28,6 +28,11 @@ describe("toUserMessage", () => {
     expect(toUserMessage(new RepositoryError("conflict", "conflict", 409), "fallback")).toContain("再読み込み");
   });
 
+  it("409 でも一意制約の重複はサーバーの文言をそのまま出すこと", () => {
+    const message = "同時に行われた別の操作と重複したため保存できませんでした。";
+    expect(toUserMessage(new RepositoryError(message, "duplicate", 409), "fallback")).toBe(message);
+  });
+
   it("Error 以外は既定の文言にすること", () => {
     expect(toUserMessage("unknown", "fallback")).toBe("fallback");
   });

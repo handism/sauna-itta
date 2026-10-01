@@ -14,6 +14,10 @@ class Api::V1::BaseControllerTest < ActionDispatch::IntegrationTest
       raise ActiveRecord::StaleObjectError.new(User.new, "update")
     end
 
+    def raise_not_unique
+      raise ActiveRecord::RecordNotUnique, "duplicate key value violates unique constraint"
+    end
+
     def raise_not_destroyed
       raise ActiveRecord::RecordNotDestroyed.new("cannot destroy", User.new)
     end
@@ -34,6 +38,7 @@ class Api::V1::BaseControllerTest < ActionDispatch::IntegrationTest
       get "/dummy_api_index", to: "api/v1/base_controller_test/dummy#index"
       get "/dummy_api_not_found", to: "api/v1/base_controller_test/dummy#raise_not_found"
       get "/dummy_api_stale_object", to: "api/v1/base_controller_test/dummy#raise_stale_object"
+      get "/dummy_api_not_unique", to: "api/v1/base_controller_test/dummy#raise_not_unique"
       get "/dummy_api_not_destroyed", to: "api/v1/base_controller_test/dummy#raise_not_destroyed"
       get "/dummy_api_parameter_missing", to: "api/v1/base_controller_test/dummy#raise_parameter_missing"
       get "/dummy_api_validation_error", to: "api/v1/base_controller_test/dummy#trigger_validation_error"
@@ -89,6 +94,17 @@ class Api::V1::BaseControllerTest < ActionDispatch::IntegrationTest
     json = JSON.parse(response.body)
     assert_equal "conflict", json["error"]["code"]
     assert_equal "別の画面で記録が更新されています。", json["error"]["message"]
+  end
+
+  test "一意制約の違反は楽観ロックの競合と別のcodeで409を返す" do
+    user = User.create!(google_subject: "123", email: "test@example.com")
+    get "/dummy_api_login/#{user.id}"
+
+    get "/dummy_api_not_unique"
+    assert_response :conflict
+    json = JSON.parse(response.body)
+    assert_equal "duplicate", json["error"]["code"]
+    assert_equal "同時に行われた別の操作と重複したため保存できませんでした。", json["error"]["message"]
   end
 
   test "rescues from ActiveRecord::RecordNotDestroyed" do

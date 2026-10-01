@@ -98,9 +98,12 @@ describe("LocalVisitRepository", () => {
   it("存在しないIDの更新は保存せずにエラーにする", async () => {
     seed([existing]);
 
-    await expect(repository.update({ ...existing, id: "missing" }, { lat: 35, lng: 139 }, form)).rejects.toThrow(
-      "更新対象が見つかりません。",
-    );
+    // apiモードの 404 と同じ code で伝える（呼び出し側がモードで分岐しなくて済むように）
+    await expect(repository.update({ ...existing, id: "missing" }, { lat: 35, lng: 139 }, form)).rejects.toMatchObject({
+      name: "RepositoryError",
+      code: "not_found",
+      message: "更新対象が見つかりません。",
+    });
     expect(storedVisits()).toHaveLength(1);
   });
 
@@ -149,9 +152,11 @@ describe("LocalVisitRepository", () => {
       throw new Error("QuotaExceededError");
     });
 
-    await expect(repository.create({ lat: 35, lng: 139 }, form)).rejects.toThrow(
-      "ブラウザへの保存に失敗しました。",
-    );
+    await expect(repository.create({ lat: 35, lng: 139 }, form)).rejects.toMatchObject({
+      name: "RepositoryError",
+      code: "storage_failed",
+      message: "ブラウザへの保存に失敗しました。",
+    });
     await expect(repository.delete("existing-1")).rejects.toThrow("ブラウザへの保存に失敗しました。");
     expect(error).toHaveBeenCalled();
     mockLocalStorage.setItem.mockImplementation((key: string, value: string) => {

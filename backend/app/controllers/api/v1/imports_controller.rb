@@ -87,7 +87,7 @@ module Api
 
         histories.each do |history|
           normalized = history.deep_symbolize_keys
-          entry = apply_history(visit, normalized, append: true, apply_image: false)
+          entry = apply_history(visit, normalized, append: true)
           entry.public_id = normalized[:id] if normalized[:id].present?
           import_history_image(entry, normalized, attributes[:external_id])
         end

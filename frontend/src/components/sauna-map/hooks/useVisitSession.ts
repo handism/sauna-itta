@@ -4,9 +4,13 @@ import { RepositoryError, type SessionUser, type VisitRepository } from "../repo
 
 export const LOAD_ERROR_FALLBACK = "記録の読み込みに失敗しました。";
 
-/** Repository の失敗を利用者向けの文言へ変換する（409 は楽観ロックの競合） */
+/**
+ * Repository の失敗を利用者向けの文言へ変換する。
+ * 楽観ロックの競合（code: conflict）だけを再読み込みの案内へ置き換える。同じ 409 でも
+ * 一意制約の重複（code: duplicate）はサーバーの文言をそのまま出す（status で判定すると隠れる）。
+ */
 export function toUserMessage(error: unknown, fallback: string): string {
-  if (error instanceof RepositoryError && error.status === 409) {
+  if (error instanceof RepositoryError && error.code === "conflict") {
     return "別の画面で記録が更新されました。再読み込みしてからもう一度お試しください。";
   }
   return error instanceof Error ? error.message : fallback;

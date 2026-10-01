@@ -91,7 +91,7 @@ export async function performBatchImport(
       }
     }
   } catch (error) {
-    // 409（同時に行われた別の操作との競合）は他の保存操作と同じ案内へ変換する
+    // 楽観ロックの競合（conflict）は他の保存操作と同じ案内へ変換する（toUserMessage 参照）
     let message = toUserMessage(error, "サーバーへの取り込みに失敗しました。");
     if (!(await reload())) {
       message += "（再読み込みにも失敗しました）";

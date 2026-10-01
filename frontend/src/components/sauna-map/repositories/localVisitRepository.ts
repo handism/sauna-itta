@@ -8,6 +8,17 @@ import {
   getVisitsWithRemovedHistory,
 } from "../utils";
 import type { ImportResult, SessionState, VisitRepository } from "./types";
+import { RepositoryError } from "./types";
+
+/**
+ * 更新後の配列から対象の記録を取り出す。見つからないのは、読み込み後に別タブで削除された
+ * ときなど。apiモードの 404 と同じ code にして、呼び出し側がモードを意識せずに扱えるようにする。
+ */
+function findUpdated(visits: SaunaVisit[], id: string): SaunaVisit {
+  const updated = visits.find((item) => item.id === id);
+  if (!updated) throw new RepositoryError("更新対象が見つかりません。", "not_found");
+  return updated;
+}
 
 export class LocalVisitRepository implements VisitRepository {
   readonly dataSource = "local" as const;
@@ -31,7 +42,7 @@ export class LocalVisitRepository implements VisitRepository {
 
   private persist(visits: SaunaVisit[]): void {
     if (!writeStorage(VISITS_STORAGE_KEY, JSON.stringify([...visits, ...this.unreadable]))) {
-      throw new Error("ブラウザへの保存に失敗しました。");
+      throw new RepositoryError("ブラウザへの保存に失敗しました。", "storage_failed");
     }
   }
 
@@ -53,8 +64,7 @@ export class LocalVisitRepository implements VisitRepository {
 
   async update(visit: SaunaVisit, location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
     const next = getUpdatedVisits(this.load(), visit.id, location, form);
-    const updated = next.find((item) => item.id === visit.id);
-    if (!updated) throw new Error("更新対象が見つかりません。");
+    const updated = findUpdated(next, visit.id);
     this.persist(next);
     return updated;
   }
@@ -65,8 +75,7 @@ export class LocalVisitRepository implements VisitRepository {
 
   async deleteHistoryEntry(visit: SaunaVisit, index: number): Promise<SaunaVisit> {
     const next = getVisitsWithRemovedHistory(this.load(), visit.id, index);
-    const updated = next.find((item) => item.id === visit.id);
-    if (!updated) throw new Error("更新対象が見つかりません。");
+    const updated = findUpdated(next, visit.id);
     this.persist(next);
     return updated;
   }

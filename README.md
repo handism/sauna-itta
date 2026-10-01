@@ -154,7 +154,7 @@ Googleログインの開始は`GET /api/v1/session`が返すCSRFトークンを�
 
 履歴を1件削除すると、旧形式から引き継いだ訪問回数も残りの履歴件数まで下がります（localモードと同じ扱い）。
 
-他ユーザーの外部ID／履歴／写真は404になります。更新は `lock_version` による楽観ロックを使い、`lockVersion` の無い更新は422、競合時は409を返します。履歴だけの変更や履歴の削除でも `lock_version` は進みます。座標、ステータス、評価0〜5、写真MIME（JPEG／PNG／WebP／GIF。SVG不可）と復号後1MB上限を検証します。
+他ユーザーの外部ID／履歴／写真は404になります。更新は `lock_version` による楽観ロックを使い、`lockVersion` の無い更新は422、競合時は409（`error.code`は楽観ロックの競合が`conflict`、同時操作による一意制約の重複が`duplicate`）を返します。履歴だけの変更や履歴の削除でも `lock_version` は進みます。座標、ステータス、評価0〜5、写真MIME（JPEG／PNG／WebP／GIF。SVG不可）と復号後1MB上限を検証します。
 
 Rails単体の検証:
 

@@ -41,7 +41,9 @@ module VisitWritable
     )
   end
 
-  def apply_history(visit, attributes, append:, apply_image: true, stale_image_blobs: [])
+  # 履歴の日付・コメント・評価だけを当てる。写真は呼び出し側が保存の段取りに合わせて
+  # 後から当てる（作成・更新は apply_history_image、取り込みは記録ごとに apply_image）。
+  def apply_history(visit, attributes, append:)
     entry = append ? visit.visit_history_entries.build : visit.visit_history_entries.last
     entry ||= visit.visit_history_entries.build
     entry.assign_attributes(
@@ -49,7 +51,6 @@ module VisitWritable
       comment: attributes[:comment].to_s,
       rating: attributes[:rating]
     )
-    apply_history_image(entry, attributes, stale_image_blobs) if apply_image
     entry
   end
 

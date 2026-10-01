@@ -108,7 +108,8 @@ describe("ApiVisitRepository", () => {
       message: "サーバーへ接続できません。通信状態を確認してください。",
     });
 
-    expect(consoleSpy).toHaveBeenCalledWith("Failed to fetch visits:", error);
+    // どのリクエストが失敗したかをログから追えるようにする
+    expect(consoleSpy).toHaveBeenCalledWith("Failed to request GET /api/v1/sauna_visits:", error);
   });
 
   it("エラー本文がJSONでなくても既定のメッセージを返す", async () => {

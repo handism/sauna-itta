@@ -50,7 +50,7 @@ module Api
       def save_visit_in_transaction(visit, attributes, append:, stale_image_blobs: [])
         SaunaVisit.transaction do
           assign_visit_attributes(visit, attributes)
-          entry = apply_history(visit, attributes, append: append, apply_image: false)
+          entry = apply_history(visit, attributes, append: append)
           visit.save!
           raise ActiveRecord::RecordInvalid.new(entry) unless entry.valid?
 

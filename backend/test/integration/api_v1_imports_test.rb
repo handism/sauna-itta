@@ -336,7 +336,7 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :conflict
-    assert_equal "conflict", response.parsed_body.dig("error", "code")
+    assert_equal "duplicate", response.parsed_body.dig("error", "code")
     assert_equal 0, owner.sauna_visits.count
   end
 

@@ -265,9 +265,9 @@ describe("useVisitImportExport", () => {
     );
   });
 
-  test("同時に行われた別の操作との競合 (409) は他の保存操作と同じ案内で伝える", async () => {
+  test("同時に行われた別の操作との重複 (409 duplicate) はサーバーの文言で伝える", async () => {
     const importBatch = vi.fn().mockRejectedValue(
-      new RepositoryError("同時に行われた別の操作と重複したため保存できませんでした。", "conflict", 409),
+      new RepositoryError("同時に行われた別の操作と重複したため保存できませんでした。", "duplicate", 409),
     );
     const showToast = vi.fn();
     const { result } = renderHook(() =>
@@ -286,7 +286,7 @@ describe("useVisitImportExport", () => {
     });
 
     expect(showToast).toHaveBeenLastCalledWith(
-      "データの取り込みに失敗しました。別の画面で記録が更新されました。再読み込みしてからもう一度お試しください。",
+      "データの取り込みに失敗しました。同時に行われた別の操作と重複したため保存できませんでした。",
       "error",
     );
   });

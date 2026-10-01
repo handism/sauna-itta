@@ -11,8 +11,10 @@ module Api
       end
       # モデルの uniqueness 検証は同時に走った別リクエストの未コミット分を見ないため、
       # すり抜けた重複は DB の一意制約で RecordNotUnique になる。500 にせず競合として返す。
+      # 楽観ロックの競合 (conflict) とは code を分ける。フロントの toUserMessage は conflict を
+      # 「再読み込みして」の案内へ置き換えるため、同じ code にするとこの文言が画面に出ない。
       rescue_from ActiveRecord::RecordNotUnique do
-        render_error("conflict", "同時に行われた別の操作と重複したため保存できませんでした。", :conflict)
+        render_error("duplicate", "同時に行われた別の操作と重複したため保存できませんでした。", :conflict)
       end
       rescue_from ActiveRecord::RecordNotDestroyed do
         render_error("delete_failed", "記録を削除できませんでした。", :unprocessable_content)
