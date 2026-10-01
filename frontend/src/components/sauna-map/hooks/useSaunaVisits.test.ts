@@ -155,4 +155,28 @@ describe("useSaunaVisits", () => {
 
     expect(result.current.loadError).toBe("記録の読み込みに失敗しました。");
   });
+
+  it("並行した保存の片方が終わっても、もう片方が終わるまで saving を保つこと", async () => {
+    let finishDelete!: () => void;
+    const source = repository({
+      delete: vi.fn().mockReturnValue(new Promise<void>((resolve) => { finishDelete = resolve; })),
+    });
+    const { result } = renderHook(() => useSaunaVisits(undefined, source));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let pendingDelete!: Promise<unknown>;
+    act(() => {
+      pendingDelete = result.current.deleteVisit("1");
+    });
+    await act(async () => {
+      await result.current.removeHistoryEntry(initialVisits[0], 0);
+    });
+    expect(result.current.saving).toBe(true);
+
+    await act(async () => {
+      finishDelete();
+      await pendingDelete;
+    });
+    expect(result.current.saving).toBe(false);
+  });
 });

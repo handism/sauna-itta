@@ -6,6 +6,8 @@ export * from "./theme";
 export * from "./image";
 export * from "./form";
 export * from "./visitHistory";
+export * from "./savedVisits";
+export * from "./visitStats";
 export * from "./motion";
 export * from "./storage";
 export * from "./search";

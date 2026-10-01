@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { SaunaVisitSchema, type LatLng, type SaunaVisit, type VisitFormState } from "../types";
+import { toNormalizedTags } from "../utils";
 import type { ImportResult, SessionState, VisitRepository } from "./types";
 import { RepositoryError } from "./types";
 
@@ -33,7 +34,7 @@ function formPayload(location: LatLng, form: VisitFormState, lockVersion?: numbe
       lng: location.lng,
       area: form.area,
       status: form.status,
-      tags: form.tagsText.split(",").map((tag) => tag.trim()).filter(Boolean),
+      tags: toNormalizedTags(form.tagsText),
       date: form.date,
       comment: form.comment,
       rating: form.rating,

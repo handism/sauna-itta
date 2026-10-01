@@ -2,6 +2,9 @@ import { X } from "lucide-react";
 
 export type ToastTone = "info" | "success" | "error";
 
+/** トーストを出す関数。フックが通知を受け取る引数はこの型にそろえる */
+export type ShowToast = (message: string, tone: ToastTone) => void;
+
 export interface ToastState {
   id: number;
   message: string;

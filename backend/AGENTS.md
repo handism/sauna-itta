@@ -7,11 +7,13 @@
 - 変更系APIはセッション認証とCSRFを必須にし、`lock_version`競合は409を返します。記録の更新（`PATCH`）は`lockVersion`を必須とし、無ければ422にします（黙って通すとロック確認を経ずに上書きされます）。更新は`updated_at`を必ず書き換え、履歴の削除は`visit.touch`して、履歴（コメント・評価・写真）だけの変更でも親の`lock_version`を進めてください。親の列が変わらないと`UPDATE`が発行されず、同じ版を持つ別タブの更新が競合として検出されません。開発ログインはdevelopmentかつ`ENABLE_DEV_LOGIN=true`の場合だけ許可し、本番ルートを追加しないでください。
 - Googleログインは`ALLOWED_GOOGLE_EMAIL`との一致に加えて、確認済みメール（`extra.raw_info.email_verified`、無ければ`info.email_verified`）であることも必須にします。メール一致がこのアプリ唯一の認可境界のため、片方だけの判定へ戻さないでください。テストの`google_auth_hash`は`email_verified:`を差し替えられます。
 - Google OAuthのrequest phaseはOmniAuth 2の既定どおりPOSTだけを許可し、`omniauth-rails_csrf_protection`でRailsの`authenticity_token`を検証します。`allowed_request_methods`へGETを追加したり警告を抑制したりしないでください。Googleからのcallbackは従来どおりGETです。
-- 書き込み系の共通エラー応答（`ActiveRecord::RecordInvalid`→422 `validation_error`、画像の`ArgumentError`→422 `invalid_image`）は`VisitWritable`の`included do`が`rescue_from`で登録します。アクションごとに`rescue`を書き写す実装へ戻さないでください（あとから足した書き込みアクションだけ500になります）。`render_validation_error`は`Api::V1::BaseController`が持つため、`VisitWritable`のinclude先はその配下に限ること。`ArgumentError`を`BaseController`側で握ると、画像を書き込まない`ImagesController`まで`invalid_image`になります。
+- 書き込み系の共通エラー応答（`ActiveRecord::RecordInvalid`→422 `validation_error`、画像の`DataUrlImage::InvalidImage`→422 `invalid_image`）は`VisitWritable`の`included do`が`rescue_from`で登録します。アクションごとに`rescue`を書き写す実装へ戻さないでください（あとから足した書き込みアクションだけ500になります）。`render_validation_error`は`Api::V1::BaseController`が持つため、`VisitWritable`のinclude先はその配下に限ること。画像の不正は必ず`DataUrlImage::InvalidImage`で表し、`ArgumentError`のような汎用の例外を`rescue_from`しないでください（無関係なプログラムの誤りまで`invalid_image`の422として隠れます）。また`BaseController`側で握ると、画像を書き込まない`ImagesController`まで`invalid_image`になります。
+- 記録本体の許可キーは`VisitWritable::VISIT_PERMITTED_KEYS`を`SaunaVisitsController`と`ImportsController`で共有します。片方へキーを書き写すと、エクスポートしたJSONの取り込みと通常の作成・更新で受け付ける項目がずれます。
 - 書き込み系レスポンスの再読み込み（`VisitWritable#serialized`）は`includes(visit_history_entries: { image_attachment: :blob })`で先読みします。`visit.reload`だけに戻すと、`SaunaVisitSerializer`が履歴ごとに添付を引いて履歴件数に比例したクエリが出ます（`api_v1_sauna_visits_test.rb`のクエリ数比較が検査しています）。
 
 ## インポート
 - 履歴IDは記録内で一意です（`public_id` は `scope: :sauna_visit_id`）。グローバル一意へ戻すと、他ユーザーがエクスポートしたJSONを取り込んだときに履歴IDが衝突して取り込めなくなります。
+- インポートの履歴は画像なしで build してから画像だけを添付します（`ImportsController#import_history_image`）。画像の保存以外の理由で添付に失敗したときは警告ログを残して画像なしで取り込み、`DataUrlImage::InvalidImage`だけはチャンクごとロールバックさせます。画像込みで build し、失敗時に build し直す実装へ戻さないでください（失敗した側のエントリが関連に残り、履歴が二重に保存されます）。
 - インポートAPIのペイロード検証は`ActionController::BadRequest`へ集約し、配列でない`saunaVisits`・記録以外の要素・IDが無い記録をすべて422で返します。`attributes.fetch(:id)`の`KeyError`を直接rescueしないでください（`ActionController::ParameterMissing`は`KeyError`のサブクラスのため、キー欠落が「IDがない記録」として誤って報告されます）。
 
 ## 写真

@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { toNormalizedTags } from "../../utils";
 
 const PRESET_TAGS = [
   "外気浴最高",
@@ -15,9 +16,7 @@ interface VisitTagsFieldProps {
 }
 
 export function VisitTagsField({ tagsText, onChange }: VisitTagsFieldProps) {
-  const currentTags = tagsText
-    ? tagsText.split(",").map((t) => t.trim()).filter(Boolean)
-    : [];
+  const currentTags = toNormalizedTags(tagsText);
 
   const toggleTag = (preset: string) => {
     const exists = currentTags.includes(preset);

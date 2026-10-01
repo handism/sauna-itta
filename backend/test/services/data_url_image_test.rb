@@ -2,7 +2,7 @@ require "test_helper"
 
 class DataUrlImageTest < ActiveSupport::TestCase
   test "SVGを拒否する" do
-    assert_raises(ArgumentError) { DataUrlImage.decode("data:image/svg+xml;base64,PHN2Zz4=") }
+    assert_raises(DataUrlImage::InvalidImage) { DataUrlImage.decode("data:image/svg+xml;base64,PHN2Zz4=") }
   end
 
   test "PNGを復号する" do
@@ -12,7 +12,12 @@ class DataUrlImageTest < ActiveSupport::TestCase
   end
 
   test "宣言MIMEと実データが異なる画像を拒否する" do
-    assert_raises(ArgumentError) { DataUrlImage.decode("data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==") }
+    assert_raises(DataUrlImage::InvalidImage) { DataUrlImage.decode("data:image/png;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==") }
+  end
+
+  test "Base64として復号できないデータを拒否する" do
+    error = assert_raises(DataUrlImage::InvalidImage) { DataUrlImage.decode("data:image/png;base64,abc") }
+    assert_equal "画像データを復号できません。", error.message
   end
 
   # 許可形式の一覧をここへ書き写すと、モデルのバリデーションと data URL の受け口が

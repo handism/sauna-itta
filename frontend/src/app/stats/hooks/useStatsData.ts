@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
 import { SaunaVisit } from "@/components/sauna-map/types";
 import {
   flattenVisitHistory,
@@ -7,36 +7,31 @@ import {
   toDateString,
 } from "@/components/sauna-map/utils";
 import { useTheme } from "@/components/sauna-map/hooks/useTheme";
+import { useVisitSession } from "@/components/sauna-map/hooks/useVisitSession";
 import { getVisitRepository } from "@/components/sauna-map/repositories";
 
 export function useStatsData() {
   const [visits, setVisits] = useState<SaunaVisit[]>([]);
   const [date, setDate] = useState<Date | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [csrfToken, setCsrfToken] = useState<string | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const repository = useMemo(() => getVisitRepository(), []);
+  // テーマと日付の初期化が済んだか。date は利用者がカレンダーで選択を外すと null に戻るため、
+  // マウント済みの判定には使えない
+  const [initialized, setInitialized] = useState(false);
+  const [repository] = useState(() => getVisitRepository());
+  // セッション確認と記録の読み込みは地図側と同じ手順を共有する
+  const { loading, authenticated, csrfToken, loadError } = useVisitSession(repository, {
+    onVisitsLoaded: setVisits,
+  });
 
   // 統計ページは静的プリレンダリングされるため、保存値の読み取りはマウント後まで遅らせる。
   // 切り替えロジック自体は地図側と共通の useTheme に集約している。
   const { theme, toggleTheme, syncFromStorage } = useTheme({ deferred: true });
 
   useEffect(() => {
-    // To satisfy react-hooks/set-state-in-effect and avoid synchronous cascading renders
-    const timer = setTimeout(async () => {
+    // エフェクト本体で同期的に setState しない（react-hooks/set-state-in-effect）
+    const timer = setTimeout(() => {
       syncFromStorage();
       setDate(new Date());
-      try {
-        const session = await repository.getSession();
-        setAuthenticated(session.authenticated);
-        setCsrfToken(session.csrfToken);
-        if (session.authenticated) setVisits(await repository.list());
-      } catch (error) {
-        setLoadError(error instanceof Error ? error.message : "記録の読み込みに失敗しました。");
-      } finally {
-        setMounted(true);
-      }
+      setInitialized(true);
     }, 0);
 
     document.documentElement.classList.add("allow-page-scroll");
@@ -47,7 +42,9 @@ export function useStatsData() {
       document.documentElement.classList.remove("allow-page-scroll");
       document.body.classList.remove("allow-page-scroll");
     };
-  }, [repository, syncFromStorage]);
+  }, [syncFromStorage]);
+
+  const mounted = initialized && !loading;
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
 

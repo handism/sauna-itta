@@ -417,3 +417,28 @@ describe("getSubmitBlockedReason", () => {
   });
 });
 
+describe("toNormalizedTags", () => {
+  it("should split a comma-separated string into an array of tags", () => {
+    expect(toNormalizedTags("sauna, relax, water")).toEqual(["sauna", "relax", "water"]);
+  });
+
+  it("should trim extra spaces around tags", () => {
+    expect(toNormalizedTags("  hot  , cold bath ,  steam  ")).toEqual(["hot", "cold bath", "steam"]);
+  });
+
+  it("should return an empty array for an empty string", () => {
+    expect(toNormalizedTags("")).toEqual([]);
+  });
+
+  it("should handle consecutive commas and trailing/leading commas by filtering empty tags", () => {
+    expect(toNormalizedTags(",sauna,,relax,")).toEqual(["sauna", "relax"]);
+  });
+
+  it("should return an empty array for a string with only spaces and commas", () => {
+    expect(toNormalizedTags("  , ,  , ")).toEqual([]);
+  });
+
+  it("should handle a single tag without commas", () => {
+    expect(toNormalizedTags("sauna")).toEqual(["sauna"]);
+  });
+});

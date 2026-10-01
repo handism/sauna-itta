@@ -1,18 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { useInitialVisits } from "./useInitialVisits";
-import type { VisitRepository } from "../repositories";
 import type { SaunaVisit } from "../types";
-
-const mocks = vi.hoisted(() => ({
-  DATA_SOURCE: "local" as "local" | "api",
-}));
-
-vi.mock("../repositories", () => ({
-  get DATA_SOURCE() {
-    return mocks.DATA_SOURCE;
-  },
-}));
 
 const mockVisits: SaunaVisit[] = [
   {
@@ -35,35 +24,28 @@ import { loadSavedVisits } from "../utils";
 describe("useInitialVisits", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.DATA_SOURCE = "local"; // reset to default
   });
 
-  it("should seed from storage when DATA_SOURCE is 'local' and no repository is injected", () => {
-    mocks.DATA_SOURCE = "local";
-    const { result } = renderHook(() => useInitialVisits());
+  it("seedFromStorage が true なら保存済みの記録を同期的に読み込むこと", () => {
+    const { result } = renderHook(() => useInitialVisits(true));
 
-    expect(result.current.seededFromStorage).toBe(true);
     expect(loadSavedVisits).toHaveBeenCalledTimes(1);
     expect(result.current.visits).toEqual(mockVisits);
     expect(result.current.unreadableCount).toBe(1);
   });
 
-  it("should not seed from storage when repository is injected", () => {
-    mocks.DATA_SOURCE = "local";
-    const mockRepo = {} as VisitRepository;
-    const { result } = renderHook(() => useInitialVisits(mockRepo));
+  it("seedFromStorage が false なら保存を読まずに空から始めること", () => {
+    const { result } = renderHook(() => useInitialVisits(false));
 
-    expect(result.current.seededFromStorage).toBe(false);
     expect(loadSavedVisits).not.toHaveBeenCalled();
     expect(result.current.visits).toEqual([]);
+    expect(result.current.unreadableCount).toBe(0);
   });
 
-  it("should not seed from storage when DATA_SOURCE is 'api'", () => {
-    mocks.DATA_SOURCE = "api";
-    const { result } = renderHook(() => useInitialVisits());
+  it("再レンダリングで保存を読み直さないこと", () => {
+    const { rerender } = renderHook(() => useInitialVisits(true));
+    rerender();
 
-    expect(result.current.seededFromStorage).toBe(false);
-    expect(loadSavedVisits).not.toHaveBeenCalled();
-    expect(result.current.visits).toEqual([]);
+    expect(loadSavedVisits).toHaveBeenCalledTimes(1);
   });
 });
