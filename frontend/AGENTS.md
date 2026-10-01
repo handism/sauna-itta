@@ -14,6 +14,7 @@
 ## Service Worker（localモード）
 
 - localモードのService Workerは静的資産と地図タイルのキャッシュを分離し、地図タイルはOpenStreetMapの明示的な許可ホストだけを最大200件保存します。activate時に削除してよいのは`sauna-itta-`接頭辞を持つ旧キャッシュだけです（GitHub Pagesの同一オリジンにある別アプリのキャッシュを削除しないこと）。キャッシュ方針を変えた場合は静的キャッシュのバージョンを更新してください。
+- 静的キャッシュも初回保存のたびに`trimCache`で上限（`MAX_STATIC_RUNTIME_ENTRIES`）まで古い順に削除します。`_next/static`のチャンクやRSCの`.txt`はデプロイごとに名前が変わる一方、`sw.js`自体はデプロイで変わらずキャッシュ名も更新されないため、上限を外すと古い版の資産が端末に溜まり続けます。先読み資産（`PRECACHE_ASSETS`／`OPTIONAL_PRECACHE_ASSETS`）は`isPrecachedRequest`で削除対象から外しているため、先読み資産を追加する場合も両配列のどちらかへ入れてください（実行時に溜まった資産に押し出されると、オフラインで最初の画面が開けなくなります）。
 - 地図の`TileLayer`には`crossOrigin="anonymous"`を必ず指定します。未指定だとタイル画像はno-corsで読み込まれ、Service Workerが受け取る応答はstatus 0のopaqueになるため、`sw.js`のタイルキャッシュ（status 200のみ保存）に一度も入りません。opaque応答を保存する方向で直すことも避けてください（ブラウザは容量を1件ごとに大きく見積もるため、すぐにキャッシュ容量を圧迫します）。
 - Service Workerの非同期キャッシュ書き込みはイベント寿命へ必ず結び付けます。キャッシュ済みレスポンスのバックグラウンド更新は`event.waitUntil()`へ渡し、初回取得時の`cache.put()`は`respondWith()`へ渡すPromise内で`await`してください（未接続のPromiseはブラウザがイベントを終了して書き込みが欠落します）。
 - 統計画面は別ドキュメントのため`OPTIONAL_PRECACHE_ASSETS`で先読みしますが、必須資産の`cache.addAll`へ混ぜないでください（`addAll`は1つでも取得に失敗するとinstallごと失敗し、オフライン対応が丸ごと失われます）。任意の先読みは`Promise.allSettled`で取得できた分だけ保存します。

@@ -14,6 +14,7 @@ function loadFetchHandler(options: {
   cachedResponse?: Response;
   networkResponse: Response;
   put?: ReturnType<typeof vi.fn>;
+  keys?: Request[];
 }) {
   const listeners = new Map<string, (event: ServiceWorkerEvent) => void>();
   const put = options.put ?? vi.fn().mockResolvedValue(undefined);
@@ -21,7 +22,7 @@ function loadFetchHandler(options: {
     add: vi.fn(),
     addAll: vi.fn(),
     delete: vi.fn(),
-    keys: vi.fn().mockResolvedValue([]),
+    keys: vi.fn().mockResolvedValue(options.keys ?? []),
     match: vi.fn(),
     put,
   };
@@ -43,12 +44,12 @@ function loadFetchHandler(options: {
 
   new Function("self", "caches", "fetch", source)(selfMock, cachesMock, fetchMock);
 
-  return { handler: listeners.get("fetch")!, put };
+  return { handler: listeners.get("fetch")!, put, cache };
 }
 
 describe("Service Workerのキャッシュ方針", () => {
   it("静的資産と地図タイルを別キャッシュへ保存する", () => {
-    expect(source).toContain('STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v3`');
+    expect(source).toContain('STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v4`');
     expect(source).toContain('TILE_CACHE_NAME = `${CACHE_PREFIX}tiles-v1`');
     expect(source).toContain("caches.open(STATIC_CACHE_NAME)");
     expect(source).toContain("caches.open(TILE_CACHE_NAME)");
@@ -116,5 +117,32 @@ describe("Service Workerのキャッシュ方針", () => {
     resolvePut?.();
     await expect(responsePromise).resolves.toBe(networkResponse);
     expect(put).toHaveBeenCalledOnce();
+  });
+
+  it("初回取得で静的キャッシュが上限を超えたら、先読み資産を残して古い資産から削除する", async () => {
+    const precached = [
+      new Request("https://example.com/sauna-itta/"),
+      new Request("https://example.com/sauna-itta/stats"),
+    ];
+    const runtime = Array.from(
+      { length: 152 },
+      (_, i) => new Request(`https://example.com/sauna-itta/_next/static/chunk-${i}.js`),
+    );
+    // 先読み資産は install 時に入るため保存順では先頭に並ぶ
+    const { handler, cache } = loadFetchHandler({
+      networkResponse: new Response("network"),
+      keys: [...precached, ...runtime],
+    });
+    const event = {
+      request: new Request("https://example.com/sauna-itta/_next/static/chunk-new.js"),
+      respondWith: vi.fn(),
+      waitUntil: vi.fn(),
+    };
+
+    handler(event);
+    await event.respondWith.mock.calls[0][0];
+
+    const deleted = cache.delete.mock.calls.map(([request]) => (request as Request).url);
+    expect(deleted).toEqual([runtime[0].url, runtime[1].url]);
   });
 });

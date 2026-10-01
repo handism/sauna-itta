@@ -1,7 +1,11 @@
 const CACHE_PREFIX = "sauna-itta-";
-const STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v3`;
+const STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v4`;
 const TILE_CACHE_NAME = `${CACHE_PREFIX}tiles-v1`;
 const MAX_TILE_ENTRIES = 200;
+// 静的キャッシュのうち、先読み資産以外（_next/static のチャンクや RSC の .txt）の上限。
+// これらはデプロイごとにファイル名が変わるため、上限が無いと古い版の資産が溜まり続ける。
+// 1 回のビルドの出力は約 60 件なので、数デプロイ分の余裕を持たせている。
+const MAX_STATIC_RUNTIME_ENTRIES = 150;
 const TILE_HOSTS = new Set([
   "tile.openstreetmap.org",
   "a.tile.openstreetmap.org",
@@ -25,6 +29,15 @@ const PRECACHE_ASSETS = [
 // ただし必須資産と同じ addAll に混ぜない：addAll は 1 つでも取得に失敗すると install
 // ごと失敗し、オフライン対応そのものが失われるため、ここは取得できた分だけ保存する。
 const OPTIONAL_PRECACHE_ASSETS = ["/sauna-itta/stats"];
+
+// 上限による削除の対象から外す資産。オフラインで最初に開く画面の土台のため、
+// 実行時に溜まった資産に押し出されて消えないようにする
+const PRECACHE_PATHS = new Set([...PRECACHE_ASSETS, ...OPTIONAL_PRECACHE_ASSETS]);
+
+function isPrecachedRequest(request) {
+  const url = new URL(request.url);
+  return url.origin === self.location.origin && PRECACHE_PATHS.has(url.pathname);
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -59,8 +72,10 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-async function trimCache(cache, maxEntries) {
-  const requests = await cache.keys();
+// cache.keys() は保存順に並ぶ。cache.put() は既存の項目を消してから末尾へ足すため、
+// バックグラウンド更新で書き直された（＝最近使われた）資産ほど後ろに来る
+async function trimCache(cache, maxEntries, isProtected = () => false) {
+  const requests = (await cache.keys()).filter((request) => !isProtected(request));
   const overflow = requests.length - maxEntries;
   if (overflow <= 0) return;
   await Promise.all(requests.slice(0, overflow).map((request) => cache.delete(request)));
@@ -124,6 +139,7 @@ self.addEventListener("fetch", (event) => {
           const responseToCache = networkResponse.clone();
           const cache = await caches.open(STATIC_CACHE_NAME);
           await cache.put(request, responseToCache);
+          await trimCache(cache, MAX_STATIC_RUNTIME_ENTRIES, isPrecachedRequest);
         }
         return networkResponse;
       });
