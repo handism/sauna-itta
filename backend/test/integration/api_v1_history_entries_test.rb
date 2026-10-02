@@ -50,7 +50,7 @@ class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
     removed = visit.fetch("history").first
     blob = ActiveStorage::Blob.find_signed!(removed.fetch("image").split("/").last)
 
-    perform_enqueued_jobs do
+    assert_no_enqueued_jobs(only: ActiveStorage::PurgeJob) do
       delete history_path(visit, removed.fetch("id")), headers: csrf_header(csrf)
     end
 

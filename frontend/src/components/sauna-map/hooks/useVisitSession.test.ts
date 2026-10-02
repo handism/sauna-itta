@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { SaunaVisit } from "../types";
 import { RepositoryError, type VisitRepository } from "../repositories";
-import { LOAD_ERROR_FALLBACK, toUserMessage, useVisitSession } from "./useVisitSession";
+import { LOAD_ERROR_FALLBACK, isSessionLostError, toUserMessage, useVisitSession } from "./useVisitSession";
 
 const loadedVisits: SaunaVisit[] = [
   { id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2026-01-01" },
@@ -34,8 +34,26 @@ describe("toUserMessage", () => {
     expect(toUserMessage(new RepositoryError(message, "duplicate", 409), "fallback")).toBe(message);
   });
 
+  it("セッションの喪失はログインし直すか再試行するかを案内すること", () => {
+    expect(toUserMessage(new RepositoryError("ログインが必要です。", "unauthenticated", 401), "fallback")).toContain(
+      "もう一度ログイン",
+    );
+    expect(toUserMessage(new RepositoryError("CSRFトークンが不正です。", "invalid_csrf", 422), "fallback")).toContain(
+      "もう一度お試しください",
+    );
+  });
+
   it("Error 以外は既定の文言にすること", () => {
     expect(toUserMessage("unknown", "fallback")).toBe("fallback");
+  });
+});
+
+describe("isSessionLostError", () => {
+  it("401 の unauthenticated と、変更系で返る invalid_csrf の両方をセッションの喪失とみなすこと", () => {
+    expect(isSessionLostError(new RepositoryError("", "unauthenticated", 401))).toBe(true);
+    expect(isSessionLostError(new RepositoryError("", "invalid_csrf", 422))).toBe(true);
+    expect(isSessionLostError(new RepositoryError("", "conflict", 409))).toBe(false);
+    expect(isSessionLostError(new Error("unauthenticated"))).toBe(false);
   });
 });
 
@@ -156,5 +174,74 @@ describe("useVisitSession", () => {
     expect(result.current.authenticated).toBe(false);
     expect(result.current.csrfToken).toBeNull();
     expect(result.current.loadError).toBe("通信失敗");
+  });
+
+  it("reload が401なら読み込みエラーにせず、未ログインへ戻して記録を空にすること", async () => {
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "token" })
+      .mockResolvedValueOnce({ authenticated: false, user: null, csrfToken: "fresh-token" });
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce(loadedVisits)
+      .mockRejectedValueOnce(new RepositoryError("ログインが必要です。", "unauthenticated", 401));
+    const source = repository({ getSession, list });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    let reloaded: boolean | undefined;
+    await act(async () => {
+      reloaded = await result.current.reload();
+    });
+
+    // loadError があると ApiAccessGate はログインフォームではなく「再読み込み」を出す
+    expect(reloaded).toBe(false);
+    expect(result.current.loadError).toBeNull();
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.csrfToken).toBe("fresh-token");
+    expect(onVisitsLoaded).toHaveBeenLastCalledWith([]);
+  });
+
+  it("reload が401でも取り直した時点でログイン済みなら、再試行を促すこと", async () => {
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce(loadedVisits)
+      .mockRejectedValueOnce(new RepositoryError("ログインが必要です。", "unauthenticated", 401));
+    const source = repository({ list });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.loadError).toBe(LOAD_ERROR_FALLBACK);
+  });
+
+  it("revalidateSessionOnError はセッションの喪失のときだけセッションを取り直すこと", async () => {
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "old-token" })
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "new-token" });
+    const source = repository({ getSession });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.revalidateSessionOnError(new RepositoryError("競合", "conflict", 409));
+    });
+    expect(getSession).toHaveBeenCalledOnce();
+
+    // 別タブで再ログインした後の invalid_csrf は、新しいトークンへ差し替えて次の操作を通す
+    await act(async () => {
+      await result.current.revalidateSessionOnError(new RepositoryError("CSRFトークンが不正です。", "invalid_csrf", 422));
+    });
+    expect(getSession).toHaveBeenCalledTimes(2);
+    expect(result.current.authenticated).toBe(true);
+    expect(result.current.csrfToken).toBe("new-token");
   });
 });

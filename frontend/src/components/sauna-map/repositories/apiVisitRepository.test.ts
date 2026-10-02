@@ -284,6 +284,16 @@ describe("ApiVisitRepository", () => {
       });
     });
 
+    it("写真の取得が401ならセッションの喪失（unauthenticated）として伝える", async () => {
+      vi.spyOn(globalThis, "fetch").mockResolvedValue(imageResponse("", 401));
+      const repository = new ApiVisitRepository();
+
+      await expect(repository.prepareExport([visitJson({ image: API_IMAGE })])).rejects.toMatchObject({
+        code: "unauthenticated",
+        status: 401,
+      });
+    });
+
     it("通信できないときは network_error にする", async () => {
       vi.spyOn(console, "error").mockImplementation(() => {});
       vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("Failed to fetch"));

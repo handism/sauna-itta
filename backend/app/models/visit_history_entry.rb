@@ -12,7 +12,11 @@ class VisitHistoryEntry < ApplicationRecord
   MAX_IMAGE_BYTES = 1.megabyte
 
   belongs_to :sauna_visit
-  has_one_attached :image
+  # 写真のblobの破棄は ImageBlobPurger に一本化する（記録・履歴の削除と差し替えで、
+  # コミット後に呼び出し側が明示的に破棄する）。既定の dependent: :purge_later のままだと
+  # 同じblobの破棄ジョブが二重に積まれるうえ、:async アダプタのジョブは Cloud Run が
+  # レスポンス後に CPU を絞るため完了しないことがあり、GCS にオブジェクトが残る。
+  has_one_attached :image, dependent: false
 
   validates :public_id, :visited_on, presence: true
   validates :public_id, uniqueness: { scope: :sauna_visit_id }

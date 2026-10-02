@@ -33,6 +33,6 @@ class SaunaVisit < ApplicationRecord
   end
 
   def purge_history_image_blobs
-    ImageBlobPurger.purge_later(@history_image_blobs || [], context: "サウナ記録の履歴画像削除")
+    ImageBlobPurger.purge(@history_image_blobs || [], context: "サウナ記録の履歴画像削除")
   end
 end

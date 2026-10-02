@@ -78,7 +78,7 @@ module VisitWritable
   end
 
   def purge_stale_image_blobs(blobs)
-    ImageBlobPurger.purge_later(blobs, context: "古い訪問画像の削除")
+    ImageBlobPurger.purge(blobs, context: "古い訪問画像の削除")
   end
 
   # 書き込み後の再読み込み。SaunaVisitSerializer は履歴ごとに image を参照するため、

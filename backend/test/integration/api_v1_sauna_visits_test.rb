@@ -212,7 +212,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     image_path = visit.fetch("image")
     blob = ActiveStorage::Blob.find_signed!(image_path.split("/").last)
 
-    perform_enqueued_jobs do
+    assert_no_enqueued_jobs(only: ActiveStorage::PurgeJob) do
       delete "/api/v1/sauna_visits/#{visit.fetch('id')}", headers: csrf_header(csrf)
       assert_response :no_content
     end
@@ -357,13 +357,36 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "image/png", response.media_type
 
-    perform_enqueued_jobs do
+    assert_no_enqueued_jobs(only: ActiveStorage::PurgeJob) do
       patch "/api/v1/sauna_visits/#{visit.fetch('id')}", params: {
         saunaVisit: valid_attributes.merge(image: nil, lockVersion: visit.fetch("lockVersion"))
       }, headers: csrf_header(csrf), as: :json
       assert_response :success
     end
     assert_not ActiveStorage::Blob.exists?(blob.id)
+  end
+
+  test "写真を差し替えると古い写真blobを同期で破棄する" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: {
+      saunaVisit: valid_attributes.merge(image: png_data_url)
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :created
+    visit = response.parsed_body.fetch("saunaVisit")
+    old_blob = ActiveStorage::Blob.find_signed!(visit.fetch("image").split("/").last)
+
+    assert_no_enqueued_jobs(only: ActiveStorage::PurgeJob) do
+      patch "/api/v1/sauna_visits/#{visit.fetch('id')}", params: {
+        saunaVisit: valid_attributes.merge(image: png_data_url, lockVersion: visit.fetch("lockVersion"))
+      }, headers: csrf_header(csrf), as: :json
+      assert_response :success
+    end
+
+    new_image_path = response.parsed_body.dig("saunaVisit", "image")
+    assert_not_equal visit.fetch("image"), new_image_path
+    assert_not ActiveStorage::Blob.exists?(old_blob.id), "差し替え前の写真blobが残っています"
+    get new_image_path
+    assert_response :success
   end
 
   test "更新レスポンスは履歴件数に比例して写真クエリを増やさない" do

@@ -277,4 +277,82 @@ describe("useSaunaVisits", () => {
     Reflect.deleteProperty(URL, "createObjectURL");
     Reflect.deleteProperty(URL, "revokeObjectURL");
   });
+
+  it("保存が invalid_csrf で失敗したらセッションを取り直し、ログアウト済みならログイン画面へ戻す", async () => {
+    const showToast = vi.fn();
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "token" })
+      .mockResolvedValueOnce({ authenticated: false, user: null, csrfToken: "fresh-token" });
+    const create = vi.fn().mockRejectedValue(new RepositoryError("CSRFトークンが不正です。", "invalid_csrf", 422));
+    const source = repository({ getSession, create });
+    const { result } = renderHook(() => useSaunaVisits(showToast, source));
+    await waitFor(() => expect(result.current.visits).toEqual(initialVisits));
+
+    let addResult: { success: boolean } | undefined;
+    await act(async () => {
+      addResult = await result.current.actions.addVisit({ lat: 35, lng: 139 }, {
+        name: "新規", comment: "", image: "", date: "2026-08-02", rating: 4,
+        tagsText: "", status: "visited", area: "東京", appendHistory: false,
+      });
+    });
+
+    expect(addResult?.success).toBe(false);
+    expect(showToast).toHaveBeenCalledWith(expect.stringContaining("ログイン状態が変わった"), "error");
+    expect(result.current.status.authenticated).toBe(false);
+    expect(result.current.status.csrfToken).toBe("fresh-token");
+    expect(result.current.visits).toEqual([]);
+    expect(result.current.status.saving).toBe(false);
+  });
+
+  it("409競合のような通常の失敗ではセッションを取り直さない", async () => {
+    const source = repository({ delete: vi.fn().mockRejectedValue(new RepositoryError("競合", "conflict", 409)) });
+    const { result } = renderHook(() => useSaunaVisits(vi.fn(), source));
+    await waitFor(() => expect(result.current.visits).toEqual(initialVisits));
+
+    await act(async () => {
+      await result.current.actions.deleteVisit("1");
+    });
+
+    expect(source.getSession).toHaveBeenCalledOnce();
+    expect(result.current.status.authenticated).toBe(true);
+  });
+
+  it("エクスポートで写真の取得が401になったら、トーストで伝えてログイン画面へ戻す", async () => {
+    const showToast = vi.fn();
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "token" })
+      .mockResolvedValueOnce({ authenticated: false, user: null, csrfToken: "fresh-token" });
+    const prepareExport = vi.fn().mockRejectedValue(new RepositoryError("ログインが必要です。", "unauthenticated", 401));
+    const source = repository({ getSession, prepareExport });
+    const { result } = renderHook(() => useSaunaVisits(showToast, source));
+    await waitFor(() => expect(result.current.visits).toEqual(initialVisits));
+
+    await act(async () => {
+      await result.current.actions.exportVisits();
+    });
+
+    expect(showToast).toHaveBeenCalledWith(expect.stringContaining("ログインの有効期限が切れました"), "error");
+    expect(result.current.status.authenticated).toBe(false);
+    expect(result.current.visits).toEqual([]);
+  });
+
+  it("ログアウトが invalid_csrf で失敗したら（別タブでログアウト済み）セッションを取り直す", async () => {
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "token" })
+      .mockResolvedValueOnce({ authenticated: false, user: null, csrfToken: "fresh-token" });
+    const logout = vi.fn().mockRejectedValue(new RepositoryError("CSRFトークンが不正です。", "invalid_csrf", 422));
+    const source = repository({ getSession, logout });
+    const { result } = renderHook(() => useSaunaVisits(vi.fn(), source));
+    await waitFor(() => expect(result.current.visits).toEqual(initialVisits));
+
+    await act(async () => {
+      await result.current.actions.logout();
+    });
+
+    expect(result.current.status.authenticated).toBe(false);
+    expect(result.current.visits).toEqual([]);
+  });
 });

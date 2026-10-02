@@ -57,7 +57,7 @@ class SaunaVisitTest < ActiveSupport::TestCase
     entry.image.attach(io: StringIO.new(png), filename: "visit.png", content_type: "image/png")
     blob_id = entry.image.blob.id
 
-    perform_enqueued_jobs do
+    assert_no_enqueued_jobs(only: ActiveStorage::PurgeJob) do
       visit.destroy!
     end
 
@@ -74,7 +74,7 @@ class SaunaVisitTest < ActiveSupport::TestCase
     visit_id = visit.id
     blob_id = entry.image.blob.id
 
-    perform_enqueued_jobs do
+    assert_no_enqueued_jobs(only: ActiveStorage::PurgeJob) do
       SaunaVisit.transaction do
         visit.destroy!
         raise ActiveRecord::Rollback
@@ -94,13 +94,13 @@ class SaunaVisitTest < ActiveSupport::TestCase
     entry.image.attach(io: StringIO.new(png), filename: "visit.png", content_type: "image/png")
 
     mock_blob = Object.new
-    mock_blob.define_singleton_method(:purge_later) { raise StandardError, "Test Error" }
+    mock_blob.define_singleton_method(:purge) { raise StandardError, "Test Error" }
 
     visit.instance_variable_set(:@history_image_blobs, [ mock_blob ])
     visit.define_singleton_method(:capture_history_image_blobs) { }
 
     messages = capture_rails_logger_errors do
-      perform_enqueued_jobs do
+      assert_no_enqueued_jobs(only: ActiveStorage::PurgeJob) do
         visit.destroy!
       end
     end

@@ -67,7 +67,7 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
     // 初回の list() は初期値と同じ localStorage の読み込み＋zod検証になるため省く
     skipInitialList: seedFromStorage,
   });
-  const { reload, resetSession } = session;
+  const { reload, resetSession, revalidateSessionOnError } = session;
 
   // 実行中の更新系操作の数。真偽値 1 つで持つと、並行した操作の片方が終わった時点で
   // もう片方の実行中に saving が false へ戻ってしまう
@@ -90,12 +90,29 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
         return { success: true, value: await operation() };
       } catch (error) {
         showToast?.(toUserMessage(error, SAVE_ERROR_FALLBACK), "error");
+        await revalidateSessionOnError(error);
         return { success: false };
       } finally {
         setPendingMutations((count) => count - 1);
       }
     },
-    [showToast],
+    [showToast, revalidateSessionOnError],
+  );
+
+  /**
+   * runMutation を通らない Repository 呼び出し（インポート・エクスポート）用。
+   * 失敗の伝え方は呼び出し側（useVisitImportExport）に任せ、セッションの喪失だけはここで拾う。
+   */
+  const withSessionRevalidation = useCallback(
+    async <T,>(operation: () => Promise<T>): Promise<T> => {
+      try {
+        return await operation();
+      } catch (error) {
+        await revalidateSessionOnError(error);
+        throw error;
+      }
+    },
+    [revalidateSessionOnError],
   );
 
   const addVisit = useCallback(
@@ -161,8 +178,9 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
   }, [repository, reload]);
 
   const importBatch = useCallback(
-    async (items: SaunaVisit[]): Promise<ImportResult> => repository.importBatch(items),
-    [repository],
+    async (items: SaunaVisit[]): Promise<ImportResult> =>
+      withSessionRevalidation(() => repository.importBatch(items)),
+    [repository, withSessionRevalidation],
   );
 
   // インポートの重複判定とエクスポートはクリック時点の visits を読めれば足りる。
@@ -175,8 +193,9 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
   const getVisits = useCallback(() => visitsRef.current, []);
 
   const prepareExport = useCallback(
-    async (items: SaunaVisit[]): Promise<SaunaVisit[]> => repository.prepareExport(items),
-    [repository],
+    async (items: SaunaVisit[]): Promise<SaunaVisit[]> =>
+      withSessionRevalidation(() => repository.prepareExport(items)),
+    [repository, withSessionRevalidation],
   );
 
   const importExport = useVisitImportExport(getVisits, importBatch, prepareExport, reload, showToast);
@@ -187,12 +206,13 @@ export function useSaunaVisits(showToast?: ShowToast, injectedRepository?: Visit
       await repository.logout();
     } catch (error) {
       showToast?.(toUserMessage(error, LOGOUT_ERROR_FALLBACK), "error");
+      await revalidateSessionOnError(error);
       return false;
     }
     setVisits([]);
     await resetSession();
     return true;
-  }, [repository, resetSession, setVisits, showToast]);
+  }, [repository, resetSession, revalidateSessionOnError, setVisits, showToast]);
 
   const saving = pendingMutations > 0;
   const { dataSource } = repository;
