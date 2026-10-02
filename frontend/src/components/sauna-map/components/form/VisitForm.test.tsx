@@ -123,6 +123,40 @@ describe("VisitFormView", () => {
     );
   });
 
+  it("新規登録では場所の選択状態を見出しの下に表示すること", () => {
+    const { rerender } = render(
+      <VisitFormView {...defaultProps} editingId={null} selectedLocation={null} />
+    );
+
+    const status = document.querySelector(".location-status");
+    expect(status).toHaveTextContent("地図上をクリックして場所を選択してください");
+    expect(status).not.toHaveClass("is-selected");
+
+    rerender(<VisitFormView {...defaultProps} editingId={null} />);
+    expect(document.querySelector(".location-status")).toHaveClass("is-selected");
+  });
+
+  it("開いたとき・編集対象が変わったときにスクロール位置を先頭へ戻すこと", () => {
+    // jsdom は scrollTop の代入を保持しないため、スクロール領域の値を自前で持つ
+    const container = document.createElement("div");
+    let scrollTop = 400;
+    Object.defineProperty(container, "scrollTop", {
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value;
+      },
+    });
+    document.body.appendChild(container);
+
+    const { rerender } = render(<VisitFormView {...defaultProps} />, { container });
+    expect(scrollTop).toBe(0);
+
+    scrollTop = 400;
+    rerender(<VisitFormView {...defaultProps} editingId="sauna-2" />);
+    expect(scrollTop).toBe(0);
+    container.remove();
+  });
+
   it("explains why the submit button is disabled when the name is blank", () => {
     render(
       <VisitFormView {...defaultProps} form={{ ...defaultForm, name: "   " }} />

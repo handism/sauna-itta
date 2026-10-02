@@ -36,8 +36,12 @@
     transform: translateY(calc(100% - 54px + var(--drag-offset-y, 0px)));
   }
 
+  /*
+   * 半分の位置でも検索・絞り込みの下に一覧が数件見える高さにする。
+   * 45vh では操作部だけで埋まり、「一覧」タブを押しても記録が 1 件も見えなかった。
+   */
   .bottom-sheet--half {
-    transform: translateY(calc(100% - 45vh + var(--drag-offset-y, 0px)));
+    transform: translateY(calc(100% - 60vh + var(--drag-offset-y, 0px)));
   }
 
   .bottom-sheet--full {
@@ -170,6 +174,8 @@
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
     padding: 0 1rem 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--glass-border) transparent;
   }
 
   /*

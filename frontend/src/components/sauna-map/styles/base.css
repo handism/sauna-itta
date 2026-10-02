@@ -126,7 +126,11 @@
     "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Noto Sans CJK JP", "Yu Gothic UI",
     "Segoe UI", Meiryo, Roboto, sans-serif;
   --error: #ef4444;
-  --map-filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(92%);
+  /*
+   * ダークテーマの地図は OSM タイルを反転して作る。反転だけだと緑の陸地・赤い道路が
+   * 強く残ってマーカー（アンバー／アクア）と競合するため、彩度を落として背景に退かせる。
+   */
+  --map-filter: invert(100%) hue-rotate(180deg) saturate(40%) brightness(95%) contrast(92%);
   --input-bg: rgba(15, 23, 42, 0.75);
 
   /*

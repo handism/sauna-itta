@@ -12,7 +12,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { BarChart3 } from "lucide-react";
-import { FlatVisitHistoryEntry } from "@/components/sauna-map/utils";
+import { FlatVisitHistoryEntry, getMonthlyVisitCounts } from "@/components/sauna-map/utils";
 import { ChartTheme, getChartColors, getTooltipStyle } from "./chartTheme";
 import { ChartEmptyState } from "./ChartEmptyState";
 
@@ -26,22 +26,8 @@ export default function MonthlyVisitsChart({
   entries,
   theme,
 }: MonthlyVisitsChartProps) {
-  const data = useMemo(() => {
-    const monthlyCounts: { [key: string]: number } = {};
-
-    entries.forEach((entry) => {
-      const month = entry.date.substring(0, 7); // YYYY-MM
-      monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
-    });
-
-    const chartData = Object.keys(monthlyCounts).map((month) => ({
-      month,
-      visits: monthlyCounts[month],
-    }));
-
-    chartData.sort((a, b) => a.month.localeCompare(b.month));
-    return chartData;
-  }, [entries]);
+  // 訪問の無い月も 0 件で埋める（飛び飛びの月を等間隔に並べると空白期間が読めない）
+  const data = useMemo(() => getMonthlyVisitCounts(entries), [entries]);
 
   const yearBoundaries = useMemo(() => {
     return data.reduce<{ month: string; year: string }[]>((acc, d) => {

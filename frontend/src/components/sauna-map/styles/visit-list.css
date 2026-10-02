@@ -195,6 +195,28 @@
   transform: rotate(90deg);
 }
 
+.sauna-compact-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.sauna-compact-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.sauna-compact-meta {
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sauna-compact-title {
   font-size: var(--text-base);
   font-weight: 600;
@@ -246,6 +268,25 @@
   min-width: 24px;
   min-height: 24px;
   justify-content: center;
+}
+
+/*
+ * マウス操作の画面では、編集ボタンを行のホバー・選択・フォーカス時だけ出して
+ * 一覧を静かにする。タッチ端末（hover: none）では常に表示したままにすること。
+ * display: none ではなく opacity で隠し、Tab で到達したときは :focus-within で現れる。
+ */
+@media (hover: hover) and (min-width: 768px) {
+  .compact-edit-btn {
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+  }
+
+  .sauna-compact-item:hover .compact-edit-btn,
+  .sauna-compact-item.is-hovered .compact-edit-btn,
+  .sauna-compact-item.is-selected .compact-edit-btn,
+  .sauna-compact-item:focus-within .compact-edit-btn {
+    opacity: 1;
+  }
 }
 
 .sauna-compact-body {
@@ -749,12 +790,48 @@
 
 /* タッチ操作時のターゲットサイズ確保 (44px) */
 @media (max-width: 767px) {
+  /*
+   * 横スワイプの案内は独立した行にせず、チップ列の右端にフェードで重ねる。
+   * 1 行ぶんの高さを取ると、半分の位置のシートで一覧が見えなくなるため。
+   * 背景はボトムシートの面（--glass-heavy）へ溶かし、下のチップの操作は妨げない。
+   */
   .quick-filter-scroll-hint {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
-    margin: 0 0.2rem 0.1rem;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    padding: 0 0.15rem 0 2.5rem;
+    background: linear-gradient(to right, transparent, var(--glass-heavy) 55%);
     color: var(--text-muted);
     font-size: var(--text-2xs);
+    pointer-events: none;
+  }
+
+  /* 一覧の上の操作部を詰め、シートの限られた高さを記録に回す */
+  .sauna-list-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .sauna-search-box {
+    margin-bottom: 0.5rem;
+  }
+
+  .quick-filter-chips {
+    margin-bottom: 0.25rem;
+  }
+
+  /* 表示切替はアイコンだけにする（読み上げは aria-label が担う） */
+  .view-mode-label {
+    display: none;
+  }
+
+  .view-mode-btn {
+    min-width: 44px;
+    justify-content: center;
   }
 
   .status-tab,

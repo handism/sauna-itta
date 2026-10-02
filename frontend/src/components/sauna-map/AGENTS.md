@@ -20,6 +20,7 @@
 - **セッション確認と初回の一覧読み込みは `useVisitSession` に集約**: 地図（`useSaunaVisits`）と統計ページ（`useStatsData`）は、どちらも `hooks/useVisitSession.ts` で `getSession` → `list` を行います。画面ごとに同じ手順を書き直さないこと（エラー文言や、一覧だけ失敗したときの扱いが画面間でずれます）。localStorage から同期的に先読みするか（`useInitialVisits(seedFromStorage)`）は `useSaunaVisits` が使う Repository の `dataSource` から決めます。`DATA_SOURCE` を別に参照すると、Repository と初期値の出所が食い違ったときに気付けません。
 - **保存中の状態は件数で持つこと**: `useSaunaVisits` の `saving` は実行中の更新系操作の数（`pendingMutations > 0`）から求めます。真偽値 1 つに戻すと、並行した操作の片方が終わった時点で、もう片方の実行中に `saving` が `false` へ戻ります。
 - **保存失敗のトーストを二重に出さないこと**: CRUD の失敗通知は `useSaunaVisits` の `runMutation` がRepository のエラー文言（409 競合・通信障害・localStorage の容量超過）で出す唯一の担当です。`useVisitCrud` 側で `if (!success) showToast(...)` を足すと、`useToast` は単一 state のため後勝ちで上書きされ、競合や通信障害まで別の原因にすり替わって表示されます（`useVisitCrud.test.ts` の「トーストを重ねないこと」が検査しています）。成功時の通知だけ呼び出し側で行うこと。
+- **フォームは開くたびに先頭から表示すること**: 一覧とフォームは同じスクロール領域を共有するため、`VisitFormView` はマウント時と `editingId` の変化時に親要素（スクロール領域）の `scrollTop` を 0 に戻します。新規登録では見出し直下の `.location-status` が場所の選択状態を示し、デスクトップでは場所を選ぶまで地図側にも `MobilePinHint`（`variant="desktop"`、キャンセルボタンなし）を出します。
 - **訪問履歴の削除は確認後だけ実行すること**: `VisitHistorySection` は削除候補の index をローカル state に保持し、`ConfirmModal` で対象日を確認してから `onDeleteEntry` を呼びます。削除ボタンから `removeHistoryEntry()` を直接呼ぶ実装へ戻すと、スクロール中の誤タップで履歴が即時消去されます。
 
 ## 2. ディレクトリ ＆ コンポーネント構造
@@ -53,6 +54,9 @@
 - **グラフ**: Recharts の配色・ツールチップは `components/charts/chartTheme.ts` の `getChartColors()` / `getTooltipStyle()` を、空データ表示は `ChartEmptyState` を使うこと。チャート側でテーマ別の色分岐を直書きしないでください。ツールチップだけに具体値を置かず、チャートと兄弟の `.sr-only` テーブルにも全データを出し、キーボード・支援技術から月別件数や評価別件数を取得できる状態を保つこと（`role="img"` の内側へ表を置くと子要素が読み上げ対象から外れます）。
 - **統計ページの履歴平坦化は 1 回だけ**: 訪問履歴の平坦化（`flattenVisitHistory()`）と `status === "visited"` の絞り込みは `useStatsData` の `visitedEntries` に集約しています。グラフやカレンダーは `visits` ではなく `FlatVisitHistoryEntry[]` を props で受け取ること。コンポーネントごとに `flattenVisitHistory(visits)` を呼ぶと、同じ走査を記録件数 × グラフ数だけ繰り返します。
 - **統計ページの順位付けも 1 回だけ**: `rankVisitsByCount()` の呼び出しは `useStatsData` の `rankedVisits` に集約しています。`HomeSaunaCard` / `TopSaunasCard` は `visits` ではなく `RankedVisit[]` を props で受け取ること（カードごとに呼ぶと同じ絞り込みと並べ替えを繰り返します）。
+- **月別件数は 0 件の月も埋めること**: 月別訪問数のグラフは `utils/visitStats.ts` の `getMonthlyVisitCounts()` を使い、最初の訪問月から最後の訪問月まで 0 件の月も並べます。記録のある月だけを並べると、x 軸が飛んでも等間隔に見えて空白期間が読めなくなります。
+- **都道府県が判定できないときは 0 と出さないこと**: サマリーの「都道府県制覇」は `prefectureCount` が 0 のとき数値の代わりに「-」と補足を出します（エリアが地名だけだと常に 0 になり、「1 つも行っていない」と読めてしまうため）。
+- **訪問カレンダーの初期表示は最後に訪問した月**: `VisitCalendar` は `defaultActiveStartDate` を `visitDates` の最新日の月に合わせます。今月を開くと、今月に訪問が無い利用者には空のカレンダーが表示されます。
 - **同じ数字を 2 か所で計算しないこと**: 平均満足度は `calculateStats()` の `stats.avgRating` が唯一の出所で、`RatingDistributionChart` は `avgRating` を props で受け取って表示します（グラフ側で再計算すると、サマリーと中央表示の数字がいずれ食い違います）。
 
 ## 3. パフォーマンス

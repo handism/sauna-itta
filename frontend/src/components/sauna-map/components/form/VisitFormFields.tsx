@@ -1,4 +1,4 @@
-import { Check, Save, X, Trash2, Info, Loader2, CheckCircle2, Star } from "lucide-react";
+import { Check, Save, X, Trash2, Info, Loader2, CheckCircle2, Star, MapPin } from "lucide-react";
 import { LocationSearchInput } from "./LocationSearchInput";
 import { GeocodingResult } from "../../utils/geocoding";
 import { getDateDaysAgo } from "../../utils/date";
@@ -13,17 +13,28 @@ export function FormHeader({
   return (
     <>
       <h2 className="panel-title mb-2">{editingId ? "サウナの編集" : "新規サウナ登録"}</h2>
-      <p className="panel-subtitle">
-        {editingId ? (
-          "内容を更新します"
-        ) : selectedLocation ? (
-          <>
-            場所が選択されました <CheckCircle2 size={14} />
-          </>
-        ) : (
-          "地図上をクリックして場所を選択してください"
-        )}
-      </p>
+      {editingId ? (
+        <p className="panel-subtitle">内容を更新します</p>
+      ) : (
+        /*
+          新規登録で最初に必要なのは場所の選択なので、補足文ではなく状態表示として目立たせる。
+          選択の前後で文言が変わるため、支援技術へも role="status" で伝える。
+        */
+        <p
+          className={`location-status ${selectedLocation ? "is-selected" : ""}`}
+          role="status"
+        >
+          {selectedLocation ? (
+            <>
+              <CheckCircle2 size={16} aria-hidden="true" /> 場所を選択しました（地図をクリックで変更）
+            </>
+          ) : (
+            <>
+              <MapPin size={16} aria-hidden="true" /> 地図上をクリックして場所を選択してください
+            </>
+          )}
+        </p>
+      )}
     </>
   );
 }

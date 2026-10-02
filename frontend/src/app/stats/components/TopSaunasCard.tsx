@@ -50,7 +50,7 @@ export function TopSaunasCard({ ranked }: TopSaunasCardProps) {
                     <span className={styles.topSaunaCount}>{count} 回</span>
                     <Link
                       href={`/?id=${sauna.id}`}
-                      className={styles.mapJumpLink}
+                      className={`${styles.mapJumpLink} ${styles.mapJumpLinkQuiet}`}
                       title={`${sauna.name}を地図で見る`}
                       aria-label={`${sauna.name}を地図で見る`}
                     >

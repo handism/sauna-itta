@@ -5,6 +5,7 @@ import {
   getPopularAreas,
   countTags,
   rankVisitsByCount,
+  getMonthlyVisitCounts,
 } from "./visitStats";
 import { SaunaVisit } from "../types";
 
@@ -298,5 +299,30 @@ describe("rankVisitsByCount", () => {
 
   it("訪問済みが無い場合は空配列を返すこと", () => {
     expect(rankVisitsByCount([])).toEqual([]);
+  });
+});
+
+describe("getMonthlyVisitCounts", () => {
+  it("訪問の無い月も 0 件として最初の月から最後の月まで埋めること", () => {
+    const result = getMonthlyVisitCounts([
+      { date: "2026-05-10" },
+      { date: "2026-07-01" },
+      { date: "2026-07-20" },
+    ]);
+    expect(result).toEqual([
+      { month: "2026-05", visits: 1 },
+      { month: "2026-06", visits: 0 },
+      { month: "2026-07", visits: 2 },
+    ]);
+  });
+
+  it("年をまたいでも月を連続させること", () => {
+    const result = getMonthlyVisitCounts([{ date: "2025-11-03" }, { date: "2026-02-14" }]);
+    expect(result.map((d) => d.month)).toEqual(["2025-11", "2025-12", "2026-01", "2026-02"]);
+  });
+
+  it("記録が無い・日付が読めない場合は空配列を返すこと", () => {
+    expect(getMonthlyVisitCounts([])).toEqual([]);
+    expect(getMonthlyVisitCounts([{ date: "" }])).toEqual([]);
   });
 });

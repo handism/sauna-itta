@@ -1,4 +1,4 @@
-import { Dispatch, FormEvent, SetStateAction } from "react";
+import { Dispatch, FormEvent, SetStateAction, useEffect, useRef } from "react";
 import { VisitFormState, VisitHistoryEntry } from "../../types";
 import { VisitHistorySection } from "./VisitHistorySection";
 import { VisitTagsField } from "./VisitTagsField";
@@ -58,6 +58,17 @@ export function VisitFormView({
   saving = false,
 }: VisitFormViewProps) {
   const historyCount = editingId ? Math.max(1, historyEntries.length) : 0;
+  const formRef = useRef<HTMLFormElement>(null);
+
+  /*
+   * 一覧とフォームは同じスクロール領域（.sidebar-content / .bottom-sheet-content）を
+   * 共有するため、一覧をスクロールした位置のままフォームが途中から表示される。
+   * 開いたとき・編集対象が変わったときは先頭（見出しと場所の選択）へ戻す。
+   */
+  useEffect(() => {
+    const scrollContainer = formRef.current?.parentElement;
+    if (scrollContainer) scrollContainer.scrollTop = 0;
+  }, [editingId]);
 
   // 保存できない理由を明示し、無反応なボタンに見えないようにする
   const submitBlockedReason = saving
@@ -76,7 +87,7 @@ export function VisitFormView({
   };
 
   return (
-    <form className="sauna-form" onSubmit={onSubmit}>
+    <form className="sauna-form" onSubmit={onSubmit} ref={formRef}>
       <FormHeader editingId={editingId} selectedLocation={selectedLocation} />
 
       <LocationSearchField onSelectLocation={handleGeocodingSelect} />

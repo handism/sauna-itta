@@ -474,6 +474,16 @@
   transition: background 0.2s;
 }
 
+/*
+ * デスクトップはサイドバー（左余白 2rem + 幅 420px）を避け、残りの地図領域の中央下に置く。
+ * 右上の地図コントロールと重ならないよう上ではなく下に出す。
+ */
+.pin-hint--desktop {
+  left: calc(50% + 210px + 1rem);
+  max-width: 380px;
+  pointer-events: none;
+}
+
 .pin-hint-cancel:hover {
   background: var(--glass-border);
 }

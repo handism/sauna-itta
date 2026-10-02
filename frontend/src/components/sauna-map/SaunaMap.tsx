@@ -48,7 +48,7 @@ function SaunaMapContent() {
   const { dataSource, loading, authenticated, csrfToken, loadError } = useVisitsStatus();
   const { reload } = useVisitsActions();
 
-  const { isAdding, isMobilePickingLocation } = useSaunaEditorState();
+  const { isAdding, isCreating, isMobilePickingLocation, selectedLocation } = useSaunaEditorState();
   const { confirmDelete } = useSaunaEditorActions();
 
   const {
@@ -89,6 +89,11 @@ function SaunaMapContent() {
 
       {isMobilePickingLocation && (
         <MobilePinHint onCancel={handleCancelEditing} />
+      )}
+
+      {/* デスクトップの新規登録は、場所を選ぶまで地図側にも次の手順を出す */}
+      {!isMobile && isCreating && !selectedLocation && (
+        <MobilePinHint variant="desktop" />
       )}
 
       {!isMobilePickingLocation && !isMobile && (

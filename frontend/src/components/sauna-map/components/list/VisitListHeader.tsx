@@ -38,7 +38,8 @@ function VisitListHeaderComponent({
             aria-label="リスト表示に切り替え"
             aria-pressed={viewMode === "compact"}
           >
-            <List size={15} aria-hidden="true" /> リスト
+            <List size={15} aria-hidden="true" />
+            <span className="view-mode-label">リスト</span>
           </button>
           <button
             type="button"
@@ -48,7 +49,8 @@ function VisitListHeaderComponent({
             aria-label="カード表示に切り替え"
             aria-pressed={viewMode === "card"}
           >
-            <LayoutGrid size={15} aria-hidden="true" /> カード
+            <LayoutGrid size={15} aria-hidden="true" />
+            <span className="view-mode-label">カード</span>
           </button>
         </div>
       </div>

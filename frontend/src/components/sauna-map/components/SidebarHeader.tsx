@@ -133,7 +133,7 @@ export function SidebarHeaderView({
         {!isAdding && (
           <button
             type="button"
-            className="mobile-menu-btn sidebar-action-btn"
+            className="mobile-menu-btn sidebar-action-btn sidebar-action-btn--primary"
             onClick={() => {
               onStartNewVisit();
               onCloseMobileMenu();

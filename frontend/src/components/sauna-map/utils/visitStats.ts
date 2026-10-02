@@ -155,3 +155,42 @@ export function getPopularAreas(visits: SaunaVisit[], limit = 4): string[] {
     .slice(0, limit)
     .map(([area]) => area);
 }
+
+export interface MonthlyVisitCount {
+  /** YYYY-MM */
+  month: string;
+  visits: number;
+}
+
+/**
+ * 月別の訪問件数を、最初の訪問月から最後の訪問月まで 0 件の月も含めて並べる。
+ * 記録のある月だけを並べると、棒グラフの x 軸が「5月 → 7月」のように飛んでも
+ * 等間隔に見え、空白期間が読み取れなくなるため。
+ */
+export function getMonthlyVisitCounts(entries: { date: string }[]): MonthlyVisitCount[] {
+  const counts = new Map<string, number>();
+  for (const entry of entries) {
+    const month = entry.date.substring(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(month)) continue;
+    counts.set(month, (counts.get(month) ?? 0) + 1);
+  }
+  if (counts.size === 0) return [];
+
+  const months = Array.from(counts.keys()).sort();
+  const [firstYear, firstMonth] = months[0].split("-").map(Number);
+  const [lastYear, lastMonth] = months[months.length - 1].split("-").map(Number);
+
+  const result: MonthlyVisitCount[] = [];
+  let year = firstYear;
+  let month = firstMonth;
+  while (year < lastYear || (year === lastYear && month <= lastMonth)) {
+    const key = `${year}-${String(month).padStart(2, "0")}`;
+    result.push({ month: key, visits: counts.get(key) ?? 0 });
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+  }
+  return result;
+}

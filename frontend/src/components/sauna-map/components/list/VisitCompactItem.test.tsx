@@ -223,4 +223,22 @@ describe("VisitCompactItem の操作", () => {
     // コメント用の p タグがないことも確認できる
     expect(screen.queryByText("sauna-card-comment")).not.toBeInTheDocument();
   });
+
+  it("折りたたんだ状態でも訪問回数と最終訪問日を表示すること", () => {
+    render(<VisitCompactItem {...compactProps} isSelected={false} />);
+
+    expect(screen.getByText("2回 · 最終 2026-07-24")).toBeInTheDocument();
+  });
+
+  it("行きたい記録には訪問回数・日付を表示しないこと", () => {
+    const { container } = render(
+      <VisitCompactItem
+        {...compactProps}
+        visit={{ ...mockVisit, status: "wishlist" }}
+        isSelected={false}
+      />
+    );
+
+    expect(container.querySelector(".sauna-compact-meta")).toBeNull();
+  });
 });

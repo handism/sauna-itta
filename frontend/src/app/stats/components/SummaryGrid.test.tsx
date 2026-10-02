@@ -85,9 +85,11 @@ describe("SummaryGrid", () => {
     expect(ratingArticle).toHaveTextContent("-");
     expect(ratingArticle).not.toHaveTextContent("/ 5.0"); // ensure suffix isn't rendered
 
+    // 0 件を「1 つも行っていない」と読ませないよう、数値の代わりに集計できない旨を出す
     const prefecturesArticle = screen.getByRole("listitem", { name: "都道府県制覇" });
-    expect(prefecturesArticle).toHaveTextContent("0");
-    expect(prefecturesArticle).toHaveTextContent("/ 47 都道府県");
+    expect(prefecturesArticle).toHaveTextContent("-");
+    expect(prefecturesArticle).not.toHaveTextContent("/ 47 都道府県");
+    expect(prefecturesArticle).toHaveTextContent("エリアに都道府県名を入れると集計されます");
 
     const periodArticle = screen.getByRole("listitem", { name: "記録期間" });
     expect(periodArticle).toHaveTextContent("-");

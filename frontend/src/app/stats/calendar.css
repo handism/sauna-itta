@@ -1,7 +1,7 @@
 /* src/app/stats/calendar.css */
 
 .calendarContainer {
-  padding: 1.5rem 0;
+  padding: 0.25rem 0 0.75rem;
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
@@ -79,57 +79,50 @@
   background-color: var(--color-bg-hover);
 }
 
+/* 今日は枠線だけで示し、訪問日の印（点）と見分けられるようにする */
 .react-calendar__tile--now {
   background-color: transparent;
   font-weight: bold;
-}
-.react-calendar__tile--now::after {
-  content: '';
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background-color: var(--color-primary);
+  box-shadow: inset 0 0 0 1.5px var(--color-border-strong);
 }
 
-
+/*
+ * 選択中の日。アンバーの面に白文字はコントラストが足りない（約 2.3:1）ため、
+ * 面は薄い色にして文字は通常色のまま、枠線で選択を示す。
+ */
 .react-calendar__tile--active {
-  background-color: var(--color-primary) !important;
-  color: white !important;
+  background-color: var(--color-primary-soft) !important;
+  color: var(--color-text) !important;
+  box-shadow: inset 0 0 0 2px var(--color-primary);
   font-weight: bold;
 }
 .react-calendar__tile--active:hover {
-  background-color: var(--color-primary);
+  background-color: var(--color-primary-soft);
 }
 
+/* 訪問した日。点だけだと見落とすため、文字も太くする */
+.react-calendar__tile--has-visit {
+  font-weight: 700;
+}
 
 .react-calendar__month-view__days__day--neighboringMonth {
   color: var(--color-text-muted) !important;
 }
 
-/* For Dark Theme */
-.react-calendar.dark-theme {
-  --color-text: #e2e8f0;
-  --color-text-muted: #94a3b8;
-  --color-bg: #0f172a;
-  --color-bg-hover: #1e293b;
-  --color-bg-subtle: #15213a;
-  --color-border: #334155;
-  --color-primary: #38bdf8;
-}
-
-/* For Light Theme */
+/*
+ * 色はアプリ共通のトークンから取る（ライトテーマの値は .light-theme が差し替える）。
+ * 以前は react-calendar 用に水色系の固定色を持っており、統計画面のアンバー系の配色から浮いていた。
+ */
+.react-calendar.dark-theme,
 .react-calendar.light-theme {
-  --color-text: #334155;
-  --color-text-muted: #64748b;
-  --color-bg: #ffffff;
-  --color-bg-hover: #f1f5f9;
-  --color-bg-subtle: #ffffff;
-  --color-border: #e2e8f0;
-  --color-primary: #0ea5e9;
+  --color-text: var(--foreground);
+  --color-text-muted: var(--text-muted);
+  --color-bg-hover: var(--overlay-hover);
+  --color-bg-subtle: transparent;
+  --color-border: var(--glass-border);
+  --color-border-strong: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-soft: color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .calendar-dot {
@@ -141,7 +134,8 @@
 }
 
 .react-calendar__tile--has-visit .calendar-dot {
-  background-color: #f59e0b; /* A different color for emphasis */
+  width: 6px;
+  height: 6px;
 }
 
 /* Make sure the tile content is aligned */

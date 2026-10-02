@@ -119,6 +119,24 @@
   box-shadow: var(--shadow-sm);
 }
 
+/*
+ * 主役の操作（新規登録）だけを塗りのボタンにし、テーマ切替やメニューと
+ * 同じ重みに並ばないようにする。文字色は .btn-primary と同じく白で固定する。
+ * modal.css の .mobile-menu-btn が後から読み込まれるため、クラスを重ねて詳細度を上げる。
+ */
+.sidebar-action-btn.sidebar-action-btn--primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
+  border-color: transparent;
+  color: var(--text-on-primary);
+  box-shadow: 0 2px 10px var(--primary-glow);
+}
+
+.sidebar-action-btn.sidebar-action-btn--primary:hover {
+  background: linear-gradient(135deg, var(--primary-hover) 0%, var(--accent-sauna) 100%);
+  color: var(--text-on-primary);
+  box-shadow: var(--shadow-sm), 0 0 14px var(--primary-glow);
+}
+
 .sidebar-action-btn:active {
   transform: translateY(0) scale(0.96);
 }
@@ -163,6 +181,9 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1.3rem 1.6rem;
+  /* 既定のスクロールバーは明るいグレーでパネルから浮くため、面の枠線と同じ色に揃える */
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
 }
 
 .mobile-toggle {

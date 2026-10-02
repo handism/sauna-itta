@@ -26,6 +26,7 @@ function VisitCompactItemComponent({
 }: VisitItemProps) {
   const visitCount = getVisitCount(visit);
   const thumbSrc = sanitizeImageUrl(visit.image);
+  const wishlist = isWishlist(visit);
 
   return (
     <div
@@ -61,11 +62,21 @@ function VisitCompactItemComponent({
               >
                 <ChevronRight size={14} />
               </span>
-              <span className="sauna-compact-title">
-                {visit.name}
-                {isWishlist(visit) && <WishlistChip />}
+              <span className="sauna-compact-text">
+                <span className="sauna-compact-title-row">
+                  <span className="sauna-compact-title">
+                    {visit.name}
+                    {wishlist && <WishlistChip />}
+                  </span>
+                  {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
+                </span>
+                {/* 折りたたんだ状態でも「何回・いつ行ったか」が一覧で比べられるようにする */}
+                {!wishlist && visit.date && (
+                  <span className="sauna-compact-meta">
+                    {visitCount}回 · 最終 {visit.date}
+                  </span>
+                )}
               </span>
-              {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
             </span>
             <span className="sauna-compact-side-info">
               {thumbSrc && (

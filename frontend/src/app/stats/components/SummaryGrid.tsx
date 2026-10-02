@@ -52,9 +52,20 @@ export function SummaryGrid({ stats }: SummaryGridProps) {
           <Map size={18} className={styles.statIconAccent} />
           <h3 id="stat-prefectures">都道府県制覇</h3>
         </div>
-        <p className={styles.statValue}>
-          {stats.prefectureCount} <span className={styles.statUnit}>/ 47 都道府県</span>
-        </p>
+        {stats.prefectureCount > 0 ? (
+          <p className={styles.statValue}>
+            {stats.prefectureCount} <span className={styles.statUnit}>/ 47 都道府県</span>
+          </p>
+        ) : (
+          /*
+            エリアが「錦糸町」のような地名だけだと都道府県を判定できず、常に 0 になる。
+            0 を大きく出すと「1 つも行っていない」と読めてしまうため、集計できない旨を伝える。
+          */
+          <>
+            <p className={styles.statValue}>-</p>
+            <p className={styles.statNote}>エリアに都道府県名を入れると集計されます</p>
+          </>
+        )}
       </article>
 
       <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-period">

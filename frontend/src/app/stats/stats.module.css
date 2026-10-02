@@ -12,12 +12,23 @@
 }
 
 /* Summary Grid */
+/*
+ * カードは 6 枚なので、列数は 6 の約数（6 / 3 / 2）に固定する。
+ * auto-fit にすると 5 列になる幅で 1 枚だけが次の行に取り残される。
+ */
 .summaryGrid {
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   margin-bottom: 1.75rem;
+}
+
+/* 内容幅の都合による境界（6 列で「記録期間」が 2 行に収まる幅） */
+@media (min-width: 1100px) {
+  .summaryGrid {
+    grid-template-columns: repeat(6, 1fr);
+  }
 }
 
 .statCard {
@@ -77,6 +88,14 @@
   font-size: var(--text-sm);
   font-weight: 600;
   opacity: 0.65;
+}
+
+/* 数値が出せない理由などの補足。カードの下端に小さく添える */
+.statNote {
+  margin: 0.35rem 0 0;
+  font-size: var(--text-2xs);
+  line-height: 1.4;
+  color: var(--text-muted);
 }
 
 /* Featured Grid (Home Sauna & Top Saunas) */
@@ -352,6 +371,34 @@
   filter: brightness(1.08);
 }
 
+/*
+ * ランキングの各行に並ぶ「地図で見る」。塗りのボタンが 5 つ並ぶと施設名より目立つため、
+ * 枠線だけの控えめな見た目にし、ホバー・フォーカスしたときだけ塗る。
+ */
+.mapJumpLinkQuiet {
+  color: var(--foreground);
+  background: transparent;
+  border-color: var(--glass-border);
+  box-shadow: none;
+}
+
+.mapJumpLinkQuiet svg {
+  color: var(--primary);
+}
+
+.mapJumpLinkQuiet:hover,
+.mapJumpLinkQuiet:focus-visible {
+  color: var(--text-on-primary);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent-sauna) 100%);
+  border-color: var(--primary);
+  filter: none;
+}
+
+.mapJumpLinkQuiet:hover svg,
+.mapJumpLinkQuiet:focus-visible svg {
+  color: inherit;
+}
+
 .topSaunaMetaRow {
   display: flex;
   gap: 10px;
@@ -382,7 +429,8 @@
 .topSaunaBarFill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--accent-water-deep), var(--accent-water));
+  /* 統計画面の主役の色（アンバー）に揃える。水色は満足度・訪問エリアなど別の意味で使っている */
+  background: linear-gradient(90deg, var(--accent-sauna), var(--primary));
 }
 
 /* Charts Wrap & Grid */

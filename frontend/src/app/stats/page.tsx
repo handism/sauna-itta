@@ -138,10 +138,12 @@ export default function StatsPage() {
               <TagCloudCard visits={visits} />
             </div>
 
-            {/* 5. Prefecture Conquest */}
-            <div className={styles.sectionWrap}>
-              <PrefectureSection prefectures={stats.prefectures} count={stats.prefectureCount} />
-            </div>
+            {/* 5. Prefecture Conquest（0 件のとき中身は描画されないため、余白ごと出さない） */}
+            {stats.prefectureCount > 0 && (
+              <div className={styles.sectionWrap}>
+                <PrefectureSection prefectures={stats.prefectures} count={stats.prefectureCount} />
+              </div>
+            )}
 
             {/* 6. Calendar View */}
             <div className={styles.sectionWrap}>
