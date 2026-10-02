@@ -195,6 +195,8 @@ export function SidebarHeaderView({
             >
               <Camera size={15} /> シェア用ビュー
             </button>
+            {/* 「見せる」「データの出し入れ」「アカウント」で区切り、ログアウトの誤タップを防ぐ */}
+            <div role="separator" className="mobile-menu-separator" />
             <button
               type="button"
               role="menuitem"
@@ -229,6 +231,7 @@ export function SidebarHeaderView({
                 </>
               )}
             </button>
+            {onLogout && <div role="separator" className="mobile-menu-separator" />}
             {onLogout && (
               <button
                 type="button"

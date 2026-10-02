@@ -124,7 +124,7 @@ export default function RatingDistributionChart({
           </div>
           <div
             style={{
-              fontSize: "0.72rem",
+              fontSize: "var(--text-2xs)",
               opacity: 0.65,
               marginTop: "2px",
               letterSpacing: "0.05em",

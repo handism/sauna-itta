@@ -30,7 +30,7 @@ describe("SaunaMarkerPopup", () => {
     expect(screen.getByText("東京都渋谷区")).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "満足度: 5/5" })).toBeInTheDocument();
     // history が 2 件なので 2 回目と表示する（visitCount 未設定でも履歴から導出する）
-    expect(screen.getByText("・2回目")).toBeInTheDocument();
+    expect(screen.getByText("訪問 2回目")).toBeInTheDocument();
     expect(screen.queryByText("行きたい")).not.toBeInTheDocument();
   });
 
@@ -53,7 +53,8 @@ describe("SaunaMarkerPopup", () => {
     const onEdit = vi.fn();
     render(<SaunaMarkerPopup visit={visit} isWishlist={false} onEdit={onEdit} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "編集する" }));
+    // 一覧カードと同じく、どの記録の編集かを名前に含める
+    fireEvent.click(screen.getByRole("button", { name: "天空サウナの記録を編集" }));
 
     expect(onEdit).toHaveBeenCalledWith(visit);
   });

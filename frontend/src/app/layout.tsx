@@ -55,11 +55,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" suppressHydrationWarning>
+    // --font-outfit は html に定義すること。base.css の --font-main は :root で
+    // var(--font-outfit) を参照するため、body に付けると :root では未定義になり、
+    // --font-main ごと無効値になってブラウザ既定の書体へ落ちる（Outfit も日本語の指定も効かない）
+    <html lang="ja" className={outfit.variable} suppressHydrationWarning>
       <head>
         <Script id="theme-init" strategy="beforeInteractive">{THEME_INIT_SCRIPT}</Script>
       </head>
-      <body className={outfit.variable}>{children}</body>
+      <body>{children}</body>
     </html>
   );
 }

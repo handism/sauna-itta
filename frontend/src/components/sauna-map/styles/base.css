@@ -98,6 +98,24 @@
   --backdrop-blur-sm: blur(6px);
   
   /*
+   * デザイントークン: 文字サイズ
+   * font-size は直書きせず、必ずこの段階から選ぶこと（styles/tokens.test.ts が検査します）。
+   * 0.01rem 刻みの値が増えると見出し・本文・補足の強弱が画面ごとにずれるため、
+   * 新しい段階を足す前に既存の段階で足りないかを確認すること。
+   * 2xs/xs: 補足・バッジ・メタ情報  sm/md: ラベル・ボタン・小さな本文
+   * base/lg: 本文・メニュー項目   xl/2xl/3xl: 見出し・強調する数値
+   */
+  --text-2xs: 0.7rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8rem;
+  --text-md: 0.85rem;
+  --text-base: 0.9rem;
+  --text-lg: 1rem;
+  --text-xl: 1.15rem;
+  --text-2xl: 1.25rem;
+  --text-3xl: 1.5rem;
+
+  /*
    * --font-outfit は layout.tsx の next/font が注入する（ラテン文字のみ）。
    * 日本語はOutfitに字形が無いため後続へフォールバックする。OS任せにすると
    * Windowsで旧来のゴシックになる等端末差が大きいので、各OSの日本語ゴシックを明示する。
@@ -249,7 +267,7 @@ body.allow-page-scroll {
   color: var(--foreground);
   opacity: 0.6;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
 }
 
 .chart-empty-state svg {

@@ -52,6 +52,18 @@ describe("SidebarHeaderView", () => {
     expect(onLogout).toHaveBeenCalledTimes(1);
   });
 
+  it("メニューはシェア・データ・アカウントの間を区切り線で分ける", () => {
+    const { rerender } = render(<SidebarHeaderView {...defaultProps} isMobileMenuOpen />);
+    expect(screen.getAllByRole("separator")).toHaveLength(1);
+
+    rerender(<SidebarHeaderView {...defaultProps} isMobileMenuOpen onLogout={vi.fn()} />);
+    const menu = screen.getByRole("menu");
+    const order = Array.from(menu.children).map((el) =>
+      el.getAttribute("role") === "separator" ? "---" : el.textContent?.trim()
+    );
+    expect(order).toEqual(["シェア用ビュー", "---", "エクスポート", "インポート", "---", "ログアウト"]);
+  });
+
   it("書き出し中はエクスポートを押せない", () => {
     render(<SidebarHeaderView {...defaultProps} isMobileMenuOpen exporting />);
     expect(screen.getByRole("menuitem", { name: /書き出し中/ })).toBeDisabled();

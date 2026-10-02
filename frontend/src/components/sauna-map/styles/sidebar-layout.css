@@ -64,7 +64,7 @@
   color: var(--foreground);
   font-family: inherit;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
   cursor: pointer;
   box-shadow: var(--shadow-lg);
   transition: all var(--transition-normal);
@@ -78,7 +78,7 @@
 }
 
 .desktop-sidebar-open-btn .open-btn-icon {
-  font-size: 1.2rem;
+  font-size: var(--text-xl);
 }
 
 .desktop-sidebar-open-btn .open-btn-text {
@@ -86,7 +86,7 @@
 }
 
 .desktop-sidebar-open-btn .open-btn-arrow {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   opacity: 0.7;
   margin-left: 0.2rem;
 }
@@ -146,14 +146,14 @@
 
 .sidebar-header-main h1 {
   color: var(--primary);
-  font-size: 1.4rem;
+  font-size: var(--text-3xl);
   line-height: 1.2;
   white-space: nowrap;
 }
 
 .sidebar-header-main p {
   margin-top: 0.2rem;
-  font-size: 0.82rem;
+  font-size: var(--text-sm);
   opacity: 0.76;
   white-space: nowrap;
 }
@@ -226,13 +226,13 @@
   }
 
   .sidebar-header-main h1 {
-    font-size: 1.15rem;
+    font-size: var(--text-xl);
     line-height: 1.3;
     white-space: nowrap;
   }
 
   .sidebar-header-main p {
-    font-size: 0.8rem;
+    font-size: var(--text-sm);
     white-space: nowrap;
   }
 
@@ -259,7 +259,7 @@
     box-shadow: var(--shadow-sm);
     z-index: calc(var(--z-sidebar) + 2);
     pointer-events: auto;
-    font-size: 1.4rem;
+    font-size: var(--text-3xl);
     transition: transform 0.3s cubic-bezier(0.33, 1, 0.68, 1);
     -webkit-tap-highlight-color: transparent;
   }

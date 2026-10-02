@@ -15,6 +15,16 @@
   background: var(--background) !important;
 }
 
+/*
+ * Leaflet 既定の指定を打ち消す。leaflet.css は SaunaMap.tsx から本ファイルより後に
+ * 読み込まれるため、同じ詳細度では負ける。必ず親クラスを付けて詳細度を上げること。
+ * - font-family: 既定の "Helvetica Neue", Arial のままだとポップアップだけ
+ *   Outfit と日本語書体の指定（--font-main）が効かない
+ */
+.map-container .leaflet-container {
+  font-family: var(--font-main);
+}
+
 .dark-map-tiles {
   filter: var(--map-filter);
 }
@@ -254,7 +264,7 @@
   height: 48px !important;
   line-height: 1 !important;
   padding: 0 !important;
-  font-size: 1.25rem !important;
+  font-size: var(--text-2xl) !important;
   cursor: pointer;
   outline: none;
   box-sizing: border-box !important;
@@ -274,7 +284,7 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   color: var(--foreground);
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -323,7 +333,7 @@
   align-items: center;
   gap: 0.25rem;
   margin-left: 0.5rem;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--accent-wishlist);
 }
 
@@ -332,70 +342,74 @@
 }
 
 .popup-area {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   opacity: 0.7;
   margin-bottom: 0.25rem;
 }
 
 .popup-rating {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   margin-bottom: 0.5rem;
 }
 
 .popup-comment {
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   opacity: 0.86;
   white-space: pre-wrap;
 }
 
+/* 日付・訪問回数は VisitMetaInfo（一覧カードと共通）。ポップアップでは余白だけ変える */
 .popup-meta {
-  display: block;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   margin-top: 0.5rem;
+  font-size: var(--text-xs);
   opacity: 0.55;
 }
 
+/*
+ * Leaflet の .leaflet-popup-content p（margin: 1.3em 0）と .leaflet-container a（#0078A8）が
+ * 共通部品のスタイルより詳細度が高いため、ポップアップ内では詳細度を上げて戻す
+ */
+.leaflet-popup-content .visit-comment-text {
+  margin: 0;
+}
+
+.leaflet-container a.route-link {
+  color: var(--primary);
+}
+
+/* 経路リンクは RouteLink（.route-link と併用）。ポップアップでは幅いっぱいに広げる */
 .popup-link {
+  width: 100%;
+  margin-top: 0.75rem;
+  background: var(--glass);
+  box-sizing: border-box;
+}
+
+.popup-edit-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  margin-top: 0.75rem;
-  padding: 0.62rem;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-sm);
-  color: var(--primary);
-  text-align: center;
-  font-size: 0.84rem;
-  text-decoration: none;
-  min-height: 42px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.popup-link-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-}
-
-.popup-link-text {
-  display: inline-flex;
-  align-items: center;
-  line-height: 1;
-}
-
-.popup-edit-btn {
   margin-top: 0.5rem;
   width: 100%;
   padding: 0.62rem;
   background: var(--primary);
   border: none;
   border-radius: var(--radius-sm);
-  color: #fff;
+  color: var(--text-on-primary);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 600;
   cursor: pointer;
   min-height: 42px;
+}
+
+.popup-edit-btn:hover {
+  background: var(--primary-hover);
 }
 
 /* Pin Hint: モバイルで場所選択中に表示するフローティング案内バー */
@@ -421,7 +435,7 @@
 }
 
 .pin-hint-icon {
-  font-size: 1.6rem;
+  font-size: var(--text-3xl);
   flex-shrink: 0;
 }
 
@@ -434,12 +448,12 @@
 }
 
 .pin-hint-text strong {
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
   color: var(--primary);
 }
 
 .pin-hint-text span {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   opacity: 0.6;
   color: var(--foreground);
 }
@@ -453,7 +467,7 @@
   height: 2.5rem;
   border-radius: 50%;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: var(--text-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -506,7 +520,7 @@
   .map-cluster-control-btn {
     width: 48px !important;
     height: 48px !important;
-    font-size: 1.25rem !important;
+    font-size: var(--text-2xl) !important;
   }
 
   .pin-hint {
@@ -548,7 +562,7 @@
   box-shadow: var(--shadow-marker), 0 0 16px var(--primary-glow);
   color: #ffffff;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: var(--text-md);
   cursor: pointer;
   transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
 }
@@ -562,14 +576,14 @@
   background: linear-gradient(135deg, #ff7a00 0%, #e64a19 100%);
   width: 46px;
   height: 46px;
-  font-size: 0.9rem;
+  font-size: var(--text-base);
 }
 
 .sauna-cluster--large {
   background: linear-gradient(135deg, #ff5252 0%, #d50000 100%);
   width: 50px;
   height: 50px;
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
 }
 
 .sauna-cluster-icon {
@@ -596,7 +610,7 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   color: var(--foreground);
-  font-size: 1.25rem;
+  font-size: var(--text-2xl);
   cursor: pointer;
   display: flex;
   align-items: center;

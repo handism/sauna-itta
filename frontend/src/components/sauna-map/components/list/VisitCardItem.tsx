@@ -74,9 +74,10 @@ function VisitCardItemComponent({
               e.stopPropagation();
               onEdit(visit);
             }}
+            aria-label={`${visit.name}の記録を編集`}
             title="記録を編集"
           >
-            <Pencil size={14} /> 編集
+            <Pencil size={14} aria-hidden="true" /> 編集
           </button>
         </div>
       </div>

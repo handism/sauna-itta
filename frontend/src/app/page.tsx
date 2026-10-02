@@ -19,7 +19,7 @@ function MapLoadingPlaceholder() {
       }}
     >
       <Loader2 size={28} className="spin-icon" />
-      <span style={{ fontSize: "0.85rem", opacity: 0.7 }}>地図を読み込み中...</span>
+      <span style={{ fontSize: "var(--text-md)", opacity: 0.7 }}>地図を読み込み中...</span>
     </div>
   );
 }

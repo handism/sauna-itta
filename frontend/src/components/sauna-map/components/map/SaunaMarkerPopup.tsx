@@ -1,7 +1,14 @@
-import { Navigation } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { SaunaVisit } from "../../types";
-import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../../utils";
-import { RatingStars, VisitComment, VisitImagePreview, WishlistChip } from "../common/common";
+import { getVisitCount, sanitizeImageUrl } from "../../utils";
+import {
+  RatingStars,
+  RouteLink,
+  VisitComment,
+  VisitImagePreview,
+  VisitMetaInfo,
+  WishlistChip,
+} from "../common/common";
 
 interface SaunaMarkerPopupProps {
   visit: SaunaVisit;
@@ -10,6 +17,10 @@ interface SaunaMarkerPopupProps {
   onOpenImage?: (src: string) => void;
 }
 
+/**
+ * 地図マーカーのポップアップ。日付・訪問回数・経路リンク・コメントは一覧カードと同じ
+ * 共通部品を使い、文言と表示の条件を揃える（個別に組むと片方だけ表記が変わる）。
+ */
 export function SaunaMarkerPopup({ visit, isWishlist, onEdit, onOpenImage }: SaunaMarkerPopupProps) {
   const visitCount = getVisitCount(visit);
   const imageUrl = sanitizeImageUrl(visit.image);
@@ -28,23 +39,16 @@ export function SaunaMarkerPopup({ visit, isWishlist, onEdit, onOpenImage }: Sau
         onOpenImage={onOpenImage || (() => {})}
       />
       <VisitComment text={visit.comment} className="popup-comment" />
-      <small className="popup-meta">
-        {visit.date}
-        {visitCount > 1 && <span>・{visitCount}回目</span>}
-      </small>
-      <a
-        href={getDirectionsUrl(visit.lat, visit.lng)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="popup-link"
+      <VisitMetaInfo date={visit.date} visitCount={visitCount} className="popup-meta" />
+      <RouteLink lat={visit.lat} lng={visit.lng} className="route-link popup-link" />
+      <button
+        type="button"
+        onClick={() => onEdit(visit)}
+        className="popup-edit-btn"
+        aria-label={`${visit.name}の記録を編集`}
+        title="記録を編集"
       >
-        <span className="popup-link-icon">
-          <Navigation size={14} />
-        </span>
-        <span className="popup-link-text">ここへ行く</span>
-      </a>
-      <button onClick={() => onEdit(visit)} className="popup-edit-btn">
-        編集する
+        <Pencil size={14} aria-hidden="true" /> 編集
       </button>
     </div>
   );

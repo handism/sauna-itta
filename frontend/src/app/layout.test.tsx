@@ -65,6 +65,18 @@ describe("layout", () => {
         },
       });
     });
+
+    it("フォント変数のクラスは body ではなく html に付けること", () => {
+      // --font-main は :root で var(--font-outfit) を参照する。body に付けると :root では
+      // 未定義になり、--font-main ごと無効値になってブラウザ既定の書体へ落ちる
+      const layout = RootLayout({ children: <main /> }) as React.ReactElement<{
+        className?: string;
+        children: React.ReactElement<{ className?: string }>[];
+      }>;
+      expect(layout.props.className).toBe("--font-outfit");
+      const body = layout.props.children.find((child) => child.type === "body");
+      expect(body?.props.className).toBeUndefined();
+    });
   });
 });
 

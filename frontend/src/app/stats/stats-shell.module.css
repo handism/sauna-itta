@@ -36,7 +36,7 @@
   gap: 6px;
   margin-bottom: 0.35rem;
   color: var(--primary);
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -96,7 +96,7 @@
   gap: 8px;
   padding: 0 1.2rem;
   border-radius: var(--radius-full);
-  font-size: 0.9rem;
+  font-size: var(--text-base);
   font-weight: 600;
   text-decoration: none;
 }
@@ -117,11 +117,12 @@
 
 .emptyState p {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--text-lg);
   opacity: 0.9;
 }
 
-@media (max-width: 720px) {
+/* モバイル境界は地図画面（JS の 768px 未満）と揃える */
+@media (max-width: 767px) {
   .main {
     padding: 1.25rem 1rem 3.5rem;
   }
@@ -133,7 +134,7 @@
 
   .eyebrow {
     margin-bottom: 0.2rem;
-    font-size: 0.7rem;
+    font-size: var(--text-2xs);
   }
 
   .description h1 {
@@ -155,7 +156,7 @@
     padding: 0 0.8rem;
     flex-shrink: 0;
     gap: 5px;
-    font-size: 0.8rem;
+    font-size: var(--text-sm);
     white-space: nowrap;
   }
 }

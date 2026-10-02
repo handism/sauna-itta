@@ -209,6 +209,49 @@ describe("CSS デザイントークンの規約", () => {
     expect(sidebarLayout).toContain("@media (min-width: 768px)");
   });
 
+  it("font-size は --text-* トークンか、理由のある例外だけであること", () => {
+    const calendar = {
+      file: "app/stats/calendar.css",
+      css: readFileSync(resolve(STYLE_DIR, "../../../app/stats/calendar.css"), "utf8"),
+    };
+    /*
+     * 文字サイズのトークンにしない値。増やす場合は必ず理由を添えること。
+     * 10px: マーカーのピル。L.divIcon の固定サイズの枠に収める
+     * 22px: Leaflet のポップアップ閉じるボタンの「×」。32px の枠に合わせる
+     * 16px: モバイルの入力欄。16px 未満だと iOS Safari がフォーカス時に拡大する
+     */
+    const ALLOWED_LITERALS = new Set(["10px", "22px", "16px"]);
+    const offenders = [...allStyleFiles, calendar].flatMap(({ file, css }) =>
+      [...css.matchAll(/font-size:\s*([^;!]+?)\s*(?:!important)?;/g)]
+        .map((m) => m[1])
+        .filter(
+          (value) =>
+            !/^var\(--text-[a-z0-9]+\)$/.test(value) &&
+            // 見出しの流体サイズ。上下限は rem で持つ
+            !value.startsWith("clamp(") &&
+            value !== "inherit" &&
+            !ALLOWED_LITERALS.has(value)
+        )
+        .map((value) => `${file}: ${value}`)
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("max-width のブレークポイントはモバイル境界（767px）か、理由のある内容幅だけであること", () => {
+    // 画面ごとに境界がずれると、同じ幅でも片方だけモバイル表示（44px ターゲット）になる
+    const CONTENT_BREAKPOINTS: Record<string, string> = {
+      "app/stats/stats.module.css:860": "featuredGrid の 2 列カードが窮屈になる幅で 1 列にする",
+    };
+    const offenders = allStyleFiles.flatMap(({ file, css }) =>
+      [...css.matchAll(/@media \(max-width: (\d+)px\)/g)]
+        .map((m) => `${file}:${m[1]}`)
+        .filter((key) => !key.endsWith(":767") && !(key in CONTENT_BREAKPOINTS))
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
   it("見落としやすいモバイル操作にも 44px のターゲットが定義されていること", () => {
     const bottomSheet = readFileSync(join(STYLE_DIR, "bottom-sheet.css"), "utf8");
     const visitCard = readFileSync(join(STYLE_DIR, "visit-card.css"), "utf8");
@@ -224,7 +267,7 @@ describe("CSS デザイントークンの規約", () => {
       /@media \(max-width: 767px\)[\s\S]*\.history-delete-btn\s*\{[^}]*width:\s*44px;/
     );
     expect(statsShell).toMatch(
-      /@media \(max-width: 720px\)[\s\S]*\.backLink\s*\{[^}]*height:\s*44px;/
+      /@media \(max-width: 767px\)[\s\S]*\.backLink\s*\{[^}]*height:\s*44px;/
     );
   });
 });

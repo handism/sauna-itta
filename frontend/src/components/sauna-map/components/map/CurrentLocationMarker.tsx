@@ -47,7 +47,7 @@ export function CurrentLocationMarker({ location }: CurrentLocationMarkerProps) 
       )}
       <Marker position={[location.lat, location.lng]} icon={icon}>
         <Popup autoPan={false}>
-          <div style={{ fontWeight: 600, fontSize: "0.88rem", textAlign: "center", padding: "2px 4px" }}>
+          <div style={{ fontWeight: 600, fontSize: "var(--text-md)", textAlign: "center", padding: "2px 4px" }}>
             📍 現在地
           </div>
         </Popup>
