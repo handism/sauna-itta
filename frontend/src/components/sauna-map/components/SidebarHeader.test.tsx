@@ -56,4 +56,64 @@ describe("SidebarHeaderView", () => {
     render(<SidebarHeaderView {...defaultProps} isMobileMenuOpen exporting />);
     expect(screen.getByRole("menuitem", { name: /書き出し中/ })).toBeDisabled();
   });
+
+  describe("メニューのキーボード操作", () => {
+    const openMenu = (props: Partial<typeof defaultProps> = {}) =>
+      render(<SidebarHeaderView {...defaultProps} {...props} isMobileMenuOpen />);
+
+    it("トリガーはメニューを開くことを公開し、開いたら先頭の項目へフォーカスする", () => {
+      openMenu();
+      const trigger = screen.getByRole("button", { name: "メニュー" });
+      expect(trigger).toHaveAttribute("aria-haspopup", "menu");
+      expect(trigger).toHaveAttribute("aria-controls", screen.getByRole("menu").id);
+      expect(screen.getByRole("menu")).toHaveAccessibleName("メニュー");
+      expect(screen.getByRole("menuitem", { name: /シェア用ビュー/ })).toHaveFocus();
+    });
+
+    it("↑↓ は端で循環し、Home／End で両端へ移動する。押せない項目は飛ばす", () => {
+      openMenu({ exporting: true });
+      const menu = screen.getByRole("menu");
+      const share = screen.getByRole("menuitem", { name: /シェア用ビュー/ });
+      const importItem = screen.getByRole("menuitem", { name: /インポート/ });
+
+      fireEvent.keyDown(menu, { key: "ArrowDown" });
+      expect(importItem).toHaveFocus();
+      fireEvent.keyDown(menu, { key: "ArrowDown" });
+      expect(share).toHaveFocus();
+      fireEvent.keyDown(menu, { key: "ArrowUp" });
+      expect(importItem).toHaveFocus();
+      fireEvent.keyDown(menu, { key: "Home" });
+      expect(share).toHaveFocus();
+      fireEvent.keyDown(menu, { key: "End" });
+      expect(importItem).toHaveFocus();
+    });
+
+    it("Escape で閉じてトリガーへフォーカスを戻す", () => {
+      const onCloseMobileMenu = vi.fn();
+      openMenu({ onCloseMobileMenu });
+      fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+      expect(onCloseMobileMenu).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole("button", { name: "メニュー" })).toHaveFocus();
+    });
+
+    it("Tab で確定せずに閉じる", () => {
+      const onCloseMobileMenu = vi.fn();
+      const onOpenShareView = vi.fn();
+      openMenu({ onCloseMobileMenu, onOpenShareView });
+      fireEvent.keyDown(screen.getByRole("menu"), { key: "Tab" });
+      expect(onCloseMobileMenu).toHaveBeenCalledTimes(1);
+      expect(onOpenShareView).not.toHaveBeenCalled();
+    });
+
+    it("項目を選ぶとフォーカスをトリガーへ戻してから実行する", () => {
+      const onOpenShareView = vi.fn(() => {
+        expect(screen.getByRole("button", { name: "メニュー" })).toHaveFocus();
+      });
+      const onCloseMobileMenu = vi.fn();
+      openMenu({ onOpenShareView, onCloseMobileMenu });
+      fireEvent.click(screen.getByRole("menuitem", { name: /シェア用ビュー/ }));
+      expect(onOpenShareView).toHaveBeenCalledTimes(1);
+      expect(onCloseMobileMenu).toHaveBeenCalledTimes(1);
+    });
+  });
 });

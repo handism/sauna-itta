@@ -6,6 +6,7 @@ import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import {
   RatingStars,
   RouteLink,
+  VisitComment,
   VisitImagePreview,
   VisitMetaInfo,
   VisitTagList,
@@ -91,7 +92,7 @@ function VisitCompactItemComponent({
             tags={visit.tags}
             onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
           />
-          {visit.comment && <p className="sauna-card-comment">{visit.comment}</p>}
+          <VisitComment text={visit.comment} className="sauna-card-comment" />
           <VisitImagePreview
             src={thumbSrc}
             alt={`${visit.name}の写真`}

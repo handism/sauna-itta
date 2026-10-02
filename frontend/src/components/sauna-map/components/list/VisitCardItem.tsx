@@ -5,6 +5,7 @@ import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import {
   RatingStars,
   RouteLink,
+  VisitComment,
   VisitImagePreview,
   VisitMetaInfo,
   VisitTagList,
@@ -85,7 +86,7 @@ function VisitCardItemComponent({
         tags={visit.tags}
         onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
       />
-      <p className="sauna-card-comment">{visit.comment}</p>
+      <VisitComment text={visit.comment} className="sauna-card-comment" />
       <VisitImagePreview
         src={imageSrc}
         alt={`${visit.name}の写真`}

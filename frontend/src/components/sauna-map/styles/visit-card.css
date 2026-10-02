@@ -142,11 +142,6 @@
   font-size: 0.9rem;
   color: var(--foreground);
   opacity: 0.7;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .sauna-img-preview-btn {
@@ -303,6 +298,47 @@
 .sauna-card-comment {
   color: var(--foreground);
   white-space: pre-wrap;
+}
+
+/*
+ * 訪問コメントの省略表示（一覧カード・コンパクト行・地図ポップアップ共通）。
+ * 省略は必ず VisitComment 経由にし、ここだけで line-clamp を掛けないこと
+ * （「続きを読む」が出ず、全文が編集画面でしか読めなくなります）。
+ */
+.visit-comment {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.visit-comment-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.visit-comment-text.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.visit-comment-toggle {
+  min-height: 24px;
+  padding: 0.1rem 0;
+  border: none;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.visit-comment-toggle:hover {
+  text-decoration: underline;
 }
 
 .sauna-card-meta {
@@ -554,7 +590,8 @@
   .sauna-card-select-btn,
   .sauna-card-edit-btn,
   .sauna-card-deselect-btn,
-  .history-delete-btn {
+  .history-delete-btn,
+  .visit-comment-toggle {
     min-height: 44px;
   }
 

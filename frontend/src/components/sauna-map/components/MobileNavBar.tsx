@@ -8,7 +8,9 @@ export interface MobileNavBarProps {
   onSelectTab: (tab: MobileTab) => void;
   snapPosition: SheetSnapPosition;
   isAdding: boolean;
+  /** 詳細フィルターの開閉。押すたびに開閉が切り替わる */
   onOpenFilter: () => void;
+  isFilterPanelOpen: boolean;
   isFilterActive: boolean;
 }
 
@@ -17,6 +19,7 @@ export function MobileNavBar({
   snapPosition,
   isAdding,
   onOpenFilter,
+  isFilterPanelOpen,
   isFilterActive,
 }: MobileNavBarProps) {
   const isMapActive = !isAdding && snapPosition === "min";
@@ -55,17 +58,26 @@ export function MobileNavBar({
         <span className="mobile-nav-label">追加</span>
       </button>
 
+      {/*
+        パネルの開閉ボタンなので状態は aria-expanded で公開する（デスクトップの
+        FilterToggleButton と同じ）。aria-pressed にすると「絞り込みのオン／オフ」を
+        切り替えるトグルとして読み上げられ、押した結果と食い違う。
+        絞り込み中であることはドットの見た目に加えて、読み上げ用の補足で伝える。
+      */}
       <button
         type="button"
-        className={`mobile-nav-item ${isFilterActive ? "is-active" : ""}`}
-        aria-pressed={isFilterActive}
+        className={`mobile-nav-item ${isFilterPanelOpen || isFilterActive ? "is-active" : ""}`}
+        aria-expanded={isFilterPanelOpen}
         onClick={onOpenFilter}
       >
         <span className="mobile-nav-icon">
           <SlidersHorizontal size={19} />
-          {isFilterActive && <span className="filter-active-dot" />}
+          {isFilterActive && <span className="filter-active-dot" aria-hidden="true" />}
         </span>
-        <span className="mobile-nav-label">フィルター</span>
+        <span className="mobile-nav-label">
+          フィルター
+          {isFilterActive && <span className="sr-only">（絞り込み中）</span>}
+        </span>
       </button>
 
       <Link

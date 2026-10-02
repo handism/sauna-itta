@@ -35,6 +35,7 @@ function SaunaMapContent() {
     mounted,
     theme,
     isDeleteConfirmOpen,
+    isFilterPanelOpen,
     toggleFilterPanel,
     closeDeleteConfirm,
     toast,
@@ -115,6 +116,7 @@ function SaunaMapContent() {
           snapPosition={snapPosition}
           isAdding={isAdding}
           onOpenFilter={handleMobileFilterClick}
+          isFilterPanelOpen={isFilterPanelOpen}
           isFilterActive={isFilterActive}
         />
       )}

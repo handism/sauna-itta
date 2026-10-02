@@ -1,6 +1,6 @@
 "use client";
 
-import { RefObject } from "react";
+import { KeyboardEvent, RefObject, useEffect, useId, useRef } from "react";
 import Link from "next/link";
 import {
   Camera,
@@ -56,6 +56,64 @@ export function SidebarHeaderView({
   onLogout,
   userEmail,
 }: SidebarHeaderViewProps) {
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
+  const menuTriggerId = useId();
+
+  // WAI-ARIA の Menu Button パターン: 開いたら先頭の項目へフォーカスを移す
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    getEnabledMenuItems(menuRef.current)[0]?.focus();
+  }, [isMobileMenuOpen]);
+
+  /**
+   * 項目の実行前にフォーカスをトリガーへ戻す。メニューが消えるとフォーカスが body へ
+   * 落ちるため。シェア用ビュー等のモーダルを閉じたときも、ここへ戻ってくる。
+   */
+  const selectMenuItem = (action: () => void) => {
+    menuTriggerRef.current?.focus();
+    action();
+    onCloseMobileMenu();
+  };
+
+  const handleMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      onCloseMobileMenu();
+      menuTriggerRef.current?.focus();
+      return;
+    }
+    if (e.key === "Tab") {
+      // 確定せず閉じ、フォーカスは通常の Tab 移動に任せる
+      onCloseMobileMenu();
+      return;
+    }
+
+    const items = getEnabledMenuItems(e.currentTarget);
+    if (items.length === 0) return;
+    const current = items.indexOf(document.activeElement as HTMLButtonElement);
+    let next: number;
+    switch (e.key) {
+      case "ArrowDown":
+        next = (current + 1) % items.length;
+        break;
+      case "ArrowUp":
+        next = (current - 1 + items.length) % items.length;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = items.length - 1;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    items[next].focus();
+  };
+
   return (
     <div className="sidebar-header">
       <div className="sidebar-header-main">
@@ -106,11 +164,15 @@ export function SidebarHeaderView({
           {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
         </button>
         <button
+          ref={menuTriggerRef}
+          id={menuTriggerId}
           type="button"
           className="mobile-menu-btn sidebar-action-btn"
           onClick={onToggleMobileMenu}
           aria-label="メニュー"
+          aria-haspopup="menu"
           aria-expanded={isMobileMenuOpen}
+          aria-controls={isMobileMenuOpen ? menuId : undefined}
         >
           <MoreHorizontal size={18} />
         </button>
@@ -120,25 +182,25 @@ export function SidebarHeaderView({
               isSidebarExpanded ? "mobile-menu-dropdown--down" : ""
             }`}
             role="menu"
+            id={menuId}
+            ref={menuRef}
+            aria-labelledby={menuTriggerId}
+            onKeyDown={handleMenuKeyDown}
           >
             <button
               type="button"
               role="menuitem"
-              onClick={() => {
-                onOpenShareView();
-                onCloseMobileMenu();
-              }}
+              tabIndex={-1}
+              onClick={() => selectMenuItem(onOpenShareView)}
             >
               <Camera size={15} /> シェア用ビュー
             </button>
             <button
               type="button"
               role="menuitem"
+              tabIndex={-1}
               disabled={exporting}
-              onClick={() => {
-                onExportVisits();
-                onCloseMobileMenu();
-              }}
+              onClick={() => selectMenuItem(onExportVisits)}
             >
               {exporting ? (
                 <>
@@ -153,11 +215,9 @@ export function SidebarHeaderView({
             <button
               type="button"
               role="menuitem"
+              tabIndex={-1}
               disabled={importing}
-              onClick={() => {
-                onImportClick();
-                onCloseMobileMenu();
-              }}
+              onClick={() => selectMenuItem(onImportClick)}
             >
               {importing ? (
                 <>
@@ -173,11 +233,9 @@ export function SidebarHeaderView({
               <button
                 type="button"
                 role="menuitem"
+                tabIndex={-1}
                 title={userEmail ?? undefined}
-                onClick={() => {
-                  onLogout();
-                  onCloseMobileMenu();
-                }}
+                onClick={() => selectMenuItem(onLogout)}
               >
                 <LogOut size={15} />
                 <span className="mobile-menu-item-label">
@@ -190,5 +248,13 @@ export function SidebarHeaderView({
         )}
       </div>
     </div>
+  );
+}
+
+/** 矢印キーで移動できるメニュー項目（処理中で押せない項目は飛ばす） */
+function getEnabledMenuItems(menu: HTMLElement | null): HTMLButtonElement[] {
+  if (!menu) return [];
+  return Array.from(
+    menu.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
   );
 }

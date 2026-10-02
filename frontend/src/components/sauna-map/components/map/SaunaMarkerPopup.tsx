@@ -1,7 +1,7 @@
 import { Navigation } from "lucide-react";
 import { SaunaVisit } from "../../types";
 import { getDirectionsUrl, getVisitCount, sanitizeImageUrl } from "../../utils";
-import { RatingStars, VisitImagePreview, WishlistChip } from "../common/common";
+import { RatingStars, VisitComment, VisitImagePreview, WishlistChip } from "../common/common";
 
 interface SaunaMarkerPopupProps {
   visit: SaunaVisit;
@@ -27,7 +27,7 @@ export function SaunaMarkerPopup({ visit, isWishlist, onEdit, onOpenImage }: Sau
         alt={`${visit.name}の写真`}
         onOpenImage={onOpenImage || (() => {})}
       />
-      <p className="popup-comment">{visit.comment}</p>
+      <VisitComment text={visit.comment} className="popup-comment" />
       <small className="popup-meta">
         {visit.date}
         {visitCount > 1 && <span>・{visitCount}回目</span>}
