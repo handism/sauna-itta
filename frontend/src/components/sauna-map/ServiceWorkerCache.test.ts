@@ -12,7 +12,9 @@ type ServiceWorkerEvent = {
 
 function loadFetchHandler(options: {
   cachedResponse?: Response;
-  networkResponse: Response;
+  networkResponse?: Response;
+  /** 指定するとネットワーク取得がこのエラーで失敗する（オフライン） */
+  networkError?: Error;
   put?: ReturnType<typeof vi.fn>;
   keys?: Request[];
 }) {
@@ -41,16 +43,25 @@ function loadFetchHandler(options: {
     registration: { scope: "https://example.com/sauna-itta/" },
     skipWaiting: vi.fn(),
   };
-  const fetchMock = vi.fn().mockResolvedValue(options.networkResponse);
+  const fetchMock = options.networkError
+    ? vi.fn().mockRejectedValue(options.networkError)
+    : vi.fn().mockResolvedValue(options.networkResponse);
 
   new Function("self", "caches", "fetch", source)(selfMock, cachesMock, fetchMock);
 
-  return { handler: listeners.get("fetch")!, install: listeners.get("install")!, put, cache };
+  return {
+    handler: listeners.get("fetch")!,
+    install: listeners.get("install")!,
+    put,
+    cache,
+    cachesMock,
+    fetchMock,
+  };
 }
 
 describe("Service Workerのキャッシュ方針", () => {
   it("静的資産と地図タイルを別キャッシュへ保存する", () => {
-    expect(source).toContain('STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v4`');
+    expect(source).toContain('STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v5`');
     expect(source).toContain('TILE_CACHE_NAME = `${CACHE_PREFIX}tiles-v1`');
     expect(source).toContain("caches.open(STATIC_CACHE_NAME)");
     expect(source).toContain("caches.open(TILE_CACHE_NAME)");
@@ -83,12 +94,97 @@ describe("Service Workerのキャッシュ方針", () => {
     expect(cache.add).toHaveBeenCalledWith("/sauna-itta/stats");
   });
 
-  it("キャッシュ済みレスポンスのバックグラウンド更新をイベント完了まで待つ", async () => {
+  it("ページは保存済みの版があってもネットワーク優先で最新版を返し、保存し直す", async () => {
+    const cachedResponse = new Response("old html");
+    const networkResponse = new Response("new html");
+    const { handler, put } = loadFetchHandler({ cachedResponse, networkResponse });
+    const event = {
+      request: new Request("https://example.com/sauna-itta/"),
+      respondWith: vi.fn(),
+      waitUntil: vi.fn(),
+    };
+
+    handler(event);
+
+    // キャッシュ優先だと、デプロイ直後の 1 回目は必ず古い HTML が表示される
+    await expect(event.respondWith.mock.calls[0][0]).resolves.toBe(networkResponse);
+    expect(put).toHaveBeenCalledWith(event.request, expect.any(Response));
+  });
+
+  it("オンラインのページ遷移はクエリを除いた URL へ保存する", async () => {
+    const networkResponse = new Response("new html");
+    const { handler, put } = loadFetchHandler({ networkResponse });
+    const request = Object.defineProperty(new Request("https://example.com/sauna-itta/?id=abc"), "mode", {
+      value: "navigate",
+    });
+    const event = { request, respondWith: vi.fn(), waitUntil: vi.fn() };
+
+    handler(event);
+
+    await expect(event.respondWith.mock.calls[0][0]).resolves.toBe(networkResponse);
+    // ?id= ごとに保存すると古い版が別項目として残り、オフライン時にそれを返してしまう
+    expect(put).toHaveBeenCalledWith("https://example.com/sauna-itta/", expect.any(Response));
+  });
+
+  it("オフラインのページ遷移はクエリを除いた URL で保存済みの版を返す", async () => {
+    const cachedResponse = new Response("cached html");
+    const { handler, cachesMock } = loadFetchHandler({
+      cachedResponse,
+      networkError: new TypeError("Failed to fetch"),
+    });
+    // Request のコンストラクタでは mode: "navigate" を作れないため、ページ遷移の形だけ真似る
+    const request = Object.defineProperty(new Request("https://example.com/sauna-itta/?id=abc"), "mode", {
+      value: "navigate",
+    });
+    const event = { request, respondWith: vi.fn(), waitUntil: vi.fn() };
+
+    handler(event);
+
+    await expect(event.respondWith.mock.calls[0][0]).resolves.toBe(cachedResponse);
+    expect(cachesMock.match).toHaveBeenCalledWith("https://example.com/sauna-itta/");
+  });
+
+  it("オフラインで保存済みの版も無ければ、取得の失敗をそのまま返す", async () => {
+    const networkError = new TypeError("Failed to fetch");
+    const { handler } = loadFetchHandler({ networkError });
+    const event = {
+      request: new Request("https://example.com/sauna-itta/__next._tree.txt"),
+      respondWith: vi.fn(),
+      waitUntil: vi.fn(),
+    };
+
+    handler(event);
+
+    await expect(event.respondWith.mock.calls[0][0]).rejects.toBe(networkError);
+  });
+
+  it("ハッシュ付きの資産は保存済みならネットワークへ取りに行かない", async () => {
+    const cachedResponse = new Response("chunk");
+    const { handler, fetchMock } = loadFetchHandler({
+      cachedResponse,
+      networkResponse: new Response("unused"),
+    });
+    const event = {
+      request: new Request("https://example.com/sauna-itta/_next/static/chunks/abc123.js"),
+      respondWith: vi.fn(),
+      waitUntil: vi.fn(),
+    };
+
+    handler(event);
+
+    await expect(event.respondWith.mock.calls[0][0]).resolves.toBe(cachedResponse);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("外部スクリプトのキャッシュ済みレスポンスのバックグラウンド更新をイベント完了まで待つ", async () => {
     const cachedResponse = new Response("cached");
     const networkResponse = new Response("updated");
     const { handler, put } = loadFetchHandler({ cachedResponse, networkResponse });
     const event = {
-      request: new Request("https://example.com/sauna-itta/"),
+      // Request のコンストラクタでは destination を指定できないため、外部スクリプトの形だけ真似る
+      request: Object.defineProperty(new Request("https://cdn.example.net/lib.js"), "destination", {
+        value: "script",
+      }),
       respondWith: vi.fn(),
       waitUntil: vi.fn(),
     };

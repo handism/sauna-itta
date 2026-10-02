@@ -173,7 +173,16 @@ export function BottomSheet({
           </button>
         )}
       </div>
-      <div className="bottom-sheet-content" id="bottom-sheet-content">
+      {/*
+        最小位置のシートは translateY で下へずらしているだけで、中身は下部ナビの裏から
+        画面外に残る。inert でフォーカス・読み上げの対象から外し、見えない一覧へ Tab で
+        入り込まないようにする（見た目の非表示は bottom-sheet.css が担う）。
+      */}
+      <div
+        className="bottom-sheet-content"
+        id="bottom-sheet-content"
+        inert={snapPosition === "min"}
+      >
         {children}
       </div>
     </div>

@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "sauna-itta-";
-const STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v4`;
+const STATIC_CACHE_NAME = `${CACHE_PREFIX}static-v5`;
 const TILE_CACHE_NAME = `${CACHE_PREFIX}tiles-v1`;
 const MAX_TILE_ENTRIES = 200;
 // 静的キャッシュのうち、先読み資産以外（_next/static のチャンクや RSC の .txt）の上限。
@@ -37,6 +37,11 @@ const OPTIONAL_PRECACHE_ASSETS = [`${BASE_PATH}/stats`];
 // 上限による削除の対象から外す資産。オフラインで最初に開く画面の土台のため、
 // 実行時に溜まった資産に押し出されて消えないようにする
 const PRECACHE_PATHS = new Set([...PRECACHE_ASSETS, ...OPTIONAL_PRECACHE_ASSETS]);
+
+// ファイル名にハッシュを含み、同じ URL の内容が変わらない資産（Next.js のビルド出力）
+function isImmutableAsset(url) {
+  return url.origin === self.location.origin && url.pathname.startsWith(`${BASE_PATH}/_next/static/`);
+}
 
 function isPrecachedRequest(request) {
   const url = new URL(request.url);
@@ -114,39 +119,76 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Cache-First strategy with Network Fallback for static assets & pages
+  // ハッシュ付きの資産は内容が変わらないため、キャッシュがあればそのまま返す
+  if (isImmutableAsset(url)) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => cachedResponse ?? fetchAndCache(request))
+    );
+    return;
+  }
+
+  /*
+   * ページ（HTML）・RSC の .txt・manifest など、同じ URL のまま中身がデプロイで変わる資産は
+   * ネットワーク優先にし、オフラインのときだけ保存済みの版を返す。キャッシュ優先にすると
+   * デプロイ直後の 1 回目は必ず古い版が表示され、さらに古い HTML が参照するハッシュ付き
+   * チャンクが上限で削除済みだと、配信元にも無いため画面が壊れたまま読み込まれる。
+   */
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetchAndCache(request).catch(async (error) => {
+        const cachedResponse = await caches.match(cacheKeyFor(request));
+        if (cachedResponse) return cachedResponse;
+        throw error;
+      })
+    );
+    return;
+  }
+
+  // 外部のスクリプト・スタイルはキャッシュを返しつつ、裏で最新版に更新する
+  if (request.destination !== "style" && request.destination !== "script") return;
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Fetch background update for cache freshness
-        const updatePromise = fetch(request)
-          .then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
-              return caches.open(STATIC_CACHE_NAME).then((cache) => {
-                return cache.put(request, networkResponse);
-              });
-            }
-          })
-          .catch(() => {
-            /* ignore offline network error */
-          });
-        event.waitUntil(updatePromise);
-        return cachedResponse;
-      }
-
-      return fetch(request).then(async (networkResponse) => {
-        if (
-          networkResponse &&
-          networkResponse.status === 200 &&
-          (url.origin === self.location.origin || request.destination === "style" || request.destination === "script")
-        ) {
-          const responseToCache = networkResponse.clone();
-          const cache = await caches.open(STATIC_CACHE_NAME);
-          await cache.put(request, responseToCache);
-          await trimCache(cache, MAX_STATIC_RUNTIME_ENTRIES, isPrecachedRequest);
-        }
-        return networkResponse;
-      });
+      if (!cachedResponse) return fetchAndCache(request);
+      // Fetch background update for cache freshness
+      const updatePromise = fetch(request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            return caches.open(STATIC_CACHE_NAME).then((cache) => {
+              return cache.put(request, networkResponse);
+            });
+          }
+        })
+        .catch(() => {
+          /* ignore offline network error */
+        });
+      event.waitUntil(updatePromise);
+      return cachedResponse;
     })
   );
 });
+
+/**
+ * ページ遷移は ?id= や ?tag= の違いでも同じ HTML なので、クエリを除いた URL を保存キーにする。
+ * クエリごとに保存すると古い版が別項目として残り、オフライン時にそれを返してしまう。
+ */
+function cacheKeyFor(request) {
+  if (request.mode !== "navigate") return request;
+  const url = new URL(request.url);
+  url.search = "";
+  url.hash = "";
+  return url.href;
+}
+
+/**
+ * ネットワークから取得し、成功したら静的キャッシュへ保存してから返す。
+ * respondWith() へ渡す Promise の中で保存を待つため、イベント終了で書き込みが欠落しない。
+ */
+async function fetchAndCache(request) {
+  const networkResponse = await fetch(request);
+  if (networkResponse && networkResponse.status === 200) {
+    const cache = await caches.open(STATIC_CACHE_NAME);
+    await cache.put(cacheKeyFor(request), networkResponse.clone());
+    await trimCache(cache, MAX_STATIC_RUNTIME_ENTRIES, isPrecachedRequest);
+  }
+  return networkResponse;
+}

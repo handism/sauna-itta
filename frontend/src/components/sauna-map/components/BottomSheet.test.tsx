@@ -37,6 +37,17 @@ describe("BottomSheet", () => {
     expect(handle).toHaveAttribute("aria-expanded", "true");
   });
 
+  it("最小位置では画面外に残る中身を inert にし、開くと操作できるようにする", () => {
+    const { unmount } = renderSheet("min");
+    // ハンドル自体は最小位置でも操作できること
+    expect(screen.getByRole("button", { name: "パネルを開く" })).not.toHaveAttribute("inert");
+    expect(document.getElementById("bottom-sheet-content")).toHaveAttribute("inert");
+    unmount();
+
+    renderSheet("half");
+    expect(document.getElementById("bottom-sheet-content")).not.toHaveAttribute("inert");
+  });
+
   it("cycles snap positions on click", () => {
     renderSheet("half");
 

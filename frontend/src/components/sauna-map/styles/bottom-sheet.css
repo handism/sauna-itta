@@ -172,6 +172,16 @@
     padding: 0 1rem 1rem;
   }
 
+  /*
+   * 最小位置では中身が半透明の下部ナビの裏に残り、一覧の見出しが透けて見えるため隠す。
+   * 開くときはすぐ表示し、閉じるときはシートが下がりきってから隠す（transition-delay）。
+   * ドラッグ中（.is-dragging）は引き上げた分の中身が見えている必要があるので隠さない。
+   */
+  .bottom-sheet--min:not(.is-dragging) .bottom-sheet-content {
+    visibility: hidden;
+    transition: visibility 0s linear var(--duration-smooth);
+  }
+
   /* モバイルナビゲーションバー */
   .mobile-nav-bar {
     position: fixed;
