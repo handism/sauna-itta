@@ -3,6 +3,8 @@ module Api
     class HistoryEntriesController < BaseController
       include VisitWritable
 
+      limit_requests to: 60
+
       def destroy
         visit = current_user.sauna_visits.find_by!(external_id: params[:sauna_visit_id])
         stale_image_blobs = []

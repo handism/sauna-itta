@@ -625,7 +625,7 @@ describe("chunkVisitsForImport", () => {
     ]);
   });
 
-  test("既定のバイト数の上限は Cloud Run のリクエスト上限（32MiB）より十分小さい", () => {
+  test("既定のバイト数の上限は Cloud Run のリクエスト上限（32MiB）と Rails の RequestBodyLimit（24MiB）より十分小さい", () => {
     expect(IMPORT_MAX_BATCH_BYTES).toBeLessThanOrEqual(16 * 1024 * 1024);
   });
 

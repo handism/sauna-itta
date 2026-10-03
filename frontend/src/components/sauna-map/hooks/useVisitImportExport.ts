@@ -10,6 +10,7 @@ import type { ShowToast } from "../components/common/Toast";
  * 履歴ごとに付くため、件数（IMPORT_MAX_BATCH_SIZE）だけで区切ると 10 件 × 写真数枚で
  * Cloud Run のリクエストサイズ上限（HTTP/1 で 32MiB）を超え、サーバーへ届く前に失敗する。
  * Rails 側の JSON 解析のメモリも抑えるため、上限より十分小さい値にしている。
+ * Rails の RequestBodyLimit（24MiB、超えると 413 payload_too_large）よりも小さく保つこと。
  */
 export const IMPORT_MAX_BATCH_BYTES = 8 * 1024 * 1024;
 

@@ -22,6 +22,7 @@ function repository(overrides: Partial<VisitRepository> = {}): VisitRepository {
     deleteHistoryEntry: vi.fn().mockResolvedValue(initialVisits[0]),
     importBatch: vi.fn().mockResolvedValue({ added: 0, skipped: 0 }),
     prepareExport: vi.fn(async (visits: SaunaVisit[]) => visits),
+    reportClientError: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }

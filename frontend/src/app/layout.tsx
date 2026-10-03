@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
-import Script from "next/script";
 import { BASE_PATH } from "../../dataSource";
+import { ClientErrorReporter } from "@/components/sauna-map/components/common/ClientErrorReporter";
 import "./globals.css";
 
 // base.css の --font-main が参照するフォント。
@@ -46,6 +46,10 @@ export const viewport = {
 /**
  * 初期描画前に html へ light-theme クラスを付けてダーク→ライトのちらつきを防ぐ。
  * 判定は utils/theme.ts の getInitialTheme() と揃えること。
+ *
+ * next/script の beforeInteractive にしないこと。HTML にはデータとして埋め込まれ、実行時に
+ * 動的に script 要素が作られるため、Rails の CSP（content_security_policy_header.rb）が
+ * HTML から求める inline script のハッシュに含まれず、ブラウザに遮断される。
  */
 const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("sauna-itta_theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia&&window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}if(t==="light"){document.documentElement.classList.add("light-theme");}}catch(e){}})();`;
 
@@ -60,9 +64,12 @@ export default function RootLayout({
     // --font-main ごと無効値になってブラウザ既定の書体へ落ちる（Outfit も日本語の指定も効かない）
     <html lang="ja" className={outfit.variable} suppressHydrationWarning>
       <head>
-        <Script id="theme-init" strategy="beforeInteractive">{THEME_INIT_SCRIPT}</Script>
+        <script id="theme-init" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        <ClientErrorReporter />
+        {children}
+      </body>
     </html>
   );
 }

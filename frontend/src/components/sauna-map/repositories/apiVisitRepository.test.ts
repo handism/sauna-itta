@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiVisitRepository } from "./apiVisitRepository";
+import { ApiVisitRepository, LIST_PAGE_SIZE } from "./apiVisitRepository";
 import { RepositoryError } from "./types";
 import type { SaunaVisit } from "../types";
 
@@ -109,7 +109,7 @@ describe("ApiVisitRepository", () => {
     });
 
     // どのリクエストが失敗したかをログから追えるようにする
-    expect(consoleSpy).toHaveBeenCalledWith("Failed to request GET /api/v1/sauna_visits:", error);
+    expect(consoleSpy).toHaveBeenCalledWith(`Failed to request GET /api/v1/sauna_visits?limit=${LIST_PAGE_SIZE}:`, error);
   });
 
   it("エラー本文がJSONでなくても既定のメッセージを返す", async () => {
@@ -182,6 +182,60 @@ describe("ApiVisitRepository", () => {
       "/api/v1/sauna_visits/sauna%2F1/history_entries/history%201",
     );
     expect(fetchMock.mock.calls[0][1]?.method).toBe("DELETE");
+  });
+
+  it("一覧はカーソルを辿って全ページを取得し、重複を除いて結合する", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(jsonResponse({ saunaVisits: [visitJson({ id: "a" }), visitJson({ id: "b" })], nextCursor: "c1" }))
+      .mockResolvedValueOnce(jsonResponse({ saunaVisits: [visitJson({ id: "b" }), visitJson({ id: "c" })], nextCursor: null }));
+    const repository = new ApiVisitRepository();
+
+    const visits = await repository.list();
+
+    expect(visits.map((visit) => visit.id)).toEqual(["a", "b", "c"]);
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      `/api/v1/sauna_visits?limit=${LIST_PAGE_SIZE}`,
+      `/api/v1/sauna_visits?limit=${LIST_PAGE_SIZE}&cursor=c1`,
+    ]);
+  });
+
+  it("nextCursorを返さない古い版のサーバーでは1ページで終える", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(jsonResponse({ saunaVisits: [visitJson({ id: "a" })] }));
+    const repository = new ApiVisitRepository();
+
+    await expect(repository.list()).resolves.toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it("途中のページで失敗したら一部の記録だけを返さずに失敗する", async () => {
+    vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(jsonResponse({ saunaVisits: [visitJson({ id: "a" })], nextCursor: "c1" }))
+      .mockResolvedValueOnce(jsonResponse({ error: { code: "rate_limited", message: "短時間に操作が集中しています。" } }, 429));
+    const repository = new ApiVisitRepository();
+
+    await expect(repository.list()).rejects.toMatchObject({ code: "rate_limited", status: 429 });
+  });
+
+  it("ログイン中だけエラー報告をCSRFトークン付きで送る", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(jsonResponse({ authenticated: false, user: null, csrfToken: "anon-token" }))
+      .mockResolvedValueOnce(jsonResponse({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "csrf-token" }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    const repository = new ApiVisitRepository();
+    const report = { message: "boom", source: "window-error" };
+
+    await repository.getSession();
+    await repository.reportClientError(report);
+    expect(fetchMock).toHaveBeenCalledOnce();
+
+    await repository.getSession();
+    await repository.reportClientError(report);
+    const [url, init] = fetchMock.mock.calls[2];
+    expect(url).toBe("/api/v1/client_errors");
+    expect(init?.method).toBe("POST");
+    expect(new Headers(init?.headers).get("X-CSRF-Token")).toBe("csrf-token");
+    expect(JSON.parse(String(init?.body))).toEqual({ clientError: report });
   });
 
   it("ログアウトでCSRFトークンを捨てる", async () => {

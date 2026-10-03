@@ -3,6 +3,18 @@ module Api
     class BaseController < ApplicationController
       before_action :require_login
 
+      # rate_limit の回数を数える場所。Rails.cache は環境ごとに null_store などへ変わり得るため、
+      # 専用のメモリストアを使う。Cloud Run のインスタンスごとに数える（最大2台）ため、
+      # 実際に通る回数は上限の最大2倍になる。目的は暴走・連打からの保護で、厳密な課金管理ではない。
+      RATE_LIMIT_STORE = ActiveSupport::Cache::MemoryStore.new(size: 8.megabytes)
+
+      # 各コントローラの rate_limit はこれを通して宣言する。before_action は宣言順に走るため、
+      # require_login より後になり、未ログインのリクエストは数えずに401で返る（by の current_user が必ずある）。
+      def self.limit_requests(to:, within: 1.minute, **options)
+        rate_limit to: to, within: within, store: RATE_LIMIT_STORE,
+          by: -> { current_user.id }, with: -> { render_rate_limited }, **options
+      end
+
       rescue_from ActiveRecord::RecordNotFound do
         render_error("not_found", "対象の記録が見つかりません。", :not_found)
       end
@@ -30,6 +42,10 @@ module Api
 
       def require_login
         render_error("unauthenticated", "ログインが必要です。", :unauthorized) unless current_user
+      end
+
+      def render_rate_limited
+        render_error("rate_limited", "短時間に操作が集中しています。少し待ってからもう一度お試しください。", :too_many_requests)
       end
 
       def render_validation_error(record)

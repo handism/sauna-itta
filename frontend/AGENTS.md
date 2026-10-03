@@ -13,6 +13,8 @@
 - フロントの永続化は `repositories/` の `VisitRepository` 経由にします。Contextや画面から`fetch`または`localStorage`を直接呼ばないでください。CRUDは非同期で、Repository成功後だけ画面状態を更新します。
 - JSONエクスポートは `Blob` + `URL.createObjectURL` で書き出します（`data:` URLへ戻さないこと。写真は最大1MBのBase64で含まれるため、数十件でURL長の上限に当たって無言で失敗します）。書き出す前に必ず`VisitRepository.prepareExport`を通します。apiモードは写真を画像エンドポイント（`/api/v1/images/...`）から取得してdata URLへ置き換え、1枚でも取得できなければ欠けたバックアップを作らずにエクスポートごと失敗させます（URLのまま書き出すと、取り込み直しても写真が復元されません。サーバーはこのURLを「既存の写真を据え置く」指示として扱うため、新しい記録には添付されません）。以前の版で書き出した画像URL入りのJSONは、取り込み時に`dropApiImageUrls`で写真だけを外し、外した枚数を完了トーストで伝えます。
 
+- `layout.tsx`のテーマ初期化スクリプトは素の`<script dangerouslySetInnerHTML>`で出力します。`next/script`の`beforeInteractive`へ戻さないでください（HTMLにはデータとして埋め込まれ実行時に動的にscript要素が作られるため、apiモードのCSPがHTMLから求めるハッシュに含まれず遮断されます）。同じ理由で、実行時に中身を組み立てるinline scriptも追加しないこと。
+
 ## Service Worker（localモード）
 
 - **静的資産の取得方針は種類で分けます**。ファイル名にハッシュを含む`/_next/static/`だけはキャッシュ優先（保存済みならネットワークへ行かない）、ページ（HTML）・RSCの`.txt`・manifestなど同じURLのまま中身がデプロイで変わる同一オリジンの資産はネットワーク優先で、オフラインのときだけ保存済みの版を返します（ページ遷移は`?id=`／`?tag=`の違いでも同じHTMLのため、`cacheKeyFor`でクエリを除いたURLを保存・読み出しの両方のキーにする。`ignoreSearch`で探す形にすると、クエリ付きで保存された古い版が先に見つかって返ります）。外部のスクリプト・スタイルだけは従来どおりキャッシュを返して裏で更新します。HTMLをキャッシュ優先へ戻すと、デプロイ直後の1回目は必ず古い版が表示され、古いHTMLが参照するハッシュ付きチャンクが`trimCache`で削除済みだと配信元にも無いため画面が壊れたまま読み込まれます。
