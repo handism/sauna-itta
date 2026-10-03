@@ -1,7 +1,13 @@
 import { renderHook, act } from "@testing-library/react";
 import type { ChangeEvent } from "react";
 import { expect, test, vi, describe, afterEach, beforeEach, type MockedFunction } from "vitest";
-import { chunkVisitsForImport, dropApiImageUrls, useVisitImportExport } from "./useVisitImportExport";
+import {
+  IMPORT_MAX_BATCH_BYTES,
+  ImportFileError,
+  chunkVisitsForImport,
+  dropApiImageUrls,
+  useVisitImportExport,
+} from "./useVisitImportExport";
 import { SaunaVisit } from "../types";
 import { RepositoryError, type ImportResult } from "../repositories";
 
@@ -41,13 +47,37 @@ describe("useVisitImportExport", () => {
   test("importVisitsFromFile handles invalid JSON", async () => {
     const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
     const file = new File(["invalid json"], "test.json", { type: "application/json" });
-    await expect(result.current.importVisitsFromFile(file)).rejects.toThrow("Invalid JSON file");
+    await expect(result.current.importVisitsFromFile(file)).rejects.toThrow(ImportFileError);
+    await expect(result.current.importVisitsFromFile(file)).rejects.toThrow(
+      "JSONの読み込みに失敗しました。JSON形式ではありません。エクスポートしたファイルを指定してください。",
+    );
   });
 
   test("importVisitsFromFile handles invalid schema", async () => {
     const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
     const file = new File(['[{"invalid": "schema"}]'], "test.json", { type: "application/json" });
-    await expect(result.current.importVisitsFromFile(file)).rejects.toThrow(/Imported data is not in the correct format/);
+    // どの記録のどの項目を直せばよいかを伝える
+    await expect(result.current.importVisitsFromFile(file)).rejects.toThrow(
+      /^JSONの読み込みに失敗しました。1件目の記録の「\w+」の形式が正しくありません（ほかに\d+か所）。$/,
+    );
+  });
+
+  test("importVisitsFromFile は問題のある記録の位置と項目を伝える", async () => {
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
+    const valid = { id: "2", name: "Sauna B", lat: 35.1, lng: 139.1, comment: "", date: "2023-01-02" };
+    const broken = { ...valid, id: "3", lat: "35.1" };
+    const file = new File([JSON.stringify([valid, broken])], "test.json", { type: "application/json" });
+    await expect(result.current.importVisitsFromFile(file)).rejects.toThrow(
+      "JSONの読み込みに失敗しました。2件目の記録の「lat」の形式が正しくありません。",
+    );
+  });
+
+  test("importVisitsFromFile は配列でないファイルをその旨で伝える", async () => {
+    const { result } = renderHook(() => useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock));
+    const file = new File(['{"id": "1"}'], "test.json", { type: "application/json" });
+    await expect(result.current.importVisitsFromFile(file)).rejects.toThrow(
+      "JSONの読み込みに失敗しました。サウナ記録の配列ではありません。エクスポートしたファイルを指定してください。",
+    );
   });
 
   test("importVisitsFromFile imports new valid visits", async () => {
@@ -382,7 +412,10 @@ describe("useVisitImportExport", () => {
     await act(async () => {
       await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
     });
-    expect(showToast).toHaveBeenCalledWith("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
+    expect(showToast).toHaveBeenCalledWith(
+      "JSONの読み込みに失敗しました。JSON形式ではありません。エクスポートしたファイルを指定してください。",
+      "error",
+    );
   });
 
   test("ファイルの読み込みに失敗した場合はエラートーストを表示する", async () => {
@@ -414,7 +447,7 @@ describe("useVisitImportExport", () => {
         await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
       });
 
-      expect(showToast).toHaveBeenCalledWith("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
+      expect(showToast).toHaveBeenCalledWith("JSONの読み込みに失敗しました。ファイルを読み込めませんでした。", "error");
     } finally {
       window.FileReader = originalFileReader;
     }
@@ -555,39 +588,48 @@ describe("dropApiImageUrls", () => {
   });
 });
 
-
 describe("chunkVisitsForImport", () => {
-  const visit = (id: string, image = ""): SaunaVisit => ({
-    id, name: id, lat: 35, lng: 139, comment: "", date: "2026-08-02", ...(image && { image }),
-  });
+  const visit = (id: string, comment = ""): SaunaVisit => ({ id, name: id, lat: 35, lng: 139, comment, date: "2026-08-02" });
+  const bytesOf = (item: SaunaVisit) => new TextEncoder().encode(JSON.stringify(item)).byteLength;
 
   test("件数の上限で区切る", () => {
     const visits = Array.from({ length: 25 }, (_, index) => visit(`v${index}`));
-
-    expect(chunkVisitsForImport(visits).map((chunk) => chunk.length)).toEqual([10, 10, 5]);
+    expect(chunkVisitsForImport(visits, 10, Infinity).map((chunk) => chunk.length)).toEqual([10, 10, 5]);
   });
 
-  test("大きさの上限を超える前に区切り、順番を保つ", () => {
-    const photo = "x".repeat(400);
-    const visits = ["a", "b", "c", "d"].map((id) => visit(id, photo));
-
-    const chunks = chunkVisitsForImport(visits, 10, 1000);
-
-    expect(chunks.map((chunk) => chunk.map((item) => item.id))).toEqual([["a", "b"], ["c", "d"]]);
+  test("件数に収まっていてもバイト数の上限を超える前に区切る", () => {
+    // 写真入りの記録を想定した大きな記録。3 件で上限を超えるため 2 件ずつに分かれる
+    const large = Array.from({ length: 5 }, (_, index) => visit(`v${index}`, "x".repeat(1000)));
+    const limit = bytesOf(large[0]) * 2 + 10;
+    expect(chunkVisitsForImport(large, 10, limit).map((chunk) => chunk.map((item) => item.id))).toEqual([
+      ["v0", "v1"],
+      ["v2", "v3"],
+      ["v4"],
+    ]);
   });
 
-  test("1件だけで上限を超える記録はその1件で送る", () => {
-    const visits = [visit("small"), visit("huge", "x".repeat(5000)), visit("next")];
-
-    const chunks = chunkVisitsForImport(visits, 10, 1000);
-
-    expect(chunks.map((chunk) => chunk.map((item) => item.id))).toEqual([["small"], ["huge"], ["next"]]);
+  test("マルチバイト文字は UTF-8 のバイト数で数える", () => {
+    const japanese = [visit("a", "あ".repeat(100)), visit("b", "あ".repeat(100))];
+    // 文字数（length）で数えると 2 件とも 1 チャンクに収まってしまう上限
+    const limit = JSON.stringify(japanese[0]).length * 2 + 10;
+    expect(chunkVisitsForImport(japanese, 10, limit)).toHaveLength(2);
   });
 
-  test("マルチバイト文字はUTF-8のバイト数で数える", () => {
-    // 1文字3バイトの日本語。文字数（約350）では収まるがバイト数（約1000超）では収まらない
-    const visits = [visit("a"), { ...visit("b"), comment: "あ".repeat(300) }];
+  test("1 件だけで上限を超える記録は単独のチャンクとして送る", () => {
+    const visits = [visit("small"), visit("huge", "x".repeat(5000)), visit("small2")];
+    const limit = bytesOf(visits[0]) * 3;
+    expect(chunkVisitsForImport(visits, 10, limit).map((chunk) => chunk.map((item) => item.id))).toEqual([
+      ["small"],
+      ["huge"],
+      ["small2"],
+    ]);
+  });
 
-    expect(chunkVisitsForImport(visits, 10, 1000)).toHaveLength(2);
+  test("既定のバイト数の上限は Cloud Run のリクエスト上限（32MiB）と Rails の RequestBodyLimit（24MiB）より十分小さい", () => {
+    expect(IMPORT_MAX_BATCH_BYTES).toBeLessThanOrEqual(16 * 1024 * 1024);
+  });
+
+  test("空の配列はチャンクを作らない", () => {
+    expect(chunkVisitsForImport([])).toEqual([]);
   });
 });

@@ -234,7 +234,7 @@ export class ApiVisitRepository implements VisitRepository {
       console.error(`Failed to request GET ${url}:`, error);
       throw new RepositoryError("サーバーへ接続できません。通信状態を確認してください。", "network_error");
     }
-    // セッションの喪失は写真の取得失敗と区別する（useVisitSession の isSessionLostError が拾い、ログイン画面へ戻す）
+    // セッションの喪失は写真の取得失敗と区別する（errorMessages.ts の isSessionLostError で判定し、useVisitSession がログイン画面へ戻す）
     if (response.status === 401) {
       throw new RepositoryError("ログインが必要です。", "unauthenticated", response.status);
     }
