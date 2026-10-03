@@ -86,84 +86,151 @@ export default function RatingDistributionChart({
   return (
     <>
       <div
-        role="img"
-        aria-label={chartSummary}
-        style={{ width: "100%", height: 260, position: "relative" }}
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "center",
+          justifyContent: "center",
+          columnGap: "1rem",
+        }}
       >
-        {/* Center avg rating indicator */}
         <div
+          role="img"
+          aria-label={chartSummary}
+          style={{ flex: "1 1 200px", minWidth: 200, maxWidth: 260, height: 240, position: "relative" }}
+        >
+          {/* Center avg rating indicator */}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -60%)",
+              textAlign: "center",
+              pointerEvents: "none",
+              zIndex: 2,
+            }}
+          >
+            <div
+              style={{
+                fontSize: "1.75rem",
+                fontWeight: 800,
+                color: textColor,
+                lineHeight: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "3px",
+              }}
+            >
+              <span>{avgLabel}</span>
+              <Star
+                size={18}
+                fill="#f59e0b"
+                color="#f59e0b"
+                style={{ marginTop: -2 }}
+              />
+            </div>
+            <div
+              style={{
+                fontSize: "var(--text-2xs)",
+                opacity: 0.65,
+                marginTop: "2px",
+                letterSpacing: "0.05em",
+              }}
+            >
+              平均 ({totalRated}件)
+            </div>
+          </div>
+
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={62}
+                outerRadius={90}
+                paddingAngle={4}
+                dataKey="value"
+                nameKey="name"
+                stroke="none"
+              >
+                {data.map((entry) => (
+                  <Cell
+                    key={`cell-${entry.rating}`}
+                    fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR}
+                    style={{
+                      outline: "none",
+                      filter: "drop-shadow(0px 4px 8px rgba(0,0,0,0.15))",
+                    }}
+                  />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={getTooltipStyle(theme)}
+                formatter={(value) => [`${value ?? 0} 件`, "訪問数"] as const}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        {/*
+          ドーナツの色だけでは何点の割合か読み取れないため、凡例に件数と割合を並べる。
+          読み上げは兄弟の .sr-only テーブルが同じ内容を担うので、ここは見た目だけにする。
+        */}
+        <ul
+          aria-hidden="true"
           style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -60%)",
-            textAlign: "center",
-            pointerEvents: "none",
-            zIndex: 2,
+            flex: "1 1 150px",
+            maxWidth: 220,
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.4rem",
+            fontSize: "var(--text-sm)",
           }}
         >
-          <div
-            style={{
-              fontSize: "1.75rem",
-              fontWeight: 800,
-              color: textColor,
-              lineHeight: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "3px",
-            }}
-          >
-            <span>{avgLabel}</span>
-            <Star
-              size={18}
-              fill="#f59e0b"
-              color="#f59e0b"
-              style={{ marginTop: -2 }}
-            />
-          </div>
-          <div
-            style={{
-              fontSize: "var(--text-2xs)",
-              opacity: 0.65,
-              marginTop: "2px",
-              letterSpacing: "0.05em",
-            }}
-          >
-            平均 ({totalRated}件)
-          </div>
-        </div>
-
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={62}
-              outerRadius={90}
-              paddingAngle={4}
-              dataKey="value"
-              nameKey="name"
-              stroke="none"
-            >
-              {data.map((entry) => (
-                <Cell
-                  key={`cell-${entry.rating}`}
-                  fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR}
+          {RATING_VALUES.map((rating) => {
+            const count = ratingCounts[rating] ?? 0;
+            const percent = Math.round((count / totalRated) * 100);
+            return (
+              <li
+                key={rating}
+                data-testid={`rating-legend-${rating}`}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                  opacity: count === 0 ? 0.45 : 1,
+                }}
+              >
+                <span
                   style={{
-                    outline: "none",
-                    filter: "drop-shadow(0px 4px 8px rgba(0,0,0,0.15))",
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    background: RATING_COLORS[rating] ?? FALLBACK_COLOR,
                   }}
                 />
-              ))}
-            </Pie>
-            <Tooltip
-              contentStyle={getTooltipStyle(theme)}
-              formatter={(value) => [`${value ?? 0} 件`, "訪問数"] as const}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+                <span style={{ flex: 1 }}>{RATING_LABELS[rating]}</span>
+                <span style={{ fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{count}件</span>
+                <span
+                  style={{
+                    width: "2.75rem",
+                    textAlign: "right",
+                    color: "var(--text-muted)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {percent}%
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       </div>
       <table className="sr-only">
         <caption>満足度分布の詳細</caption>

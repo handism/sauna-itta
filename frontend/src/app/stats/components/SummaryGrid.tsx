@@ -2,6 +2,15 @@ import { Flame, CheckCircle, MapPin, Star, Calendar, Map } from "lucide-react";
 import styles from '../stats.module.css';
 import { VisitStats } from "@/components/sauna-map/types";
 
+/**
+ * 「2024-01-01」を「2024.01」にする。サマリーの他のカードは数値 1 つなので、
+ * 日付 2 つを日単位で並べると記録期間のカードだけ 2 行に折り返して高さが揃わない。
+ * 日単位の期間は title（ホバー）で補う。
+ */
+function toYearMonth(date: string): string {
+  return date.slice(0, 7).replace("-", ".");
+}
+
 interface SummaryGridProps {
   stats: VisitStats;
 }
@@ -73,9 +82,18 @@ export function SummaryGrid({ stats }: SummaryGridProps) {
           <Calendar size={18} className={styles.statIconMuted} />
           <h3 id="stat-period">記録期間</h3>
         </div>
-        <p className={styles.statValueCompact}>
-          {stats.firstDate && stats.lastDate ? `${stats.firstDate} 〜 ${stats.lastDate}` : '-'}
-        </p>
+        {stats.firstDate && stats.lastDate ? (
+          <p
+            className={styles.statValueCompact}
+            title={`${stats.firstDate} 〜 ${stats.lastDate}`}
+          >
+            <time dateTime={stats.firstDate}>{toYearMonth(stats.firstDate)}</time>
+            {" 〜 "}
+            <time dateTime={stats.lastDate}>{toYearMonth(stats.lastDate)}</time>
+          </p>
+        ) : (
+          <p className={styles.statValueCompact}>-</p>
+        )}
       </article>
     </div>
   );

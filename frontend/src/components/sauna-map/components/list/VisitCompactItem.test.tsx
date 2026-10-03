@@ -121,7 +121,7 @@ describe("VisitCompactItem の操作", () => {
     expect(onOpenImage).toHaveBeenCalledWith(mockVisit.image);
   });
 
-  it("展開中の解除ボタンは折りたたみを一度だけ呼ぶ", () => {
+  it("展開中の閉じるボタンは折りたたみを一度だけ呼ぶ", () => {
     const handleDeselect = vi.fn();
     render(
       <VisitCompactItem
@@ -132,7 +132,7 @@ describe("VisitCompactItem の操作", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /解除/ }));
+    fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
 
     expect(handleDeselect).toHaveBeenCalledOnce();
   });
@@ -230,7 +230,7 @@ describe("VisitCompactItem の操作", () => {
     expect(screen.getByText("2回 · 最終 2026-07-24")).toBeInTheDocument();
   });
 
-  it("行きたい記録には訪問回数・日付を表示しないこと", () => {
+  it("行きたい記録は訪問回数・日付の代わりに状態とエリアを 2 行目へ出すこと", () => {
     const { container } = render(
       <VisitCompactItem
         {...compactProps}
@@ -239,6 +239,30 @@ describe("VisitCompactItem の操作", () => {
       />
     );
 
-    expect(container.querySelector(".sauna-compact-meta")).toBeNull();
+    // 訪問済みの行と同じ 2 行構成にして、一覧の行の高さを揃える
+    const meta = container.querySelector(".sauna-compact-meta");
+    expect(meta).toHaveTextContent("行きたい");
+    expect(meta).toHaveTextContent("東京");
+    expect(screen.queryByText(/回 · 最終/)).not.toBeInTheDocument();
+  });
+
+  it("施設名は 1 行目に単独で置き、エリアは 2 行目に回すこと", () => {
+    const { container } = render(<VisitCompactItem {...compactProps} isSelected={false} />);
+
+    expect(container.querySelector(".sauna-compact-title")).toHaveTextContent(/^天空サウナ$/);
+    expect(container.querySelector(".sauna-compact-meta")).toHaveTextContent("東京2回 · 最終 2026-07-24");
+  });
+
+  it("行きたい記録では状態と同名の「行きたい」タグを重ねて表示しないこと", () => {
+    render(
+      <VisitCompactItem
+        {...compactProps}
+        visit={{ ...mockVisit, status: "wishlist", tags: ["行きたい", "外気浴"] }}
+        isSelected
+      />
+    );
+
+    expect(screen.getByRole("button", { name: "外気浴" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "行きたい" })).not.toBeInTheDocument();
   });
 });

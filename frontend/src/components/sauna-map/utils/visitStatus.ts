@@ -17,3 +17,15 @@ export function isVisited(visit: Pick<SaunaVisit, "status">): boolean {
 export function isWishlist(visit: Pick<SaunaVisit, "status">): boolean {
   return getVisitStatus(visit) === "wishlist";
 }
+
+/** 「行きたい」状態の表示名。一覧のチップと、タグとの重複判定で共有する。 */
+export const WISHLIST_LABEL = "行きたい";
+
+/**
+ * 一覧に表示するタグ。行きたい記録は状態を {@link WISHLIST_LABEL} のチップで示すため、
+ * 同名のタグを並べると「行きたい」が 2 回表示される。そのタグだけ表示から外す（保存値は変えない）。
+ */
+export function getDisplayTags(visit: Pick<SaunaVisit, "status" | "tags">): string[] {
+  const tags = visit.tags ?? [];
+  return isWishlist(visit) ? tags.filter((tag) => tag !== WISHLIST_LABEL) : tags;
+}

@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom/vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { expect, test, describe, afterEach } from "vitest";
-import { TagCloudCard } from "./TagCloudCard";
+import { TAG_CLOUD_INITIAL_COUNT, TagCloudCard } from "./TagCloudCard";
 import { SaunaVisit } from "@/components/sauna-map/types";
 
 describe("TagCloudCard", () => {
@@ -72,5 +72,32 @@ describe("TagCloudCard", () => {
     const links = screen.getAllByRole("link");
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveTextContent("#ロウリュ 1");
+  });
+
+  test("件数の多い順に先頭だけを表示し、「すべて表示」で残りを開閉できること", () => {
+    const total = TAG_CLOUD_INITIAL_COUNT + 3;
+    // tag-00 が最多になるよう、後ろのタグほど付いている記録を減らす
+    const visits = Array.from({ length: total }, (_, i) =>
+      mockVisit(Array.from({ length: total - i }, (_, j) => `tag-${String(j).padStart(2, "0")}`)),
+    );
+
+    render(<TagCloudCard visits={visits} />);
+
+    expect(screen.getByText(`全 ${total} 種類`)).toBeInTheDocument();
+    expect(screen.getAllByRole("link")).toHaveLength(TAG_CLOUD_INITIAL_COUNT);
+    expect(screen.getByRole("link", { name: /#tag-00 / })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /#tag-26 / })).not.toBeInTheDocument();
+
+    const toggle = screen.getByRole("button", { name: /すべて表示（残り 3 種類）/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+
+    fireEvent.click(toggle);
+    expect(screen.getAllByRole("link")).toHaveLength(total);
+    expect(screen.getByRole("button", { name: /よく使うタグだけ表示/ })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  test("タグが少ないときは開閉ボタンを出さないこと", () => {
+    render(<TagCloudCard visits={[mockVisit(["ロウリュ", "外気浴"])]} />);
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 });

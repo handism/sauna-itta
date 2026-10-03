@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { Trophy, Star, MapPin } from "lucide-react";
-import { RankedVisit } from "@/components/sauna-map/utils";
+import {
+  getRepeatVisits,
+  RankedVisit,
+  REPEAT_VISIT_MIN_COUNT,
+  sortRankedByRating,
+} from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface TopSaunasCardProps {
@@ -10,7 +15,15 @@ interface TopSaunasCardProps {
 }
 
 export function TopSaunasCard({ ranked }: TopSaunasCardProps) {
-  const topSaunas = useMemo(() => ranked.slice(0, 5), [ranked]);
+  // 2 回以上行った施設があれば訪問回数順に、それだけを並べる（1 回の施設で 5 枠を埋めると、
+  // 全行「1 回」・バーが満タンになり順位の意味が無くなる）。1 つも無ければ満足度順に切り替える。
+  const { topSaunas, byRating } = useMemo(() => {
+    const repeatVisits = getRepeatVisits(ranked);
+    if (repeatVisits.length > 0) {
+      return { topSaunas: repeatVisits.slice(0, 5), byRating: false };
+    }
+    return { topSaunas: sortRankedByRating(ranked).slice(0, 5), byRating: true };
+  }, [ranked]);
 
   if (topSaunas.length === 0) return null;
 
@@ -28,9 +41,11 @@ export function TopSaunasCard({ ranked }: TopSaunasCardProps) {
       <div className={styles.cardHeader}>
         <div className={styles.cardTitleGroup}>
           <Trophy size={20} className={styles.trophyIcon} />
-          <h2>よく行く施設 TOP 5</h2>
+          <h2>{byRating ? "満足度の高い施設 TOP 5" : "よく行く施設 TOP 5"}</h2>
         </div>
-        <span className={styles.cardSubtitle}>訪問回数順</span>
+        <span className={styles.cardSubtitle}>
+          {byRating ? `${REPEAT_VISIT_MIN_COUNT}回以上行った施設がまだ無いため満足度順` : "訪問回数順"}
+        </span>
       </div>
 
       <div className={styles.topSaunasList}>
@@ -47,7 +62,7 @@ export function TopSaunasCard({ ranked }: TopSaunasCardProps) {
                 <div className={styles.topSaunaNameRow}>
                   <span className={styles.topSaunaName}>{sauna.name}</span>
                   <div className={styles.topSaunaActions}>
-                    <span className={styles.topSaunaCount}>{count} 回</span>
+                    {!byRating && <span className={styles.topSaunaCount}>{count} 回</span>}
                     <Link
                       href={`/?id=${sauna.id}`}
                       className={`${styles.mapJumpLink} ${styles.mapJumpLinkQuiet}`}
@@ -72,12 +87,15 @@ export function TopSaunasCard({ ranked }: TopSaunasCardProps) {
                   ) : null}
                 </div>
 
-                <div className={styles.topSaunaBarTrack}>
-                  <div
-                    className={styles.topSaunaBarFill}
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
+                {/* 満足度は 5 段階で上位が同点に並びやすく、バーが揃って満タンになるだけなので出さない */}
+                {!byRating && (
+                  <div className={styles.topSaunaBarTrack}>
+                    <div
+                      className={styles.topSaunaBarFill}
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           );

@@ -89,14 +89,18 @@
   flex-shrink: 0;
 }
 
+/*
+ * 選択の解除は記録を消す操作ではないため、エラー色（赤）にしない。
+ * 赤くすると「行きたい」の解除や削除と誤読される。
+ */
 .sauna-card-deselect-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: color-mix(in srgb, var(--error) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+  background: var(--overlay-subtle);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  color: var(--error-text);
+  color: var(--text-muted);
   padding: 0.25rem 0.6rem;
   font-size: var(--text-sm);
   font-weight: 500;
@@ -106,11 +110,8 @@
 }
 
 .sauna-card-deselect-btn:hover {
-  /* 白文字とのコントラストを 4.5:1 以上にするため、面は --error より暗くする */
-  background: color-mix(in srgb, var(--error) 80%, #000000);
-  color: #ffffff;
-  border-color: var(--error);
-  box-shadow: 0 0 10px color-mix(in srgb, var(--error) 50%, transparent);
+  background: var(--overlay-hover);
+  color: var(--foreground);
 }
 
 .sauna-card-edit-btn {
@@ -281,15 +282,19 @@
   font-size: var(--text-xs);
 }
 
+/*
+ * カード自体が --glass の面なので、タグも --glass にすると背景が見えず、
+ * 折り返した行が字下げされた文字列のように見える。重ね色と枠線で面を作る。
+ */
 .sauna-tag {
-  padding: 0.1rem 0.35rem;
+  padding: 0.1rem 0.5rem;
   border-radius: var(--radius-full);
-  background: var(--glass);
+  background: var(--overlay-subtle);
+  border: 1px solid var(--glass-border);
   color: var(--foreground);
 }
 
 .sauna-tag-btn {
-  border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
@@ -297,6 +302,7 @@
 
 .sauna-tag-btn:hover {
   background: var(--primary);
+  border-color: var(--primary);
   color: #ffffff;
 }
 

@@ -103,4 +103,56 @@ describe("MapController", () => {
       { animate: false, duration: 1.2 }
     );
   });
+
+  describe("デスクトップのサイドバー", () => {
+    const rect = (left: number, right: number) =>
+      ({ left, right, width: right - left, top: 0, bottom: 800, height: 800, x: left, y: 0 }) as DOMRect;
+
+    let sidebar: HTMLElement;
+    let project: ReturnType<typeof vi.fn>;
+    let unproject: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      sidebar = document.createElement("aside");
+      sidebar.className = "sidebar";
+      sidebar.getBoundingClientRect = () => rect(0, 460);
+      document.body.appendChild(sidebar);
+
+      const container = document.createElement("div");
+      container.getBoundingClientRect = () => rect(0, 1440);
+      const subtract = vi.fn(([dx, dy]: [number, number]) => ({ x: 1000 - dx, y: 500 - dy }));
+      project = vi.fn(() => ({ x: 1000, y: 500, subtract }));
+      unproject = vi.fn(() => ({ lat: 35.0, lng: 138.9 }));
+      Object.assign(mockMap, { getContainer: () => container, project, unproject });
+      mockMap.getZoom.mockReturnValue(14);
+      vi.spyOn(motion, "prefersReducedMotion").mockReturnValue(false);
+    });
+
+    afterEach(() => {
+      sidebar.remove();
+    });
+
+    it("覆われた幅の半分だけ中心を左へずらし、マーカーを見えている領域の中央へ置く", () => {
+      render(<MapController target={{ lat: 35.0, lng: 139.0 }} />);
+
+      expect(project).toHaveBeenCalledWith([35.0, 139.0], 14);
+      expect(unproject).toHaveBeenCalledWith({ x: 1000 - 230, y: 500 }, 14);
+      expect(mockMap.flyTo).toHaveBeenCalledWith([35.0, 138.9], 14, { animate: true, duration: 1.2 });
+    });
+
+    it("サイドバーを折りたたんでいるときはずらさない", () => {
+      sidebar.classList.add("collapsed");
+
+      render(<MapController target={{ lat: 35.0, lng: 139.0 }} />);
+
+      expect(project).not.toHaveBeenCalled();
+      expect(mockMap.flyTo).toHaveBeenCalledWith([35.0, 139.0], 14, { animate: true, duration: 1.2 });
+    });
+
+    it("モバイルではサイドバーの幅を見ない", () => {
+      render(<MapController target={{ lat: 35.0, lng: 139.0 }} isMobile />);
+
+      expect(project).not.toHaveBeenCalled();
+    });
+  });
 });

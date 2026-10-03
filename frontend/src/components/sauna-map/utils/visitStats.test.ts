@@ -6,6 +6,8 @@ import {
   countTags,
   rankVisitsByCount,
   getMonthlyVisitCounts,
+  getRepeatVisits,
+  sortRankedByRating,
 } from "./visitStats";
 import { SaunaVisit } from "../types";
 
@@ -324,5 +326,25 @@ describe("getMonthlyVisitCounts", () => {
   it("記録が無い・日付が読めない場合は空配列を返すこと", () => {
     expect(getMonthlyVisitCounts([])).toEqual([]);
     expect(getMonthlyVisitCounts([{ date: "" }])).toEqual([]);
+  });
+});
+
+describe("getRepeatVisits / sortRankedByRating", () => {
+  const ranked = (name: string, count: number, rating?: number) => ({
+    visit: { id: name, name, lat: 0, lng: 0, date: "2026-01-01", comment: "", rating, status: "visited" as const },
+    count,
+  });
+
+  it("getRepeatVisits は 2 回以上行った施設だけを順序を保って返すこと", () => {
+    const list = [ranked("A", 5), ranked("B", 2), ranked("C", 1)];
+    expect(getRepeatVisits(list).map(({ visit }) => visit.name)).toEqual(["A", "B"]);
+    expect(getRepeatVisits([ranked("C", 1)])).toEqual([]);
+  });
+
+  it("sortRankedByRating は満足度の高い順に並べ、同点は元の順を保つこと", () => {
+    const list = [ranked("A", 1, 3), ranked("B", 1, 5), ranked("C", 1), ranked("D", 1, 5)];
+    expect(sortRankedByRating(list).map(({ visit }) => visit.name)).toEqual(["B", "D", "A", "C"]);
+    // 元の配列は変更しない
+    expect(list.map(({ visit }) => visit.name)).toEqual(["A", "B", "C", "D"]);
   });
 });

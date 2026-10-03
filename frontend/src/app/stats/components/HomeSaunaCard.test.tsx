@@ -74,16 +74,30 @@ describe("HomeSaunaCard", () => {
   it("falls back to main visit date when history entries are empty", () => {
     const ranked: RankedVisit[] = [
       {
-        visit: createVisit({ id: "1", name: "Single Visit Sauna", date: "2024-03-15", history: [] }),
-        count: 1,
+        visit: createVisit({ id: "1", name: "Legacy Sauna", date: "2024-03-15", history: [] }),
+        count: 2,
       },
     ];
 
     render(<HomeSaunaCard ranked={ranked} />);
 
-    expect(screen.getByText("Single Visit Sauna")).toBeInTheDocument();
+    expect(screen.getByText("Legacy Sauna")).toBeInTheDocument();
     expect(screen.getByText("初訪問: 2024-03-15")).toBeInTheDocument();
     expect(screen.getByText("最新訪問: 2024-03-15")).toBeInTheDocument();
+  });
+
+  it("どの施設も 1 回ずつのときは施設を出さず、表示される条件を案内すること", () => {
+    const ranked: RankedVisit[] = [
+      { visit: createVisit({ id: "1", name: "Once A" }), count: 1 },
+      { visit: createVisit({ id: "2", name: "Once B" }), count: 1 },
+    ];
+
+    render(<HomeSaunaCard ranked={ranked} />);
+
+    expect(screen.getByText("まだホームサウナはありません")).toBeInTheDocument();
+    expect(screen.getByText(/同じ施設に2回以上行くと/)).toBeInTheDocument();
+    expect(screen.queryByText("Once A")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("renders a link to view sauna on the map", () => {

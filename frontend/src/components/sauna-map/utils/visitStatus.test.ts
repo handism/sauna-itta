@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getVisitStatus, isVisited, isWishlist } from "./visitStatus";
+import { getDisplayTags, getVisitStatus, isVisited, isWishlist } from "./visitStatus";
 
 describe("visitStatus", () => {
   it("status を持つ記録はその値を返すこと", () => {
@@ -18,5 +18,11 @@ describe("visitStatus", () => {
     for (const visit of [{}, { status: "visited" as const }, { status: "wishlist" as const }]) {
       expect(isVisited(visit)).toBe(!isWishlist(visit));
     }
+  });
+
+  it("getDisplayTags は行きたい記録からだけ「行きたい」タグを外すこと", () => {
+    expect(getDisplayTags({ status: "wishlist", tags: ["行きたい", "外気浴"] })).toEqual(["外気浴"]);
+    expect(getDisplayTags({ status: "visited", tags: ["行きたい", "外気浴"] })).toEqual(["行きたい", "外気浴"]);
+    expect(getDisplayTags({ status: "wishlist" })).toEqual([]);
   });
 });

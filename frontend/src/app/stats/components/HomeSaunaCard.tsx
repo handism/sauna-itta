@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { Flame, Calendar, Award, MapPin } from "lucide-react";
-import { getVisitHistoryEntries, RankedVisit } from "@/components/sauna-map/utils";
+import {
+  getVisitHistoryEntries,
+  RankedVisit,
+  REPEAT_VISIT_MIN_COUNT,
+} from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 interface HomeSaunaCardProps {
@@ -41,6 +45,28 @@ export function HomeSaunaCard({ ranked }: HomeSaunaCardProps) {
 
   if (!homeSaunaInfo) {
     return null;
+  }
+
+  // どの施設も 1 回ずつのときに 1 位を「ホーム」と呼んでも、五十音順で先頭の施設が出るだけになる。
+  // カードごと消すと TOP 5 と並ぶ 2 列の片側が空くため、条件を伝える案内に置き換える。
+  if (homeSaunaInfo.count < REPEAT_VISIT_MIN_COUNT) {
+    return (
+      <article className={`${styles.glassCard} ${styles.homeSaunaCard}`}>
+        <div className={styles.homeSaunaHeader}>
+          <div className={styles.homeSaunaBadge}>
+            <Flame size={18} />
+            <span>MY HOME SAUNA</span>
+          </div>
+        </div>
+        <div className={styles.homeSaunaPending}>
+          <Flame size={40} className={styles.homeSaunaPendingIcon} aria-hidden="true" />
+          <h2 className={styles.homeSaunaPendingTitle}>まだホームサウナはありません</h2>
+          <p className={styles.homeSaunaPendingText}>
+            同じ施設に{REPEAT_VISIT_MIN_COUNT}回以上行くと、いちばん通っている施設がここに表示されます。
+          </p>
+        </div>
+      </article>
+    );
   }
 
   const { sauna, count, firstDate, lastDate, sharePercentage } = homeSaunaInfo;

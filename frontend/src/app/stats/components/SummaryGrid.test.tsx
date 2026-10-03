@@ -53,7 +53,10 @@ describe("SummaryGrid", () => {
 
     // Check recording period
     const periodArticle = screen.getByRole("listitem", { name: "記録期間" });
-    expect(periodArticle).toHaveTextContent("2023-01-01 〜 2023-12-31");
+    // 1 行に収まるよう年月で表示し、日単位の期間は title に残す
+    expect(periodArticle).toHaveTextContent("2023.01 〜 2023.12");
+    expect(periodArticle.querySelector("p[title]")).toHaveAttribute("title", "2023-01-01 〜 2023-12-31");
+    expect(periodArticle.querySelector("time")).toHaveAttribute("dateTime", "2023-01-01");
   });
 
   it("renders correctly with empty/zero stats", () => {

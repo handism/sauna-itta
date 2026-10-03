@@ -1,7 +1,7 @@
 import { memo } from "react";
 import Image from "next/image";
-import { ChevronRight, Pencil, X } from "lucide-react";
-import { getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
+import { ChevronRight, ChevronUp, Pencil } from "lucide-react";
+import { getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import { RatingStars } from "../common/RatingStars";
 import { RouteLink } from "../common/RouteLink";
@@ -61,19 +61,24 @@ function VisitCompactItemComponent({
                 <ChevronRight size={14} />
               </span>
               <span className="sauna-compact-text">
-                <span className="sauna-compact-title-row">
-                  <span className="sauna-compact-title">
-                    {visit.name}
-                    {wishlist && <WishlistChip />}
-                  </span>
+                {/*
+                  1 行目は施設名だけにする。エリアを同じ行へ並べると、縮まないエリアに押されて
+                  施設名がほとんど読めないほど省略される。
+                */}
+                <span className="sauna-compact-title">{visit.name}</span>
+                {/*
+                  2 行目はエリアと「何回・いつ行ったか」。行きたい記録も同じ 2 行構成にして、
+                  一覧の行の高さを揃える。省略されるのはエリアだけ（回数・日付は縮めない）。
+                */}
+                <span className="sauna-compact-meta">
+                  {wishlist && <WishlistChip compact />}
                   {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
+                  {!wishlist && visit.date && (
+                    <span className="sauna-compact-visits">
+                      {visitCount}回 · 最終 {visit.date}
+                    </span>
+                  )}
                 </span>
-                {/* 折りたたんだ状態でも「何回・いつ行ったか」が一覧で比べられるようにする */}
-                {!wishlist && visit.date && (
-                  <span className="sauna-compact-meta">
-                    {visitCount}回 · 最終 {visit.date}
-                  </span>
-                )}
               </span>
             </span>
             <span className="sauna-compact-side-info">
@@ -98,7 +103,7 @@ function VisitCompactItemComponent({
       {isSelected && (
         <div className="sauna-compact-body">
           <VisitTagList
-            tags={visit.tags}
+            tags={getDisplayTags(visit)}
             onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
           />
           <VisitComment text={visit.comment} className="sauna-card-comment" />
@@ -119,7 +124,7 @@ function VisitCompactItemComponent({
                   onDeselectVisit();
                 }}
               >
-                <X size={13} /> 解除
+                <ChevronUp size={13} aria-hidden="true" /> 閉じる
               </button>
             )}
           </div>

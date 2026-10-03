@@ -75,6 +75,11 @@ describe("RatingDistributionChart", () => {
     expect(rating4?.value).toBe(1);
     expect(rating4?.name).toBe("★4 (満足)");
 
+    // 色だけに頼らず、凡例に評価ごとの件数と割合を表示する（0 件の評価も並べる）
+    expect(screen.getByTestId("rating-legend-5")).toHaveTextContent("★5 (最高)2件67%");
+    expect(screen.getByTestId("rating-legend-4")).toHaveTextContent("★4 (満足)1件33%");
+    expect(screen.getByTestId("rating-legend-1")).toHaveTextContent("★1 (うーん)0件0%");
+
     const table = screen.getByRole("table", { name: "満足度分布の詳細" });
     expect(table).toHaveTextContent("★5");
     expect(table).toHaveTextContent("2件");

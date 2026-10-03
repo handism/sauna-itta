@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Pencil, X } from "lucide-react";
-import { getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
+import { getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import { RatingStars } from "../common/RatingStars";
 import { RouteLink } from "../common/RouteLink";
@@ -59,10 +59,8 @@ function VisitCardItemComponent({
                 e.stopPropagation();
                 onDeselectVisit();
               }}
-              title="選択を解除"
-              aria-label="選択を解除"
             >
-              <X size={13} /> 解除
+              <X size={13} aria-hidden="true" /> 選択を解除
             </button>
           )}
           <button
@@ -82,7 +80,7 @@ function VisitCardItemComponent({
       {visit.area && <div className="sauna-card-area">{visit.area}</div>}
       <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" />
       <VisitTagList
-        tags={visit.tags}
+        tags={getDisplayTags(visit)}
         onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
       />
       <VisitComment text={visit.comment} className="sauna-card-comment" />

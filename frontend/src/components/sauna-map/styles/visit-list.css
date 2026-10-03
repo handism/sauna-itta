@@ -202,22 +202,19 @@
   min-width: 0;
 }
 
-.sauna-compact-title-row {
+.sauna-compact-meta {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
   min-width: 0;
-}
-
-.sauna-compact-meta {
   font-size: var(--text-2xs);
   color: var(--text-muted);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
+/* flex にすると省略記号（…）が出ないため、施設名は block のまま省略する */
 .sauna-compact-title {
+  display: block;
   font-size: var(--text-base);
   font-weight: 600;
   margin: 0;
@@ -225,20 +222,28 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
 }
 
+/* 2 行目で幅が足りないときに省略するのはエリアだけにする */
 .sauna-compact-area {
-  font-size: var(--text-2xs);
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-xs);
-  background: var(--input-bg);
-  color: var(--foreground);
-  opacity: 0.75;
-  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sauna-compact-visits {
   flex-shrink: 0;
+}
+
+.sauna-compact-meta .wishlist-chip {
+  margin-left: 0;
+  flex-shrink: 0;
+  font-size: var(--text-2xs);
+}
+
+.sauna-compact-area + .sauna-compact-visits::before {
+  content: "·";
+  margin-right: 0.4rem;
 }
 
 .sauna-compact-side-info {
@@ -696,14 +701,34 @@
   display: none;
 }
 
+/*
+ * スクロールバーは隠さない（横に続くことの手がかり）。ただしチップとの間が空くと
+ * 宙に浮いた灰色の棒に見えるため、下の余白は container 側の margin だけにして詰める。
+ */
 .quick-filter-chips {
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
-  padding: 0.3rem 0.2rem;
-  margin-bottom: 0.5rem;
+  padding: 0.3rem 0.2rem 0.2rem;
   scrollbar-width: thin;
   scrollbar-color: var(--glass-border) transparent;
+}
+
+/*
+ * デスクトップでは「横にスワイプ」の文字は出さず、右端を面の色へ溶かして続きがあることを示す。
+ * スクロールバーに掛からないよう下端は空け、チップの操作は妨げない。
+ */
+@media (min-width: 768px) {
+  .quick-filter-container::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0.6rem;
+    width: 1.75rem;
+    background: linear-gradient(to right, transparent, var(--glass-heavy));
+    pointer-events: none;
+  }
 }
 
 .chip-btn {
@@ -818,10 +843,6 @@
 
   .sauna-search-box {
     margin-bottom: 0.5rem;
-  }
-
-  .quick-filter-chips {
-    margin-bottom: 0.25rem;
   }
 
   /* 表示切替はアイコンだけにする（読み上げは aria-label が担う） */

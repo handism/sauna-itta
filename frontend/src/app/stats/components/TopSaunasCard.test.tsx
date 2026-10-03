@@ -89,5 +89,37 @@ describe("TopSaunasCard", () => {
     const link = screen.getByRole("link", { name: "Top 1 Saunaを地図で見る" });
     expect(link).toHaveAttribute("href", "/?id=sauna-top-1");
   });
-});
 
+  it("2 回以上行った施設だけを訪問回数順に並べ、1 回の施設で枠を埋めないこと", () => {
+    const ranked: RankedVisit[] = [
+      { visit: createVisit({ id: "1", name: "Repeat", rating: 3 }), count: 3 },
+      { visit: createVisit({ id: "2", name: "Once", rating: 5 }), count: 1 },
+    ];
+    render(<TopSaunasCard ranked={ranked} />);
+
+    expect(screen.getByText("よく行く施設 TOP 5")).toBeInTheDocument();
+    expect(screen.getByText("Repeat")).toBeInTheDocument();
+    expect(screen.queryByText("Once")).not.toBeInTheDocument();
+  });
+
+  it("どの施設も 1 回ずつのときは満足度順に切り替え、回数を出さないこと", () => {
+    const ranked: RankedVisit[] = [
+      { visit: createVisit({ id: "1", name: "Low", rating: 3 }), count: 1 },
+      { visit: createVisit({ id: "2", name: "High", rating: 5 }), count: 1 },
+    ];
+    const { container } = render(<TopSaunasCard ranked={ranked} />);
+
+    expect(screen.getByText("満足度の高い施設 TOP 5")).toBeInTheDocument();
+    expect(screen.getByText(/2回以上行った施設がまだ無いため満足度順/)).toBeInTheDocument();
+    expect(screen.queryByText("1 回")).not.toBeInTheDocument();
+
+    // 満足度の高い High が先に並ぶ
+    expect(
+      screen.getByText("High").compareDocumentPosition(screen.getByText("Low")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    // 満足度は同点が並びやすくバーが揃って満タンになるだけなので、バーは出さない
+    expect(container.querySelector('[class*="topSaunaBarFill"]')).toBeNull();
+  });
+});

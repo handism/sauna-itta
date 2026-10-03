@@ -19,8 +19,9 @@
   max-height: calc(100vh - 4rem);
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--glass-heavy) 90%, transparent),
-    color-mix(in srgb, var(--secondary) 50%, transparent)
+    color-mix(in srgb, var(--glass-heavy) 96%, transparent),
+    /* 一覧の背後に地図の地名が透けると文字が読みにくいため、下側も透過を抑える */
+    color-mix(in srgb, var(--secondary) 90%, transparent)
   );
   backdrop-filter: var(--backdrop-blur-heavy);
   -webkit-backdrop-filter: var(--backdrop-blur-heavy);

@@ -98,6 +98,25 @@ export function rankVisitsByCount(visits: SaunaVisit[]): RankedVisit[] {
     .sort((a, b) => b.count - a.count || a.visit.name.localeCompare(b.visit.name, "ja"));
 }
 
+/**
+ * 「通っている」とみなす最小の訪問回数。全施設が 1 回ずつのとき、訪問回数で順位を付けても
+ * 全員同率で意味が無いため、MY HOME SAUNA と よく行く施設 TOP 5 はこの回数以上の施設だけを扱う。
+ */
+export const REPEAT_VISIT_MIN_COUNT = 2;
+
+/** {@link rankVisitsByCount} の結果のうち、{@link REPEAT_VISIT_MIN_COUNT} 回以上行った施設だけを返す（順序は保つ）。 */
+export function getRepeatVisits(ranked: RankedVisit[]): RankedVisit[] {
+  return ranked.filter(({ count }) => count >= REPEAT_VISIT_MIN_COUNT);
+}
+
+/**
+ * {@link rankVisitsByCount} の結果を満足度の高い順に並べ替えて返す（同点なら元の順＝訪問回数・施設名の順）。
+ * 繰り返し訪問した施設が無いときの TOP 5 の代わりの並びに使う。評価の無い記録は 0 点として末尾へ回す。
+ */
+export function sortRankedByRating(ranked: RankedVisit[]): RankedVisit[] {
+  return [...ranked].sort((a, b) => (b.visit.rating ?? 0) - (a.visit.rating ?? 0));
+}
+
 export interface TagCount {
   name: string;
   count: number;

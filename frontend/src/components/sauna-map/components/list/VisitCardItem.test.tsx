@@ -164,7 +164,7 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
       expect(onOpenImage).toHaveBeenCalledWith(mockVisit.image);
     });
 
-    it("展開中の解除ボタンは折りたたみを一度だけ呼ぶ", () => {
+    it("展開中の閉じるボタンは折りたたみを一度だけ呼ぶ", () => {
       const handleDeselect = vi.fn();
       render(
         <VisitCompactItem
@@ -175,7 +175,7 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
         />
       );
 
-      fireEvent.click(screen.getByRole("button", { name: /解除/ }));
+      fireEvent.click(screen.getByRole("button", { name: "閉じる" }));
 
       expect(handleDeselect).toHaveBeenCalledOnce();
     });

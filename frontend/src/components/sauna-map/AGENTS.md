@@ -45,6 +45,9 @@
 - **訪問回数の算出**: 訪問回数は必ず `utils/visitHistory.ts` の `getVisitCount()` を使うこと（`history.length` と `visitCount` の両方を考慮します）。地図側と統計ページで別々に導出すると、旧形式データで表示が食い違います。訪問回数による順位付けは `utils/visitStats.ts` の `rankVisitsByCount()` に集約しています（同数のときの並びまで揃わないと、「MY HOME SAUNA」と「よく行く施設 TOP 5」で 1 位が食い違います）。
 - **`utils/` 内のファイル同士は個別ファイルから import すること**: `utils/index.ts` は全ファイルを再エクスポートしているため、`utils/` 内から `"../utils"` 経由で読むと循環 import になり、読み込み順によっては値が `undefined` になります（`visitHistory.ts` が `./date` を読むのと同じ形にすること）。
 - **最新履歴の本体への写しは 1 か所で行うこと**: 記録本体の `date` / `comment` / `rating` / `image` は履歴の末尾の写しです。履歴を足す・直す・消すどの経路でも `utils/visitHistory.ts` の `syncLatestFromHistory()` を通してください（`createNewVisit()` / `buildHistoryUpdate()` / `normalizeVisits()` / `getVisitsWithRemovedHistory()` がこれを共有します）。フォームから履歴 1 件を作る処理も `buildHistoryEntry()` に集約しており、新規作成と更新で日付・評価の既定値を食い違わせないこと。経路ごとに `history[history.length - 1]` から書き写すと、1 か所の直し忘れで一覧に出る本体の値と履歴の中身がずれます。訪問回数は第 2 引数で渡し、履歴を削除する経路だけ渡さない（残件数へ揃える）という区別も同関数に集約しています。
+- **コンパクト行は施設名を 1 行目に単独で置くこと**: `VisitCompactItem` の 1 行目は施設名（`.sauna-compact-title`、`display: block` で省略記号を出す）だけにし、エリアと「N回 · 最終 日付」は 2 行目の `.sauna-compact-meta` に置きます。エリアを施設名と同じ行へ戻すと、縮まないエリアに押されて施設名がほとんど読めなくなります。2 行目で省略するのはエリアだけです（回数・日付は縮めない）。行きたい記録も同じ 2 行構成（`WishlistChip compact` ＋ エリア）にして行の高さを揃えます。
+- **一覧のタグは `getDisplayTags()` を通すこと**: 行きたい記録は状態を `WishlistChip` で示すため、`utils/visitStatus.ts` の `getDisplayTags()` が同名の「行きたい」タグを表示から外します（保存値は変えません）。`visit.tags` をそのまま渡すと「行きたい」が 2 回並びます。チップの文言は同ファイルの `WISHLIST_LABEL` が唯一の出所です。
+- **デスクトップの地図移動はサイドバーの幅を差し引くこと**: `MapController` は選択した記録へ `flyTo` するとき、開いている `.sidebar` が地図を覆っている幅の半分だけ中心を左へずらし、マーカーを見えている領域の中央へ置きます（折りたたみ中・モバイル・地図の半分以上を覆う狭い画面ではずらしません）。モバイルのボトムシート分の緯度オフセットとは別の処理です。
 - **訪問リストの行コンポーネント**: `VisitCompactItem` / `VisitCardItem` は表示密度が違うだけなので、props 型と `memo` の比較関数は `components/list/visitItem.ts` の `VisitItemProps` / `areVisitItemPropsEqual` を共有します。片方にだけ props を足すと比較関数の更新漏れで表示が古いまま残るため、個別に再定義しないこと。
 - **テーマフックは 1 本**: 地図側・統計ページとも `hooks/useTheme.ts` を使います。統計ページのように静的プリレンダリングされる画面は `useTheme({ deferred: true })` で開始し、他のクライアント専用初期化と同じタイミングで `syncFromStorage()` を呼ぶこと（マウント直後に既定値でクラスを適用すると、`layout.tsx` のインラインスクリプトが付けた `light-theme` を剥がしてちらつきます）。
 - **タグ集計**: タグの出現回数は `utils/visitStats.ts` の `countTags()` に集約しています（`getPopularTags()` はその薄いラッパー）。コンポーネント内で `visit.tags` を数え直さないこと。
@@ -58,6 +61,10 @@
 - **月別件数は 0 件の月も埋めること**: 月別訪問数のグラフは `utils/visitStats.ts` の `getMonthlyVisitCounts()` を使い、最初の訪問月から最後の訪問月まで 0 件の月も並べます。記録のある月だけを並べると、x 軸が飛んでも等間隔に見えて空白期間が読めなくなります。
 - **都道府県が判定できないときは 0 と出さないこと**: サマリーの「都道府県制覇」は `prefectureCount` が 0 のとき数値の代わりに「-」と補足を出します（エリアが地名だけだと常に 0 になり、「1 つも行っていない」と読めてしまうため）。
 - **訪問カレンダーの初期表示は最後に訪問した月**: `VisitCalendar` は `defaultActiveStartDate` を `visitDates` の最新日の月に合わせます。今月を開くと、今月に訪問が無い利用者には空のカレンダーが表示されます。
+- **訪問回数の順位は 2 回以上行った施設だけで付けること**: どの施設も 1 回ずつのときに訪問回数で並べると、全員同率で五十音順の先頭が「1 位」になるだけです。`utils/visitStats.ts` の `REPEAT_VISIT_MIN_COUNT`（2）を境に、`HomeSaunaCard` は条件を伝える案内に切り替え（カードを消すと TOP 5 と並ぶ 2 列の片側が空くため）、`TopSaunasCard` は `getRepeatVisits()` の施設だけを並べ、1 つも無いときは `sortRankedByRating()` の満足度順（見出しも「満足度の高い施設 TOP 5」、回数とバーは出さない）に切り替えます。
+- **タグクラウドは先頭だけを出すこと**: `TagCloudCard` は件数の多い順に `TAG_CLOUD_INITIAL_COUNT` 件だけを表示し、残りは「すべて表示」（`aria-expanded` / `aria-controls`）で開きます。全種類を並べると 100 件を超える同じ大きさのチップの壁になり、よく使うタグが埋もれます。1 回しか付いていないタグは `.tagPillRare` で控えめにします。
+- **満足度分布は凡例を出すこと**: `RatingDistributionChart` はドーナツの横に ★5〜★1 の件数と割合の凡例を並べます（0 件の評価も薄く表示）。色だけでは何点の割合か読み取れません。凡例は見た目用（`aria-hidden`）で、読み上げは兄弟の `.sr-only` テーブルが担います。
+- **記録期間は年月で表示すること**: サマリーの「記録期間」は `YYYY.MM 〜 YYYY.MM` で表示し、日単位の期間は `title` と `<time dateTime>` に残します。日付 2 つを日単位で並べると、このカードだけ 2 行に折り返してサマリーの高さが揃いません。
 - **同じ数字を 2 か所で計算しないこと**: 平均満足度は `calculateStats()` の `stats.avgRating` が唯一の出所で、`RatingDistributionChart` は `avgRating` を props で受け取って表示します（グラフ側で再計算すると、サマリーと中央表示の数字がいずれ食い違います）。
 
 ## 3. パフォーマンス
