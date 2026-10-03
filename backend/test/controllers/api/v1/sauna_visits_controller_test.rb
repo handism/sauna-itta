@@ -38,7 +38,8 @@ class Api::V1::SaunaVisitsControllerTest < ActionController::TestCase
     assert_equal "data:image/png;base64,...", permitted_params[:image]
     assert_equal true, permitted_params[:appendHistory]
     assert_equal 1, permitted_params[:lockVersion]
-    assert_equal 2, permitted_params[:visitCount]
+    # 旧形式の訪問回数は取り込み専用 (ImportsController::IMPORT_PERMITTED_KEYS)
+    assert_not permitted_params.key?(:visitCount)
     assert_equal [ "relax", "hot" ], permitted_params[:tags]
 
     assert_nil permitted_params[:unallowed_attribute]

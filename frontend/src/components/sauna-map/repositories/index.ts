@@ -3,6 +3,7 @@ import { LocalVisitRepository } from "./localVisitRepository";
 import { DATA_SOURCE } from "../../../../dataSource";
 
 export * from "./types";
+export * from "./errorMessages";
 export { DATA_SOURCE };
 
 let repository: ApiVisitRepository | LocalVisitRepository | undefined;

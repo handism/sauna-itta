@@ -102,6 +102,24 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal 4, updated["history"].first["rating"]
   end
 
+  # 旧形式の訪問回数 (legacy_visit_count) は取り込み専用。作成・更新で受け付けると、
+  # 履歴を足していないのに訪問回数だけを書き換えられ、履歴の件数と食い違う。
+  test "作成・更新ではvisitCountを受け付けない" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes.merge(visitCount: 9) },
+      headers: csrf_header(csrf), as: :json
+    assert_response :created
+    visit = response.parsed_body.fetch("saunaVisit")
+    assert_equal 1, visit["visitCount"]
+
+    patch "/api/v1/sauna_visits/#{visit['id']}", params: {
+      saunaVisit: valid_attributes.merge(visitCount: 7, lockVersion: visit["lockVersion"])
+    }, headers: csrf_header(csrf), as: :json
+    assert_response :success
+    assert_equal 1, response.parsed_body.dig("saunaVisit", "visitCount")
+    assert_equal 1, SaunaVisit.find_by!(external_id: visit["id"]).legacy_visit_count
+  end
+
   test "一覧(index)は更新日時順で取得でき、正しくシリアライズされる" do
     csrf = sign_in
 

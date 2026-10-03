@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export interface GeocodingResult {
   placeId: number;
   lat: number;
@@ -7,29 +9,54 @@ export interface GeocodingResult {
   addressText: string;
 }
 
-interface NominatimRawAddress {
-  province?: string;
-  state?: string;
-  city?: string;
-  town?: string;
-  village?: string;
-  suburb?: string;
-  city_district?: string;
-  quarter?: string;
-  neighbourhood?: string;
-  road?: string;
-  house_number?: string;
-  postcode?: string;
-  [key: string]: string | undefined;
-}
+/*
+ * Nominatim の応答は外部サービスの値のため、型注釈だけで信用せず zod で検証する
+ * （apiVisitRepository と同じ方針）。座標が数値にならない結果を地図へ渡すと、
+ * 選択した時点で Leaflet が NaN の座標で例外を投げる。
+ */
+const coordinate = (min: number, max: number) =>
+  z.string().trim().min(1).transform(Number).pipe(z.number().min(min).max(max));
 
-interface NominatimRawResult {
-  place_id: number;
-  lat: string;
-  lon: string;
-  display_name: string;
-  name?: string;
-  address?: NominatimRawAddress;
+const NominatimRawAddressSchema = z.object({
+  province: z.string().optional(),
+  state: z.string().optional(),
+  city: z.string().optional(),
+  town: z.string().optional(),
+  village: z.string().optional(),
+  suburb: z.string().optional(),
+  city_district: z.string().optional(),
+  quarter: z.string().optional(),
+  neighbourhood: z.string().optional(),
+  road: z.string().optional(),
+  house_number: z.string().optional(),
+});
+
+const NominatimRawResultSchema = z.object({
+  place_id: z.number(),
+  lat: coordinate(-90, 90),
+  lon: coordinate(-180, 180),
+  display_name: z.string(),
+  name: z.string().optional(),
+  address: NominatimRawAddressSchema.optional(),
+});
+
+type NominatimRawAddress = z.infer<typeof NominatimRawAddressSchema>;
+type NominatimRawResult = z.infer<typeof NominatimRawResultSchema>;
+
+/**
+ * 応答の配列から、検証に通った結果だけを返す。1 件の不正で検索全体を失敗にはしないが、
+ * 配列ですらない応答は接続先の誤りや障害のため例外にする（0 件として扱わないこと）。
+ */
+function parseNominatimResponse(body: unknown): NominatimRawResult[] {
+  if (!Array.isArray(body)) {
+    throw new Error("Geocoding response is not an array");
+  }
+  return body.flatMap((item) => {
+    const result = NominatimRawResultSchema.safeParse(item);
+    if (result.success) return [result.data];
+    console.warn("Ignored unexpected geocoding result:", result.error);
+    return [];
+  });
 }
 
 const DEFAULT_GEOCODING_ENDPOINT = "https://nominatim.openstreetmap.org/search";
@@ -92,11 +119,9 @@ export async function searchLocation(
       throw new Error(`Geocoding HTTP error! status: ${response.status}`);
     }
 
-    const data: NominatimRawResult[] = await response.json();
+    const data = parseNominatimResponse(await response.json());
 
     const results = data.map((item) => {
-      const lat = parseFloat(item.lat);
-      const lng = parseFloat(item.lon);
       const formattedAddress = formatJapaneseAddress(item.address);
       const displayName = item.display_name || "";
       // Extract specific location/building name if available, or first chunk of display_name
@@ -104,8 +129,8 @@ export async function searchLocation(
 
       return {
         placeId: item.place_id,
-        lat,
-        lng,
+        lat: item.lat,
+        lng: item.lon,
         displayName,
         name,
         addressText: formattedAddress || displayName,

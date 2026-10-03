@@ -2,15 +2,13 @@ import { memo } from "react";
 import { Pencil, X } from "lucide-react";
 import { getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
-import {
-  RatingStars,
-  RouteLink,
-  VisitComment,
-  VisitImagePreview,
-  VisitMetaInfo,
-  VisitTagList,
-  WishlistChip,
-} from "../common/common";
+import { RatingStars } from "../common/RatingStars";
+import { RouteLink } from "../common/RouteLink";
+import { VisitComment } from "../common/VisitComment";
+import { VisitImagePreview } from "../common/VisitImagePreview";
+import { VisitMetaInfo } from "../common/VisitMetaInfo";
+import { VisitTagList } from "../common/VisitTagList";
+import { WishlistChip } from "../common/WishlistChip";
 
 function VisitCardItemComponent({
   visit,

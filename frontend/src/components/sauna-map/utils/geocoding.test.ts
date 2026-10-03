@@ -57,6 +57,33 @@ describe("searchLocation", () => {
     });
   });
 
+  it("座標が数値にならない結果は除外し、残りの結果を返す", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => [
+        { place_id: 1, lat: "not-a-number", lon: "139.7", display_name: "壊れた結果" },
+        { place_id: 2, lat: "", lon: "139.7", display_name: "空の座標" },
+        { place_id: 3, lat: "95", lon: "139.7", display_name: "範囲外の座標" },
+        { place_id: 4, lat: "35.7", lon: "139.7", display_name: "正しい結果" },
+      ],
+    });
+
+    const results = await searchLocation("座標検証");
+
+    expect(results.map((result) => result.placeId)).toEqual([4]);
+    expect(results[0]).toMatchObject({ lat: 35.7, lng: 139.7 });
+  });
+
+  it("配列でない応答は0件ではなくエラーとして伝える", async () => {
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ error: "Unable to geocode" }),
+    });
+
+    await expect(searchLocation("配列でない応答")).rejects.toThrow("Geocoding response is not an array");
+  });
+
   it("HTTPエラーを呼び出し側へ伝える", async () => {
     (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
       ok: false,
