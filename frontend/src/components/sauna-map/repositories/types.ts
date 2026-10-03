@@ -19,6 +19,16 @@ export interface ImportResult {
   skipped: number;
 }
 
+/** ブラウザで起きたエラーの報告（apiモードはサーバーのログへ送る） */
+export interface ClientErrorReport {
+  message: string;
+  stack?: string;
+  componentStack?: string;
+  /** どこで捕まえたか（"error-boundary" / "window-error" / "unhandled-rejection"） */
+  source: string;
+  url?: string;
+}
+
 export class RepositoryError extends Error {
   constructor(
     message: string,
@@ -51,4 +61,9 @@ export interface VisitRepository {
    * 写真が復元されない。写真を1枚でも取得できなければ、欠けたバックアップを作らないよう失敗させる。
    */
   prepareExport(visits: SaunaVisit[]): Promise<SaunaVisit[]>;
+  /**
+   * ブラウザで起きたエラーを開発者へ届ける。localモードは送り先が無いため何もしない。
+   * 報告の失敗で元の処理を妨げないよう、呼び出し側（utils/errorReporter.ts）が例外を握る。
+   */
+  reportClientError(report: ClientErrorReport): Promise<void>;
 }

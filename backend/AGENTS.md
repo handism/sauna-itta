@@ -10,11 +10,14 @@
 - 書き込み系の共通エラー応答（`ActiveRecord::RecordInvalid`→422 `validation_error`、画像の`DataUrlImage::InvalidImage`→422 `invalid_image`）は`VisitWritable`の`included do`が`rescue_from`で登録します。アクションごとに`rescue`を書き写す実装へ戻さないでください（あとから足した書き込みアクションだけ500になります）。`render_validation_error`は`Api::V1::BaseController`が持つため、`VisitWritable`のinclude先はその配下に限ること。画像の不正は必ず`DataUrlImage::InvalidImage`で表し、`ArgumentError`のような汎用の例外を`rescue_from`しないでください（無関係なプログラムの誤りまで`invalid_image`の422として隠れます）。また`BaseController`側で握ると、画像を書き込まない`ImagesController`まで`invalid_image`になります。
 - 記録本体の許可キーは`VisitWritable::VISIT_PERMITTED_KEYS`を`SaunaVisitsController`と`ImportsController`で共有します。片方へキーを書き写すと、エクスポートしたJSONの取り込みと通常の作成・更新で受け付ける項目がずれます。
 - 書き込み系レスポンスの再読み込み（`VisitWritable#serialized`）は`includes(visit_history_entries: { image_attachment: :blob })`で先読みします。`visit.reload`だけに戻すと、`SaunaVisitSerializer`が履歴ごとに添付を引いて履歴件数に比例したクエリが出ます（`api_v1_sauna_visits_test.rb`のクエリ数比較が検査しています）。
+- 回数の上限は`Api::V1::BaseController.limit_requests`で宣言します（Rails 8の`rate_limit`を、専用のメモリストア`RATE_LIMIT_STORE`・ユーザーID単位・429 `rate_limited`の応答で包んだもの）。`rate_limit`を直接書いて`store:`を省くと、`Rails.cache`の設定次第で数えられなかったり、`by:`の既定（IP）でまとめて数えられたりします。`require_login`より後に宣言されるため未ログインは数えません。ストアはCloud Runのインスタンスごとのため、実際に通る回数は上限の最大2倍（`max_instance_count`）です。テストは`ApiAuthHelper`のsetupでストアを空にしています。
+- ブラウザのエラー報告（`ClientErrorsController`）は利用者の入力として扱い、各項目を`FIELD_LIMITS`で切り詰めて1行のJSONでログへ出します（改行を含む値でログ行を偽装させないため、文字列を連結して出力しないこと）。
 
 ## インポート
 - 履歴IDは記録内で一意です（`public_id` は `scope: :sauna_visit_id`）。グローバル一意へ戻すと、他ユーザーがエクスポートしたJSONを取り込んだときに履歴IDが衝突して取り込めなくなります。
 - インポートの履歴は画像なしで build してから画像だけを添付します（`ImportsController#import_history_image`）。画像の保存以外の理由で添付に失敗したときは警告ログを残して画像なしで取り込み、`DataUrlImage::InvalidImage`だけはチャンクごとロールバックさせます。画像込みで build し、失敗時に build し直す実装へ戻さないでください（失敗した側のエントリが関連に残り、履歴が二重に保存されます）。
 - インポートは記録ごとにセーブポイント（`transaction(requires_new: true)`）を張り、同時に別リクエストが同じ`external_id`を先にコミットしたことによる`ActiveRecord::RecordNotUnique`は、その記録だけを取り消して`skipped`に数えます（`ImportsController#import_visit_unless_concurrently_added`）。既存IDの事前確認やモデルの`uniqueness`検証は相手の未コミット分を見ないため、これを外すと同時インポートで500になります。同じ`external_id`が保存済みでない一意制約違反は握らずに上げ、`BaseController`が409 `duplicate`で返します（楽観ロックの競合`conflict`とはcodeを分けること。フロントは`conflict`だけを再読み込みの案内へ置き換えるため、同じcodeにすると重複の文言が画面に出ません）。
+- 1記録あたりの履歴は`MAX_HISTORY_PER_VISIT`（1000件）までで、超えるとチャンクごと422にします。記録数の上限（`MAX_BATCH_SIZE`）だけでは履歴の配列が無制限になります。ボディ全体の大きさは`lib/middleware/request_body_limit.rb`がパラメータ解析より前に413で弾きます。
 - インポートAPIのペイロード検証は`ActionController::BadRequest`へ集約し、配列でない`saunaVisits`・記録以外の要素・IDが無い記録をすべて422で返します。`attributes.fetch(:id)`の`KeyError`を直接rescueしないでください（`ActionController::ParameterMissing`は`KeyError`のサブクラスのため、キー欠落が「IDがない記録」として誤って報告されます）。
 
 ## 写真
@@ -26,7 +29,8 @@
 
 ## 静的成果物の配信
 - Railsは`public/`へ同梱したAPIモードのNext.js成果物を配信します。長期キャッシュは`lib/middleware/static_asset_cache_headers.rb`が`/_next/static/`配下（内容ハッシュ付き）にだけ付けます。`config.public_file_server.headers`で一律に指定しないでください（`index.html`まで固定され、デプロイしても更新が届かなくなります）。
-- このミドルウェアはスタック構築時に定数解決されるため、`config/application.rb`で`require_relative`し、`autoload_lib`の`ignore`に`middleware`を入れています。
+- HTMLのContent-Security-Policyは`lib/middleware/content_security_policy_header.rb`が付けます。`/`や`/stats`は`ActionDispatch::Static`がコントローラを通さずに返すため、Railsの`content_security_policy`設定へ移さないでください（静的配信されたHTMLにだけ付かなくなります）。inline scriptは配信するHTMLから求めたsha256ハッシュだけを許可し、`'unsafe-inline'`を足さないこと。本番イメージは`.gz`も同梱しており、gzipの本文は展開してからハッシュを求めます（展開せずに求めると全てのinline scriptが遮断されて画面が動きません）。外部オリジンを増やす場合（`NEXT_PUBLIC_GEOCODING_ENDPOINT`の差し替えなど）は、同ファイルの`*_SOURCES`へ追加してください。
+- これらのミドルウェアはスタック構築時に定数解決されるため、`config/application.rb`で`require_relative`し、`autoload_lib`の`ignore`に`middleware`を入れています。
 
 ## DB
 - DB変更はexpand/contract方式で後方互換に進めます。本番seedへ個人データやデモデータを追加しないでください。

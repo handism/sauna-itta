@@ -56,6 +56,24 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_equal 0, owner.sauna_visits.count
   end
 
+  test "履歴が上限を超える記録はチャンクごと422で拒否する" do
+    csrf = sign_in
+    history = Array.new(Api::V1::ImportsController::MAX_HISTORY_PER_VISIT + 1) do |index|
+      { id: "history-#{index}", date: "2026-08-02", comment: "", rating: nil }
+    end
+    payload = [
+      valid_attributes.merge(id: "legacy-ok"),
+      valid_attributes.merge(id: "legacy-too-many", history: history)
+    ]
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+    assert_equal 0, owner.sauna_visits.count
+  end
+
   test "配列以外のsaunaVisitsは500にせず422で返す" do
     csrf = sign_in
 

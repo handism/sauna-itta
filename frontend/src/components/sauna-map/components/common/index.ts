@@ -5,3 +5,4 @@ export * from "./ImageLightbox";
 export * from "./iconSvg";
 export * from "./markerIcon";
 export * from "./ErrorBoundary";
+export * from "./ClientErrorReporter";

@@ -13,6 +13,7 @@ Rails.application.routes.draw do
         collection { post :imports, to: "imports#create" }
       end
       get "images/:signed_id", to: "images#show", as: :image
+      resources :client_errors, only: :create
     end
   end
 

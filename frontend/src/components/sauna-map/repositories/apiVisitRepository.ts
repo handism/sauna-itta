@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { SaunaVisitSchema, type LatLng, type SaunaVisit, type VisitFormState } from "../types";
 import { blobToDataUrl, isApiImageUrl, toNormalizedTags } from "../utils";
-import type { ImportResult, SessionState, VisitRepository } from "./types";
+import type { ClientErrorReport, ImportResult, SessionState, VisitRepository } from "./types";
 import { RepositoryError } from "./types";
 
 /*
@@ -10,7 +10,11 @@ import { RepositoryError } from "./types";
  * Repository のエラーとして利用者へ伝えるため。
  */
 const VisitEnvelopeSchema = z.object({ saunaVisit: SaunaVisitSchema });
-const VisitListEnvelopeSchema = z.object({ saunaVisits: z.array(SaunaVisitSchema) });
+const VisitPageEnvelopeSchema = z.object({
+  saunaVisits: z.array(SaunaVisitSchema),
+  // 古い版のサーバー（limit を解釈せず全件を返す）では無い。そのときは1ページで終える
+  nextCursor: z.string().nullish(),
+});
 const ImportResultSchema = z.object({ added: z.number().int(), skipped: z.number().int() });
 const SessionStateSchema = z.object({
   authenticated: z.boolean(),
@@ -29,6 +33,15 @@ function parseResponse<T>(schema: z.ZodType<T>, body: unknown): T {
 
 /** エクスポート時に写真を同時に取得する数。1枚最大1MBのため、多く並べても回線を詰まらせるだけ */
 const EXPORT_IMAGE_CONCURRENCY = 4;
+
+/**
+ * 一覧を1回に取る件数。サーバーの MAX_PAGE_SIZE（SaunaVisitsController）以下にすること。
+ * limit を付けずに呼ぶとサーバーは全件を1回で返すが、記録が増えると応答が大きくなりすぎる。
+ */
+export const LIST_PAGE_SIZE = 100;
+
+/** サーバーが毎回同じカーソルを返すなどの異常で、読み込みが終わらなくなるのを防ぐ上限 */
+const MAX_LIST_PAGES = 1000;
 
 const EXPORT_IMAGE_FAILED_MESSAGE = "写真を取得できなかったため、エクスポートを中止しました。";
 
@@ -58,6 +71,8 @@ function formPayload(location: LatLng, form: VisitFormState, lockVersion?: numbe
 export class ApiVisitRepository implements VisitRepository {
   readonly dataSource = "api" as const;
   private csrfToken: string | null = null;
+  /** エラー報告の送信可否。サーバーはログイン中の報告だけを受け付ける */
+  private authenticated = false;
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const method = init.method ?? "GET";
@@ -94,17 +109,38 @@ export class ApiVisitRepository implements VisitRepository {
     const body = await this.request<unknown>("/api/v1/session");
     const session: SessionState = parseResponse(SessionStateSchema, body);
     this.csrfToken = session.csrfToken;
+    this.authenticated = session.authenticated;
     return session;
   }
 
   async logout(): Promise<void> {
     await this.request<void>("/api/v1/session", { method: "DELETE" });
     this.csrfToken = null;
+    this.authenticated = false;
   }
 
+  /**
+   * 全ページを順に取得して1つの配列にする。ページは主キー順のため、取得の合間に
+   * 更新された記録も取りこぼさない（並びは画面側で並べ替える）。
+   */
   async list(): Promise<SaunaVisit[]> {
-    const body = await this.request<unknown>("/api/v1/sauna_visits");
-    return parseResponse(VisitListEnvelopeSchema, body).saunaVisits;
+    const visits: SaunaVisit[] = [];
+    const seen = new Set<string>();
+    let cursor: string | null = null;
+    for (let page = 0; page < MAX_LIST_PAGES; page += 1) {
+      const params = new URLSearchParams({ limit: String(LIST_PAGE_SIZE) });
+      if (cursor) params.set("cursor", cursor);
+      const body = await this.request<unknown>(`/api/v1/sauna_visits?${params.toString()}`);
+      const result = parseResponse(VisitPageEnvelopeSchema, body);
+      for (const visit of result.saunaVisits) {
+        if (seen.has(visit.id)) continue;
+        seen.add(visit.id);
+        visits.push(visit);
+      }
+      cursor = result.nextCursor ?? null;
+      if (!cursor) return visits;
+    }
+    throw new RepositoryError("記録の読み込みが終わりませんでした。", "invalid_response");
   }
 
   async create(location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
@@ -179,6 +215,15 @@ export class ApiVisitRepository implements VisitRepository {
         history: visit.history.map((entry) => ({ ...entry, image: inline(entry.image) })),
       }),
     }));
+  }
+
+  async reportClientError(report: ClientErrorReport): Promise<void> {
+    // ログイン前はサーバーが受け付けない（401）ため送らない
+    if (!this.authenticated) return;
+    await this.request<void>("/api/v1/client_errors", {
+      method: "POST",
+      body: JSON.stringify({ clientError: report }),
+    });
   }
 
   private async fetchImageAsDataUrl(url: string): Promise<string> {

@@ -5,6 +5,8 @@ module ApiAuthHelper
 
   def self.included(base)
     base.setup do
+      # rate_limit の回数はプロセス内のメモリストアに残るため、テストごとに数え直す
+      Api::V1::BaseController::RATE_LIMIT_STORE.clear
       @original_allowed_email = ENV["ALLOWED_GOOGLE_EMAIL"]
       ENV["ALLOWED_GOOGLE_EMAIL"] = ALLOWED_EMAIL
       OmniAuth.config.test_mode = true

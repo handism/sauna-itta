@@ -3,10 +3,34 @@ module Api
     class SaunaVisitsController < BaseController
       include VisitWritable
 
+      # 一覧はページ単位で取るため、1回の読み込みで数回呼ばれる
+      limit_requests to: 120, only: :index, name: "read"
+      limit_requests to: 60, only: %i[create update destroy], name: "write"
+
+      # 1ページの既定件数と上限
+      DEFAULT_PAGE_SIZE = 100
+      MAX_PAGE_SIZE = 200
+
+      # limit を指定したときだけページ単位で返す。指定が無い呼び出しは従来どおり全件を返す
+      # （デプロイ直後に古い版のフロントが残っていても、記録の一部だけが表示される状態にしない）。
+      #
+      # ページの並びは主キーの降順にする。updated_at はページ取得の合間に更新された記録が
+      # カーソルより前へ移り、どのページにも現れなくなるため、カーソルには使えない。
       def index
         visits = current_user.sauna_visits.includes(visit_history_entries: { image_attachment: :blob })
-          .order(updated_at: :desc)
-        render json: { saunaVisits: visits.map { |visit| SaunaVisitSerializer.new(visit).as_json } }
+        return render_all(visits) unless params.key?(:limit)
+
+        page_size = page_size_param
+        visits = visits.order(id: :desc).limit(page_size + 1)
+        visits = visits.where(id: ...cursor_param) if params[:cursor].present?
+        page = visits.to_a
+        has_more = page.size > page_size
+        page = page.first(page_size)
+
+        render json: {
+          saunaVisits: page.map { |visit| SaunaVisitSerializer.new(visit).as_json },
+          nextCursor: has_more ? encode_cursor(page.last.id) : nil
+        }
       end
 
       def create
@@ -46,6 +70,32 @@ module Api
       end
 
       private
+
+      def render_all(visits)
+        visits = visits.order(updated_at: :desc)
+        render json: { saunaVisits: visits.map { |visit| SaunaVisitSerializer.new(visit).as_json } }
+      end
+
+      def page_size_param
+        size = Integer(params[:limit], exception: false)
+        raise ActionController::BadRequest, "limitは1以上の整数で指定してください。" unless size&.positive?
+
+        [ size, MAX_PAGE_SIZE ].min
+      end
+
+      # カーソルは中身を約束しない文字列として返す（フロントは受け取った値をそのまま送り返す）
+      def encode_cursor(id)
+        Base64.urlsafe_encode64(id.to_s, padding: false)
+      end
+
+      def cursor_param
+        id = Integer(Base64.urlsafe_decode64(params[:cursor].to_s), exception: false)
+        raise ActionController::BadRequest, "cursorが不正です。" unless id&.positive?
+
+        id
+      rescue ArgumentError
+        raise ActionController::BadRequest, "cursorが不正です。"
+      end
 
       def save_visit_in_transaction(visit, attributes, append:, stale_image_blobs: [])
         SaunaVisit.transaction do

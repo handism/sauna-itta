@@ -48,6 +48,8 @@ localモードのService Workerは静的資産と地図タイルを別キャッ�
 
 APIモードでは、Railsが同梱するNext.js成果物のうち内容ハッシュ付きの `/_next/static/` だけに長期キャッシュ（`immutable`）を付けます。`index.html` は毎回再検証されるため、デプロイした更新はすぐ届きます。
 
+APIモードのHTMLにはContent-Security-Policyを付けます。inline scriptは `'unsafe-inline'` で許可せず、配信するHTMLに含まれるscriptのハッシュだけを許可します（ビルドのたびに変わるハッシュはRailsが配信時に求めるため、手で更新する必要はありません）。外部への通信は地図タイルと場所検索（OpenStreetMap）、Googleログインのリダイレクトだけを許可しています。GitHub Pages（localモード）はレスポンスヘッダを設定できないため対象外です。
+
 ## ディレクトリ
 
 ```text
@@ -83,7 +85,7 @@ Playwright E2Eはローカルで任意に行う実ブラウザ確認です。初
 
 地点検索は公共Nominatimの利用方針に合わせ、入力中には送信せず検索ボタンまたはEnterで実行します。同一語句はブラウザ内でキャッシュし、連続検索は1秒間隔です。Nominatim互換サービスへ切り替える場合はビルド時に`NEXT_PUBLIC_GEOCODING_ENDPOINT`を指定します。
 
-依存関係の更新はDependabot（`.github/dependabot.yml`）がnpm・Bundler・GitHub Actions・Dockerを毎週チェックします。
+依存関係の更新はDependabot（`.github/dependabot.yml`）がnpm・Bundler・GitHub Actions・Docker・Terraform（Google provider。majorは対象外）を毎週チェックします。
 
 ## Docker Composeでローカル起動
 
@@ -146,11 +148,14 @@ Googleログインの開始は`GET /api/v1/session`が返すCSRFトークンを�
 主要エンドポイントは以下です。変更系はセッションCookieと `GET /api/v1/session` が返すCSRFトークンを必要とします。
 
 - `GET /api/v1/session`、`DELETE /api/v1/session`
-- `GET|POST /api/v1/sauna_visits`
+- `GET|POST /api/v1/sauna_visits`（一覧は `limit`（最大200）と `cursor` でページ単位に取得し、応答の `nextCursor` が `null` になるまで辿ります。`limit` を付けない呼び出しは従来どおり全件を返します）
 - `PATCH|DELETE /api/v1/sauna_visits/:id`
 - `DELETE /api/v1/sauna_visits/:id/history_entries/:history_id`
-- `POST /api/v1/sauna_visits/imports`（最大10件）
+- `POST /api/v1/sauna_visits/imports`（最大10件、1記録あたりの履歴は最大1000件）
 - `GET /api/v1/images/:signed_id`
+- `POST /api/v1/client_errors`（ブラウザで起きたエラーを受け取り、`"event":"client_error"` を含む1行のJSONとしてログへ残します。ログイン中だけ受け付けます）
+
+`/api/` へのリクエストボディは24MBまでで、超えると413（`payload_too_large`）を返します。フロントのインポートは件数（10件）に加えてJSONの大きさ（8MB）でもチャンクを分けます。各APIはユーザーごとに1分あたりの回数を制限し、超えると429（`rate_limited`）を返します（一覧120回、作成・更新・削除60回、インポート60回、画像600回、エラー報告10回。Cloud Runのインスタンスごとに数えます）。
 
 履歴を1件削除すると、旧形式から引き継いだ訪問回数も残りの履歴件数まで下がります（localモードと同じ扱い）。
 

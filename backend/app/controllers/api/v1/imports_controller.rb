@@ -5,6 +5,11 @@ module Api
 
       # 1リクエストで受け付ける記録数。フロントの CHUNK_SIZE (useVisitImportExport.ts) と揃えること
       MAX_BATCH_SIZE = 10
+      # 1記録あたりの履歴件数。件数の上限だけでは履歴の配列が無制限になり、1リクエストで
+      # 大量の行を作れてしまう（ボディの大きさは RequestBodyLimit が別に抑える）
+      MAX_HISTORY_PER_VISIT = 1000
+
+      limit_requests to: 60
 
       def create
         payload = params.require(:saunaVisits)
@@ -83,6 +88,9 @@ module Api
         visit = current_user.sauna_visits.build(external_id: attributes[:external_id])
         assign_visit_attributes(visit, attributes)
         histories = Array(attributes[:history])
+        if histories.size > MAX_HISTORY_PER_VISIT
+          raise ActionController::BadRequest, "1件の記録に含められる履歴は#{MAX_HISTORY_PER_VISIT}件までです。"
+        end
         histories = [ attributes.slice(:date, :comment, :rating, :image) ] if histories.empty?
 
         # attributes は permit 後に deep_symbolize_keys 済みのため、履歴もシンボルキーで読める

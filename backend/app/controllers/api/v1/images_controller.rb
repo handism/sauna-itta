@@ -1,6 +1,9 @@
 module Api
   module V1
     class ImagesController < BaseController
+      # 一覧の表示やエクスポートで写真の枚数ぶん呼ばれるため、他より大きくとる。
+      # 条件付きGET（304）も数えるが、GCSからのダウンロードが連打されるのを防ぐのが目的
+      limit_requests to: 600
       rescue_from ActiveSupport::MessageVerifier::InvalidSignature do
         render_error("not_found", "対象の記録が見つかりません。", :not_found)
       end

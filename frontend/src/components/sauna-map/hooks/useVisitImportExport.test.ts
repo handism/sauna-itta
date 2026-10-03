@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import type { ChangeEvent } from "react";
 import { expect, test, vi, describe, afterEach, beforeEach, type MockedFunction } from "vitest";
-import { dropApiImageUrls, useVisitImportExport } from "./useVisitImportExport";
+import { chunkVisitsForImport, dropApiImageUrls, useVisitImportExport } from "./useVisitImportExport";
 import { SaunaVisit } from "../types";
 import { RepositoryError, type ImportResult } from "../repositories";
 
@@ -555,3 +555,39 @@ describe("dropApiImageUrls", () => {
   });
 });
 
+
+describe("chunkVisitsForImport", () => {
+  const visit = (id: string, image = ""): SaunaVisit => ({
+    id, name: id, lat: 35, lng: 139, comment: "", date: "2026-08-02", ...(image && { image }),
+  });
+
+  test("件数の上限で区切る", () => {
+    const visits = Array.from({ length: 25 }, (_, index) => visit(`v${index}`));
+
+    expect(chunkVisitsForImport(visits).map((chunk) => chunk.length)).toEqual([10, 10, 5]);
+  });
+
+  test("大きさの上限を超える前に区切り、順番を保つ", () => {
+    const photo = "x".repeat(400);
+    const visits = ["a", "b", "c", "d"].map((id) => visit(id, photo));
+
+    const chunks = chunkVisitsForImport(visits, 10, 1000);
+
+    expect(chunks.map((chunk) => chunk.map((item) => item.id))).toEqual([["a", "b"], ["c", "d"]]);
+  });
+
+  test("1件だけで上限を超える記録はその1件で送る", () => {
+    const visits = [visit("small"), visit("huge", "x".repeat(5000)), visit("next")];
+
+    const chunks = chunkVisitsForImport(visits, 10, 1000);
+
+    expect(chunks.map((chunk) => chunk.map((item) => item.id))).toEqual([["small"], ["huge"], ["next"]]);
+  });
+
+  test("マルチバイト文字はUTF-8のバイト数で数える", () => {
+    // 1文字3バイトの日本語。文字数（約350）では収まるがバイト数（約1000超）では収まらない
+    const visits = [visit("a"), { ...visit("b"), comment: "あ".repeat(300) }];
+
+    expect(chunkVisitsForImport(visits, 10, 1000)).toHaveLength(2);
+  });
+});

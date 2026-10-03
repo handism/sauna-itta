@@ -43,3 +43,13 @@ updates:
       - /frontend
     schedule:
       interval: weekly
+
+  # infra/ の Google provider。major 更新は破壊的変更を含むため、
+  # versions.tf の制約（~> 6.0）の範囲で上がる分だけを受け取り、major は手動で計画して上げる
+  - package-ecosystem: terraform
+    directory: /infra
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: hashicorp/google
+        update-types: ["version-update:semver-major"]

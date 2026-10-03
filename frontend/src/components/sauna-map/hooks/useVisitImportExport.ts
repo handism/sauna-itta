@@ -9,6 +9,40 @@ import { toUserMessage } from "./useVisitSession";
 // Rails 側の ImportsController::MAX_BATCH_SIZE と揃えること（1 リクエストあたり 10 件まで）
 const CHUNK_SIZE = 10;
 
+/**
+ * 1 リクエストに載せる記録の JSON の大きさの目安。写真は1枚最大1MBの Base64 のため、
+ * 件数だけで区切ると写真の多い10件で Rails の RequestBodyLimit（24MB）を超えて 413 になる。
+ * 上限より十分小さくし、1件だけで超える記録はその1件で送る（サーバーが理由を返す）。
+ */
+export const MAX_CHUNK_BYTES = 8 * 1024 * 1024;
+
+/**
+ * 件数（CHUNK_SIZE）と大きさ（maxBytes）の両方を超えないよう、記録を順番どおりに分ける。
+ * 大きさは JSON の UTF-8 バイト数で測る（写真の Base64 が大半を占める）。
+ */
+export function chunkVisitsForImport(
+  visits: SaunaVisit[],
+  maxCount = CHUNK_SIZE,
+  maxBytes = MAX_CHUNK_BYTES,
+): SaunaVisit[][] {
+  const encoder = new TextEncoder();
+  const chunks: SaunaVisit[][] = [];
+  let current: SaunaVisit[] = [];
+  let currentBytes = 0;
+  for (const visit of visits) {
+    const bytes = encoder.encode(JSON.stringify(visit)).byteLength;
+    if (current.length > 0 && (current.length >= maxCount || currentBytes + bytes > maxBytes)) {
+      chunks.push(current);
+      current = [];
+      currentBytes = 0;
+    }
+    current.push(visit);
+    currentBytes += bytes;
+  }
+  if (current.length > 0) chunks.push(current);
+  return chunks;
+}
+
 const REVOKE_OBJECT_URL_DELAY_MS = 1000;
 
 const RELOAD_FAILED_NOTE = "（画面の再読み込みに失敗したため、表示が最新でない可能性があります）";
@@ -109,12 +143,13 @@ export async function performBatchImport(
   let skipped = alreadyKnown;
   try {
     const total = normalizedImported.length;
-    for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
-      const result = await importBatch(normalizedImported.slice(offset, offset + CHUNK_SIZE));
+    const chunks = chunkVisitsForImport(normalizedImported);
+    for (const [index, chunk] of chunks.entries()) {
+      const result = await importBatch(chunk);
       added += result.added;
       skipped += result.skipped;
       // 最終チャンクの結果は完了トーストで伝えるため、残りがある間だけ途中経過を出す
-      if (offset + CHUNK_SIZE < total) {
+      if (index < chunks.length - 1) {
         showToast?.(`${added}/${total}件を取り込み中です...`, "info");
       }
     }

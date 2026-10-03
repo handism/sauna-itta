@@ -3,6 +3,9 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { ErrorBoundary } from "./ErrorBoundary";
+import { reportError } from "../../utils/errorReporter";
+
+vi.mock("../../utils/errorReporter", () => ({ reportError: vi.fn() }));
 
 function Bomb({ shouldThrow }: { shouldThrow?: boolean }) {
   if (shouldThrow) {
@@ -110,5 +113,18 @@ describe("ErrorBoundary", () => {
 
     // @ts-expect-error Restore original window.location
     window.location = originalLocation;
+  });
+  it("捕まえたエラーをコンポーネントの階層と一緒に報告する", () => {
+    render(
+      <ErrorBoundary>
+        <Bomb shouldThrow />
+      </ErrorBoundary>
+    );
+
+    expect(reportError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "テスト用の例外です" }),
+      "error-boundary",
+      { componentStack: expect.stringContaining("Bomb") },
+    );
   });
 });

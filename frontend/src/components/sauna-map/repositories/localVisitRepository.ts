@@ -92,4 +92,7 @@ export class LocalVisitRepository implements VisitRepository {
   async prepareExport(visits: SaunaVisit[]): Promise<SaunaVisit[]> {
     return visits;
   }
+
+  /** 静的サイトで送り先のサーバーが無いため何もしない（console への出力は utils/errorReporter.ts が行う） */
+  async reportClientError(): Promise<void> {}
 }
