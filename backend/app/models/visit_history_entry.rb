@@ -1,7 +1,7 @@
 class VisitHistoryEntry < ApplicationRecord
   # 許可する画像形式と、保存時に付ける拡張子。DataUrlImage も data URL の
   # パターンと拡張子をここから組み立てるため、形式を増減するときはここだけを変える
-  # （フロントの ALLOWED_IMAGE_MIME_TYPES とも同じ集合に保つこと）。
+  # （フロントの apiLimits.json とも同じ集合に保つこと。test/contract/frontend_api_limits_test.rb が検査する）。
   IMAGE_TYPE_EXTENSIONS = {
     "image/jpeg" => "jpg",
     "image/png" => "png",

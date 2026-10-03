@@ -1,0 +1,6 @@
+{
+  "_comment": "Rails API と共有する上限値。backend/test/contract/frontend_api_limits_test.rb が Rails 側の定数と一致することを検査する",
+  "importMaxBatchSize": 10,
+  "maxImageBytes": 1048576,
+  "allowedImageMimeTypes": ["image/jpeg", "image/png", "image/webp", "image/gif"]
+}

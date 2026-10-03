@@ -3,8 +3,16 @@ module Api
     class ImportsController < BaseController
       include VisitWritable
 
-      # 1リクエストで受け付ける記録数。フロントの CHUNK_SIZE (useVisitImportExport.ts) と揃えること
+      # 1リクエストで受け付ける記録数。フロントは apiLimits.json の importMaxBatchSize を使い、
+      # 一致は test/contract/frontend_api_limits_test.rb が検査する
       MAX_BATCH_SIZE = 10
+
+      # 記録本体の許可キーは SaunaVisitsController と共有し (VisitWritable::VISIT_PERMITTED_KEYS)、
+      # 取り込みだけが受け付ける ID・旧形式の訪問回数・履歴を足す
+      IMPORT_PERMITTED_KEYS = [
+        :id, :visitCount, *VISIT_PERMITTED_KEYS,
+        { history: [ :id, :date, :comment, :rating, :image ] }
+      ].freeze
 
       def create
         payload = params.require(:saunaVisits)
@@ -39,11 +47,7 @@ module Api
           payload.each do |raw|
             raise ActionController::BadRequest, "取り込むデータは記録の配列で指定してください。" unless raw.is_a?(ActionController::Parameters)
 
-            # 記録本体の許可キーは SaunaVisitsController と共有する (VisitWritable::VISIT_PERMITTED_KEYS)
-            attributes = raw.permit(
-              :id, *VISIT_PERMITTED_KEYS,
-              history: [ :id, :date, :comment, :rating, :image ]
-            ).to_h.deep_symbolize_keys
+            attributes = raw.permit(*IMPORT_PERMITTED_KEYS).to_h.deep_symbolize_keys
 
             external_id = attributes[:id].to_s
             raise ActionController::BadRequest, "IDがない記録は取り込めません。" if external_id.blank?

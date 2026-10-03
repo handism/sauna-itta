@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import { SaunaVisit, VisitFilters } from "../../types";
-import { ImageLightbox } from "../common/common";
+import { ImageLightbox } from "../common/ImageLightbox";
 import { useImageLightbox } from "../../hooks/useImageLightbox";
 import { useIncrementalList } from "../../hooks/useIncrementalList";
 import { VisitCompactItem } from "./VisitCompactItem";

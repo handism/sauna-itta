@@ -1,13 +1,19 @@
 import { useState, useRef, useCallback, ChangeEvent } from "react";
 import { z } from "zod";
 import { SaunaVisit, SaunaVisitSchema } from "../types";
-import { isApiImageUrl, normalizeVisits, syncLatestFromHistory } from "../utils";
-import type { ImportResult } from "../repositories";
+import { IMPORT_MAX_BATCH_SIZE, isApiImageUrl, normalizeVisits, syncLatestFromHistory } from "../utils";
+import { toUserMessage, type ImportResult } from "../repositories";
 import type { ShowToast } from "../components/common/Toast";
-import { toUserMessage } from "./useVisitSession";
 
-// Rails 側の ImportsController::MAX_BATCH_SIZE と揃えること（1 リクエストあたり 10 件まで）
-const CHUNK_SIZE = 10;
+/**
+ * 1 リクエストで送る JSON のバイト数の目安。写真は 1 枚最大 1MB（Base64 で約 1.33MB）で
+ * 履歴ごとに付くため、件数（IMPORT_MAX_BATCH_SIZE）だけで区切ると 10 件 × 写真数枚で
+ * Cloud Run のリクエストサイズ上限（HTTP/1 で 32MiB）を超え、サーバーへ届く前に失敗する。
+ * Rails 側の JSON 解析のメモリも抑えるため、上限より十分小さい値にしている。
+ */
+export const IMPORT_MAX_BATCH_BYTES = 8 * 1024 * 1024;
+
+const FILE_FORMAT_ERROR_PREFIX = "JSONの読み込みに失敗しました。";
 
 const REVOKE_OBJECT_URL_DELAY_MS = 1000;
 
@@ -33,6 +39,31 @@ export class ImportProgressError extends Error {
   }
 }
 
+/**
+ * 取り込むファイル自体の問題（読み込めない・JSON でない・記録の形式でない）。
+ * message はそのまま利用者へ出す文言で、どこを直せばよいかを含める。
+ * Repository の失敗（ImportProgressError）とは分けること（ルートの AGENTS.md 参照）。
+ */
+export class ImportFileError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "ImportFileError";
+  }
+}
+
+/** zod の最初の問題箇所を「3件目の記録の「lat」」のような利用者向けの文言にする */
+function describeSchemaError(error: z.ZodError): string {
+  const [issue] = error.issues;
+  const [index, ...fieldPath] = issue?.path ?? [];
+  if (typeof index !== "number") {
+    return "サウナ記録の配列ではありません。エクスポートしたファイルを指定してください。";
+  }
+  const field = fieldPath.map(String).join(".");
+  const location = field ? `${index + 1}件目の記録の「${field}」` : `${index + 1}件目の記録`;
+  const others = error.issues.length > 1 ? `（ほかに${error.issues.length - 1}か所）` : "";
+  return `${location}の形式が正しくありません${others}。`;
+}
+
 function readFileAsText(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -43,17 +74,28 @@ function readFileAsText(file: File): Promise<string> {
 }
 
 export async function parseImportFile(file: File): Promise<SaunaVisit[]> {
-  const text = await readFileAsText(file);
+  let text: string;
+  try {
+    text = await readFileAsText(file);
+  } catch (error) {
+    throw new ImportFileError(`${FILE_FORMAT_ERROR_PREFIX}ファイルを読み込めませんでした。`, { cause: error });
+  }
+
   let parsed;
   try {
     parsed = JSON.parse(text);
-  } catch {
-    throw new Error("Invalid JSON file");
+  } catch (error) {
+    throw new ImportFileError(
+      `${FILE_FORMAT_ERROR_PREFIX}JSON形式ではありません。エクスポートしたファイルを指定してください。`,
+      { cause: error },
+    );
   }
 
   const validationResult = z.array(SaunaVisitSchema).safeParse(parsed);
   if (!validationResult.success) {
-    throw new Error("Imported data is not in the correct format for sauna visits: " + validationResult.error.message);
+    throw new ImportFileError(`${FILE_FORMAT_ERROR_PREFIX}${describeSchemaError(validationResult.error)}`, {
+      cause: validationResult.error,
+    });
   }
 
   return validationResult.data;
@@ -92,6 +134,33 @@ export function dropApiImageUrls(visits: SaunaVisit[]): { visits: SaunaVisit[]; 
 }
 
 /**
+ * 取り込む記録を、件数（maxCount）と JSON のバイト数（maxBytes）の両方の上限で区切る。
+ * 1 件だけで maxBytes を超える記録は分割できないため、単独のチャンクとして送る。
+ */
+export function chunkVisitsForImport(
+  visits: SaunaVisit[],
+  maxCount: number = IMPORT_MAX_BATCH_SIZE,
+  maxBytes: number = IMPORT_MAX_BATCH_BYTES,
+): SaunaVisit[][] {
+  const encoder = new TextEncoder();
+  const chunks: SaunaVisit[][] = [];
+  let current: SaunaVisit[] = [];
+  let currentBytes = 0;
+  for (const visit of visits) {
+    const bytes = encoder.encode(JSON.stringify(visit)).byteLength;
+    if (current.length > 0 && (current.length >= maxCount || currentBytes + bytes > maxBytes)) {
+      chunks.push(current);
+      current = [];
+      currentBytes = 0;
+    }
+    current.push(visit);
+    currentBytes += bytes;
+  }
+  if (current.length > 0) chunks.push(current);
+  return chunks;
+}
+
+/**
  * 取り込みは Repository の importBatch へ委ねる（localモードは localStorage、
  * apiモードは Rails への POST）。保存の失敗は例外で伝わるため、戻り値に成否は持たせない。
  *
@@ -109,12 +178,13 @@ export async function performBatchImport(
   let skipped = alreadyKnown;
   try {
     const total = normalizedImported.length;
-    for (let offset = 0; offset < total; offset += CHUNK_SIZE) {
-      const result = await importBatch(normalizedImported.slice(offset, offset + CHUNK_SIZE));
+    const chunks = chunkVisitsForImport(normalizedImported);
+    for (const [index, chunk] of chunks.entries()) {
+      const result = await importBatch(chunk);
       added += result.added;
       skipped += result.skipped;
       // 最終チャンクの結果は完了トーストで伝えるため、残りがある間だけ途中経過を出す
-      if (offset + CHUNK_SIZE < total) {
+      if (index < chunks.length - 1) {
         showToast?.(`${added}/${total}件を取り込み中です...`, "info");
       }
     }
@@ -212,8 +282,12 @@ export function useVisitImportExport(
         if (error instanceof ImportProgressError) {
           const progress = error.added > 0 ? `${error.added}件は取り込み済みです。` : "";
           showToast?.(`データの取り込みに失敗しました。${progress}${error.message}`, "error");
+        } else if (error instanceof ImportFileError) {
+          showToast?.(error.message, "error");
         } else {
-          showToast?.("JSONの読み込みに失敗しました。ファイル形式を確認してください。", "error");
+          // parseImportFile と performBatchImport は上の 2 種類で投げるため、ここへ来るのは想定外の誤りだけ
+          console.error("Unexpected import failure:", error);
+          showToast?.("データの取り込みに失敗しました。", "error");
         }
       } finally {
         setImporting(false);

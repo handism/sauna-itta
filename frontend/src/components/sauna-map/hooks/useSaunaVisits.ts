@@ -6,12 +6,13 @@ import {
   type ImportResult,
   type SessionUser,
   type VisitRepository,
+  toUserMessage,
 } from "../repositories";
 import type { ShowToast } from "../components/common/Toast";
 import { VISITS_STORAGE_KEY } from "../utils";
 import { useVisitImportExport } from "./useVisitImportExport";
 import { useInitialVisits } from "./useInitialVisits";
-import { toUserMessage, useVisitSession } from "./useVisitSession";
+import { useVisitSession } from "./useVisitSession";
 
 const SAVE_ERROR_FALLBACK = "保存に失敗しました。";
 const LOGOUT_ERROR_FALLBACK = "ログアウトに失敗しました。";

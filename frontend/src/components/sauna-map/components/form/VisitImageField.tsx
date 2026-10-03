@@ -1,7 +1,8 @@
 import { DragEvent, useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
 import { IMAGE_INPUT_ACCEPT, sanitizeImageUrl } from "../../utils";
-import { ImageLightbox, VisitImagePreview } from "../common/common";
+import { ImageLightbox } from "../common/ImageLightbox";
+import { VisitImagePreview } from "../common/VisitImagePreview";
 import { useImageLightbox } from "../../hooks/useImageLightbox";
 
 interface VisitImageFieldProps {

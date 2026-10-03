@@ -1,14 +1,12 @@
 import { Pencil } from "lucide-react";
 import { SaunaVisit } from "../../types";
 import { getVisitCount, sanitizeImageUrl } from "../../utils";
-import {
-  RatingStars,
-  RouteLink,
-  VisitComment,
-  VisitImagePreview,
-  VisitMetaInfo,
-  WishlistChip,
-} from "../common/common";
+import { RatingStars } from "../common/RatingStars";
+import { RouteLink } from "../common/RouteLink";
+import { VisitComment } from "../common/VisitComment";
+import { VisitImagePreview } from "../common/VisitImagePreview";
+import { VisitMetaInfo } from "../common/VisitMetaInfo";
+import { WishlistChip } from "../common/WishlistChip";
 
 interface SaunaMarkerPopupProps {
   visit: SaunaVisit;

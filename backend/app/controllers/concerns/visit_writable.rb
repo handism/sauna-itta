@@ -22,9 +22,12 @@ module VisitWritable
   # 記録本体として受け付けるキー。作成・更新 (SaunaVisitsController) と取り込み
   # (ImportsController) で共有する。エクスポートしたJSONをそのまま取り込むため、
   # 取り込み側も lockVersion / appendHistory を受け取れる必要がある。
+  # 旧形式から引き継ぐ訪問回数 (visitCount) は取り込み専用のため、ここへは入れない
+  # (ImportsController::IMPORT_PERMITTED_KEYS)。作成・更新で受け付けると、履歴と無関係に
+  # legacy_visit_count を書き換えられ、訪問回数が履歴の件数と食い違う。
   VISIT_PERMITTED_KEYS = [
     :name, :lat, :lng, :area, :status, :date, :comment, :rating, :image,
-    :appendHistory, :lockVersion, :visitCount, { tags: [] }
+    :appendHistory, :lockVersion, { tags: [] }
   ].freeze
 
   private
@@ -37,6 +40,7 @@ module VisitWritable
       area: attributes[:area],
       status: attributes[:status],
       tags: Array(attributes[:tags]).map(&:to_s),
+      # visitCount は取り込みだけが渡す。作成・更新では許可キーに無いため既存値を保つ
       legacy_visit_count: attributes[:visitCount] || visit.legacy_visit_count
     )
   end

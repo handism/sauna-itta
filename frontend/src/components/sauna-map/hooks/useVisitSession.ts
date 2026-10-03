@@ -1,39 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import type { SaunaVisit } from "../types";
-import { RepositoryError, type SessionUser, type VisitRepository } from "../repositories";
+import { isSessionLostError, toUserMessage, type SessionUser, type VisitRepository } from "../repositories";
 
 export const LOAD_ERROR_FALLBACK = "記録の読み込みに失敗しました。";
-
-/**
- * サーバー側でセッションが失われたことを表す code。別タブでのログアウトなどで起きる。
- * GET は require_login の 401（unauthenticated）になるが、変更系は CSRF の検証が
- * require_login より先に走るため 422（invalid_csrf）になる。片方だけを見ると、
- * 保存・削除の失敗からログイン画面へ戻れない。
- */
-const SESSION_LOST_CODES: ReadonlySet<string> = new Set(["unauthenticated", "invalid_csrf"]);
-
-export function isSessionLostError(error: unknown): boolean {
-  return error instanceof RepositoryError && SESSION_LOST_CODES.has(error.code);
-}
-
-/**
- * Repository の失敗を利用者向けの文言へ変換する。
- * 楽観ロックの競合（code: conflict）は再読み込みの案内へ置き換える。同じ 409 でも
- * 一意制約の重複（code: duplicate）はサーバーの文言をそのまま出す（status で判定すると隠れる）。
- * セッションの喪失（isSessionLostError）は、ログイン画面へ戻るか再試行するかを案内する。
- */
-export function toUserMessage(error: unknown, fallback: string): string {
-  if (error instanceof RepositoryError && error.code === "conflict") {
-    return "別の画面で記録が更新されました。再読み込みしてからもう一度お試しください。";
-  }
-  if (error instanceof RepositoryError && error.code === "unauthenticated") {
-    return "ログインの有効期限が切れました。もう一度ログインしてください。";
-  }
-  if (error instanceof RepositoryError && error.code === "invalid_csrf") {
-    return "ログイン状態が変わったため操作を完了できませんでした。もう一度お試しください。";
-  }
-  return error instanceof Error ? error.message : fallback;
-}
 
 interface VisitSessionOptions {
   /** 読み込んだ記録の受け取り先。参照が変わると初回読み込みをやり直すため、安定した関数を渡すこと */

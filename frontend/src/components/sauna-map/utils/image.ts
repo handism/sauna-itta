@@ -1,18 +1,14 @@
 import imageCompression from "browser-image-compression";
+import { API_ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_BYTES } from "./apiLimits";
 
 /**
  * アップロードを受け付ける画像の MIME タイプ。
  *
- * バックエンドの `VisitHistoryEntry::ALLOWED_IMAGE_TYPES` と同じ集合を保つこと。
- * ここだけ広げると、apiモードではフォームを全部埋めて保存した時点で初めて
- * 「画像形式が許可されていません。」と弾かれ、入力内容が無駄になる。
+ * 値は apiLimits.json が唯一の出所で、バックエンドの `VisitHistoryEntry::ALLOWED_IMAGE_TYPES`
+ * との一致を Rails のテストが検査している。ここだけ広げると、apiモードではフォームを全部埋めて
+ * 保存した時点で初めて「画像形式が許可されていません。」と弾かれ、入力内容が無駄になる。
  */
-export const ALLOWED_IMAGE_MIME_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-] as const;
+export const ALLOWED_IMAGE_MIME_TYPES = API_ALLOWED_IMAGE_MIME_TYPES;
 
 /** `<input type="file">` の accept 属性値。`image/*` へ戻すと上記の集合と食い違う */
 export const IMAGE_INPUT_ACCEPT = ALLOWED_IMAGE_MIME_TYPES.join(",");
@@ -22,7 +18,7 @@ export const IMAGE_INPUT_ACCEPT = ALLOWED_IMAGE_MIME_TYPES.join(",");
  * accept 属性はドラッグ&ドロップには効かないため、取り込み側でも必ず通すこと。
  */
 export function isAllowedImageFile(file: File): boolean {
-  return (ALLOWED_IMAGE_MIME_TYPES as readonly string[]).includes(file.type);
+  return ALLOWED_IMAGE_MIME_TYPES.includes(file.type);
 }
 
 /**
@@ -85,7 +81,7 @@ export function blobToDataUrl(blob: Blob): Promise<string> {
 
 export async function compressAndGetBase64(file: File): Promise<string> {
   const compressedFile = await imageCompression(file, {
-    maxSizeMB: 1,
+    maxSizeMB: MAX_IMAGE_BYTES / (1024 * 1024),
     maxWidthOrHeight: 1024,
   });
 
