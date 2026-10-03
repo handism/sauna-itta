@@ -84,9 +84,9 @@ jobs:
       - run: terraform -chdir=infra validate
       # レイヤーを GitHub Actions のキャッシュへ保存し、依存が変わらない限り
       # npm ci / bundle install を毎回やり直さない
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
       - name: productionイメージをビルド
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           tags: sauna-itta:ci
