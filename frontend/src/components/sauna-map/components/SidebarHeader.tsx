@@ -15,6 +15,7 @@ import {
   Loader2,
   LogOut,
 } from "lucide-react";
+import { cx } from "../utils/classNames";
 
 export interface SidebarHeaderViewProps {
   isSidebarExpanded: boolean;
@@ -182,9 +183,7 @@ export function SidebarHeaderView({
         </button>
         {isMobileMenuOpen && (
           <div
-            className={`mobile-menu-dropdown ${
-              isSidebarExpanded ? "mobile-menu-dropdown--down" : ""
-            }`}
+            className={cx("mobile-menu-dropdown", isSidebarExpanded && "mobile-menu-dropdown--down")}
             role="menu"
             id={menuId}
             ref={menuRef}

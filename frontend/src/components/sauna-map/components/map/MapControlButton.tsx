@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, MouseEvent } from "react";
+import { cx } from "../../utils/classNames";
 
 export interface MapControlButtonProps {
   onClick: (e: MouseEvent<HTMLButtonElement>) => void;
@@ -27,7 +28,7 @@ export function MapControlButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`${className} ${active ? "is-active" : ""}`.trim()}
+      className={cx(className, active && "is-active")}
       // ズームボタンなどトグルでないものには付けない
       aria-pressed={active}
       aria-label={ariaLabel}

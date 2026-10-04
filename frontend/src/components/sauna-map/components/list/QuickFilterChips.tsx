@@ -2,6 +2,7 @@ import { Dispatch, ReactNode, SetStateAction, useMemo } from "react";
 import { X, Star, MapPin, Tag, Search, SlidersHorizontal } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../../types";
 import { getPopularAreas, getPopularTags } from "../../utils";
+import { cx } from "../../utils/classNames";
 
 interface QuickFilterChipsProps {
   filters: VisitFilters;
@@ -176,7 +177,7 @@ export function QuickFilterChips({
           <button
             key={key}
             type="button"
-            className={`chip-btn ${isActive ? "is-active active-filter-chip" : ""}`}
+            className={cx("chip-btn", isActive && "is-active active-filter-chip")}
             aria-pressed={isActive}
             onClick={onToggle}
           >

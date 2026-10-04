@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useId } from "react";
 import { Calendar, Star, Flame, ArrowDownAZ, ChevronDown } from "lucide-react";
 import { VisitFilters } from "../../types";
+import { cx } from "../../utils/classNames";
 
 export interface SortOption {
   value: VisitFilters["sort"];
@@ -139,7 +140,7 @@ export function SortSelect({ value, onChange, className = "" }: SortSelectProps)
           <CurrentIcon size={14} className="quick-sort-icon" />
           <span>{currentOption.label}</span>
         </span>
-        <ChevronDown size={14} className={`quick-sort-chevron ${isOpen ? "is-open" : ""}`} />
+        <ChevronDown size={14} className={cx("quick-sort-chevron", isOpen && "is-open")} />
       </button>
       {isOpen && (
         <ul
@@ -163,9 +164,7 @@ export function SortSelect({ value, onChange, className = "" }: SortSelectProps)
                 id={optionId(index)}
                 role="option"
                 aria-selected={isSelected}
-                className={`quick-sort-option ${isSelected ? "is-selected" : ""} ${
-                  isActive ? "is-active" : ""
-                }`}
+                className={cx("quick-sort-option", isSelected && "is-selected", isActive && "is-active")}
                 onClick={() => handleSelect(option.value)}
                 onMouseEnter={() => setActiveIndex(index)}
               >

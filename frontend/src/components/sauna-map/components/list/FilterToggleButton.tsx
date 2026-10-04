@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { SlidersHorizontal } from "lucide-react";
+import { cx } from "../../utils/classNames";
 
 interface FilterToggleButtonProps {
   isFilterPanelOpen: boolean;
@@ -15,7 +16,7 @@ function FilterToggleButtonComponent({
   return (
     <button
       type="button"
-      className={`filters-open-btn ${isFilterPanelOpen || isFilterActive ? "is-active" : ""}`}
+      className={cx("filters-open-btn", (isFilterPanelOpen || isFilterActive) && "is-active")}
       onClick={toggleFilterPanel}
       title="詳細フィルター（最低満足度・マップ表示エリア）"
       aria-expanded={isFilterPanelOpen}

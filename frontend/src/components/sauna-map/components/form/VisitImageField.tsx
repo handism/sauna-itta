@@ -4,6 +4,7 @@ import { IMAGE_INPUT_ACCEPT, sanitizeImageUrl } from "../../utils";
 import { ImageLightbox } from "../common/ImageLightbox";
 import { VisitImagePreview } from "../common/VisitImagePreview";
 import { useImageLightbox } from "../../hooks/useImageLightbox";
+import { cx } from "../../utils/classNames";
 
 interface VisitImageFieldProps {
   image: string;
@@ -79,7 +80,7 @@ export function VisitImageField({
         </div>
       ) : (
         <div
-          className={`image-dropzone ${isDragOver ? "is-dragover" : ""}`}
+          className={cx("image-dropzone", isDragOver && "is-dragover")}
           onClick={() => !uploading && inputRef.current?.click()}
           onDragOver={(e) => {
             e.preventDefault();

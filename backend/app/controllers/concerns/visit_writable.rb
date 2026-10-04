@@ -85,12 +85,10 @@ module VisitWritable
     ImageBlobPurger.purge(blobs, context: "古い訪問画像の削除")
   end
 
-  # 書き込み後の再読み込み。SaunaVisitSerializer は履歴ごとに image を参照するため、
-  # index と同じく添付とblobを先読みする（visit.reload だけだと履歴件数ぶんクエリが出る）。
+  # 書き込み後の再読み込み。index と同じく写真まで先読みする
+  # （visit.reload だけだと履歴件数ぶんクエリが出る）。
   def serialized(visit)
-    reloaded = current_user.sauna_visits
-      .includes(visit_history_entries: { image_attachment: :blob })
-      .find(visit.id)
+    reloaded = current_user.sauna_visits.with_history_images.find(visit.id)
     SaunaVisitSerializer.new(reloaded).as_json
   end
 end

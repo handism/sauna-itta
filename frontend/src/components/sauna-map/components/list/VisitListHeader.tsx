@@ -1,5 +1,6 @@
 import { memo } from "react";
 import { List, LayoutGrid } from "lucide-react";
+import { cx } from "../../utils/classNames";
 
 export type ViewMode = "card" | "compact";
 
@@ -32,7 +33,7 @@ function VisitListHeaderComponent({
         <div className="view-mode-toggle" role="group" aria-label="表示形式切り替え">
           <button
             type="button"
-            className={`view-mode-btn ${viewMode === "compact" ? "is-active" : ""}`}
+            className={cx("view-mode-btn", viewMode === "compact" && "is-active")}
             onClick={() => onViewModeChange("compact")}
             title="リスト（コンパクト）表示"
             aria-label="リスト表示に切り替え"
@@ -43,7 +44,7 @@ function VisitListHeaderComponent({
           </button>
           <button
             type="button"
-            className={`view-mode-btn ${viewMode === "card" ? "is-active" : ""}`}
+            className={cx("view-mode-btn", viewMode === "card" && "is-active")}
             onClick={() => onViewModeChange("card")}
             title="カード表示"
             aria-label="カード表示に切り替え"

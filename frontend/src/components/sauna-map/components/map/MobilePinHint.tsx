@@ -1,6 +1,7 @@
 import { MapPin, X } from "lucide-react";
 import { LocationSearchInput } from "../form/LocationSearchInput";
 import type { GeocodingResult } from "../../utils/geocoding";
+import { cx } from "../../utils/classNames";
 
 interface MobilePinHintProps {
   /** 省略するとキャンセルボタンを出さない（デスクトップはフォーム側にキャンセルがあるため） */
@@ -25,7 +26,7 @@ export function MobilePinHint({ onCancel, variant = "mobile", onSelectSearchResu
 
   return (
     <div
-      className={`pin-hint ${isDesktop ? "pin-hint--desktop" : ""} ${showSearch ? "pin-hint--with-search" : ""}`}
+      className={cx("pin-hint", isDesktop && "pin-hint--desktop", showSearch && "pin-hint--with-search")}
     >
       {/* 案内の文言だけをライブリージョンにする（検索欄まで含めると入力のたびに読み上げが走る） */}
       <div className="pin-hint-main" role="status">

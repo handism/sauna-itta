@@ -159,6 +159,16 @@ class ApiV1HistoryEntriesTest < ActionDispatch::IntegrationTest
     assert_equal "not_found", response.parsed_body.dig("error", "code")
   end
 
+  test "履歴が1件の記録でも存在しない履歴IDは404を返す" do
+    csrf = sign_in
+    visit = create_visit(csrf)
+
+    delete history_path(visit, "missing-history-id"), headers: csrf_header(csrf)
+
+    assert_response :not_found
+    assert_equal "not_found", response.parsed_body.dig("error", "code")
+  end
+
   test "履歴削除にもCSRFトークンを要求する" do
     csrf = sign_in
     visit = create_visit(csrf)

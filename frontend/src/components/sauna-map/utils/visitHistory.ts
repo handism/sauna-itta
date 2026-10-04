@@ -1,4 +1,4 @@
-import { SaunaVisit, VisitHistoryEntry } from "../types";
+import { SaunaVisit, VisitHistoryEntry, VisitStatus } from "../types";
 import { getTodayDate } from "./date";
 import { getVisitStatus } from "./visitStatus";
 
@@ -29,7 +29,7 @@ export function getVisitCount(visit: SaunaVisit): number {
  */
 export type FlatVisitHistoryEntry = VisitHistoryEntry & {
   visitId: string;
-  status: "visited" | "wishlist";
+  status: VisitStatus;
 };
 
 /**
@@ -39,7 +39,7 @@ export type FlatVisitHistoryEntry = VisitHistoryEntry & {
  */
 export function flattenVisitHistory(
   visits: SaunaVisit[],
-  filterStatus?: "visited" | "wishlist",
+  filterStatus?: VisitStatus,
 ): FlatVisitHistoryEntry[] {
   const entries: FlatVisitHistoryEntry[] = [];
 

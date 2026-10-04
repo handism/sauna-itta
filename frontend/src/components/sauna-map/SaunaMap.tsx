@@ -29,6 +29,7 @@ import { SaunaMapLayer } from "./components/map/SaunaMapLayer";
 import { ApiAccessGate } from "./components/ApiAccessGate";
 import { fillFormFromPlace } from "./utils/form";
 import type { GeocodingResult } from "./utils/geocoding";
+import { cx } from "./utils/classNames";
 
 /**
  * モバイルの場所選択中の案内。地点検索で選んだときは、登録フォームの検索欄と同じく
@@ -94,7 +95,7 @@ function SaunaMapContent() {
   }
 
   return (
-    <div className={`map-wrapper ${theme === "light" ? "light-theme" : ""}`}>
+    <div className={cx("map-wrapper", theme === "light" && "light-theme")}>
       <SaunaMapLayer
         currentLocation={currentLocation}
         setCurrentLocation={setCurrentLocation}

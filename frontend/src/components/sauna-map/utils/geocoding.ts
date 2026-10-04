@@ -78,7 +78,24 @@ function getReverseEndpoint(): string | null {
   return /\/search\/?$/.test(endpoint) ? endpoint.replace(/\/search\/?$/, "/reverse") : null;
 }
 
-const resultCache = new Map<string, GeocodingResult[]>();
+/** 1 つのキャッシュに保持する件数。超えたら最も古く入れたものから捨てる */
+const CACHE_LIMIT = 100;
+
+function createBoundedCache<V>(limit: number) {
+  const entries = new Map<string, V>();
+  return {
+    has: (key: string) => entries.has(key),
+    get: (key: string) => entries.get(key),
+    set(key: string, value: V) {
+      if (!entries.has(key) && entries.size >= limit) {
+        entries.delete(entries.keys().next().value!);
+      }
+      entries.set(key, value);
+    },
+  };
+}
+
+const resultCache = createBoundedCache<GeocodingResult[]>(CACHE_LIMIT);
 
 /**
  * Formats a raw Nominatim address object into a human-readable Japanese address string.
@@ -152,9 +169,6 @@ export async function searchLocation(
       };
     });
 
-    if (resultCache.size >= 100) {
-      resultCache.delete(resultCache.keys().next().value!);
-    }
     resultCache.set(cacheKey, results);
     return results;
   } catch (error: unknown) {
@@ -169,7 +183,7 @@ const NominatimReverseResultSchema = z.object({
   address: NominatimRawAddressSchema.optional(),
 });
 
-const areaCache = new Map<string, string | null>();
+const areaCache = createBoundedCache<string | null>(CACHE_LIMIT);
 
 /**
  * 座標から「都道府県＋市区町村」（例: 東京都台東区）を返す。地図をクリックして場所を選んだときに
@@ -214,9 +228,6 @@ export async function reverseGeocodeArea(
       ? `${prefecture}${address?.city ?? address?.town ?? address?.village ?? ""}`
       : null;
 
-    if (areaCache.size >= 100) {
-      areaCache.delete(areaCache.keys().next().value!);
-    }
     areaCache.set(cacheKey, area);
     return area;
   } catch (error: unknown) {

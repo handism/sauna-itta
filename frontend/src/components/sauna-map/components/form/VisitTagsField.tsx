@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { toNormalizedTags } from "../../utils";
+import { cx } from "../../utils/classNames";
 
 interface VisitTagsFieldProps {
   tagsText: string;
@@ -36,7 +37,7 @@ export function VisitTagsField({ tagsText, onChange, suggestedTags }: VisitTagsF
             <button
               key={tag}
               type="button"
-              className={`preset-tag-chip ${isSelected ? "is-selected" : ""}`}
+              className={cx("preset-tag-chip", isSelected && "is-selected")}
               aria-pressed={isSelected}
               onClick={() => toggleTag(tag)}
             >
