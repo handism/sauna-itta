@@ -17,7 +17,7 @@ module Api
       # ページの並びは主キーの降順にする。updated_at はページ取得の合間に更新された記録が
       # カーソルより前へ移り、どのページにも現れなくなるため、カーソルには使えない。
       def index
-        visits = current_user.sauna_visits.includes(visit_history_entries: { image_attachment: :blob })
+        visits = current_user.sauna_visits.with_history_images
         return render_all(visits) unless params.key?(:limit)
 
         page_size = page_size_param
@@ -71,7 +71,10 @@ module Api
 
       private
 
+      # limit を付けない古い版のフロント向けの互換経路。ページング導入 (#323) の直後に
+      # 開いたままのタブだけが通る想定のため、ログで呼び出しが途絶えたことを確かめてから消す。
       def render_all(visits)
+        Rails.logger.info("legacy_unpaged_index user_id=#{current_user.id}")
         visits = visits.order(updated_at: :desc)
         render json: { saunaVisits: visits.map { |visit| SaunaVisitSerializer.new(visit).as_json } }
       end

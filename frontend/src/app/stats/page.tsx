@@ -14,6 +14,7 @@ import { TopSaunasCard } from './components/TopSaunasCard';
 import { TagCloudCard } from './components/TagCloudCard';
 import { StatsEmptyState } from './components/StatsEmptyState';
 import { ApiAccessGate } from '@/components/sauna-map/components/ApiAccessGate';
+import { cx } from '@/components/sauna-map/utils';
 
 const MonthlyVisitsChart = dynamic(() => import('@/components/charts/MonthlyVisitsChart'), {
   loading: () => <div className={`${styles.chartCard} ${styles.skeleton}`} style={{ minHeight: 260 }} />,
@@ -82,7 +83,7 @@ export default function StatsPage() {
   }
 
   return (
-    <div className={`${shellStyles.page} ${theme === 'light' ? 'light-theme' : ''}`}>
+    <div className={cx(shellStyles.page, theme === 'light' && 'light-theme')}>
       <main className={shellStyles.main}>
         <StatsHeader theme={theme} onToggleTheme={toggleTheme} />
 

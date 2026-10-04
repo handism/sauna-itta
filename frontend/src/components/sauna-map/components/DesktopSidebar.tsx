@@ -15,6 +15,7 @@ import {
   useSaunaEditorActions,
 } from "../context";
 import { SidebarHeaderView } from "./SidebarHeader";
+import { cx } from "../utils/classNames";
 
 export interface DesktopSidebarViewProps {
   isSidebarExpanded: boolean;
@@ -84,7 +85,7 @@ export function DesktopSidebarView({
           aria-hidden
         />
       )}
-      <aside className={`sidebar ${!isSidebarExpanded ? "collapsed" : ""}`}>
+      <aside className={cx("sidebar", !isSidebarExpanded && "collapsed")}>
         <button
           className="mobile-toggle"
           onClick={onToggleSidebar}

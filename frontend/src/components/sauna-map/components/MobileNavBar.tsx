@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Map, List, Plus, BarChart3 } from "lucide-react";
 import type { SheetSnapPosition, MobileTab } from "../types";
+import { cx } from "../utils/classNames";
 
 export type { MobileTab };
 
@@ -27,7 +28,7 @@ export function MobileNavBar({
     <nav className="mobile-nav-bar" aria-label="モバイルナビゲーション">
       <button
         type="button"
-        className={`mobile-nav-item ${isMapActive ? "is-active" : ""}`}
+        className={cx("mobile-nav-item", isMapActive && "is-active")}
         aria-current={isMapActive ? "true" : undefined}
         onClick={() => onSelectTab("map")}
       >
@@ -37,7 +38,7 @@ export function MobileNavBar({
 
       <button
         type="button"
-        className={`mobile-nav-item ${isListActive ? "is-active" : ""}`}
+        className={cx("mobile-nav-item", isListActive && "is-active")}
         aria-current={isListActive ? "true" : undefined}
         onClick={() => onSelectTab("list")}
       >
@@ -47,7 +48,7 @@ export function MobileNavBar({
 
       <button
         type="button"
-        className={`mobile-nav-item mobile-nav-item--add ${isAdding ? "is-active" : ""}`}
+        className={cx("mobile-nav-item mobile-nav-item--add", isAdding && "is-active")}
         aria-current={isAdding ? "true" : undefined}
         onClick={() => onSelectTab("add")}
         aria-label="サウナ追加"

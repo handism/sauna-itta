@@ -4,6 +4,10 @@ class SaunaVisit < ApplicationRecord
   belongs_to :user
   has_many :visit_history_entries, -> { order(:visited_on, :created_at) }, dependent: :destroy
 
+  # SaunaVisitSerializer は履歴ごとに写真の URL を作るため、添付と blob まで先読みする。
+  # 一覧 (index) と書き込み後の再読み込み (VisitWritable#serialized) で同じ条件を使うこと。
+  scope :with_history_images, -> { includes(visit_history_entries: { image_attachment: :blob }) }
+
   validates :external_id, :name, :status, presence: true
   validates :external_id, uniqueness: { scope: :user_id }
   validates :latitude, numericality: { in: -90..90 }

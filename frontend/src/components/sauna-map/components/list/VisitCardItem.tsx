@@ -10,6 +10,7 @@ import { VisitImagePreview } from "../common/VisitImagePreview";
 import { VisitMetaInfo } from "../common/VisitMetaInfo";
 import { VisitTagList } from "../common/VisitTagList";
 import { WishlistChip } from "../common/WishlistChip";
+import { cx } from "../../utils/classNames";
 
 function VisitCardItemComponent({
   visit,
@@ -32,7 +33,7 @@ function VisitCardItemComponent({
     // ここでのクリックはポインタ操作の利便性のための補助に留める。
     <div
       data-visit-id={visit.id}
-      className={`sauna-card ${isHovered ? "is-hovered" : ""} ${isSelected ? "is-selected" : ""}`}
+      className={cx("sauna-card", isHovered && "is-hovered", isSelected && "is-selected")}
       onClick={() => onSelectVisit?.(visit)}
       onMouseEnter={() => onHoverVisit?.(visit.id)}
       onMouseLeave={() => onHoverVisit?.(null)}

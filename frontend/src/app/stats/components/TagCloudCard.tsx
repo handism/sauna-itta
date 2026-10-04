@@ -2,7 +2,7 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronUp, Tag } from "lucide-react";
 import { SaunaVisit } from "@/components/sauna-map/types";
-import { countTags } from "@/components/sauna-map/utils";
+import { countTags, cx } from "@/components/sauna-map/utils";
 import styles from "../stats.module.css";
 
 /**
@@ -50,7 +50,7 @@ export function TagCloudCard({ visits }: TagCloudCardProps) {
             <Link
               key={name}
               href={`/?tag=${encodeURIComponent(name)}`}
-              className={`${styles.tagPill} ${isHigh ? styles.tagPillPopular : ""} ${isRare ? styles.tagPillRare : ""}`}
+              className={cx(styles.tagPill, isHigh && styles.tagPillPopular, isRare && styles.tagPillRare)}
               title={`タグ「${name}」で地図を絞り込む`}
             >
               #{name} <span className={styles.tagPillCount}>{count}</span>

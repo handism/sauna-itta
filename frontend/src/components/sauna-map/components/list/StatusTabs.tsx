@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, memo } from "react";
 import { VisitFilters } from "../../types";
+import { cx } from "../../utils/classNames";
 
 const STATUS_OPTIONS: { value: VisitFilters["status"]; label: string }[] = [
   { value: "all", label: "すべて" },
@@ -20,7 +21,7 @@ function StatusTabsComponent({ filters, setFilters }: StatusTabsProps) {
           key={value}
           type="button"
           aria-pressed={filters.status === value}
-          className={`status-tab ${filters.status === value ? "is-active" : ""}`}
+          className={cx("status-tab", filters.status === value && "is-active")}
           onClick={() => setFilters((prev) => ({ ...prev, status: value }))}
         >
           {label}

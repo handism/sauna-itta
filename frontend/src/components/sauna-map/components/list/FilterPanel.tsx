@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { Map, ChevronUp, RotateCcw } from "lucide-react";
 import { VisitFilters } from "../../types";
+import { cx } from "../../utils/classNames";
 
 const MIN_RATING_OPTIONS = [
   { value: 0, label: "指定なし" },
@@ -79,7 +80,7 @@ export function FilterPanel({
           <div role="group" aria-labelledby="filter-bounds-label">
             <button
               type="button"
-              className={`btn bounds-toggle-btn bounds-toggle-btn--full ${filters.filterByBounds ? "is-active" : ""}`}
+              className={cx("btn bounds-toggle-btn bounds-toggle-btn--full", filters.filterByBounds && "is-active")}
               aria-pressed={filters.filterByBounds}
               onClick={() =>
                 setFilters((prev) => ({

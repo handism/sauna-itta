@@ -12,16 +12,19 @@ module Api
 
         # 親レコードをロックして件数確認と削除を直列化する。別タブから同時に
         # 2件の履歴を削除しても、最後の1件が消えないようにする。
+        # 対象の存在を先に確かめる。件数から判定すると、履歴が1件の記録へ存在しない
+        # history_id を送ったときに 404 ではなく last_history が返る。
         visit.with_lock do
-          if visit.visit_history_entries.count <= 1
+          entry = visit.visit_history_entries.find_by!(public_id: params[:history_id])
+          history_count = visit.visit_history_entries.count
+          if history_count <= 1
             last_history = true
             next
           end
 
-          entry = visit.visit_history_entries.find_by!(public_id: params[:history_id])
           stale_image_blobs << entry.image.blob if entry.image.attached?
           entry.destroy!
-          truncate_legacy_visit_count(visit)
+          truncate_legacy_visit_count(visit, remaining: history_count - 1)
           # 履歴の削除も記録の変更として lock_version を進める。進めないと、削除前の版を
           # 持つ別タブが本体の値（最新履歴の写し）を古い内容で上書きできてしまう。
           visit.touch
@@ -38,8 +41,7 @@ module Api
       # 履歴を消したのに画面の「訪問回数」が減らない。localモードの
       # getVisitsWithRemovedHistory は残件数へ揃えるため、api側も同じ扱いにする
       # （両モードで同じ操作の結果が変わらないようにすること）。
-      def truncate_legacy_visit_count(visit)
-        remaining = visit.visit_history_entries.count
+      def truncate_legacy_visit_count(visit, remaining:)
         return if visit.legacy_visit_count <= remaining
 
         visit.update!(legacy_visit_count: remaining)

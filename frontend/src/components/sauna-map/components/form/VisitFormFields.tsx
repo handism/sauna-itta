@@ -3,6 +3,8 @@ import { Check, Save, X, Trash2, Info, Loader2, CheckCircle2, Star, MapPin } fro
 import { LocationSearchInput } from "./LocationSearchInput";
 import { GeocodingResult } from "../../utils/geocoding";
 import { getDateDaysAgo } from "../../utils/date";
+import type { VisitStatus } from "../../types";
+import { cx } from "../../utils/classNames";
 
 export function FormHeader({
   editingId,
@@ -29,9 +31,7 @@ export function FormHeader({
         */
         <p
           key={attentionKey}
-          className={`location-status ${selectedLocation ? "is-selected" : ""} ${
-            !selectedLocation && attentionKey > 0 ? "is-attention" : ""
-          }`}
+          className={cx("location-status", selectedLocation && "is-selected", !selectedLocation && attentionKey > 0 && "is-attention")}
           role="status"
         >
           {selectedLocation ? (
@@ -108,7 +108,7 @@ export function HistoryAppendField({
       <div className="segmented" role="group" aria-labelledby="visit-append-label">
         <button
           type="button"
-          className={`btn segmented-btn segmented-btn--mode ${appendHistory ? "is-active" : ""}`}
+          className={cx("btn segmented-btn segmented-btn--mode", appendHistory && "is-active")}
           aria-pressed={appendHistory}
           onClick={() => onChange(true)}
         >
@@ -116,7 +116,7 @@ export function HistoryAppendField({
         </button>
         <button
           type="button"
-          className={`btn segmented-btn segmented-btn--mode ${!appendHistory ? "is-active" : ""}`}
+          className={cx("btn segmented-btn segmented-btn--mode", !appendHistory && "is-active")}
           aria-pressed={!appendHistory}
           onClick={() => onChange(false)}
         >
@@ -137,7 +137,7 @@ export function CommentField({
   comment,
   onChange,
 }: {
-  status: "visited" | "wishlist";
+  status: VisitStatus;
   comment: string;
   onChange: (comment: string) => void;
 }) {
@@ -200,7 +200,7 @@ export function FormActions({
           {submitBlockedReason}
         </p>
       )}
-      <div className={`form-actions-secondary ${!editingId ? "form-actions-secondary--single" : ""}`}>
+      <div className={cx("form-actions-secondary", !editingId && "form-actions-secondary--single")}>
         {editingId && (
           <button
             type="button"
@@ -224,8 +224,8 @@ export function StatusField({
   status,
   onChange,
 }: {
-  status: "visited" | "wishlist";
-  onChange: (status: "visited" | "wishlist") => void;
+  status: VisitStatus;
+  onChange: (status: VisitStatus) => void;
 }) {
   return (
     <div className="form-group">
@@ -236,9 +236,7 @@ export function StatusField({
       <div className="segmented" role="group" aria-labelledby="visit-status-label">
         <button
           type="button"
-          className={`btn segmented-btn segmented-btn--visited ${
-            status === "visited" ? "is-active" : ""
-          }`}
+          className={cx("btn segmented-btn segmented-btn--visited", status === "visited" && "is-active")}
           aria-pressed={status === "visited"}
           onClick={() => onChange("visited")}
         >
@@ -246,9 +244,7 @@ export function StatusField({
         </button>
         <button
           type="button"
-          className={`btn segmented-btn segmented-btn--wishlist ${
-            status === "wishlist" ? "is-active" : ""
-          }`}
+          className={cx("btn segmented-btn segmented-btn--wishlist", status === "wishlist" && "is-active")}
           aria-pressed={status === "wishlist"}
           onClick={() => onChange("wishlist")}
         >

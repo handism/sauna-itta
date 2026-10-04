@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, KeyboardEvent } from "react";
 import { Search, Loader2, X, MapPin, AlertCircle } from "lucide-react";
 import { searchLocation, GeocodingResult } from "../../utils/geocoding";
+import { cx } from "../../utils/classNames";
 
 interface LocationSearchInputProps {
   onSelectLocation: (result: GeocodingResult) => void;
@@ -222,9 +223,7 @@ export function LocationSearchInput({
               <li
                 key={result.placeId}
                 id={`${OPTION_ID_PREFIX}${index}`}
-                className={`location-search-item ${
-                  index === activeIndex ? "is-active" : ""
-                }`}
+                className={cx("location-search-item", index === activeIndex && "is-active")}
                 role="option"
                 aria-selected={index === activeIndex}
                 onClick={() => handleSelect(result)}

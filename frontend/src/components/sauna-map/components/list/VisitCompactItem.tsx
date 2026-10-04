@@ -11,6 +11,7 @@ import { VisitImagePreview } from "../common/VisitImagePreview";
 import { VisitMetaInfo } from "../common/VisitMetaInfo";
 import { VisitTagList } from "../common/VisitTagList";
 import { WishlistChip } from "../common/WishlistChip";
+import { cx } from "../../utils/classNames";
 
 function VisitCompactItemComponent({
   visit,
@@ -30,7 +31,7 @@ function VisitCompactItemComponent({
   return (
     <div
       data-visit-id={visit.id}
-      className={`sauna-compact-item ${isHovered ? "is-hovered" : ""} ${isSelected ? "is-selected" : ""}`}
+      className={cx("sauna-compact-item", isHovered && "is-hovered", isSelected && "is-selected")}
       onMouseEnter={() => onHoverVisit?.(visit.id)}
       onMouseLeave={() => onHoverVisit?.(null)}
     >
@@ -56,7 +57,7 @@ function VisitCompactItemComponent({
           >
             <span className="sauna-compact-main-info">
               <span
-                className={`sauna-compact-chevron ${isSelected ? "is-expanded" : ""}`}
+                className={cx("sauna-compact-chevron", isSelected && "is-expanded")}
                 aria-hidden="true"
               >
                 <ChevronRight size={14} />
