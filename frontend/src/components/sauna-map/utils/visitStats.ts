@@ -1,7 +1,7 @@
 import { SaunaVisit, VisitStats } from "../types";
 import { extractPrefecture } from "./geo";
 import { getVisitCount, getVisitHistoryEntries } from "./visitHistory";
-import { isVisited, isWishlist } from "./visitStatus";
+import { isVisited, isWishlist, WISHLIST_LABEL } from "./visitStatus";
 
 /*
  * 統計ページと地図の絞り込み候補で使う集計。記録そのものを変える処理は visitHistory.ts に置く。
@@ -158,6 +158,41 @@ export function getPopularTags(visits: SaunaVisit[], limit = 5): string[] {
   return countTags(visits)
     .slice(0, limit)
     .map(({ name }) => name);
+}
+
+/** フォームのタグ候補の既定（記録にタグが少ないうちはこれで埋める） */
+export const PRESET_TAGS = [
+  "外気浴最高",
+  "水風呂キンキン",
+  "セルフロウリュ",
+  "アウフグース",
+  "サウナ飯",
+  "ソロ向き",
+] as const;
+
+/** フォームに並べるタグ候補の数 */
+export const TAG_SUGGESTION_LIMIT = 8;
+
+/**
+ * フォームのタグ候補。利用者がよく付けるタグを先に並べ、足りない分を
+ * {@link PRESET_TAGS} で埋める。固定のプリセットだけだと、自分のタグは毎回手で打つことになる。
+ * 「行きたい」はステータスで表すため候補に出さない。
+ */
+export function getTagSuggestions(
+  visits: SaunaVisit[],
+  limit = TAG_SUGGESTION_LIMIT,
+): string[] {
+  const suggestions: string[] = [];
+  const candidates = [
+    ...countTags(visits).map(({ name }) => name),
+    ...PRESET_TAGS,
+  ];
+  for (const tag of candidates) {
+    if (suggestions.length >= limit) break;
+    if (tag === WISHLIST_LABEL || suggestions.includes(tag)) continue;
+    suggestions.push(tag);
+  }
+  return suggestions;
 }
 
 export function getPopularAreas(visits: SaunaVisit[], limit = 4): string[] {

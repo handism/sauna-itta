@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ChevronDown, ChevronUp, Star, X } from "lucide-react";
 import { VisitHistoryEntry } from "../../types";
 import { ConfirmModal } from "../common/ConfirmModal";
+import { formatDisplayDate, formatShortDate } from "../../utils/date";
 
 interface VisitHistorySectionProps {
   historyCount: number;
@@ -52,7 +53,7 @@ export function VisitHistorySection({
               {recentEntries.map(({ entry, index }) => (
                 <li key={`${entry.date}-${index}`} className="history-item">
                   <div className="history-item-header">
-                    <span>{entry.date}</span>
+                    <time dateTime={entry.date}>{formatShortDate(entry.date)}</time>
                     <span className="history-rating">
                       {entry.rating ? (
                         <>
@@ -90,7 +91,7 @@ export function VisitHistorySection({
       <ConfirmModal
         isOpen={pendingDeleteEntry !== null}
         title="訪問履歴を削除しますか？"
-        message={`${pendingDeleteEntry?.date ?? "選択した日"}の訪問履歴を削除します。この操作は元に戻せません。`}
+        message={`${pendingDeleteEntry ? formatDisplayDate(pendingDeleteEntry.date) : "選択した日"}の訪問履歴を削除します。この操作は元に戻せません。`}
         confirmLabel="履歴を削除する"
         cancelLabel="キャンセル"
         destructive

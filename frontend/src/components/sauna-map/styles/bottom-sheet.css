@@ -241,8 +241,6 @@
     justify-content: center;
     line-height: 1;
     margin-bottom: 2px;
-    /* .filter-active-dot の位置基準 */
-    position: relative;
   }
 
   /* 追加ボタンの特記スタイル */
@@ -266,17 +264,6 @@
     transform: scale(0.92);
   }
 
-  /* フィルターが有効なときに MobileNavBar が出すバッジ */
-  .filter-active-dot {
-    position: absolute;
-    top: -2px;
-    right: -6px;
-    width: 7px;
-    height: 7px;
-    background-color: var(--primary);
-    box-shadow: 0 0 8px var(--primary-glow);
-    border-radius: 50%;
-  }
 }
 
 /* 768px 以上はデスクトップ。JS の isMobile（幅 < MOBILE_BREAKPOINT）と境界を揃える */

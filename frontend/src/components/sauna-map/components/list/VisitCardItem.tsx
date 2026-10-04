@@ -23,6 +23,7 @@ function VisitCardItemComponent({
 }: VisitItemProps) {
   const visitCount = getVisitCount(visit);
   const imageSrc = sanitizeImageUrl(visit.image);
+  const wishlist = isWishlist(visit);
 
   return (
     // カードは編集ボタン・タグ・経路リンクを内包するため、カード自体を role="button" に
@@ -35,6 +36,16 @@ function VisitCardItemComponent({
       onMouseEnter={() => onHoverVisit?.(visit.id)}
       onMouseLeave={() => onHoverVisit?.(null)}
     >
+      {/*
+        写真は記録を思い出す一番の手がかりなので、一覧を眺めたときに目に入るよう先頭に置く。
+        コメントの下に置くと、カードを読み進めないと写真があるかどうかも分からない。
+      */}
+      <VisitImagePreview
+        src={imageSrc}
+        alt={`${visit.name}の写真`}
+        onOpenImage={onOpenImage}
+        className="sauna-img-preview-btn--cover"
+      />
       <div className="sauna-card-header">
         <h3 className="sauna-card-title">
           <button
@@ -47,7 +58,7 @@ function VisitCardItemComponent({
             }}
           >
             {visit.name}
-            {isWishlist(visit) && <WishlistChip />}
+            {wishlist && <WishlistChip />}
           </button>
         </h3>
         <div className="sauna-card-actions">
@@ -78,18 +89,13 @@ function VisitCardItemComponent({
         </div>
       </div>
       {visit.area && <div className="sauna-card-area">{visit.area}</div>}
-      <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" />
+      <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" showUnrated={!wishlist} />
       <VisitTagList
         tags={getDisplayTags(visit)}
-        onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
+        onSelectTag={(tag) => setFilters((prev) => ({ ...prev, selectedTag: tag }))}
       />
       <VisitComment text={visit.comment} className="sauna-card-comment" />
-      <VisitImagePreview
-        src={imageSrc}
-        alt={`${visit.name}の写真`}
-        onOpenImage={onOpenImage}
-      />
-      <VisitMetaInfo date={visit.date} visitCount={visitCount} />
+      <VisitMetaInfo date={visit.date} visitCount={visitCount} isWishlist={wishlist} />
       <RouteLink lat={visit.lat} lng={visit.lng} />
     </div>
   );

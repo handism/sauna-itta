@@ -60,3 +60,35 @@ export function parseLocalDate(dateInput: string | Date): Date {
 export function toDateString(dateInput: string | Date): string {
   return parseLocalDate(dateInput).toDateString();
 }
+
+const WEEKDAY_LABELS = ["日", "月", "火", "水", "木", "金", "土"] as const;
+
+/**
+ * YYYY-MM-DD の日付文字列が実在する日付なら Date を返す。
+ * `parseLocalDate()` は 2026-02-30 を 3 月 2 日へ繰り越すため、表示用には使えない。
+ */
+function parseDisplayDate(date: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+  const parsed = parseLocalDate(date);
+  return formatLocalDate(parsed) === date ? parsed : null;
+}
+
+/**
+ * 画面に出す日付（例: 2026年10月4日（日））。保存値の YYYY-MM-DD を
+ * そのまま出すと内部の形式が見えるため、カード・ポップアップ・シェア画面はここを通す。
+ * 解釈できない値は手がかりを残すため元の文字列のまま返す。
+ */
+export function formatDisplayDate(date: string): string {
+  const parsed = parseDisplayDate(date);
+  if (!parsed) return date;
+  return `${parsed.getFullYear()}年${parsed.getMonth() + 1}月${parsed.getDate()}日（${WEEKDAY_LABELS[parsed.getDay()]}）`;
+}
+
+/**
+ * 幅の限られた場所に出す日付（例: 2026/10/4）。コンパクト行・履歴一覧で使う。
+ */
+export function formatShortDate(date: string): string {
+  const parsed = parseDisplayDate(date);
+  if (!parsed) return date;
+  return `${parsed.getFullYear()}/${parsed.getMonth() + 1}/${parsed.getDate()}`;
+}

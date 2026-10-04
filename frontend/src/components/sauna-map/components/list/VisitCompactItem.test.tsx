@@ -137,7 +137,7 @@ describe("VisitCompactItem の操作", () => {
     expect(handleDeselect).toHaveBeenCalledOnce();
   });
 
-  it("展開中のタグをクリックすると検索条件へ反映する", () => {
+  it("展開中のタグをクリックするとタグの絞り込みへ反映する（文字の検索にはしない）", () => {
     const setFilters = vi.fn((updater) => updater({ search: "" }));
     render(
       <VisitCompactItem
@@ -150,7 +150,7 @@ describe("VisitCompactItem の操作", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /水風呂/ }));
 
-    expect(setFilters.mock.results[0].value).toEqual({ search: "水風呂" });
+    expect(setFilters.mock.results[0].value).toEqual({ search: "", selectedTag: "水風呂" });
   });
 
   it("行の出入りでホバー状態を伝える", () => {
@@ -227,7 +227,7 @@ describe("VisitCompactItem の操作", () => {
   it("折りたたんだ状態でも訪問回数と最終訪問日を表示すること", () => {
     render(<VisitCompactItem {...compactProps} isSelected={false} />);
 
-    expect(screen.getByText("2回 · 最終 2026-07-24")).toBeInTheDocument();
+    expect(screen.getByText("2回 · 最終 2026/7/24")).toBeInTheDocument();
   });
 
   it("行きたい記録は訪問回数・日付の代わりに状態とエリアを 2 行目へ出すこと", () => {
@@ -250,7 +250,7 @@ describe("VisitCompactItem の操作", () => {
     const { container } = render(<VisitCompactItem {...compactProps} isSelected={false} />);
 
     expect(container.querySelector(".sauna-compact-title")).toHaveTextContent(/^天空サウナ$/);
-    expect(container.querySelector(".sauna-compact-meta")).toHaveTextContent("東京2回 · 最終 2026-07-24");
+    expect(container.querySelector(".sauna-compact-meta")).toHaveTextContent("東京2回 · 最終 2026/7/24");
   });
 
   it("行きたい記録では状態と同名の「行きたい」タグを重ねて表示しないこと", () => {

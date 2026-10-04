@@ -37,15 +37,28 @@ describe("RatingField", () => {
     expect(screen.getByRole("button", { name: "4つ星" })).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("星の選択とクリアを通知する", () => {
+  it("星の選択を通知し、選択中の星をもう一度押すと評価を外す", () => {
     const onChange = vi.fn();
     render(<RatingField rating={3} onChange={onChange} />);
 
     fireEvent.click(screen.getByRole("button", { name: "5つ星" }));
     expect(onChange).toHaveBeenLastCalledWith(5);
 
-    fireEvent.click(screen.getByRole("button", { name: "評価をクリア" }));
+    // 選択中より下の星は外さずに選び直す
+    fireEvent.click(screen.getByRole("button", { name: "2つ星" }));
+    expect(onChange).toHaveBeenLastCalledWith(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "3つ星" }));
     expect(onChange).toHaveBeenLastCalledWith(0);
+  });
+
+  it("外し方を補足として星のグループへ関連付ける", () => {
+    render(<RatingField rating={3} onChange={vi.fn()} />);
+
+    expect(screen.getByRole("group", { name: "満足度（1〜5）" })).toHaveAccessibleDescription(
+      "選んだ星をもう一度押すと評価を外せます"
+    );
+    expect(screen.queryByRole("button", { name: "評価をクリア" })).toBeNull();
   });
 });
 

@@ -8,6 +8,8 @@ import {
   getMonthlyVisitCounts,
   getRepeatVisits,
   sortRankedByRating,
+  getTagSuggestions,
+  PRESET_TAGS,
 } from "./visitStats";
 import { SaunaVisit } from "../types";
 
@@ -346,5 +348,44 @@ describe("getRepeatVisits / sortRankedByRating", () => {
     expect(sortRankedByRating(list).map(({ visit }) => visit.name)).toEqual(["B", "D", "A", "C"]);
     // 元の配列は変更しない
     expect(list.map(({ visit }) => visit.name)).toEqual(["A", "B", "C", "D"]);
+  });
+});
+
+describe("getTagSuggestions", () => {
+  const makeVisit = (id: string, tags: string[]): SaunaVisit => ({
+    id,
+    name: id,
+    lat: 35.68,
+    lng: 139.76,
+    date: "2026-01-01",
+    comment: "",
+    rating: 4,
+    status: "visited",
+    tags,
+  });
+
+  it("記録が無ければプリセットだけを返す", () => {
+    expect(getTagSuggestions([])).toEqual([...PRESET_TAGS]);
+  });
+
+  it("よく使うタグを先に並べ、プリセットとの重複は 1 つにまとめる", () => {
+    const visits = [
+      makeVisit("a", ["薪ストーブ", "サウナ飯"]),
+      makeVisit("b", ["薪ストーブ"]),
+    ];
+
+    const result = getTagSuggestions(visits);
+
+    expect(result.slice(0, 2)).toEqual(["薪ストーブ", "サウナ飯"]);
+    expect(result.filter((tag) => tag === "サウナ飯")).toHaveLength(1);
+    expect(result).toHaveLength(PRESET_TAGS.length + 1);
+  });
+
+  it("「行きたい」は候補に出さず、上限で打ち切る", () => {
+    const visits = [makeVisit("a", ["行きたい", "A", "B", "C"])];
+
+    const result = getTagSuggestions(visits, 4);
+
+    expect(result).toEqual(["A", "B", "C", PRESET_TAGS[0]]);
   });
 });

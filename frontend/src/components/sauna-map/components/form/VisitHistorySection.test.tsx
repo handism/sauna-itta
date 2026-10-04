@@ -29,7 +29,7 @@ describe("VisitHistorySection", () => {
 
     expect(onDeleteEntry).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog", { name: "訪問履歴を削除しますか？" })).toBeInTheDocument();
-    expect(screen.getByText(/2026-07-20の訪問履歴を削除します/)).toBeInTheDocument();
+    expect(screen.getByText(/2026年7月20日（月）の訪問履歴を削除します/)).toBeInTheDocument();
   });
 
   it("確認後にだけ対象の履歴を削除すること", () => {

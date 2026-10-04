@@ -19,3 +19,21 @@ describe("RatingStars", () => {
     expect(filledStars.length).toBe(3);
   });
 });
+
+describe("RatingStars（未評価）", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("showUnrated のときは評価 0 を「未評価」と出す", () => {
+    const { container } = render(<RatingStars rating={0} showUnrated className="x" />);
+    expect(container.firstChild).toHaveTextContent("未評価");
+    expect(container.firstChild).toHaveClass("rating-unrated", "x");
+  });
+
+  it("評価があれば showUnrated でも星を出す", () => {
+    const { container } = render(<RatingStars rating={2} showUnrated />);
+    expect(container.querySelectorAll(".rating-star--filled").length).toBe(2);
+    expect(container).not.toHaveTextContent("未評価");
+  });
+});

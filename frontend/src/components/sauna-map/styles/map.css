@@ -57,6 +57,12 @@
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 
+.sauna-marker--frequent {
+  width: 40px;
+  height: 40px;
+  border-color: var(--star-color);
+}
+
 .sauna-marker--selected {
   background: linear-gradient(135deg, var(--accent-water) 0%, var(--accent-water-deep) 100%);
   box-shadow: 0 6px 20px var(--water-glow), 0 0 16px var(--accent-water);

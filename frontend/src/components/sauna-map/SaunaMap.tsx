@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import "leaflet/dist/leaflet.css";
 
 import { ShareModal } from "./components/ShareModal";
@@ -35,14 +35,12 @@ function SaunaMapContent() {
     mounted,
     theme,
     isDeleteConfirmOpen,
-    isFilterPanelOpen,
-    toggleFilterPanel,
     closeDeleteConfirm,
     toast,
     clearToast,
   } = useSaunaUI();
 
-  const { filteredVisits, isFilterActive } = useVisitFiltersContext();
+  const { filteredVisits } = useVisitFiltersContext();
   // 記録本体（useVisitsData）は購読しない。ここは画面全体の親なので、記録が 1 件変わる
   // たびに再レンダリングされると子の比較コストまで毎回かかる
   const { dataSource, loading, authenticated, csrfToken, loadError } = useVisitsStatus();
@@ -58,11 +56,6 @@ function SaunaMapContent() {
     handleCancelEditing,
     handleSelectMobileTab,
   } = useSaunaMapState();
-
-  const handleMobileFilterClick = useCallback(() => {
-    setSnapPosition("half");
-    toggleFilterPanel();
-  }, [setSnapPosition, toggleFilterPanel]);
 
   if (!mounted) {
     return <div className="map-container" style={{ background: "var(--background)", height: "100%", width: "100%" }} />;
@@ -120,9 +113,6 @@ function SaunaMapContent() {
           onSelectTab={handleSelectMobileTab}
           snapPosition={snapPosition}
           isAdding={isAdding}
-          onOpenFilter={handleMobileFilterClick}
-          isFilterPanelOpen={isFilterPanelOpen}
-          isFilterActive={isFilterActive}
         />
       )}
 

@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, act, within } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import type { FormEvent, SetStateAction } from "react";
 import "@testing-library/jest-dom/vitest";
@@ -70,29 +70,42 @@ describe("VisitFormView", () => {
     imageUploading: false,
   };
 
-  it("renders the append history checkbox with checkbox-row class when editing a visited sauna", () => {
+  it("訪問済みの編集では保存のしかたを排他の切り替えで公開する", () => {
     render(<VisitFormView {...defaultProps} />);
 
-    const labelElement = screen.getByText(/新しい訪問記録として追加する/).closest("label");
-    expect(labelElement).not.toBeNull();
-    expect(labelElement).toHaveClass("checkbox-row");
-
-    const checkbox = screen.getByRole("checkbox", {
-      name: /新しい訪問記録として追加する/,
-    });
-    expect(checkbox).toBeChecked();
+    const group = screen.getByRole("group", { name: "保存のしかた" });
+    expect(within(group).getByRole("button", { name: "新しい訪問を追加" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
+    expect(within(group).getByRole("button", { name: "前回の記録を修正" })).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+    expect(screen.getByText(/新しい訪問として履歴に追加します/)).toBeInTheDocument();
   });
 
-  it("calls setForm when toggling the append history checkbox", () => {
+  it("「前回の記録を修正」を選ぶと appendHistory を false にする", () => {
     const setFormMock = vi.fn();
     render(<VisitFormView {...defaultProps} setForm={setFormMock} />);
 
-    const checkbox = screen.getByRole("checkbox", {
-      name: /新しい訪問記録として追加する/,
-    });
-    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: "前回の記録を修正" }));
 
-    expect(setFormMock).toHaveBeenCalled();
+    const updater = setFormMock.mock.calls[0][0];
+    expect(updater({ ...defaultForm, appendHistory: true }).appendHistory).toBe(false);
+  });
+
+  it("項目を「場所」「記録の内容」「タグ」「これまでの訪問」の区切りで見せる", () => {
+    render(<VisitFormView {...defaultProps} />);
+
+    const headings = screen
+      .getAllByRole("heading", { level: 3 })
+      .map((heading) => heading.textContent);
+    expect(headings).toEqual(["場所", "記録の内容", "タグ", "これまでの訪問"]);
+    // 必須のサウナ名は場所の区切りに置く
+    expect(
+      within(screen.getByRole("region", { name: "場所" })).getByLabelText("サウナ名")
+    ).toBeInTheDocument();
   });
 
   it("associates every text field label with its input", () => {
@@ -197,9 +210,9 @@ describe("VisitFormView", () => {
     expect(screen.queryByLabelText("訪問日")).not.toBeInTheDocument();
     expect(screen.queryByText("写真を追加")).not.toBeInTheDocument();
     expect(screen.getByLabelText("メモ")).toBeInTheDocument();
-    // 訪問済みでないので履歴追加のチェックボックスも出さない
+    // 訪問済みでないので保存のしかたの切り替えも出さない
     expect(
-      screen.queryByRole("checkbox", { name: /新しい訪問記録として追加する/ })
+      screen.queryByRole("group", { name: "保存のしかた" })
     ).not.toBeInTheDocument();
   });
 
@@ -209,7 +222,7 @@ describe("VisitFormView", () => {
     expect(screen.getByRole("button", { name: /保存する/ })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /削除/ })).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("checkbox", { name: /新しい訪問記録として追加する/ })
+      screen.queryByRole("group", { name: "保存のしかた" })
     ).not.toBeInTheDocument();
   });
 

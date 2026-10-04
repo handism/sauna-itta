@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
 import { RatingStars } from "./common/RatingStars";
 import { WishlistChip } from "./common/WishlistChip";
-import { isWishlist } from "../utils";
+import { formatShortDate, isWishlist } from "../utils";
 import { useModalBehavior } from "../hooks/useModalBehavior";
 import { useSaunaUI, useVisitFiltersContext } from "../context";
 
@@ -67,7 +67,10 @@ export function ShareModalView({
                   {isWishlist(visit) && <WishlistChip compact />}
                   {visit.area && <span className="share-area">{visit.area}</span>}
                 </div>
-                <span>{visit.date}</span>
+                {/* 行きたい記録の date は登録時の既定値で、行った日ではないため出さない */}
+                {!isWishlist(visit) && visit.date && (
+                  <time dateTime={visit.date}>{formatShortDate(visit.date)}</time>
+                )}
               </div>
               <RatingStars rating={visit.rating ?? 0} className="share-rating" />
               {visit.tags && visit.tags.length > 0 && (

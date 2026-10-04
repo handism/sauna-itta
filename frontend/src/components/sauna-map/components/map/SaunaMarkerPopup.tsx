@@ -25,19 +25,26 @@ export function SaunaMarkerPopup({ visit, isWishlist, onEdit, onOpenImage }: Sau
 
   return (
     <div className="popup-card">
+      {/* 一覧カードと同じく、写真があれば先頭に置く */}
+      <VisitImagePreview
+        src={imageUrl}
+        alt={`${visit.name}の写真`}
+        onOpenImage={onOpenImage || (() => {})}
+        className="sauna-img-preview-btn--cover"
+      />
       <h3 className="popup-title">
         {visit.name}
         {isWishlist && <WishlistChip />}
       </h3>
       {visit.area && <div className="popup-area">{visit.area}</div>}
-      <RatingStars rating={visit.rating ?? 0} className="popup-rating" />
-      <VisitImagePreview
-        src={imageUrl}
-        alt={`${visit.name}の写真`}
-        onOpenImage={onOpenImage || (() => {})}
-      />
+      <RatingStars rating={visit.rating ?? 0} className="popup-rating" showUnrated={!isWishlist} />
       <VisitComment text={visit.comment} className="popup-comment" />
-      <VisitMetaInfo date={visit.date} visitCount={visitCount} className="popup-meta" />
+      <VisitMetaInfo
+        date={visit.date}
+        visitCount={visitCount}
+        isWishlist={isWishlist}
+        className="popup-meta"
+      />
       <RouteLink lat={visit.lat} lng={visit.lng} className="route-link popup-link" />
       <button
         type="button"

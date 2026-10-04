@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Check, Save, X, Trash2, Info, Loader2, CheckCircle2, Star, MapPin } from "lucide-react";
 import { LocationSearchInput } from "./LocationSearchInput";
 import { GeocodingResult } from "../../utils/geocoding";
@@ -55,6 +56,30 @@ export function LocationSearchField({
   );
 }
 
+/**
+ * フォームの区切り。項目を「場所」「記録の内容」「タグ」のまとまりで見せ、
+ * 長いフォームのどこを入力しているかを見失わないようにする。
+ */
+export function FormSection({
+  id,
+  title,
+  children,
+}: {
+  id: string;
+  title: string;
+  children: ReactNode;
+}) {
+  const headingId = `${id}-heading`;
+  return (
+    <section className="form-section" aria-labelledby={headingId}>
+      <h3 className="form-section-title" id={headingId}>
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
 export function HistoryAppendField({
   appendHistory,
   onChange,
@@ -62,18 +87,37 @@ export function HistoryAppendField({
   appendHistory: boolean;
   onChange: (appendHistory: boolean) => void;
 }) {
+  /*
+   * 「新しい訪問として追加」と「前回の記録を修正」は排他の 2 択なので、
+   * チェックボックス＋長い説明文ではなく、どちらを選んでいるかが見える切り替えにする。
+   */
   return (
-    <div className="form-group form-group--checkbox">
-      <label className="checkbox-row">
-        <input
-          type="checkbox"
-          checked={appendHistory}
-          onChange={(e) => onChange(e.target.checked)}
-        />
-        <span>新しい訪問記録として追加する（訪問回数+1）</span>
-      </label>
-      <p className="form-hint">
-        チェックを入れると、今回の内容が新しい訪問履歴として保存されます。チェックを外すと前回の記録を修正します。
+    <div className="form-group">
+      <span className="form-group-label" id="visit-append-label">
+        保存のしかた
+      </span>
+      <div className="segmented" role="group" aria-labelledby="visit-append-label">
+        <button
+          type="button"
+          className={`btn segmented-btn segmented-btn--mode ${appendHistory ? "is-active" : ""}`}
+          aria-pressed={appendHistory}
+          onClick={() => onChange(true)}
+        >
+          新しい訪問を追加
+        </button>
+        <button
+          type="button"
+          className={`btn segmented-btn segmented-btn--mode ${!appendHistory ? "is-active" : ""}`}
+          aria-pressed={!appendHistory}
+          onClick={() => onChange(false)}
+        >
+          前回の記録を修正
+        </button>
+      </div>
+      <p className="form-hint" role="status">
+        {appendHistory
+          ? "今回の内容を新しい訪問として履歴に追加します（訪問回数+1）。"
+          : "最新の訪問の内容を書き換えます（訪問回数は変わりません）。"}
       </p>
     </div>
   );
@@ -211,12 +255,21 @@ export function RatingField({
       <span className="form-group-label" id="visit-rating-label">
         満足度（1〜5）
       </span>
-      <div className="rating-row" role="group" aria-labelledby="visit-rating-label">
+      {/*
+        選んでいる星をもう一度押すと評価を外す。星の横に「クリア」の文字ボタンを
+        並べると、星より目立って何の操作か分かりにくかったため。
+      */}
+      <div
+        className="rating-row"
+        role="group"
+        aria-labelledby="visit-rating-label"
+        aria-describedby="visit-rating-hint"
+      >
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             type="button"
-            onClick={() => onChange(star)}
+            onClick={() => onChange(rating === star ? 0 : star)}
             className="rating-star-btn"
             aria-pressed={rating >= star}
             aria-label={`${star}つ星`}
@@ -228,15 +281,10 @@ export function RatingField({
             />
           </button>
         ))}
-        <button
-          type="button"
-          onClick={() => onChange(0)}
-          className="clear-rating"
-          aria-label="評価をクリア"
-        >
-          クリア
-        </button>
       </div>
+      <p className="form-hint" id="visit-rating-hint">
+        {rating > 0 ? "選んだ星をもう一度押すと評価を外せます" : "未評価"}
+      </p>
     </div>
   );
 }
