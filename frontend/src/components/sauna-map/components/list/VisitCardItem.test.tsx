@@ -180,7 +180,7 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
       expect(handleDeselect).toHaveBeenCalledOnce();
     });
 
-    it("展開中のタグをクリックすると検索条件へ反映する", () => {
+    it("展開中のタグをクリックするとタグの絞り込みへ反映する（文字の検索にはしない）", () => {
       const setFilters = vi.fn((updater) => updater({ search: "" }));
       render(
         <VisitCompactItem
@@ -193,7 +193,7 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
 
       fireEvent.click(screen.getByRole("button", { name: /水風呂/ }));
 
-      expect(setFilters.mock.results[0].value).toEqual({ search: "水風呂" });
+      expect(setFilters.mock.results[0].value).toEqual({ search: "", selectedTag: "水風呂" });
     });
 
     it("行の出入りでホバー状態を伝える", () => {
@@ -313,7 +313,7 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
       expect(handleSelect).not.toHaveBeenCalled();
     });
 
-    it("タグをクリックすると検索条件へ反映する", () => {
+    it("タグをクリックするとタグの絞り込みへ反映する（文字の検索にはしない）", () => {
       const setFilters = vi.fn((updater) => updater({ search: "" }));
       render(
         <VisitCardItem
@@ -330,7 +330,7 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
       fireEvent.click(screen.getByRole("button", { name: /外気浴/ }));
 
       expect(setFilters).toHaveBeenCalledOnce();
-      expect(setFilters.mock.results[0].value).toEqual({ search: "外気浴" });
+      expect(setFilters.mock.results[0].value).toEqual({ search: "", selectedTag: "外気浴" });
     });
 
     it("行きたい記録には行きたいチップを出す", () => {

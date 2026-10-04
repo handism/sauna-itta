@@ -1,7 +1,7 @@
 import { memo } from "react";
 import Image from "next/image";
 import { ChevronRight, ChevronUp, Pencil } from "lucide-react";
-import { getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
+import { formatShortDate, getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import { RatingStars } from "../common/RatingStars";
 import { RouteLink } from "../common/RouteLink";
@@ -75,7 +75,7 @@ function VisitCompactItemComponent({
                   {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
                   {!wishlist && visit.date && (
                     <span className="sauna-compact-visits">
-                      {visitCount}回 · 最終 {visit.date}
+                      {visitCount}回 · 最終 {formatShortDate(visit.date)}
                     </span>
                   )}
                 </span>
@@ -104,7 +104,7 @@ function VisitCompactItemComponent({
         <div className="sauna-compact-body">
           <VisitTagList
             tags={getDisplayTags(visit)}
-            onSelectTag={(tag) => setFilters((prev) => ({ ...prev, search: tag }))}
+            onSelectTag={(tag) => setFilters((prev) => ({ ...prev, selectedTag: tag }))}
           />
           <VisitComment text={visit.comment} className="sauna-card-comment" />
           <VisitImagePreview
@@ -112,7 +112,7 @@ function VisitCompactItemComponent({
             alt={`${visit.name}の写真`}
             onOpenImage={onOpenImage}
           />
-          <VisitMetaInfo date={visit.date} visitCount={visitCount} />
+          <VisitMetaInfo date={visit.date} visitCount={visitCount} isWishlist={wishlist} />
           <div className="sauna-compact-footer-actions">
             <RouteLink lat={visit.lat} lng={visit.lng} />
             {onDeselectVisit && (

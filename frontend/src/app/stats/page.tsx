@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import styles from './stats.module.css';
 import shellStyles from './stats-shell.module.css';
 import 'react-calendar/dist/Calendar.css';
@@ -13,6 +12,7 @@ import { PrefectureSection } from './components/PrefectureSection';
 import { HomeSaunaCard } from './components/HomeSaunaCard';
 import { TopSaunasCard } from './components/TopSaunasCard';
 import { TagCloudCard } from './components/TagCloudCard';
+import { StatsEmptyState } from './components/StatsEmptyState';
 import { ApiAccessGate } from '@/components/sauna-map/components/ApiAccessGate';
 
 const MonthlyVisitsChart = dynamic(() => import('@/components/charts/MonthlyVisitsChart'), {
@@ -91,12 +91,19 @@ export default function StatsPage() {
           登録への導線だけを見せる
         */}
         {stats.total === 0 ? (
-          <div className={shellStyles.emptyState}>
-            <p>まだ訪問記録がありません。地図からサウナを登録すると、ここにグラフィカルな統計が表示されます。</p>
-            <Link href="/" className={shellStyles.backLink}>
-              マップでサウナを登録する
-            </Link>
-          </div>
+          <StatsEmptyState variant="none" />
+        ) : stats.visitedCount === 0 ? (
+          /*
+            「行きたい」だけのときは、グラフ・ランキング・カレンダーが行った記録だけから
+            集計されるため空になる。空のカードを並べず、サマリーとタグだけを出して理由を伝える。
+          */
+          <>
+            <StatsEmptyState variant="wishlistOnly" wishlistCount={stats.wishlistCount} />
+            <SummaryGrid stats={stats} />
+            <div className={styles.sectionWrap}>
+              <TagCloudCard visits={visits} />
+            </div>
+          </>
         ) : (
           <>
             {/* 1. Key Statistics Summary */}

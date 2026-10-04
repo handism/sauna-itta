@@ -5,19 +5,15 @@ import { MobileNavBar, type MobileNavBarProps } from "./MobileNavBar";
 
 function renderNav(overrides: Partial<MobileNavBarProps> = {}) {
   const onSelectTab = vi.fn();
-  const onOpenFilter = vi.fn();
   const utils = render(
     <MobileNavBar
       onSelectTab={onSelectTab}
       snapPosition="half"
       isAdding={false}
-      onOpenFilter={onOpenFilter}
-      isFilterPanelOpen={false}
-      isFilterActive={false}
       {...overrides}
     />,
   );
-  return { onSelectTab, onOpenFilter, ...utils };
+  return { onSelectTab, ...utils };
 }
 
 describe("MobileNavBar", () => {
@@ -57,30 +53,10 @@ describe("MobileNavBar", () => {
     expect(onSelectTab.mock.calls).toEqual([["map"], ["list"], ["add"]]);
   });
 
-  it("フィルターはパネルの開閉ボタンとして状態をaria-expandedで公開する", () => {
-    const { onOpenFilter, unmount } = renderNav();
+  it("詳細フィルターは一覧側にあるため、ナビには置かない", () => {
+    renderNav();
 
-    const filterButton = screen.getByRole("button", { name: "フィルター" });
-    expect(filterButton).toHaveAttribute("aria-expanded", "false");
-    // 絞り込みのオン／オフを切り替えるトグルではない
-    expect(filterButton).not.toHaveAttribute("aria-pressed");
-
-    fireEvent.click(filterButton);
-    expect(onOpenFilter).toHaveBeenCalledOnce();
-    unmount();
-
-    renderNav({ isFilterPanelOpen: true });
-    expect(screen.getByRole("button", { name: "フィルター" })).toHaveAttribute("aria-expanded", "true");
-  });
-
-  it("絞り込み中はドットに加えて読み上げ用の補足で伝える", () => {
-    const { container, unmount } = renderNav();
-    expect(container.querySelector(".filter-active-dot")).toBeNull();
-    unmount();
-
-    const active = renderNav({ isFilterActive: true });
-    expect(screen.getByRole("button", { name: "フィルター（絞り込み中）" })).toHaveClass("is-active");
-    expect(active.container.querySelector(".filter-active-dot")).not.toBeNull();
+    expect(screen.queryByRole("button", { name: /フィルター/ })).toBeNull();
   });
 
   it("統計はタブではなくリンクとして提供する", () => {

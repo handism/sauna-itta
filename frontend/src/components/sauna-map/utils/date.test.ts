@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getDateDaysAgo, getTodayDate, parseLocalDate, toDateString } from "./date";
+import {
+  formatDisplayDate,
+  formatShortDate,
+  getDateDaysAgo,
+  getTodayDate,
+  parseLocalDate,
+  toDateString,
+} from "./date";
 
 describe("date utils", () => {
   afterEach(() => {
@@ -77,5 +84,28 @@ describe("date utils", () => {
       const expected = new Date(2026, 6, 29).toDateString();
       expect(dateStr).toBe(expected);
     });
+  });
+});
+
+describe("formatDisplayDate", () => {
+  it("年月日と曜日を日本語で表す", () => {
+    expect(formatDisplayDate("2026-10-04")).toBe("2026年10月4日（日）");
+    expect(formatDisplayDate("2024-01-01")).toBe("2024年1月1日（月）");
+  });
+
+  it("解釈できない値・実在しない日付は元の文字列のまま返す", () => {
+    expect(formatDisplayDate("")).toBe("");
+    expect(formatDisplayDate("2026/10/04")).toBe("2026/10/04");
+    expect(formatDisplayDate("2026-02-30")).toBe("2026-02-30");
+  });
+});
+
+describe("formatShortDate", () => {
+  it("ゼロ埋めしない年/月/日にする", () => {
+    expect(formatShortDate("2026-10-04")).toBe("2026/10/4");
+  });
+
+  it("解釈できない値は元の文字列のまま返す", () => {
+    expect(formatShortDate("不明")).toBe("不明");
   });
 });

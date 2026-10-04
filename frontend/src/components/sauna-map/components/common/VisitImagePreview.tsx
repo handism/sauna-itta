@@ -6,6 +6,8 @@ interface VisitImagePreviewProps {
   /** 画像の代替テキスト。拡大ボタンの名前は「〜を拡大表示」として組み立てる */
   alt: string;
   onOpenImage: (src: string) => void;
+  /** 配置ごとの余白の調整用（カード上部のカバー写真など） */
+  className?: string;
 }
 
 /**
@@ -15,13 +17,13 @@ interface VisitImagePreviewProps {
  * コンポーネント（= button）経由にすること。sanitizeImageUrl は同一レンダー内で
  * 何度も呼ばないよう、呼び出し側が計算済みの src を渡す。
  */
-export function VisitImagePreview({ src, alt, onOpenImage }: VisitImagePreviewProps) {
+export function VisitImagePreview({ src, alt, onOpenImage, className }: VisitImagePreviewProps) {
   if (!src) return null;
 
   return (
     <button
       type="button"
-      className="sauna-img-preview-btn"
+      className={`sauna-img-preview-btn ${className ?? ""}`}
       onClick={(e) => {
         e.stopPropagation();
         onOpenImage(src);

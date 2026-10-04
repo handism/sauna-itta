@@ -260,6 +260,16 @@ body.allow-page-scroll {
   opacity: 1;
 }
 
+/*
+ * 行った記録で評価が 0 のときの表示。星の位置に置くクラス（.sauna-card-rating 等）が
+ * --star-color を指定しているため、要素セレクタを足して詳細度で中立色へ戻す。
+ */
+span.rating-unrated {
+  display: inline-block;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
 .spin-icon {
   animation: spin 1s linear infinite;
 }

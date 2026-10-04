@@ -101,24 +101,44 @@
   text-decoration: none;
 }
 
+/* 地図側の一覧の空状態（.empty-state）と同じ「アイコン＋見出し＋説明＋操作」の構成 */
 .emptyState {
   display: flex;
   width: 100%;
   margin-bottom: 1.5rem;
-  padding: 1.5rem;
-  flex-wrap: wrap;
+  padding: 2rem 1.5rem;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
+  text-align: center;
   border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   border-radius: var(--radius-xl);
   background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
-.emptyState p {
+.emptyStateIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--primary);
+}
+
+.emptyStateTitle {
   margin: 0;
-  font-size: var(--text-lg);
-  opacity: 0.9;
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.emptyStateBody {
+  max-width: 34rem;
+  margin: 0 0 0.25rem;
+  font-size: var(--text-base);
+  line-height: 1.7;
+  opacity: 0.85;
 }
 
 /* モバイル境界は地図画面（JS の 768px 未満）と揃える */

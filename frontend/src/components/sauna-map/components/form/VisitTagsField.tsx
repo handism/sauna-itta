@@ -1,21 +1,14 @@
 import { Check } from "lucide-react";
 import { toNormalizedTags } from "../../utils";
 
-const PRESET_TAGS = [
-  "外気浴最高",
-  "水風呂キンキン",
-  "セルフロウリュ",
-  "アウフグース",
-  "サウナ飯",
-  "ソロ向き",
-];
-
 interface VisitTagsFieldProps {
   tagsText: string;
   onChange: (tagsText: string) => void;
+  /** 候補のチップ。よく使うタグ順（`getTagSuggestions()`）で渡す */
+  suggestedTags: readonly string[];
 }
 
-export function VisitTagsField({ tagsText, onChange }: VisitTagsFieldProps) {
+export function VisitTagsField({ tagsText, onChange, suggestedTags }: VisitTagsFieldProps) {
   const currentTags = toNormalizedTags(tagsText);
 
   const toggleTag = (preset: string) => {
@@ -36,8 +29,8 @@ export function VisitTagsField({ tagsText, onChange }: VisitTagsFieldProps) {
         onChange={(e) => onChange(e.target.value)}
         placeholder="例: 外気浴最高, 水風呂キンキン, ソロ向き"
       />
-      <div className="preset-tags" role="group" aria-label="タグのプリセット">
-        {PRESET_TAGS.map((tag) => {
+      <div className="preset-tags" role="group" aria-label="タグの候補">
+        {suggestedTags.map((tag) => {
           const isSelected = currentTags.includes(tag);
           return (
             <button
