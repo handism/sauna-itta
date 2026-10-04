@@ -1,6 +1,7 @@
 import { SaunaVisit, VisitFormState, VisitFormInputSchema } from "../types";
 import { getVisitHistoryEntries } from "./visitHistory";
 import { getVisitStatus } from "./visitStatus";
+import { getTodayDate } from "./date";
 
 export function getDefaultForm(date = ""): VisitFormState {
   return {
@@ -29,6 +30,26 @@ export function toFormState(visit: SaunaVisit): VisitFormState {
     status: getVisitStatus(visit),
     area: visit.area ?? "",
     appendHistory: false,
+  };
+}
+
+/**
+ * 「また行った」「行った！」から開くフォームの初期値。
+ *
+ * 再訪のたびに編集を開いて「新しい訪問を追加」へ切り替え、日付・感想・評価を消して
+ * 入れ直す手間を省くため、今日の訪問を書く状態で開く。行きたい記録は履歴に訪問が
+ * 無いので、履歴の末尾（行きたい時点の内容）を書き換える（追加すると訪問回数が 2 から始まる）。
+ * サウナ名・エリア・タグは施設の情報なので引き継ぐ。
+ */
+export function toRevisitFormState(visit: SaunaVisit): VisitFormState {
+  return {
+    ...toFormState(visit),
+    comment: "",
+    image: "",
+    date: getTodayDate(),
+    rating: 0,
+    status: "visited",
+    appendHistory: getVisitStatus(visit) === "visited",
   };
 }
 
@@ -73,6 +94,18 @@ export function getSubmitBlockedReason(
   return null;
 }
 
+/**
+ * 保存の前に利用者が入力すべき箇所。{@link getSubmitBlockedReason} のうち、
+ * 待てば解消する理由（画像の処理中）を除いたもの。保存ボタンを押したときの案内先に使う。
+ */
+export function getSubmitFixTarget(
+  selectedLocation: { lat: number; lng: number } | null | undefined,
+  name: string | undefined,
+): "location" | "name" | null {
+  if (!selectedLocation) return "location";
+  if (!name || !name.trim()) return "name";
+  return null;
+}
 
 /**
  * 地点検索の結果からサウナ名・エリアを補う。利用者がすでに入力した値は上書きしない。

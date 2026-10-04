@@ -1,5 +1,5 @@
-import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useRef } from "react";
-import { VisitFormState, VisitHistoryEntry } from "../../types";
+import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import { VisitFormState, VisitHistoryEntry, VisitStatus } from "../../types";
 import { VisitHistorySection } from "./VisitHistorySection";
 import { VisitTagsField } from "./VisitTagsField";
 import { VisitImageField } from "./VisitImageField";
@@ -25,13 +25,17 @@ import {
 } from "../../context";
 import { getTagSuggestions, PRESET_TAGS } from "../../utils/visitStats";
 import { GeocodingResult } from "../../utils/geocoding";
-import { fillFormFromPlace, getSubmitBlockedReason } from "../../utils/form";
+import { fillFormFromPlace, getSubmitBlockedReason, getSubmitFixTarget } from "../../utils/form";
+import { getVisitStatus } from "../../utils/visitStatus";
+import { useAreaFromLocation } from "../../hooks/useAreaFromLocation";
 
 export interface VisitFormViewProps {
   form: VisitFormState;
   setForm: Dispatch<SetStateAction<VisitFormState>>;
   selectedLocation: { lat: number; lng: number } | null;
   editingId: string | null;
+  /** 編集中の記録の保存済みステータス（フォームで切り替える前の値）。新規登録では undefined */
+  editingStatus?: VisitStatus;
   historyEntries: VisitHistoryEntry[];
   onSubmit: (e: FormEvent) => void | Promise<void>;
   onImageFile: (file: File) => void;
@@ -51,6 +55,7 @@ export function VisitFormView({
   setForm,
   selectedLocation,
   editingId,
+  editingStatus,
   historyEntries,
   onSubmit,
   onImageFile,
@@ -81,6 +86,30 @@ export function VisitFormView({
     ? "サーバーへ保存しています。"
     : getSubmitBlockedReason(selectedLocation, form.name, imageUploading);
 
+  /*
+   * 場所・サウナ名が足りないときは保存ボタンを disabled にせず、押されたら足りない箇所へ案内する。
+   * disabled のボタンは押しても何も起きず、理由の文がフォーム下端の小さな補足だけだと
+   * どこを直せばよいかが伝わらないため。保存中・画像処理中は待つしかないので disabled のままにする。
+   */
+  const submitFixTarget = saving ? null : getSubmitFixTarget(selectedLocation, form.name);
+  const [locationAttention, setLocationAttention] = useState(0);
+  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
+    if (submitFixTarget === "name") {
+      e.preventDefault();
+      document.getElementById("visit-name")?.focus();
+      return;
+    }
+    if (submitFixTarget === "location") {
+      e.preventDefault();
+      // 場所の案内は見出しの直下にあるため、先頭へ戻してから目立たせる
+      const scrollContainer = e.currentTarget.parentElement;
+      if (scrollContainer) scrollContainer.scrollTop = 0;
+      setLocationAttention((count) => count + 1);
+      return;
+    }
+    void onSubmit(e);
+  };
+
   const handleGeocodingSelect = (result: GeocodingResult) => {
     if (onLocationSelect) {
       onLocationSelect(result.lat, result.lng);
@@ -89,8 +118,12 @@ export function VisitFormView({
   };
 
   return (
-    <form className="sauna-form" onSubmit={onSubmit} ref={formRef}>
-      <FormHeader editingId={editingId} selectedLocation={selectedLocation} />
+    <form className="sauna-form" onSubmit={handleFormSubmit} ref={formRef}>
+      <FormHeader
+        editingId={editingId}
+        selectedLocation={selectedLocation}
+        attentionKey={locationAttention}
+      />
 
       {/*
         項目は「どこの」「どんな記録か」「タグ」の順にまとめる。必須のサウナ名を
@@ -116,7 +149,11 @@ export function VisitFormView({
           onChange={(status) => setForm((prev) => ({ ...prev, status }))}
         />
 
-        {editingId && form.status === "visited" && (
+        {/*
+          行きたい記録にはまだ訪問が無いため、行ったへ切り替えたときは追加か修正かを選ばせない
+          （appendHistory は false のまま、行きたい時点の履歴を初回の訪問として書き換える）
+        */}
+        {editingId && editingStatus === "visited" && form.status === "visited" && (
           <HistoryAppendField
             appendHistory={form.appendHistory}
             onChange={(appendHistory) =>
@@ -179,6 +216,7 @@ export function VisitFormView({
         saving={saving}
         editingId={editingId}
         submitBlockedReason={submitBlockedReason}
+        submitNeedsInput={submitFixTarget !== null}
         onDelete={onDelete}
         onCancel={onCancel}
       />
@@ -188,7 +226,7 @@ export function VisitFormView({
 
 /** Context から値を集めて View へ渡すだけのコンテナ（テストは VisitFormView を描画する） */
 export function VisitForm() {
-  const { selectedLocation, editingId, historyEntries } = useSaunaEditorState();
+  const { selectedLocation, editingId, editingVisit, historyEntries } = useSaunaEditorState();
   const {
     handleSubmit,
     handleImageFile,
@@ -209,6 +247,7 @@ export function VisitForm() {
   // 記録が変わったとき以外は再レンダリングされない
   const { visits } = useVisitsData();
   const suggestedTags = useMemo(() => getTagSuggestions(visits), [visits]);
+  useAreaFromLocation(selectedLocation, !editingId && form.area.trim() === "", setForm);
 
   return (
     <VisitFormView
@@ -216,6 +255,7 @@ export function VisitForm() {
       setForm={setForm}
       selectedLocation={selectedLocation}
       editingId={editingId}
+      editingStatus={editingVisit ? getVisitStatus(editingVisit) : undefined}
       historyEntries={historyEntries}
       onSubmit={(e) => handleSubmit(e, handleEditingFinished)}
       onImageFile={handleImageFile}

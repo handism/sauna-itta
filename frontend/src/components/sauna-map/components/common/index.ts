@@ -5,6 +5,7 @@ export * from "./VisitComment";
 export * from "./VisitImagePreview";
 export * from "./VisitMetaInfo";
 export * from "./RouteLink";
+export * from "./RevisitButton";
 export * from "./ConfirmModal";
 export * from "./Toast";
 export * from "./ImageLightbox";

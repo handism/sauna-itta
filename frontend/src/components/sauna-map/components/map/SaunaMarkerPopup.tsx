@@ -1,17 +1,19 @@
 import { Pencil } from "lucide-react";
-import { SaunaVisit } from "../../types";
-import { getDisplayRating, getVisitCount, sanitizeImageUrl } from "../../utils";
+import { EditVisitHandler, SaunaVisit } from "../../types";
+import { getDisplayRating, getDisplayTags, getVisitCount, sanitizeImageUrl } from "../../utils";
 import { RatingStars } from "../common/RatingStars";
+import { RevisitButton } from "../common/RevisitButton";
 import { RouteLink } from "../common/RouteLink";
 import { VisitComment } from "../common/VisitComment";
 import { VisitImagePreview } from "../common/VisitImagePreview";
 import { VisitMetaInfo } from "../common/VisitMetaInfo";
+import { VisitTagList } from "../common/VisitTagList";
 import { WishlistChip } from "../common/WishlistChip";
 
 interface SaunaMarkerPopupProps {
   visit: SaunaVisit;
   isWishlist: boolean;
-  onEdit: (visit: SaunaVisit) => void;
+  onEdit: EditVisitHandler;
   onOpenImage?: (src: string) => void;
 }
 
@@ -38,6 +40,8 @@ export function SaunaMarkerPopup({ visit, isWishlist, onEdit, onOpenImage }: Sau
       </h3>
       {visit.area && <div className="popup-area">{visit.area}</div>}
       <RatingStars rating={getDisplayRating(visit)} className="popup-rating" showUnrated={!isWishlist} />
+      {/* タグは一覧カードと揃えて出す。ポップアップからはタグの絞り込みを持たないため表示だけ */}
+      <VisitTagList tags={getDisplayTags(visit)} />
       <VisitComment text={visit.comment} className="popup-comment" />
       <VisitMetaInfo
         date={visit.date}
@@ -46,6 +50,13 @@ export function SaunaMarkerPopup({ visit, isWishlist, onEdit, onOpenImage }: Sau
         className="popup-meta"
       />
       <RouteLink lat={visit.lat} lng={visit.lng} className="route-link popup-link" />
+      {/* 地図から開いたときに一番多い操作は再訪の記録なので、塗りのボタンはこちらにする */}
+      <RevisitButton
+        visitName={visit.name}
+        isWishlist={isWishlist}
+        onRevisit={() => onEdit(visit, { revisit: true })}
+        className="revisit-btn--primary popup-revisit-btn"
+      />
       <button
         type="button"
         onClick={() => onEdit(visit)}

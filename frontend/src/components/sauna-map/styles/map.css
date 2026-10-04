@@ -395,6 +395,17 @@
   box-sizing: border-box;
 }
 
+/*
+ * ポップアップで塗りにするのは「また行った」だけ（主役の操作を 1 つに絞る）。
+ * 編集は枠線だけの補助の操作にする。
+ */
+.popup-revisit-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  min-height: 42px;
+  font-size: var(--text-md);
+}
+
 .popup-edit-btn {
   display: inline-flex;
   align-items: center;
@@ -403,10 +414,10 @@
   margin-top: 0.5rem;
   width: 100%;
   padding: 0.62rem;
-  background: var(--primary);
-  border: none;
+  background: var(--overlay-subtle);
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-sm);
-  color: var(--text-on-primary);
+  color: var(--foreground);
   font: inherit;
   font-size: var(--text-md);
   font-weight: 600;
@@ -415,7 +426,7 @@
 }
 
 .popup-edit-btn:hover {
-  background: var(--primary-hover);
+  background: var(--overlay-hover);
 }
 
 /* Pin Hint: モバイルで場所選択中に表示するフローティング案内バー */
@@ -546,6 +557,7 @@
 /* JS側の MOBILE_BREAKPOINT（sauna-map/utils.ts）と値を揃えること */
 @media (max-width: 767px) {
   .popup-link,
+  .popup-revisit-btn,
   .popup-edit-btn,
   .pin-hint-cancel {
     min-height: 44px;

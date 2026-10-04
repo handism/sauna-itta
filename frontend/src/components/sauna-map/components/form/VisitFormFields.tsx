@@ -7,9 +7,15 @@ import { getDateDaysAgo } from "../../utils/date";
 export function FormHeader({
   editingId,
   selectedLocation,
+  attentionKey = 0,
 }: {
   editingId: string | null;
   selectedLocation: { lat: number; lng: number } | null;
+  /**
+   * 場所が未選択のまま保存しようとした回数。変わるたびに案内を作り直して強調の
+   * アニメーションをやり直す（同じ要素のままだと 2 回目以降は動かない）。
+   */
+  attentionKey?: number;
 }) {
   return (
     <>
@@ -22,7 +28,10 @@ export function FormHeader({
           選択の前後で文言が変わるため、支援技術へも role="status" で伝える。
         */
         <p
-          className={`location-status ${selectedLocation ? "is-selected" : ""}`}
+          key={attentionKey}
+          className={`location-status ${selectedLocation ? "is-selected" : ""} ${
+            !selectedLocation && attentionKey > 0 ? "is-attention" : ""
+          }`}
           role="status"
         >
           {selectedLocation ? (
@@ -157,12 +166,18 @@ export function FormActions({
   saving,
   editingId,
   submitBlockedReason,
+  submitNeedsInput = false,
   onDelete,
   onCancel,
 }: {
   saving: boolean;
   editingId: string | null;
   submitBlockedReason: string | null;
+  /**
+   * 足りないのが利用者の入力（場所・サウナ名）のとき true。押せる状態のまま aria-disabled で
+   * 保存できないことを伝え、押されたらフォーム側が足りない箇所へ案内する。
+   */
+  submitNeedsInput?: boolean;
   onDelete: () => void;
   onCancel: () => void;
 }) {
@@ -171,7 +186,8 @@ export function FormActions({
       <button
         type="submit"
         className="btn btn-primary"
-        disabled={submitBlockedReason !== null}
+        disabled={submitBlockedReason !== null && !submitNeedsInput}
+        aria-disabled={submitNeedsInput || undefined}
         title={submitBlockedReason ?? undefined}
         aria-describedby={submitBlockedReason ? "submit-blocked-reason" : undefined}
       >
@@ -258,21 +274,42 @@ export function RatingField({
       {/*
         選んでいる星をもう一度押すと評価を外す。星の横に「クリア」の文字ボタンを
         並べると、星より目立って何の操作か分かりにくかったため。
+        評価は 1 つの値を選ぶ操作なので radiogroup で公開する。aria-pressed のトグルにすると、
+        ★4 のとき 1〜4 つ星がすべて「押されている」と読み上げられ、どれを選んだか分からない。
+        矢印キーでの移動は radio の慣習どおり選択中（未評価なら先頭）の星だけを Tab 順に入れる。
       */}
       <div
         className="rating-row"
-        role="group"
+        role="radiogroup"
         aria-labelledby="visit-rating-label"
         aria-describedby="visit-rating-hint"
+        onKeyDown={(e) => {
+          const delta =
+            e.key === "ArrowRight" || e.key === "ArrowUp"
+              ? 1
+              : e.key === "ArrowLeft" || e.key === "ArrowDown"
+                ? -1
+                : 0;
+          if (delta === 0) return;
+          e.preventDefault();
+          const next = Math.min(5, Math.max(1, (rating || 0) + delta));
+          onChange(next);
+          e.currentTarget
+            .querySelector<HTMLButtonElement>(`[data-star="${next}"]`)
+            ?.focus();
+        }}
       >
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             type="button"
+            role="radio"
+            data-star={star}
             onClick={() => onChange(rating === star ? 0 : star)}
             className="rating-star-btn"
-            aria-pressed={rating >= star}
+            aria-checked={rating === star}
             aria-label={`${star}つ星`}
+            tabIndex={star === (rating || 1) ? 0 : -1}
           >
             <Star
               size={22}
@@ -326,8 +363,13 @@ export function AreaField({
         className="input"
         value={area}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="例: 東京 / 北海道 / 関西 など"
+        placeholder="例: 東京都台東区"
+        aria-describedby="visit-area-hint"
       />
+      {/* 統計の都道府県集計はエリアの先頭の都道府県名から判定するため、書き方を案内する */}
+      <p className="form-hint" id="visit-area-hint">
+        都道府県名から書くと、統計の「都道府県制覇」に集計されます（地図で場所を選ぶと自動で入ります）
+      </p>
     </div>
   );
 }

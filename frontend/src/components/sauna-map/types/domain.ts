@@ -61,6 +61,8 @@ export interface VisitStats {
   total: number;
   visitedCount: number;
   wishlistCount: number;
+  /** 延べ訪問回数（行った記録の訪問回数の合計） */
+  totalVisits: number;
   firstDate: string | null;
   lastDate: string | null;
   avgRating: number;

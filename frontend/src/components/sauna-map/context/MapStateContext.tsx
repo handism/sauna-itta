@@ -11,7 +11,7 @@ import { useMapViewState } from "../hooks/useMapViewState";
 import { useSaunaViewport } from "./UIContext";
 import { useVisitsData } from "./VisitsCRUDContext";
 import { useSaunaEditorActions } from "./EditorContext";
-import { SheetSnapPosition, SaunaVisit, LatLng, MobileTab } from "../types";
+import { SheetSnapPosition, SaunaVisit, LatLng, MobileTab, StartEditingOptions } from "../types";
 
 export interface MapStateValueType {
   hoveredId: string | null;
@@ -31,7 +31,7 @@ export interface MapStateActionsType {
   toggleClustering: () => void;
   handleSelectVisit: (visit: SaunaVisit) => void;
   handleDeselectVisit: () => void;
-  handleEditVisit: (visit: SaunaVisit) => void;
+  handleEditVisit: (visit: SaunaVisit, options?: StartEditingOptions) => void;
   handleCancelEditing: (completed?: boolean) => void;
   /** 編集を閉じ終えたときのシート位置の後始末。保存完了時に VisitForm から呼ばれる */
   handleEditingFinished: () => void;
@@ -73,9 +73,9 @@ export function MapStateProvider({ children }: { children: ReactNode }) {
   // 編集の開始／終了はモバイルのシート位置と連動するため、呼び出し側で個別に
   // setSnapPosition せずここへ集約する（リスト・マーカー・ピンヒントで共通）
   const handleEditVisit = useCallback(
-    (visit: SaunaVisit) => {
+    (visit: SaunaVisit, options?: StartEditingOptions) => {
       setSelectedId(visit.id);
-      startEditing(visit);
+      startEditing(visit, options);
       if (isMobile) setSnapPosition("full");
     },
     [setSelectedId, startEditing, isMobile, setSnapPosition],

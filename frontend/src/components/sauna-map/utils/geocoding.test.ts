@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { searchLocation } from "./geocoding";
+import { reverseGeocodeArea, searchLocation } from "./geocoding";
 
 describe("searchLocation", () => {
   beforeEach(() => {
@@ -128,5 +128,69 @@ describe("searchLocation", () => {
     (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(errorString);
 
     await expect(searchLocation("string error test")).rejects.toEqual("String error thrown somehow");
+  });
+});
+
+describe("reverseGeocodeArea", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+  });
+
+  const mockResponse = (body: unknown, ok = true) =>
+    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({ ok, json: async () => body });
+
+  it("検索と同じ階層の /reverse へ問い合わせ、都道府県＋市区町村を返すこと", async () => {
+    mockResponse({ address: { province: "東京都", city: "台東区", road: "上野" } });
+
+    await expect(reverseGeocodeArea(35.7101, 139.7741)).resolves.toBe("東京都台東区");
+
+    const url = new URL((fetch as ReturnType<typeof vi.fn>).mock.calls[0][0] as string);
+    expect(url.origin + url.pathname).toBe("https://nominatim.openstreetmap.org/reverse");
+    expect(url.searchParams.get("lat")).toBe("35.7101");
+    expect(url.searchParams.get("lon")).toBe("139.7741");
+    expect(url.searchParams.get("accept-language")).toBe("ja");
+  });
+
+  it("state に地方名が入っていても、都道府県として判定できる方を採ること", async () => {
+    mockResponse({ address: { state: "関東地方", province: "埼玉県", town: "三芳町" } });
+
+    await expect(reverseGeocodeArea(35.8201, 139.5501)).resolves.toBe("埼玉県三芳町");
+  });
+
+  it("都道府県を判定できない地点（海外・海上など）は null を返すこと", async () => {
+    mockResponse({ address: { state: "Uusimaa", city: "Helsinki" } });
+    await expect(reverseGeocodeArea(60.1699, 24.9384)).resolves.toBeNull();
+
+    mockResponse({ error: "Unable to geocode" });
+    await expect(reverseGeocodeArea(30.0001, 140.0001)).resolves.toBeNull();
+  });
+
+  it("HTTP エラーや通信の失敗でも例外にせず null を返すこと（登録は続けられるため）", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    mockResponse({}, false);
+    await expect(reverseGeocodeArea(34.0001, 135.0001)).resolves.toBeNull();
+
+    (fetch as ReturnType<typeof vi.fn>).mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    await expect(reverseGeocodeArea(34.0002, 135.0002)).resolves.toBeNull();
+  });
+
+  it("同じ地点を選び直したときは問い合わせないこと", async () => {
+    mockResponse({ address: { province: "大阪府", city: "大阪市" } });
+
+    await expect(reverseGeocodeArea(34.6937, 135.5023)).resolves.toBe("大阪府大阪市");
+    await expect(reverseGeocodeArea(34.69371, 135.50231)).resolves.toBe("大阪府大阪市");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("接続先が /search で終わらないときは逆ジオコーディングを行わないこと", async () => {
+    vi.stubEnv("NEXT_PUBLIC_GEOCODING_ENDPOINT", "https://geo.example.com/api");
+
+    await expect(reverseGeocodeArea(35.0001, 135.0001)).resolves.toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
   });
 });

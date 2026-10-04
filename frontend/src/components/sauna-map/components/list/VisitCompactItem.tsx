@@ -4,6 +4,7 @@ import { ChevronRight, ChevronUp, Pencil } from "lucide-react";
 import { formatShortDate, getDisplayRating, getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import { RatingStars } from "../common/RatingStars";
+import { RevisitButton } from "../common/RevisitButton";
 import { RouteLink } from "../common/RouteLink";
 import { VisitComment } from "../common/VisitComment";
 import { VisitImagePreview } from "../common/VisitImagePreview";
@@ -115,6 +116,11 @@ function VisitCompactItemComponent({
           <VisitMetaInfo date={visit.date} visitCount={visitCount} isWishlist={wishlist} />
           <div className="sauna-compact-footer-actions">
             <RouteLink lat={visit.lat} lng={visit.lng} />
+            <RevisitButton
+              visitName={visit.name}
+              isWishlist={wishlist}
+              onRevisit={() => onEdit(visit, { revisit: true })}
+            />
             {onDeselectVisit && (
               <button
                 type="button"

@@ -14,6 +14,7 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
       total: 0,
       visitedCount: 0,
       wishlistCount: 0,
+      totalVisits: 0,
       firstDate: null,
       lastDate: null,
       avgRating: 0,
@@ -24,6 +25,7 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
   }
 
   let visitedCount = 0;
+  let totalVisits = 0;
   const areasSet = new Set<string>();
   const prefectureSet = new Set<string>();
   let firstDate: string | null = null;
@@ -39,6 +41,8 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
 
     if (isVisited(visit)) {
       visitedCount++;
+      // 一覧・ランキングの「N回」と同じ数え方にする（旧形式の visitCount も含める）
+      totalVisits += getVisitCount(visit);
 
       const pref = extractPrefecture(visit.area);
       if (pref != null) {
@@ -70,6 +74,7 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
     total,
     visitedCount,
     wishlistCount: total - visitedCount,
+    totalVisits,
     firstDate,
     lastDate,
     avgRating,

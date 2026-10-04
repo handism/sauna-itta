@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { extractPrefecture } from "./geo";
 
 export interface GeocodingResult {
   placeId: number;
@@ -61,6 +62,22 @@ function parseNominatimResponse(body: unknown): NominatimRawResult[] {
 
 const DEFAULT_GEOCODING_ENDPOINT = "https://nominatim.openstreetmap.org/search";
 
+// Nominatim互換の接続先へ差し替えられるようにし、公共APIからの移行を
+// フロントコードの変更なしで行えるようにする。
+function getSearchEndpoint(): string {
+  return process.env.NEXT_PUBLIC_GEOCODING_ENDPOINT ?? DEFAULT_GEOCODING_ENDPOINT;
+}
+
+/**
+ * 逆ジオコーディングの接続先。Nominatim は検索（/search）と同じ階層に /reverse を持つため、
+ * 検索の接続先から導く（設定を 2 つに増やさない）。/search で終わらない接続先は
+ * 導けないため null を返し、逆ジオコーディングを行わない。
+ */
+function getReverseEndpoint(): string | null {
+  const endpoint = getSearchEndpoint();
+  return /\/search\/?$/.test(endpoint) ? endpoint.replace(/\/search\/?$/, "/reverse") : null;
+}
+
 const resultCache = new Map<string, GeocodingResult[]>();
 
 /**
@@ -100,9 +117,7 @@ export async function searchLocation(
     limit: "5",
   });
 
-  // Nominatim互換の接続先へ差し替えられるようにし、公共APIからの移行を
-  // フロントコードの変更なしで行えるようにする。
-  const endpoint = process.env.NEXT_PUBLIC_GEOCODING_ENDPOINT ?? DEFAULT_GEOCODING_ENDPOINT;
+  const endpoint = getSearchEndpoint();
   const cacheKey = `${endpoint}\n${trimmed}`;
   const cached = resultCache.get(cacheKey);
   if (cached) return cached;
@@ -147,5 +162,66 @@ export async function searchLocation(
       return [];
     }
     throw error;
+  }
+}
+
+const NominatimReverseResultSchema = z.object({
+  address: NominatimRawAddressSchema.optional(),
+});
+
+const areaCache = new Map<string, string | null>();
+
+/**
+ * 座標から「都道府県＋市区町村」（例: 東京都台東区）を返す。地図をクリックして場所を選んだときに
+ * エリア欄を補い、統計の都道府県集計に載るようにするために使う。
+ *
+ * Nominatim は日本の都道府県を state と province のどちらに入れるかが一定しないため、
+ * 都道府県として判定できる方を採る。判定できない（海外・海上など）ときは null。
+ * 失敗しても登録は続けられるため、HTTP エラーや想定外の応答も例外にせず null を返す。
+ */
+export async function reverseGeocodeArea(
+  lat: number,
+  lng: number,
+  signal?: AbortSignal,
+): Promise<string | null> {
+  const endpoint = getReverseEndpoint();
+  if (!endpoint) return null;
+
+  // 同じ地点を選び直したときに再送しない（約 10m 単位で丸める）
+  const cacheKey = `${endpoint}\n${lat.toFixed(4)},${lng.toFixed(4)}`;
+  if (areaCache.has(cacheKey)) return areaCache.get(cacheKey) ?? null;
+
+  const params = new URLSearchParams({
+    lat: String(lat),
+    lon: String(lng),
+    format: "json",
+    addressdetails: "1",
+    "accept-language": "ja",
+    // 市区町村の粒度で十分（細かくすると番地まで返り、エリア欄には長すぎる）
+    zoom: "10",
+  });
+
+  try {
+    const response = await fetch(`${endpoint}?${params.toString()}`, { signal });
+    if (!response.ok) return null;
+
+    const parsed = NominatimReverseResultSchema.safeParse(await response.json());
+    const address = parsed.success ? parsed.data.address : undefined;
+    const prefecture = [address?.province, address?.state].find(
+      (candidate) => extractPrefecture(candidate) !== null,
+    );
+    const area = prefecture
+      ? `${prefecture}${address?.city ?? address?.town ?? address?.village ?? ""}`
+      : null;
+
+    if (areaCache.size >= 100) {
+      areaCache.delete(areaCache.keys().next().value!);
+    }
+    areaCache.set(cacheKey, area);
+    return area;
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === "AbortError") return null;
+    console.warn("Reverse geocoding failed:", error);
+    return null;
   }
 }

@@ -18,6 +18,7 @@ describe("calculateStats", () => {
     const stats = calculateStats([]);
     expect(stats.total).toBe(0);
     expect(stats.visitedCount).toBe(0);
+    expect(stats.totalVisits).toBe(0);
     expect(stats.wishlistCount).toBe(0);
     expect(stats.firstDate).toBeNull();
     expect(stats.lastDate).toBeNull();
@@ -91,6 +92,8 @@ describe("calculateStats", () => {
     expect(stats.total).toBe(3);
     expect(stats.visitedCount).toBe(2);
     expect(stats.wishlistCount).toBe(1);
+    // 延べ訪問回数に「行きたい」は含めない
+    expect(stats.totalVisits).toBe(2);
     expect(stats.firstDate).toBe("2023-01-01");
     expect(stats.lastDate).toBe("2023-01-03");
     expect(stats.avgRating).toBe(3.5); // (4+3)/2
@@ -133,6 +136,7 @@ describe("calculateStats", () => {
 
     const stats = calculateStats(visits);
     expect(stats.avgRating).toBe(4); // (3+5+4)/3 = 12/3 = 4
+    expect(stats.totalVisits).toBe(4); // 履歴 2 件ずつ
     expect(stats.firstDate).toBe("2023-01-01");
     expect(stats.lastDate).toBe("2023-04-01");
     expect(stats.prefectureCount).toBe(2);
@@ -189,6 +193,24 @@ describe("calculateStats", () => {
     expect(stats.firstDate).toBe(""); // lexicographical comparison sets empty string as first
     expect(stats.lastDate).toBe("2023-01-01");
     expect(stats.uniqueAreas).toBe(0);
+  });
+});
+
+describe("calculateStats の延べ訪問回数", () => {
+  it("旧形式から引き継いだ visitCount も一覧の「N回」と同じく数えること", () => {
+    const stats = calculateStats([
+      {
+        id: "1",
+        name: "旧形式",
+        lat: 0,
+        lng: 0,
+        comment: "",
+        date: "2023-01-01",
+        status: "visited",
+        visitCount: 5,
+      },
+    ]);
+    expect(stats.totalVisits).toBe(5);
   });
 });
 

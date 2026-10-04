@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect, useRef } from "react";
-import { SaunaVisit, VisitFormState } from "../types";
+import { SaunaVisit, StartEditingOptions, VisitFormState } from "../types";
 import type { ShowToast } from "../components/common/Toast";
 import {
   getDefaultForm,
   getTodayDate,
   toFormState,
+  toRevisitFormState,
   compressAndGetBase64,
   isAllowedImageFile,
 } from "../utils";
@@ -52,9 +53,9 @@ export function useVisitFormState({
   }, [startCreate]);
 
   const startEditing = useCallback(
-    (visit: SaunaVisit) => {
+    (visit: SaunaVisit, options: StartEditingOptions = {}) => {
       startEdit(visit);
-      setForm(toFormState(visit));
+      setForm(options.revisit ? toRevisitFormState(visit) : toFormState(visit));
     },
     [startEdit],
   );

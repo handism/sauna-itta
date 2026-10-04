@@ -400,6 +400,53 @@
   text-decoration: underline;
 }
 
+/*
+ * 「また行った」／「行った！」（RevisitButton）。経路リンクと並べるため形を揃え、
+ * 押せることが分かるよう文字色だけアクセントにする。地図ポップアップでは --primary で塗る。
+ */
+.revisit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.52rem;
+  padding: 0.5rem 0.72rem;
+  min-height: 40px;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--glass) 84%, transparent);
+  color: var(--primary);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.revisit-btn:hover {
+  background: var(--overlay-hover);
+  border-color: var(--primary);
+}
+
+.revisit-btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-primary);
+}
+
+.revisit-btn--primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+/* 経路リンクと「また行った」を 1 行に並べる（狭いときは折り返す） */
+.sauna-card-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .history-section-toggle {
   display: flex;
   align-items: center;
@@ -561,6 +608,29 @@
   color: var(--accent-wishlist);
 }
 
+/* 場所が未選択のまま保存しようとしたとき。枠線を実線にして揺らし、ここを直すと示す */
+.location-status.is-attention {
+  border-style: solid;
+  border-width: 2px;
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  animation: locationStatusShake 0.45s ease-in-out;
+}
+
+@keyframes locationStatusShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
 
 .filters {
   display: flex;
@@ -626,6 +696,19 @@
     margin-top: 0.65rem;
     font-size: var(--text-md);
     justify-content: center;
+  }
+
+  .revisit-btn {
+    min-height: 44px;
+    margin-top: 0.65rem;
+    font-size: var(--text-md);
+  }
+
+  /* .route-link はモバイルで幅いっぱいになるため、並べるときは等分にする */
+  .sauna-card-footer-actions > .route-link,
+  .sauna-card-footer-actions > .revisit-btn {
+    flex: 1 1 0;
+    width: auto;
   }
 
   .sauna-card {

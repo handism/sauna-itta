@@ -11,6 +11,7 @@ const stats: VisitStats = {
   lastDate: "2026-08-02",
   visitedCount: 2,
   wishlistCount: 0,
+  totalVisits: 3,
   uniqueAreas: 1,
   prefectures: ["東京都"],
   prefectureCount: 1,

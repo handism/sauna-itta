@@ -18,18 +18,21 @@ interface SummaryGridProps {
 export function SummaryGrid({ stats }: SummaryGridProps) {
   return (
     <div className={styles.summaryGrid} role="list" aria-label="統計サマリー">
-      <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-total">
+      {/*
+        先頭は「何回サウナに行ったか」。登録施設数は「行った / 行きたい」の合計と同じ情報なので出さない。
+      */}
+      <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-total-visits">
         <div className={styles.statCardHeader}>
           <Flame size={18} className={styles.statIconPrimary} />
-          <h3 id="stat-total">登録サウナ総数</h3>
+          <h3 id="stat-total-visits">延べ訪問回数</h3>
         </div>
-        <p className={styles.statValue}>{stats.total} <span className={styles.statUnit}>施設</span></p>
+        <p className={styles.statValue}>{stats.totalVisits} <span className={styles.statUnit}>回</span></p>
       </article>
 
       <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-visited">
         <div className={styles.statCardHeader}>
           <CheckCircle size={18} className={styles.statIconSuccess} />
-          <h3 id="stat-visited">行った / 行きたい</h3>
+          <h3 id="stat-visited">施設数（行った / 行きたい）</h3>
         </div>
         <p className={styles.statValue}>
           {stats.visitedCount} <span className={styles.statUnit}>行った</span>

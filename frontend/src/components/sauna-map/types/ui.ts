@@ -1,4 +1,4 @@
-import { VisitStatus, LatLng } from "./domain";
+import { VisitStatus, LatLng, SaunaVisit } from "./domain";
 
 // --- UI / フォーム型定義 ---
 export interface VisitFormState {
@@ -12,6 +12,18 @@ export interface VisitFormState {
   area: string;
   appendHistory: boolean;
 }
+
+/**
+ * 既存の記録の編集フォームを開くときの指定。
+ * revisit は「また行った」（行った記録）／「行った！」（行きたい記録）から開くときに付け、
+ * 今日の訪問を記録する初期値でフォームを開く。
+ */
+export interface StartEditingOptions {
+  revisit?: boolean;
+}
+
+/** 一覧・地図から記録の編集フォームを開くハンドラ */
+export type EditVisitHandler = (visit: SaunaVisit, options?: StartEditingOptions) => void;
 
 export type SortOrder =
   | "recent"

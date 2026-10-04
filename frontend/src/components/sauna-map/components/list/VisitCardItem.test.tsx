@@ -350,3 +350,59 @@ describe("Keyboard Accessibility for Card & Compact Items", () => {
     });
   });
 });
+
+describe("再訪の記録（また行った／行った！）", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  const itemProps = {
+    isHovered: false,
+    setFilters: vi.fn(),
+    onOpenImage: vi.fn(),
+  };
+
+  it("カードの「また行った」は再訪として編集を開き、カードの選択を伝播させない", () => {
+    const handleEdit = vi.fn();
+    const handleSelect = vi.fn();
+    render(
+      <VisitCardItem
+        {...itemProps}
+        visit={mockVisit}
+        isSelected={false}
+        onSelectVisit={handleSelect}
+        onEdit={handleEdit}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "天空サウナにまた行った記録をつける" }));
+
+    expect(handleEdit).toHaveBeenCalledWith(mockVisit, { revisit: true });
+    expect(handleSelect).not.toHaveBeenCalled();
+  });
+
+  it("行きたい記録のカードは「行った！」にする", () => {
+    const wishlistVisit = { ...mockVisit, status: "wishlist" as const };
+    const handleEdit = vi.fn();
+    render(
+      <VisitCardItem {...itemProps} visit={wishlistVisit} isSelected={false} onEdit={handleEdit} />
+    );
+
+    const button = screen.getByRole("button", { name: "天空サウナに行った記録をつける" });
+    expect(button).toHaveTextContent("行った！");
+    fireEvent.click(button);
+    expect(handleEdit).toHaveBeenCalledWith(wishlistVisit, { revisit: true });
+  });
+
+  it("コンパクト行は展開中だけ「また行った」を出す", () => {
+    const handleEdit = vi.fn();
+    const { rerender } = render(
+      <VisitCompactItem {...itemProps} visit={mockVisit} isSelected={false} onEdit={handleEdit} />
+    );
+    expect(screen.queryByRole("button", { name: /また行った記録をつける/ })).toBeNull();
+
+    rerender(<VisitCompactItem {...itemProps} visit={mockVisit} isSelected onEdit={handleEdit} />);
+    fireEvent.click(screen.getByRole("button", { name: "天空サウナにまた行った記録をつける" }));
+    expect(handleEdit).toHaveBeenCalledWith(mockVisit, { revisit: true });
+  });
+});
