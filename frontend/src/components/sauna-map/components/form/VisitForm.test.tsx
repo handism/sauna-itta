@@ -61,6 +61,7 @@ describe("VisitFormView", () => {
     setForm: vi.fn(),
     selectedLocation: { lat: 35.68, lng: 139.76 },
     editingId: "sauna-1",
+    editingStatus: "visited" as const,
     historyEntries: [],
     onSubmit: vi.fn(),
     onImageFile: vi.fn(),
@@ -83,6 +84,12 @@ describe("VisitFormView", () => {
       "false"
     );
     expect(screen.getByText(/新しい訪問として履歴に追加します/)).toBeInTheDocument();
+  });
+
+  it("行きたい記録を行ったへ切り替えたときは保存のしかたを選ばせない", () => {
+    render(<VisitFormView {...defaultProps} editingStatus="wishlist" />);
+
+    expect(screen.queryByRole("group", { name: "保存のしかた" })).toBeNull();
   });
 
   it("「前回の記録を修正」を選ぶと appendHistory を false にする", () => {
@@ -129,11 +136,47 @@ describe("VisitFormView", () => {
     render(<VisitFormView {...defaultProps} selectedLocation={null} />);
 
     const submit = screen.getByRole("button", { name: /更新する/ });
-    expect(submit).toBeDisabled();
+    // 押したときに足りない箇所へ案内するため、disabled ではなく aria-disabled にする
+    expect(submit).toBeEnabled();
+    expect(submit).toHaveAttribute("aria-disabled", "true");
     expect(submit).toHaveAttribute("aria-describedby", "submit-blocked-reason");
     expect(document.getElementById("submit-blocked-reason")).toHaveTextContent(
       "地図上をクリックして場所を選択してください"
     );
+  });
+
+  it("場所が未選択のまま保存を押すと、送信せず場所の案内を強調する", () => {
+    const onSubmit = vi.fn();
+    render(
+      <VisitFormView {...defaultProps} editingId={null} selectedLocation={null} onSubmit={onSubmit} />
+    );
+
+    expect(document.querySelector(".location-status")).not.toHaveClass("is-attention");
+    fireEvent.click(screen.getByRole("button", { name: /保存する/ }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(document.querySelector(".location-status")).toHaveClass("is-attention");
+  });
+
+  it("サウナ名が空のまま保存を押すと、送信せずサウナ名の欄へフォーカスする", () => {
+    const onSubmit = vi.fn();
+    render(
+      <VisitFormView {...defaultProps} form={{ ...defaultForm, name: "   " }} onSubmit={onSubmit} />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /更新する/ }));
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("サウナ名")).toHaveFocus();
+  });
+
+  it("入力がそろっていれば保存を押すと送信する", () => {
+    const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
+    render(<VisitFormView {...defaultProps} onSubmit={onSubmit} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /更新する/ }));
+
+    expect(onSubmit).toHaveBeenCalledOnce();
   });
 
   it("新規登録では場所の選択状態を見出しの下に表示すること", () => {
@@ -175,7 +218,7 @@ describe("VisitFormView", () => {
       <VisitFormView {...defaultProps} form={{ ...defaultForm, name: "   " }} />
     );
 
-    expect(screen.getByRole("button", { name: /更新する/ })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /更新する/ })).toHaveAttribute("aria-disabled", "true");
     expect(document.getElementById("submit-blocked-reason")).toHaveTextContent(
       "サウナ名を入力してください"
     );
@@ -282,7 +325,7 @@ describe("VisitFormView", () => {
     fireEvent.click(screen.getByRole("button", { name: "行きたい" }));
     expect(latest().status).toBe("wishlist");
 
-    fireEvent.click(screen.getByRole("button", { name: "3つ星" }));
+    fireEvent.click(screen.getByRole("radio", { name: "3つ星" }));
     expect(latest().rating).toBe(3);
   });
 

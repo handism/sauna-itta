@@ -76,4 +76,32 @@ describe("SaunaMarkerPopup", () => {
     );
     expect(screen.queryByRole("button", { name: "天空サウナの写真を拡大表示" })).not.toBeInTheDocument();
   });
+
+  it("「また行った」は再訪として、編集は通常の編集として開く", () => {
+    const onEdit = vi.fn();
+    render(<SaunaMarkerPopup visit={visit} isWishlist={false} onEdit={onEdit} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "天空サウナにまた行った記録をつける" }));
+    expect(onEdit).toHaveBeenLastCalledWith(visit, { revisit: true });
+
+    fireEvent.click(screen.getByRole("button", { name: "天空サウナの記録を編集" }));
+    expect(onEdit).toHaveBeenLastCalledWith(visit);
+  });
+
+  it("行きたい記録では「行った！」を出す", () => {
+    render(<SaunaMarkerPopup visit={{ ...visit, status: "wishlist" }} isWishlist onEdit={vi.fn()} />);
+
+    expect(screen.getByRole("button", { name: "天空サウナに行った記録をつける" })).toHaveTextContent("行った！");
+  });
+
+  it("タグを一覧カードと同じく表示だけのチップで出す", () => {
+    render(
+      <SaunaMarkerPopup visit={{ ...visit, tags: ["外気浴", "水風呂"] }} isWishlist={false} onEdit={vi.fn()} />
+    );
+
+    expect(screen.getByText("外気浴")).toBeInTheDocument();
+    expect(screen.getByText("水風呂")).toBeInTheDocument();
+    // ポップアップには絞り込みが無いため、押しても何も起きないボタンにしない
+    expect(screen.queryByRole("button", { name: "外気浴" })).toBeNull();
+  });
 });

@@ -55,6 +55,24 @@ describe("useVisitFormState", () => {
     expect(result.current.form.name).toBe("サウナしきじ");
   });
 
+  it("startEditing に revisit を渡すと今日の訪問を追加する状態で開くこと", () => {
+    const { result } = renderHook(() => useVisitFormState(defaultOptions));
+
+    act(() => {
+      result.current.startEditing({ ...mockVisit, status: "visited" }, { revisit: true });
+    });
+
+    expect(defaultOptions.startEdit).toHaveBeenCalled();
+    expect(result.current.form).toMatchObject({
+      name: "サウナしきじ",
+      comment: "",
+      rating: 0,
+      date: utils.getTodayDate(),
+      status: "visited",
+      appendHistory: true,
+    });
+  });
+
   it("handleImageFile で画像圧縮に失敗したときにエラーのトーストが表示されること", async () => {
     const { result } = renderHook(() => useVisitFormState(defaultOptions));
 

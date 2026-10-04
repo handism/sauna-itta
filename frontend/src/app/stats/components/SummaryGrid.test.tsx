@@ -14,6 +14,7 @@ describe("SummaryGrid", () => {
     total: 10,
     visitedCount: 6,
     wishlistCount: 4,
+    totalVisits: 15,
     firstDate: "2023-01-01",
     lastDate: "2023-12-31",
     avgRating: 4.5,
@@ -25,15 +26,13 @@ describe("SummaryGrid", () => {
   it("renders correctly with full stats", () => {
     render(<SummaryGrid stats={mockStats} />);
 
-    // Check total saunas
-    expect(screen.getByText("登録サウナ総数")).toBeInTheDocument();
-
-    // Using testid or specific querying is better, but since this is just text content:
-    const totalArticle = screen.getByRole("listitem", { name: "登録サウナ総数" });
-    expect(totalArticle).toHaveTextContent("10");
+    // 先頭は延べ訪問回数。登録施設数は「行った / 行きたい」と重なるため出さない
+    const totalArticle = screen.getByRole("listitem", { name: "延べ訪問回数" });
+    expect(totalArticle).toHaveTextContent("15 回");
+    expect(screen.queryByText("登録サウナ総数")).toBeNull();
 
     // Check visited / wishlist
-    const visitedArticle = screen.getByRole("listitem", { name: "行った / 行きたい" });
+    const visitedArticle = screen.getByRole("listitem", { name: "施設数（行った / 行きたい）" });
     expect(visitedArticle).toHaveTextContent("6");
     expect(visitedArticle).toHaveTextContent("/ 4 行きたい");
 
@@ -64,6 +63,7 @@ describe("SummaryGrid", () => {
       total: 0,
       visitedCount: 0,
       wishlistCount: 0,
+      totalVisits: 0,
       firstDate: null,
       lastDate: null,
       avgRating: 0,
@@ -73,10 +73,10 @@ describe("SummaryGrid", () => {
     };
     render(<SummaryGrid stats={emptyStats} />);
 
-    const totalArticle = screen.getByRole("listitem", { name: "登録サウナ総数" });
-    expect(totalArticle).toHaveTextContent("0");
+    const totalArticle = screen.getByRole("listitem", { name: "延べ訪問回数" });
+    expect(totalArticle).toHaveTextContent("0 回");
 
-    const visitedArticle = screen.getByRole("listitem", { name: "行った / 行きたい" });
+    const visitedArticle = screen.getByRole("listitem", { name: "施設数（行った / 行きたい）" });
     expect(visitedArticle).toHaveTextContent("0");
     expect(visitedArticle).toHaveTextContent("/ 0 行きたい");
 

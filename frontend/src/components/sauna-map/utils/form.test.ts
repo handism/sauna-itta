@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { fillFormFromPlace, getDefaultForm, getSubmitBlockedReason, toFormState, validateVisitForm, toNormalizedTags } from "./form";
+import {
+  fillFormFromPlace,
+  getDefaultForm,
+  getSubmitBlockedReason,
+  getSubmitFixTarget,
+  toFormState,
+  toRevisitFormState,
+  validateVisitForm,
+  toNormalizedTags,
+} from "./form";
 import { getTodayDate } from "./date";
 import { buildHistoryUpdate } from "./visitHistory";
 import { SaunaVisit, VisitFormState } from "../types";
@@ -456,5 +465,56 @@ describe("fillFormFromPlace", () => {
     const filled = fillFormFromPlace({ ...getDefaultForm(), name: "自分で付けた名前", area: "港区" }, place);
     expect(filled.name).toBe("自分で付けた名前");
     expect(filled.area).toBe("港区");
+  });
+});
+
+describe("toRevisitFormState", () => {
+  const visited: SaunaVisit = {
+    id: "v1",
+    name: "かるまる",
+    lat: 35.7,
+    lng: 139.7,
+    comment: "前回の感想",
+    image: "data:image/png;base64,AAA",
+    date: "2026-01-01",
+    rating: 4,
+    tags: ["水風呂", "外気浴"],
+    status: "visited",
+    area: "東京都豊島区",
+    history: [{ date: "2026-01-01", comment: "前回の感想", rating: 4, image: "data:image/png;base64,AAA" }],
+  };
+
+  it("行った記録は今日の訪問を新しく追加する状態で開くこと", () => {
+    const form = toRevisitFormState(visited);
+    expect(form).toEqual({
+      name: "かるまる",
+      comment: "",
+      image: "",
+      date: getTodayDate(),
+      rating: 0,
+      tagsText: "水風呂, 外気浴",
+      status: "visited",
+      area: "東京都豊島区",
+      appendHistory: true,
+    });
+  });
+
+  it("行きたい記録は行ったへ切り替え、履歴を追加せず書き換えること（訪問回数を 1 から始める）", () => {
+    const form = toRevisitFormState({ ...visited, status: "wishlist", rating: undefined });
+    expect(form.status).toBe("visited");
+    expect(form.appendHistory).toBe(false);
+    expect(form.date).toBe(getTodayDate());
+
+    const update = buildHistoryUpdate({ ...visited, status: "wishlist" }, form);
+    expect(update.history).toHaveLength(1);
+    expect(update.visitCount).toBe(1);
+  });
+});
+
+describe("getSubmitFixTarget", () => {
+  it("場所が無ければ場所、サウナ名が空白だけならサウナ名、そろっていれば null を返すこと", () => {
+    expect(getSubmitFixTarget(null, "かるまる")).toBe("location");
+    expect(getSubmitFixTarget({ lat: 1, lng: 2 }, "   ")).toBe("name");
+    expect(getSubmitFixTarget({ lat: 1, lng: 2 }, "かるまる")).toBeNull();
   });
 });

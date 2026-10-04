@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState } from "react";
-import { SaunaVisit, VisitFilters } from "../../types";
+import { EditVisitHandler, SaunaVisit, VisitFilters } from "../../types";
 import { ImageLightbox } from "../common/ImageLightbox";
 import { useImageLightbox } from "../../hooks/useImageLightbox";
 import { useIncrementalList } from "../../hooks/useIncrementalList";
@@ -45,7 +45,7 @@ export interface VisitListViewProps {
   activeFilterCount: number;
   onClearFilters: () => void;
   onStartNewVisit: () => void;
-  onEdit: (visit: SaunaVisit) => void;
+  onEdit: EditVisitHandler;
   selectedId: string | null;
   onSelectVisit: (visit: SaunaVisit) => void;
   onDeselectVisit: () => void;

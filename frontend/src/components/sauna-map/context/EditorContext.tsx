@@ -15,7 +15,7 @@ import { useSaunaUIActions, useSaunaViewport } from "./UIContext";
 import { useVisitsActions, useVisitsData, useVisitsStatus } from "./VisitsCRUDContext";
 import { useVisitFilterActions } from "./VisitFiltersContext";
 import { getVisitHistoryEntries } from "../utils";
-import { SaunaVisit, VisitFormState, LatLng } from "../types";
+import { SaunaVisit, StartEditingOptions, VisitFormState, LatLng } from "../types";
 
 /**
  * 入力中のフォーム値だけを載せる Context。
@@ -46,7 +46,7 @@ export interface EditorStateContextType {
 
 export interface EditorActionsContextType {
   startNewVisit: () => void;
-  startEditing: (visit: SaunaVisit) => void;
+  startEditing: (visit: SaunaVisit, options?: StartEditingOptions) => void;
   handleDelete: () => void;
   confirmDelete: () => void;
   handleLocationSelect: (lat: number, lng: number) => void;

@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo } from "react";
 import { Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
-import { SaunaVisit } from "../../types";
+import { EditVisitHandler, SaunaVisit } from "../../types";
 import { getDisplayRating, getVisitCount, isWishlist } from "../../utils";
 import { getSaunaIcon } from "../common/markerIcon";
 import { flameIconSvg } from "../common/iconSvg";
@@ -16,7 +16,7 @@ interface VisitMarkersProps {
   hoveredId?: string | null;
   showBadges?: boolean;
   enableClustering?: boolean;
-  onEdit: (visit: SaunaVisit) => void;
+  onEdit: EditVisitHandler;
   onSelectVisit?: (visit: SaunaVisit) => void;
 }
 

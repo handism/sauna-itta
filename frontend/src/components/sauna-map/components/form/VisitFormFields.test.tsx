@@ -29,36 +29,75 @@ describe("StatusField", () => {
 });
 
 describe("RatingField", () => {
-  it("選択中の星までをaria-pressedで公開する", () => {
+  it("評価を radiogroup で公開し、選んだ星だけを aria-checked にする", () => {
     render(<RatingField rating={3} onChange={vi.fn()} />);
 
-    expect(screen.getByRole("group", { name: "満足度（1〜5）" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "3つ星" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "4つ星" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("radiogroup", { name: "満足度（1〜5）" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "3つ星" })).toHaveAttribute("aria-checked", "true");
+    // ★3 のとき 1・2 つ星まで「選択中」と読まれないこと
+    expect(screen.getByRole("radio", { name: "2つ星" })).toHaveAttribute("aria-checked", "false");
+    expect(screen.getByRole("radio", { name: "4つ星" })).toHaveAttribute("aria-checked", "false");
+  });
+
+  it("選んだ星（未評価なら 1 つ星）だけを Tab 順に入れる", () => {
+    const { rerender } = render(<RatingField rating={3} onChange={vi.fn()} />);
+    expect(screen.getByRole("radio", { name: "3つ星" })).toHaveAttribute("tabindex", "0");
+    expect(screen.getByRole("radio", { name: "1つ星" })).toHaveAttribute("tabindex", "-1");
+
+    rerender(<RatingField rating={0} onChange={vi.fn()} />);
+    expect(screen.getByRole("radio", { name: "1つ星" })).toHaveAttribute("tabindex", "0");
+  });
+
+  it("矢印キーで評価を 1〜5 の範囲で上げ下げする", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<RatingField rating={3} onChange={onChange} />);
+
+    fireEvent.keyDown(screen.getByRole("radio", { name: "3つ星" }), { key: "ArrowRight" });
+    expect(onChange).toHaveBeenLastCalledWith(4);
+    fireEvent.keyDown(screen.getByRole("radio", { name: "3つ星" }), { key: "ArrowLeft" });
+    expect(onChange).toHaveBeenLastCalledWith(2);
+
+    rerender(<RatingField rating={5} onChange={onChange} />);
+    fireEvent.keyDown(screen.getByRole("radio", { name: "5つ星" }), { key: "ArrowUp" });
+    expect(onChange).toHaveBeenLastCalledWith(5);
+
+    rerender(<RatingField rating={0} onChange={onChange} />);
+    fireEvent.keyDown(screen.getByRole("radio", { name: "1つ星" }), { key: "ArrowDown" });
+    expect(onChange).toHaveBeenLastCalledWith(1);
   });
 
   it("星の選択を通知し、選択中の星をもう一度押すと評価を外す", () => {
     const onChange = vi.fn();
     render(<RatingField rating={3} onChange={onChange} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "5つ星" }));
+    fireEvent.click(screen.getByRole("radio", { name: "5つ星" }));
     expect(onChange).toHaveBeenLastCalledWith(5);
 
     // 選択中より下の星は外さずに選び直す
-    fireEvent.click(screen.getByRole("button", { name: "2つ星" }));
+    fireEvent.click(screen.getByRole("radio", { name: "2つ星" }));
     expect(onChange).toHaveBeenLastCalledWith(2);
 
-    fireEvent.click(screen.getByRole("button", { name: "3つ星" }));
+    fireEvent.click(screen.getByRole("radio", { name: "3つ星" }));
     expect(onChange).toHaveBeenLastCalledWith(0);
   });
 
   it("外し方を補足として星のグループへ関連付ける", () => {
     render(<RatingField rating={3} onChange={vi.fn()} />);
 
-    expect(screen.getByRole("group", { name: "満足度（1〜5）" })).toHaveAccessibleDescription(
+    expect(screen.getByRole("radiogroup", { name: "満足度（1〜5）" })).toHaveAccessibleDescription(
       "選んだ星をもう一度押すと評価を外せます"
     );
     expect(screen.queryByRole("button", { name: "評価をクリア" })).toBeNull();
+  });
+});
+
+describe("AreaField", () => {
+  it("都道府県から書くと集計されることを補足として関連付ける", () => {
+    render(<AreaField area="" onChange={vi.fn()} />);
+
+    expect(screen.getByLabelText("エリア（任意）")).toHaveAccessibleDescription(
+      /都道府県名から書くと、統計の「都道府県制覇」に集計されます/
+    );
   });
 });
 

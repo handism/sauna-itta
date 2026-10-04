@@ -312,6 +312,11 @@
   margin-top: 0.2rem;
 }
 
+/* 経路リンクと「また行った」は左に寄せ、「閉じる」だけを右端に置く */
+.sauna-compact-footer-actions > .revisit-btn {
+  margin-right: auto;
+}
+
 .sauna-search-box {
   display: flex;
   flex-direction: column;

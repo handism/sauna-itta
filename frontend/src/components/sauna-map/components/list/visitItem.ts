@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction } from "react";
-import { SaunaVisit, VisitFilters } from "../../types";
+import { EditVisitHandler, SaunaVisit, VisitFilters } from "../../types";
 
 /**
  * 訪問リストの 1 行を描画するコンポーネント（`VisitCompactItem` / `VisitCardItem`）の共通 props。
@@ -14,7 +14,7 @@ export interface VisitItemProps {
   onHoverVisit?: (id: string | null) => void;
   onSelectVisit?: (visit: SaunaVisit) => void;
   onDeselectVisit?: () => void;
-  onEdit: (visit: SaunaVisit) => void;
+  onEdit: EditVisitHandler;
   setFilters: Dispatch<SetStateAction<VisitFilters>>;
   onOpenImage: (src: string) => void;
 }
