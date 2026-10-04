@@ -6,6 +6,8 @@ class ContentSecurityPolicyHeaderTest < ActionDispatch::IntegrationTest
 
   setup do
     @page = Rails.root.join("public/csp-test.html")
+    # public/ には追跡するファイルが無く、CI のチェックアウトにはディレクトリ自体が存在しない
+    FileUtils.mkdir_p(@page.dirname)
     File.write(@page, <<~HTML)
       <!doctype html><title>csp</title>
       <script src="/_next/static/chunks/app.js" async=""></script>
