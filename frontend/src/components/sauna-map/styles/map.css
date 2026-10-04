@@ -25,7 +25,13 @@
   font-family: var(--font-main);
 }
 
-.dark-map-tiles {
+/*
+ * フィルターはレイヤー（.dark-map-tiles）ではなくタイル 1 枚ずつに掛けること。
+ * leaflet.css はタイル境界の隙間を mix-blend-mode: plus-lighter で埋めているが、
+ * 親レイヤーに filter を掛けるとその合成が効かず、小数の devicePixelRatio
+ * （Pixel 7 の 2.625 等）でタイルの継ぎ目が格子状の線として見える。
+ */
+.dark-map-tiles img.leaflet-tile {
   filter: var(--map-filter);
 }
 
@@ -596,6 +602,20 @@
     min-width: 44px;
     min-height: 44px;
   }
+
+  /*
+   * OSM の帰属表示（ライセンス上の必須表示）をボトムシートの上端に載せる。
+   * 既定の画面下端のままだと、下部ナビと最小位置のシートの裏に隠れて一度も見えない。
+   * 値は bottom-sheet.css のナビの高さ（56px）と各スナップ位置の見えている高さに揃えること。
+   * 全画面（full）のときは地図自体が見えないため追従させない。
+   */
+  .map-wrapper:has(.bottom-sheet--min) .leaflet-bottom {
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 54px);
+  }
+
+  .map-wrapper:has(.bottom-sheet--half) .leaflet-bottom {
+    bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 60vh);
+  }
 }
 
 /* Cluster Marker Styling */
@@ -689,10 +709,12 @@
   box-shadow: 0 0 16px var(--primary-glow) !important;
 }
 
+/*
+ * クラスタ表示は既定でオンのため、オンの見た目を強くすると地図の操作の中で常にいちばん目立つ。
+ * 面と枠は他のボタンのままにし、アイコンの色だけで状態を示す（状態は aria-pressed でも公開）。
+ */
 .map-cluster-control-btn.is-active {
-  border-color: var(--primary);
   color: var(--primary);
-  background: color-mix(in srgb, var(--glass-heavy) 80%, var(--primary) 20%);
 }
 
 .map-cluster-control-btn:active {

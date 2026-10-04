@@ -217,6 +217,7 @@ export function VisitFormView({
         editingId={editingId}
         submitBlockedReason={submitBlockedReason}
         submitNeedsInput={submitFixTarget !== null}
+        hideBlockedReason={submitFixTarget === "location"}
         onDelete={onDelete}
         onCancel={onCancel}
       />

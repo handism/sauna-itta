@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
-import { SummaryGrid } from "./SummaryGrid";
+import { SummaryGrid, formatPeriodLength } from "./SummaryGrid";
 import { VisitStats } from "@/components/sauna-map/types/domain";
 
 describe("SummaryGrid", () => {
@@ -32,7 +32,7 @@ describe("SummaryGrid", () => {
     expect(screen.queryByText("登録サウナ総数")).toBeNull();
 
     // Check visited / wishlist
-    const visitedArticle = screen.getByRole("listitem", { name: "施設数（行った / 行きたい）" });
+    const visitedArticle = screen.getByRole("listitem", { name: "施設数" });
     expect(visitedArticle).toHaveTextContent("6");
     expect(visitedArticle).toHaveTextContent("/ 4 行きたい");
 
@@ -52,7 +52,8 @@ describe("SummaryGrid", () => {
 
     // Check recording period
     const periodArticle = screen.getByRole("listitem", { name: "記録期間" });
-    // 1 行に収まるよう年月で表示し、日単位の期間は title に残す
+    // 他のカードと同じく長さを大きな数値で出し、範囲は年月の補足、日単位の期間は title に残す
+    expect(periodArticle).toHaveTextContent("1年");
     expect(periodArticle).toHaveTextContent("2023.01 〜 2023.12");
     expect(periodArticle.querySelector("p[title]")).toHaveAttribute("title", "2023-01-01 〜 2023-12-31");
     expect(periodArticle.querySelector("time")).toHaveAttribute("dateTime", "2023-01-01");
@@ -76,7 +77,7 @@ describe("SummaryGrid", () => {
     const totalArticle = screen.getByRole("listitem", { name: "延べ訪問回数" });
     expect(totalArticle).toHaveTextContent("0 回");
 
-    const visitedArticle = screen.getByRole("listitem", { name: "施設数（行った / 行きたい）" });
+    const visitedArticle = screen.getByRole("listitem", { name: "施設数" });
     expect(visitedArticle).toHaveTextContent("0");
     expect(visitedArticle).toHaveTextContent("/ 0 行きたい");
 
@@ -96,5 +97,20 @@ describe("SummaryGrid", () => {
 
     const periodArticle = screen.getByRole("listitem", { name: "記録期間" });
     expect(periodArticle).toHaveTextContent("-");
+  });
+});
+
+describe("formatPeriodLength", () => {
+  it("始まりと終わりの月を含めて数える", () => {
+    expect(formatPeriodLength("2026-01-04", "2026-04-04")).toEqual([{ value: "4", unit: "ヶ月" }]);
+    expect(formatPeriodLength("2026-03-01", "2026-03-31")).toEqual([{ value: "1", unit: "ヶ月" }]);
+  });
+
+  it("12 ヶ月以上は年とヶ月に分ける", () => {
+    expect(formatPeriodLength("2024-05-01", "2026-04-30")).toEqual([{ value: "2", unit: "年" }]);
+    expect(formatPeriodLength("2024-05-01", "2026-07-01")).toEqual([
+      { value: "2", unit: "年" },
+      { value: "3", unit: "ヶ月" },
+    ]);
   });
 });

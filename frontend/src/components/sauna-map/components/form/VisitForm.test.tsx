@@ -140,9 +140,18 @@ describe("VisitFormView", () => {
     expect(submit).toBeEnabled();
     expect(submit).toHaveAttribute("aria-disabled", "true");
     expect(submit).toHaveAttribute("aria-describedby", "submit-blocked-reason");
-    expect(document.getElementById("submit-blocked-reason")).toHaveTextContent(
-      "地図上をクリックして場所を選択してください"
-    );
+    const reason = document.getElementById("submit-blocked-reason");
+    expect(reason).toHaveTextContent("地図上をクリックして場所を選択してください");
+    // フォーム先頭の場所の案内と同じ文なので、見た目には出さず読み上げにだけ残す
+    expect(reason).toHaveClass("sr-only");
+  });
+
+  it("サウナ名の不足はボタンの下に見える形で理由を出す", () => {
+    render(<VisitFormView {...defaultProps} form={{ ...defaultProps.form, name: "" }} />);
+
+    const reason = document.getElementById("submit-blocked-reason");
+    expect(reason).toHaveTextContent("サウナ名");
+    expect(reason).not.toHaveClass("sr-only");
   });
 
   it("場所が未選択のまま保存を押すと、送信せず場所の案内を強調する", () => {

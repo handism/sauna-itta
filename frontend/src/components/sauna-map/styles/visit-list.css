@@ -844,6 +844,8 @@
    * 横スワイプの案内は独立した行にせず、チップ列の右端にフェードで重ねる。
    * 1 行ぶんの高さを取ると、半分の位置のシートで一覧が見えなくなるため。
    * 背景はボトムシートの面（--glass-heavy）へ溶かし、下のチップの操作は妨げない。
+   * 案内は矢印アイコンだけにする（文字にすると、隠れたチップのアイコンと並んで
+   * 「横にスワイプ」という名前のチップに読める）。
    */
   .quick-filter-scroll-hint {
     display: flex;
@@ -854,10 +856,10 @@
     right: 0;
     bottom: 0;
     z-index: 1;
-    padding: 0 0.15rem 0 2.5rem;
-    background: linear-gradient(to right, transparent, var(--glass-heavy) 55%);
+    width: 2.75rem;
+    padding-right: 0.1rem;
+    background: linear-gradient(to right, transparent, var(--glass-heavy) 60%);
     color: var(--text-muted);
-    font-size: var(--text-2xs);
     pointer-events: none;
   }
 

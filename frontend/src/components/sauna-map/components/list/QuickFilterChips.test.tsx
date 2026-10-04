@@ -48,7 +48,7 @@ describe("QuickFilterChips", () => {
   });
 
   it("横スクロールが必要な候補数では視覚的なスワイプヒントを表示すること", () => {
-    render(
+    const { container } = render(
       <QuickFilterChips
         filters={filters}
         setFilters={vi.fn()}
@@ -56,7 +56,7 @@ describe("QuickFilterChips", () => {
       />
     );
 
-    expect(screen.getByText("横にスワイプ")).toBeInTheDocument();
+    expect(container.querySelector(".quick-filter-scroll-hint")).toBeInTheDocument();
   });
 
   it("検索文字列やステータス絞り込みがある場合、アクティブフィルターチップとして表示されクリックでクリアできること", () => {
@@ -203,9 +203,9 @@ describe("QuickFilterChips", () => {
   });
 
   it("候補が少なければスワイプヒントを出さない", () => {
-    render(<QuickFilterChips filters={filters} setFilters={vi.fn()} visits={[]} />);
+    const { container } = render(<QuickFilterChips filters={filters} setFilters={vi.fn()} visits={[]} />);
 
-    expect(screen.queryByText("横にスワイプ")).not.toBeInTheDocument();
+    expect(container.querySelector(".quick-filter-scroll-hint")).not.toBeInTheDocument();
     expect(screen.getByRole("group", { name: "サブフィルター" })).toBeInTheDocument();
   });
 });

@@ -3,12 +3,29 @@ import styles from '../stats.module.css';
 import { VisitStats } from "@/components/sauna-map/types";
 
 /**
- * 「2024-01-01」を「2024.01」にする。サマリーの他のカードは数値 1 つなので、
- * 日付 2 つを日単位で並べると記録期間のカードだけ 2 行に折り返して高さが揃わない。
- * 日単位の期間は title（ホバー）で補う。
+ * 「2024-01-01」を「2024.01」にする。記録期間の範囲は補足の小さな文字で出すため、
+ * 日単位で並べると折り返してカードの高さが揃わない。日単位の期間は title（ホバー）で補う。
  */
 function toYearMonth(date: string): string {
   return date.slice(0, 7).replace("-", ".");
+}
+
+/**
+ * 記録期間の長さを「N ヶ月」「N 年 M ヶ月」で返す（始まりと終わりの月を含めて数える）。
+ * 他のカードと同じ「大きな数値＋単位」の形にそろえ、年月の範囲は下の補足に回す。
+ */
+export function formatPeriodLength(firstDate: string, lastDate: string): { value: string; unit: string }[] {
+  const [y1, m1] = firstDate.split("-").map(Number);
+  const [y2, m2] = lastDate.split("-").map(Number);
+  const months = Math.max(1, (y2 - y1) * 12 + (m2 - m1) + 1);
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  if (years === 0) return [{ value: String(rest), unit: "ヶ月" }];
+  if (rest === 0) return [{ value: String(years), unit: "年" }];
+  return [
+    { value: String(years), unit: "年" },
+    { value: String(rest), unit: "ヶ月" },
+  ];
 }
 
 interface SummaryGridProps {
@@ -32,7 +49,8 @@ export function SummaryGrid({ stats }: SummaryGridProps) {
       <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-visited">
         <div className={styles.statCardHeader}>
           <CheckCircle size={18} className={styles.statIconSuccess} />
-          <h3 id="stat-visited">施設数（行った / 行きたい）</h3>
+          {/* 内訳は値の側に「行った / 行きたい」と出すため、見出しは 1 行に収まる短さにする */}
+          <h3 id="stat-visited">施設数</h3>
         </div>
         <p className={styles.statValue}>
           {stats.visitedCount} <span className={styles.statUnit}>行った</span>
@@ -86,16 +104,23 @@ export function SummaryGrid({ stats }: SummaryGridProps) {
           <h3 id="stat-period">記録期間</h3>
         </div>
         {stats.firstDate && stats.lastDate ? (
-          <p
-            className={styles.statValueCompact}
-            title={`${stats.firstDate} 〜 ${stats.lastDate}`}
-          >
-            <time dateTime={stats.firstDate}>{toYearMonth(stats.firstDate)}</time>
-            {" 〜 "}
-            <time dateTime={stats.lastDate}>{toYearMonth(stats.lastDate)}</time>
-          </p>
+          <>
+            <p className={styles.statValue}>
+              {formatPeriodLength(stats.firstDate, stats.lastDate).map(({ value, unit }) => (
+                <span key={unit}>
+                  {value}
+                  <span className={styles.statUnit}>{unit}</span>{" "}
+                </span>
+              ))}
+            </p>
+            <p className={styles.statNote} title={`${stats.firstDate} 〜 ${stats.lastDate}`}>
+              <time dateTime={stats.firstDate}>{toYearMonth(stats.firstDate)}</time>
+              {" 〜 "}
+              <time dateTime={stats.lastDate}>{toYearMonth(stats.lastDate)}</time>
+            </p>
+          </>
         ) : (
-          <p className={styles.statValueCompact}>-</p>
+          <p className={styles.statValue}>-</p>
         )}
       </article>
     </div>

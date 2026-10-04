@@ -11,7 +11,11 @@
     height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
     max-height: calc(100dvh - (56px + env(safe-area-inset-bottom, 0px)) - env(safe-area-inset-top, 0px) - 20px);
     z-index: var(--z-sheet);
-    background: var(--glass-heavy);
+    /*
+     * --glass-heavy の下に --background を敷いて不透明にする（.form-actions と同じ）。
+     * 92% の面だけだと、ぼかしが効かない環境で一覧の背後に地図のマーカーや地名が透けた。
+     */
+    background: linear-gradient(var(--glass-heavy), var(--glass-heavy)), var(--background);
     backdrop-filter: var(--backdrop-blur-heavy);
     -webkit-backdrop-filter: var(--backdrop-blur-heavy);
     border-top: 1px solid var(--glass-border);

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { Flame, Calendar, Award, MapPin } from "lucide-react";
 import {
+  formatShortDate,
   getVisitHistoryEntries,
   RankedVisit,
   REPEAT_VISIT_MIN_COUNT,
@@ -114,14 +115,28 @@ export function HomeSaunaCard({ ranked }: HomeSaunaCardProps) {
         </div>
       </div>
 
+      {/*
+       * 右隣の TOP 5 と高さが揃うため、カードの中ほどが大きく空く。
+       * 最新の感想を添えて、日付の行はカードの下端に寄せる（.homeSaunaFooter の margin-top: auto）。
+       */}
+      {sauna.comment && (
+        <blockquote className={styles.homeSaunaComment}>
+          <p>{sauna.comment}</p>
+        </blockquote>
+      )}
+
       <div className={styles.homeSaunaFooter}>
         <div className={styles.homeSaunaMetaItem}>
           <Calendar size={14} />
-          <span>初訪問: {firstDate}</span>
+          <span>
+            初訪問: <time dateTime={firstDate}>{formatShortDate(firstDate)}</time>
+          </span>
         </div>
         <div className={styles.homeSaunaMetaItem}>
           <Award size={14} />
-          <span>最新訪問: {lastDate}</span>
+          <span>
+            最新訪問: <time dateTime={lastDate}>{formatShortDate(lastDate)}</time>
+          </span>
         </div>
       </div>
     </article>

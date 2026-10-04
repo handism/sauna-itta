@@ -67,8 +67,8 @@ describe("HomeSaunaCard", () => {
     expect(screen.getByText("60%")).toBeInTheDocument();
 
     // Dates verification
-    expect(screen.getByText("初訪問: 2024-01-01")).toBeInTheDocument();
-    expect(screen.getByText("最新訪問: 2024-06-01")).toBeInTheDocument();
+    expect(screen.getByText((_, el) => el?.tagName === "SPAN" && el.textContent === "初訪問: 2024/1/1")).toBeInTheDocument();
+    expect(screen.getByText((_, el) => el?.tagName === "SPAN" && el.textContent === "最新訪問: 2024/6/1")).toBeInTheDocument();
   });
 
   it("falls back to main visit date when history entries are empty", () => {
@@ -82,8 +82,8 @@ describe("HomeSaunaCard", () => {
     render(<HomeSaunaCard ranked={ranked} />);
 
     expect(screen.getByText("Legacy Sauna")).toBeInTheDocument();
-    expect(screen.getByText("初訪問: 2024-03-15")).toBeInTheDocument();
-    expect(screen.getByText("最新訪問: 2024-03-15")).toBeInTheDocument();
+    expect(screen.getByText((_, el) => el?.tagName === "SPAN" && el.textContent === "初訪問: 2024/3/15")).toBeInTheDocument();
+    expect(screen.getByText((_, el) => el?.tagName === "SPAN" && el.textContent === "最新訪問: 2024/3/15")).toBeInTheDocument();
   });
 
   it("どの施設も 1 回ずつのときは施設を出さず、表示される条件を案内すること", () => {

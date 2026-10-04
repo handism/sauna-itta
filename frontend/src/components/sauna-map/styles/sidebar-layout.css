@@ -138,6 +138,16 @@
   box-shadow: var(--shadow-sm), 0 0 14px var(--primary-glow);
 }
 
+/* 入力中（新規・編集）は押せない。塗りの主ボタンのまま残すと、まだ押せるように見える */
+.sidebar-action-btn.sidebar-action-btn--primary:disabled {
+  background: var(--overlay-hover);
+  border-color: var(--glass-border);
+  color: var(--text-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .sidebar-action-btn:active {
   transform: translateY(0) scale(0.96);
 }
@@ -185,6 +195,14 @@
   /* 既定のスクロールバーは明るいグレーでパネルから浮くため、面の枠線と同じ色に揃える */
   scrollbar-width: thin;
   scrollbar-color: var(--glass-border) transparent;
+}
+
+/*
+ * 一覧の下端を面へ溶かし、最後の行が枠で切れて見えないようにする（続きがあることも伝わる）。
+ * フォームの表示中は下端に保存ボタン（.form-actions の sticky）があるため掛けないこと。
+ */
+.sidebar-content:has(> .sauna-list) {
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 1.5rem), transparent);
 }
 
 .mobile-toggle {

@@ -266,6 +266,19 @@ input[type="date"].input {
   box-shadow: 0 4px 16px var(--primary-glow);
 }
 
+/*
+ * 押せない（まだ保存できない）主ボタンは塗りをやめて中立色の面にする。
+ * 塗りのグラデーションを半透明にするだけだと、くすんだ茶色の面に読みにくい白文字が乗り、
+ * 押せるのか押せないのかが分かりにくかった。
+ */
+.btn-primary:disabled,
+.btn-primary[aria-disabled="true"] {
+  background: var(--overlay-hover);
+  color: var(--text-muted);
+  border-color: var(--glass-border);
+  opacity: 1;
+}
+
 .btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {
   transform: translateY(-1px);
   box-shadow: 0 8px 24px var(--primary-glow);
@@ -491,8 +504,11 @@ input[type="date"].input {
   cursor: pointer;
 }
 
+/* 主ボタンと同じく、押せない間は塗りをやめて中立色にする */
 .location-search-submit:disabled {
-  opacity: 0.5;
+  background: var(--overlay-hover);
+  border-color: var(--glass-border);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 

@@ -76,7 +76,9 @@ describe("DesktopSidebarView", () => {
     unmount();
 
     renderSidebar({ isAdding: true });
+    // 登録中はヘッダーの配置がずれないよう、消さずに押せない状態で残す
     expect(screen.queryByRole("button", { name: "新規ピンを立てる" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "記録を入力中" })).toBeDisabled();
   });
 
   it("toggles theme correctly", () => {

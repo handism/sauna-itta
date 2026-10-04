@@ -122,20 +122,23 @@ export function SidebarHeaderView({
         <p>マイととのいマップ</p>
       </div>
       <div className="mobile-menu-wrap" ref={mobileMenuRef}>
-        {!isAdding && (
-          <button
-            type="button"
-            className="mobile-menu-btn sidebar-action-btn sidebar-action-btn--primary"
-            onClick={() => {
-              onStartNewVisit();
-              onCloseMobileMenu();
-            }}
-            aria-label="新規ピンを立てる"
-            title="新規ピンを立てる"
-          >
-            <Plus size={18} />
-          </button>
-        )}
+        {/*
+         * 入力中（新規・編集）も消さずに押せない状態で残す。消すと右側の統計・テーマ・メニュー・
+         * 折りたたみのボタンが左へ詰まり、フォームを開くたびにヘッダーの配置がずれる。
+         */}
+        <button
+          type="button"
+          className="mobile-menu-btn sidebar-action-btn sidebar-action-btn--primary"
+          onClick={() => {
+            onStartNewVisit();
+            onCloseMobileMenu();
+          }}
+          disabled={isAdding}
+          aria-label={isAdding ? "記録を入力中" : "新規ピンを立てる"}
+          title={isAdding ? "記録を入力中" : "新規ピンを立てる"}
+        >
+          <Plus size={18} />
+        </button>
         <Link
           href="/stats"
           prefetch={false}

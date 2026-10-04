@@ -1,5 +1,5 @@
 import { Dispatch, ReactNode, SetStateAction, useMemo } from "react";
-import { X, Star, MapPin, Tag, Search, SlidersHorizontal } from "lucide-react";
+import { X, Star, MapPin, Tag, Search, SlidersHorizontal, ChevronRight } from "lucide-react";
 import { SaunaVisit, VisitFilters } from "../../types";
 import { getPopularAreas, getPopularTags } from "../../utils";
 import { cx } from "../../utils/classNames";
@@ -153,9 +153,13 @@ export function QuickFilterChips({
 
   return (
     <div className="quick-filter-container">
+      {/*
+       * 文字ではなく矢印だけで示す。右端のチップに「横にスワイプ」の文字が重なると、
+       * 隠れたチップのアイコンと並んでそういう名前のチップがあるように読めた。
+       */}
       {allChips.length > 3 && (
         <span className="quick-filter-scroll-hint" aria-hidden="true">
-          横にスワイプ
+          <ChevronRight size={18} />
         </span>
       )}
       {/* role の無い div の aria-label は支援技術に無視されるため group として公開する */}

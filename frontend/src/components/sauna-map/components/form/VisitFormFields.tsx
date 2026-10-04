@@ -167,6 +167,7 @@ export function FormActions({
   editingId,
   submitBlockedReason,
   submitNeedsInput = false,
+  hideBlockedReason = false,
   onDelete,
   onCancel,
 }: {
@@ -178,6 +179,12 @@ export function FormActions({
    * 保存できないことを伝え、押されたらフォーム側が足りない箇所へ案内する。
    */
   submitNeedsInput?: boolean;
+  /**
+   * 理由の文を見た目からは隠し、読み上げ（aria-describedby）にだけ残す。
+   * 場所の未選択はフォーム先頭の .location-status が同じ文で示しているため、
+   * ボタンの下にも出すと同じ案内が 2 つ並ぶ（デスクトップでは地図側の案内と合わせて 3 つ）。
+   */
+  hideBlockedReason?: boolean;
   onDelete: () => void;
   onCancel: () => void;
 }) {
@@ -195,7 +202,11 @@ export function FormActions({
         <span>{saving ? "保存中..." : editingId ? "更新する" : "保存する"}</span>
       </button>
       {submitBlockedReason && (
-        <p className="form-hint form-hint--blocked" id="submit-blocked-reason" role="status">
+        <p
+          className={cx("form-hint form-hint--blocked", hideBlockedReason && "sr-only")}
+          id="submit-blocked-reason"
+          role="status"
+        >
           <Info size={13} aria-hidden="true" />
           {submitBlockedReason}
         </p>
