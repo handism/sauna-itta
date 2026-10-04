@@ -265,4 +265,22 @@ describe("VisitCompactItem の操作", () => {
     expect(screen.getByRole("button", { name: "外気浴" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "行きたい" })).not.toBeInTheDocument();
   });
+
+  it("行きたい記録は評価が残っていても星を出さない（行った→行きたいへ切り替えた記録）", () => {
+    const { unmount } = render(
+      <VisitCompactItem {...compactProps} onSelectVisit={vi.fn()} onDeselectVisit={vi.fn()} />
+    );
+    expect(screen.getByRole("img", { name: "満足度: 5/5" })).toBeInTheDocument();
+    unmount();
+
+    render(
+      <VisitCompactItem
+        {...compactProps}
+        visit={{ ...mockVisit, status: "wishlist" }}
+        onSelectVisit={vi.fn()}
+        onDeselectVisit={vi.fn()}
+      />
+    );
+    expect(screen.queryByRole("img", { name: /満足度/ })).toBeNull();
+  });
 });

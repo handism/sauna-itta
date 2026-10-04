@@ -3,7 +3,7 @@ import { Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { SaunaVisit } from "../../types";
-import { getVisitCount, isWishlist } from "../../utils";
+import { getDisplayRating, getVisitCount, isWishlist } from "../../utils";
 import { getSaunaIcon } from "../common/markerIcon";
 import { flameIconSvg } from "../common/iconSvg";
 import { SaunaMarkerPopup } from "./SaunaMarkerPopup";
@@ -79,7 +79,7 @@ function VisitMarkersComponent({
             selected: visit.id === editingId || isSelected,
             wishlist,
             hovered: isHovered,
-            rating: visit.rating,
+            rating: getDisplayRating(visit),
             visitCount,
             showBadges,
           })}

@@ -1,7 +1,7 @@
 import { memo } from "react";
 import Image from "next/image";
 import { ChevronRight, ChevronUp, Pencil } from "lucide-react";
-import { formatShortDate, getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
+import { formatShortDate, getDisplayRating, getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import { RatingStars } from "../common/RatingStars";
 import { RouteLink } from "../common/RouteLink";
@@ -85,7 +85,7 @@ function VisitCompactItemComponent({
               {thumbSrc && (
                 <Image src={thumbSrc} className="sauna-compact-thumb" alt="" width={28} height={28} unoptimized />
               )}
-              <RatingStars rating={visit.rating ?? 0} className="sauna-compact-rating" />
+              <RatingStars rating={getDisplayRating(visit)} className="sauna-compact-rating" />
             </span>
           </button>
         </h3>

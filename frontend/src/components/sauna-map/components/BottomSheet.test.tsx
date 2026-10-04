@@ -89,5 +89,13 @@ describe("BottomSheet", () => {
     fireEvent.click(mapBtn);
     expect(onSnapChange).toHaveBeenCalledWith("min");
   });
-});
 
+  it("件数は最小位置のときだけ出す（開いているときは一覧の見出しと重複するため）", () => {
+    const { unmount } = renderSheet("min");
+    expect(screen.getByText("3件表示中")).toBeInTheDocument();
+    unmount();
+
+    renderSheet("half");
+    expect(screen.queryByText("3件表示中")).toBeNull();
+  });
+});

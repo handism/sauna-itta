@@ -14,9 +14,20 @@ import {
   useVisitFiltersContext,
   useSaunaMapState,
   useSaunaEditorActions,
+  useSaunaViewport,
 } from "../../context";
 
 const STORAGE_KEY = "sauna_itta_view_mode";
+/**
+ * モバイルの表示形式は別に覚える。デスクトップで選んだカード表示をそのまま使うと、
+ * 半分の位置のボトムシートに 1 件目の見出しすら収まらない。
+ */
+const MOBILE_STORAGE_KEY = "sauna_itta_view_mode_mobile";
+
+function readViewMode(key: string): ViewMode {
+  const saved = readStorage(key);
+  return saved === "compact" || saved === "card" ? saved : "compact";
+}
 
 /**
  * 一度に描画する件数。記録が増えても初期表示が重くならないよう、
@@ -40,6 +51,8 @@ export interface VisitListViewProps {
   onDeselectVisit: () => void;
   hoveredId: string | null;
   onHoverVisit: (id: string | null) => void;
+  /** 表示形式をモバイル用に覚えるか（省略時はデスクトップ） */
+  isMobile?: boolean;
 }
 
 export function VisitListView({
@@ -57,16 +70,19 @@ export function VisitListView({
   onDeselectVisit,
   hoveredId,
   onHoverVisit,
+  isMobile = false,
 }: VisitListViewProps) {
   const { lightboxSrc, openImage, closeImage } = useImageLightbox();
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    const saved = readStorage(STORAGE_KEY);
-    return saved === "compact" || saved === "card" ? saved : "compact";
-  });
+  // 画面幅をまたいで回転・リサイズしても、それぞれの幅で選んだ形式へ戻せるよう両方を持つ
+  const [viewModes, setViewModes] = useState(() => ({
+    desktop: readViewMode(STORAGE_KEY),
+    mobile: readViewMode(MOBILE_STORAGE_KEY),
+  }));
+  const viewMode = isMobile ? viewModes.mobile : viewModes.desktop;
 
   const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode);
-    writeStorage(STORAGE_KEY, mode);
+    setViewModes((prev) => (isMobile ? { ...prev, mobile: mode } : { ...prev, desktop: mode }));
+    writeStorage(isMobile ? MOBILE_STORAGE_KEY : STORAGE_KEY, mode);
   };
 
   const {
@@ -175,6 +191,7 @@ export function VisitList() {
   // 一覧が要るのは操作関数だけ。編集状態を購読すると、サイドバーの開閉で
   // 一覧全体が再レンダリング対象になる
   const { startNewVisit } = useSaunaEditorActions();
+  const { isMobile } = useSaunaViewport();
 
   return (
     <VisitListView
@@ -192,6 +209,7 @@ export function VisitList() {
       onDeselectVisit={handleDeselectVisit}
       hoveredId={hoveredId}
       onHoverVisit={setHoveredId}
+      isMobile={isMobile}
     />
   );
 }

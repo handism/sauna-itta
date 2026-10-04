@@ -319,6 +319,26 @@
   margin-bottom: 0.9rem;
 }
 
+/*
+ * 検索欄とステータス・並び順の行は、一覧を読み進めても上端に残す。
+ * top はスクロール領域（.sidebar-content）の padding-top ぶん負にして縁へ貼り付け、
+ * 左右も padding ぶんはみ出させて、後ろを流れる記録が帯の脇から透けないようにする。
+ * 上の負のマージンは帯の padding-top を打ち消し、固定していないときの見出しとの間隔を保つ。
+ * 背景は .form-actions と同じく --glass-heavy の下に --background を敷いて不透明にする。
+ * z-index は並び順のドロップダウンを後ろのカードより上に出すため。
+ */
+.sauna-search-sticky {
+  position: sticky;
+  top: -1.3rem;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: -0.5rem -1.6rem 0;
+  padding: 0.5rem 1.6rem;
+  background: linear-gradient(var(--glass-heavy), var(--glass-heavy)), var(--background);
+}
+
 .search-row {
   display: flex;
   align-items: center;
@@ -843,6 +863,17 @@
 
   .sauna-search-box {
     margin-bottom: 0.5rem;
+  }
+
+  /* 固定する帯の位置と幅はスクロール領域の余白に合わせる（sidebar-layout.css / bottom-sheet.css） */
+  .sauna-search-sticky {
+    top: -0.75rem;
+    margin: -0.4rem -1rem 0;
+    padding: 0.4rem 1rem;
+  }
+
+  .bottom-sheet-content .sauna-search-sticky {
+    top: 0;
   }
 
   /* 表示切替はアイコンだけにする（読み上げは aria-label が担う） */

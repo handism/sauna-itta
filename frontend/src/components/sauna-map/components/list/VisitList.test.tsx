@@ -132,4 +132,24 @@ describe("VisitListView の増分レンダリング", () => {
       document.querySelector(`[data-visit-id="visit-${targetIndex}"]`)
     ).not.toBeNull();
   });
+
+  it("表示形式はモバイルとデスクトップで別々に覚える", () => {
+    const visits = [makeVisit(1)];
+    const { unmount } = render(
+      <VisitListView {...baseProps} visits={visits} filteredVisits={visits} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "カード表示に切り替え" }));
+    expect(document.querySelector(".sauna-card")).not.toBeNull();
+    unmount();
+
+    // デスクトップでカードにしても、モバイルの既定（リスト）は変わらない
+    const mobile = render(
+      <VisitListView {...baseProps} visits={visits} filteredVisits={visits} isMobile />
+    );
+    expect(screen.getByRole("button", { name: "リスト表示に切り替え" })).toHaveAttribute("aria-pressed", "true");
+    mobile.unmount();
+
+    render(<VisitListView {...baseProps} visits={visits} filteredVisits={visits} />);
+    expect(screen.getByRole("button", { name: "カード表示に切り替え" })).toHaveAttribute("aria-pressed", "true");
+  });
 });

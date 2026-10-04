@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getDefaultForm, getSubmitBlockedReason, toFormState, validateVisitForm, toNormalizedTags } from "./form";
+import { fillFormFromPlace, getDefaultForm, getSubmitBlockedReason, toFormState, validateVisitForm, toNormalizedTags } from "./form";
 import { getTodayDate } from "./date";
 import { buildHistoryUpdate } from "./visitHistory";
 import { SaunaVisit, VisitFormState } from "../types";
@@ -440,5 +440,21 @@ describe("toNormalizedTags", () => {
 
   it("should handle a single tag without commas", () => {
     expect(toNormalizedTags("sauna")).toEqual(["sauna"]);
+  });
+});
+
+describe("fillFormFromPlace", () => {
+  const place = { name: "サウナ東京", addressText: "東京都 港区" };
+
+  it("空のサウナ名・エリアを検索結果で補う", () => {
+    const filled = fillFormFromPlace(getDefaultForm(), place);
+    expect(filled.name).toBe("サウナ東京");
+    expect(filled.area).toBe("東京都 港区");
+  });
+
+  it("入力済みの値は上書きしない", () => {
+    const filled = fillFormFromPlace({ ...getDefaultForm(), name: "自分で付けた名前", area: "港区" }, place);
+    expect(filled.name).toBe("自分で付けた名前");
+    expect(filled.area).toBe("港区");
   });
 });

@@ -1,6 +1,6 @@
 import { Pencil } from "lucide-react";
 import { SaunaVisit } from "../../types";
-import { getVisitCount, sanitizeImageUrl } from "../../utils";
+import { getDisplayRating, getVisitCount, sanitizeImageUrl } from "../../utils";
 import { RatingStars } from "../common/RatingStars";
 import { RouteLink } from "../common/RouteLink";
 import { VisitComment } from "../common/VisitComment";
@@ -37,7 +37,7 @@ export function SaunaMarkerPopup({ visit, isWishlist, onEdit, onOpenImage }: Sau
         {isWishlist && <WishlistChip />}
       </h3>
       {visit.area && <div className="popup-area">{visit.area}</div>}
-      <RatingStars rating={visit.rating ?? 0} className="popup-rating" showUnrated={!isWishlist} />
+      <RatingStars rating={getDisplayRating(visit)} className="popup-rating" showUnrated={!isWishlist} />
       <VisitComment text={visit.comment} className="popup-comment" />
       <VisitMetaInfo
         date={visit.date}

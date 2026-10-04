@@ -34,44 +34,54 @@ function VisitListSearchComponent({
   const isFilterActive = activeFilterCount > 0;
 
   return (
-    <div className="sauna-search-box">
-      <SearchInput filters={filters} setFilters={setFilters} />
+    <>
+      {/*
+        検索欄とステータス・並び順の行だけを一覧のスクロールに追従させる（.sauna-search-sticky）。
+        詳細フィルターとチップまで含めると、開いたときに固定部分が一覧の大半を覆う。
+        position: sticky は親要素の範囲内でしか効かないため、包む要素を作らず
+        一覧（.sauna-list）の直下に置くこと（包むと、その要素ごとスクロールで流れる）。
+      */}
+      <div className="sauna-search-sticky">
+        <SearchInput filters={filters} setFilters={setFilters} />
 
-      <div className="controls-row">
-        <StatusTabs filters={filters} setFilters={setFilters} />
+        <div className="controls-row">
+          <StatusTabs filters={filters} setFilters={setFilters} />
 
-        <div className="controls-actions">
-          <SortSelect
-            value={filters.sort}
-            onChange={(newSort) =>
-              setFilters((prev) => ({ ...prev, sort: newSort }))
-            }
-          />
-          <FilterToggleButton
-            isFilterPanelOpen={isFilterPanelOpen}
-            isFilterActive={isFilterActive}
-            toggleFilterPanel={toggleFilterPanel}
-          />
+          <div className="controls-actions">
+            <SortSelect
+              value={filters.sort}
+              onChange={(newSort) =>
+                setFilters((prev) => ({ ...prev, sort: newSort }))
+              }
+            />
+            <FilterToggleButton
+              isFilterPanelOpen={isFilterPanelOpen}
+              isFilterActive={isFilterActive}
+              toggleFilterPanel={toggleFilterPanel}
+            />
+          </div>
         </div>
       </div>
 
-      <FilterPanel
-        isOpen={isFilterPanelOpen}
-        filters={filters}
-        setFilters={setFilters}
-        isFilterActive={Boolean(isFilterActive && onClearFilters)}
-        onClearFilters={onClearFilters ?? (() => {})}
-        onClose={closeFilterPanel}
-      />
+      <div className="sauna-search-box">
+        <FilterPanel
+          isOpen={isFilterPanelOpen}
+          filters={filters}
+          setFilters={setFilters}
+          isFilterActive={Boolean(isFilterActive && onClearFilters)}
+          onClearFilters={onClearFilters ?? (() => {})}
+          onClose={closeFilterPanel}
+        />
 
-      <QuickFilterChips
-        filters={filters}
-        setFilters={setFilters}
-        visits={visits}
-        activeFilterCount={activeFilterCount}
-        onClearFilters={onClearFilters}
-      />
-    </div>
+        <QuickFilterChips
+          filters={filters}
+          setFilters={setFilters}
+          visits={visits}
+          activeFilterCount={activeFilterCount}
+          onClearFilters={onClearFilters}
+        />
+      </div>
+    </>
   );
 }
 

@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
 import { RatingStars } from "./common/RatingStars";
 import { WishlistChip } from "./common/WishlistChip";
-import { formatShortDate, isWishlist } from "../utils";
+import { formatShortDate, getDisplayRating, isWishlist } from "../utils";
 import { useModalBehavior } from "../hooks/useModalBehavior";
 import { useSaunaUI, useVisitFiltersContext } from "../context";
 
@@ -72,7 +72,7 @@ export function ShareModalView({
                   <time dateTime={visit.date}>{formatShortDate(visit.date)}</time>
                 )}
               </div>
-              <RatingStars rating={visit.rating ?? 0} className="share-rating" />
+              <RatingStars rating={getDisplayRating(visit)} className="share-rating" />
               {visit.tags && visit.tags.length > 0 && (
                 <div className="share-tags">
                   {visit.tags.map((tag) => (

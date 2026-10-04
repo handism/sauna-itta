@@ -136,7 +136,7 @@ describe("calculateStats", () => {
     expect(stats.firstDate).toBe("2023-01-01");
     expect(stats.lastDate).toBe("2023-04-01");
     expect(stats.prefectureCount).toBe(2);
-    expect(stats.prefectures).toEqual(["埼玉県", "東京都"]); // Sorted alphabetically
+    expect(stats.prefectures).toEqual(["埼玉県", "東京都"]); // 都道府県コード順（北から南）
   });
 
   it("should handle missing optional fields safely", () => {

@@ -2,28 +2,20 @@
 
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
-import type { Map as LeafletMap } from "leaflet";
 import { LatLng } from "../../types";
 import { prefersReducedMotion } from "../../utils/motion";
+import { getCoveredWidth } from "./mapInsets";
+
+/**
+ * 記録を選んだときに寄るズーム。14 以上（街区）まで寄ると周りに他の記録が 1 件も無く、
+ * どのあたりにいるのか分からなくなるため、駅や地区の名前が読める 13 に留める。
+ * これより拡大していれば縮小はしない。
+ */
+export const SELECT_ZOOM = 13;
 
 interface MapControllerProps {
   target: LatLng | null;
   isMobile?: boolean;
-}
-
-/**
- * デスクトップで地図の左側を覆っているサイドバーの幅（px）。
- * 折りたたみ中（.collapsed）や未描画のときは 0 を返す。
- */
-function getCoveredWidth(map: LeafletMap): number {
-  const sidebar = document.querySelector(".sidebar:not(.collapsed)");
-  if (!sidebar) return 0;
-  const sidebarRect = sidebar.getBoundingClientRect();
-  const containerRect = map.getContainer().getBoundingClientRect();
-  const covered = sidebarRect.right - containerRect.left;
-  // サイドバーが地図の大半を覆うような狭い画面ではずらさない（マーカーが画面外へ出るため）
-  if (covered <= 0 || covered >= containerRect.width / 2) return 0;
-  return covered;
 }
 
 export function MapController({ target, isMobile = false }: MapControllerProps) {
@@ -33,10 +25,11 @@ export function MapController({ target, isMobile = false }: MapControllerProps) 
     if (!target) return;
 
     const currentZoom = map.getZoom();
-    const nextZoom = currentZoom < 14 ? 14 : currentZoom;
+    const nextZoom = Math.max(currentZoom, SELECT_ZOOM);
 
-    // モバイル表示の際、下部のBottomSheetに隠れないよう緯度を少し南へオフセット（マーカーを画面上寄りに表示）
-    const latOffset = isMobile ? (nextZoom >= 15 ? 0.0025 : 0.0045) : 0;
+    // モバイル表示の際、下部のBottomSheetに隠れないよう緯度を少し南へオフセット（マーカーを画面上寄りに表示）。
+    // 同じ画面上の距離にするため、ズームが 1 段上がるごとに半分にする（ズーム 14 で 0.0045）
+    const latOffset = isMobile ? 0.0045 * Math.pow(2, 14 - nextZoom) : 0;
     let targetCenter: [number, number] = [target.lat - latOffset, target.lng];
 
     // デスクトップでは、サイドバーに覆われていない領域の中央にマーカーが来るよう、

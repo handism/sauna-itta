@@ -149,16 +149,24 @@ export function BottomSheet({
           {/* button の子要素は phrasing content に限られるため span で構成する */}
           <span className="bottom-sheet-handle-bar-container">
             <span className="bottom-sheet-handle" />
-            <span className="bottom-sheet-summary-badge">
-              <span className="summary-count">
-                <MapPin size={13} /> {filteredCount ?? 0}件表示中
+            {/*
+              件数は最小位置のときだけ出す。開いているときは一覧の見出しに「(N件)」があり、
+              同じ数字が 2 段続くうえ、限られたシートの高さを 1 行ぶん使ってしまう。
+            */}
+            {(snapPosition === "min" || selectedVisitName) && (
+              <span className="bottom-sheet-summary-badge">
+                {snapPosition === "min" && (
+                  <span className="summary-count">
+                    <MapPin size={13} /> {filteredCount ?? 0}件表示中
+                  </span>
+                )}
+                {selectedVisitName && (
+                  <span className="summary-selected" title={selectedVisitName}>
+                    選択中: {selectedVisitName}
+                  </span>
+                )}
               </span>
-              {selectedVisitName && (
-                <span className="summary-selected" title={selectedVisitName}>
-                  選択中: {selectedVisitName}
-                </span>
-              )}
-            </span>
+            )}
           </span>
         </button>
         {selectedVisitName && snapPosition !== "min" && (

@@ -29,3 +29,12 @@ export function getDisplayTags(visit: Pick<SaunaVisit, "status" | "tags">): stri
   const tags = visit.tags ?? [];
   return isWishlist(visit) ? tags.filter((tag) => tag !== WISHLIST_LABEL) : tags;
 }
+
+/**
+ * 画面に出す満足度。行きたい記録はフォームに評価欄が無いため 0（表示しない）として扱う。
+ * 行った記録から行きたいへ切り替えた記録やインポートした記録は評価を持ったままのことがあり、
+ * そのまま渡すと「まだ行っていないのに ★5」と表示される。保存値は変えない（行ったへ戻すと評価も戻る）。
+ */
+export function getDisplayRating(visit: Pick<SaunaVisit, "status" | "rating">): number {
+  return isWishlist(visit) ? 0 : (visit.rating ?? 0);
+}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { extractPrefecture, getDirectionsUrl, isInBounds } from "./geo";
+import { comparePrefectures, extractPrefecture, getDirectionsUrl, isInBounds, PREFECTURES } from "./geo";
 import { normalizeVisits } from "./visitHistory";
 import { SaunaVisit } from "../types";
 
@@ -276,3 +276,25 @@ describe("isInBounds", () => {
   });
 });
 
+
+describe("PREFECTURES / comparePrefectures", () => {
+  it("47 都道府県を重複なく持つ", () => {
+    expect(PREFECTURES).toHaveLength(47);
+    expect(new Set(PREFECTURES).size).toBe(47);
+    expect(PREFECTURES[0]).toBe("北海道");
+    expect(PREFECTURES[46]).toBe("沖縄県");
+  });
+
+  it("五十音順ではなく都道府県コード順（北から南）に並べる", () => {
+    expect(["沖縄県", "愛知県", "北海道", "東京都"].sort(comparePrefectures)).toEqual([
+      "北海道",
+      "東京都",
+      "愛知県",
+      "沖縄県",
+    ]);
+  });
+
+  it("一覧に無い名前は末尾に置く", () => {
+    expect(["架空県", "大阪府"].sort(comparePrefectures)).toEqual(["大阪府", "架空県"]);
+  });
+});

@@ -440,6 +440,33 @@
   pointer-events: auto;
 }
 
+.pin-hint-main {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 1;
+  min-width: 0;
+}
+
+/* 地点検索を出すときは、案内とキャンセルの行の下に検索欄を 1 行で並べる */
+.pin-hint--with-search {
+  flex-wrap: wrap;
+  row-gap: 0.75rem;
+}
+
+.pin-hint-search {
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+/* 案内バーは画面の下端にあるため、候補は検索欄の上へ開く（下へ開くと画面外に出る） */
+.pin-hint-search .location-search-results {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 0.25rem;
+}
+
 .pin-hint-icon {
   font-size: var(--text-3xl);
   flex-shrink: 0;

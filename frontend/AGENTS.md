@@ -23,3 +23,13 @@
 - 地図の`TileLayer`には`crossOrigin="anonymous"`を必ず指定します。未指定だとタイル画像はno-corsで読み込まれ、Service Workerが受け取る応答はstatus 0のopaqueになるため、`sw.js`のタイルキャッシュ（status 200のみ保存）に一度も入りません。opaque応答を保存する方向で直すことも避けてください（ブラウザは容量を1件ごとに大きく見積もるため、すぐにキャッシュ容量を圧迫します）。
 - Service Workerの非同期キャッシュ書き込みはイベント寿命へ必ず結び付けます。キャッシュ済みレスポンスのバックグラウンド更新は`event.waitUntil()`へ渡し、初回取得時の`cache.put()`は`respondWith()`へ渡すPromise内で`await`してください（未接続のPromiseはブラウザがイベントを終了して書き込みが欠落します）。
 - 統計画面は別ドキュメントのため`OPTIONAL_PRECACHE_ASSETS`で先読みしますが、必須資産の`cache.addAll`へ混ぜないでください（`addAll`は1つでも取得に失敗するとinstallごと失敗し、オフライン対応が丸ごと失われます）。任意の先読みは`Promise.allSettled`で取得できた分だけ保存します。
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

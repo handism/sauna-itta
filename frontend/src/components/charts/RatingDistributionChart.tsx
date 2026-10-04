@@ -18,14 +18,6 @@ interface RatingDistributionChartProps {
   theme: ChartTheme;
 }
 
-const RATING_COLORS: { [key: number]: string } = {
-  5: "#10b981", // Emerald green
-  4: "#3b82f6", // Blue
-  3: "#f59e0b", // Amber
-  2: "#f97316", // Orange
-  1: "#ef4444", // Red
-};
-const FALLBACK_COLOR = "#8b5cf6";
 const RATING_VALUES = [5, 4, 3, 2, 1] as const;
 const RATING_LABELS: { [key: number]: string } = {
   5: "★5 (最高)",
@@ -53,7 +45,7 @@ export default function RatingDistributionChart({
     });
 
     const chartData = RATING_VALUES.reduce<
-      { rating: number; name: string; value: number }[]
+      { rating: (typeof RATING_VALUES)[number]; name: string; value: number }[]
     >((acc, r) => {
       if (ratingCounts[r]) {
         acc.push({
@@ -70,7 +62,7 @@ export default function RatingDistributionChart({
 
   const avgLabel = avgRating.toFixed(1);
 
-  const { text: textColor } = getChartColors(theme);
+  const { text: textColor, rating: ratingColors } = getChartColors(theme);
 
   if (data.length === 0) {
     return (
@@ -126,9 +118,7 @@ export default function RatingDistributionChart({
               <span>{avgLabel}</span>
               <Star
                 size={18}
-                fill="#f59e0b"
-                color="#f59e0b"
-                style={{ marginTop: -2 }}
+                style={{ marginTop: -2, color: "var(--star-color)", fill: "var(--star-color)" }}
               />
             </div>
             <div
@@ -159,7 +149,7 @@ export default function RatingDistributionChart({
                 {data.map((entry) => (
                   <Cell
                     key={`cell-${entry.rating}`}
-                    fill={RATING_COLORS[entry.rating] ?? FALLBACK_COLOR}
+                    fill={ratingColors[entry.rating]}
                     style={{
                       outline: "none",
                       filter: "drop-shadow(0px 4px 8px rgba(0,0,0,0.15))",
@@ -212,7 +202,7 @@ export default function RatingDistributionChart({
                     height: 10,
                     borderRadius: "50%",
                     flexShrink: 0,
-                    background: RATING_COLORS[rating] ?? FALLBACK_COLOR,
+                    background: ratingColors[rating],
                   }}
                 />
                 <span style={{ flex: 1 }}>{RATING_LABELS[rating]}</span>

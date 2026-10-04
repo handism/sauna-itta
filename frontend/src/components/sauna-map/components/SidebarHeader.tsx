@@ -121,15 +121,6 @@ export function SidebarHeaderView({
         <p>マイととのいマップ</p>
       </div>
       <div className="mobile-menu-wrap" ref={mobileMenuRef}>
-        <button
-          type="button"
-          className="desktop-sidebar-close-btn sidebar-action-btn"
-          onClick={onToggleSidebar}
-          aria-label="サイドバーを折りたたむ"
-          title="サイドバーを折りたたむ"
-        >
-          <ChevronLeft size={18} />
-        </button>
         {!isAdding && (
           <button
             type="button"
@@ -175,6 +166,19 @@ export function SidebarHeaderView({
           aria-controls={isMobileMenuOpen ? menuId : undefined}
         >
           <MoreHorizontal size={18} />
+        </button>
+        {/*
+          折りたたみは画面の配置を変える補助の操作なので、右端（サイドバーの外側の縁）に置く。
+          先頭に置くと、主役の新規登録より先に目に入り、Tab でも最初に止まる。
+        */}
+        <button
+          type="button"
+          className="desktop-sidebar-close-btn sidebar-action-btn"
+          onClick={onToggleSidebar}
+          aria-label="サイドバーを折りたたむ"
+          title="サイドバーを折りたたむ"
+        >
+          <ChevronLeft size={18} />
         </button>
         {isMobileMenuOpen && (
           <div

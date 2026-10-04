@@ -13,15 +13,31 @@ describe('PrefectureSection', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('count が 1 以上の場合に都道府県リストとタイトルが表示されること', () => {
-    const prefectures = ['東京都', '神奈川県', '埼玉県'];
+  it('47 都道府県を北から南の順に並べ、行った都道府県と未訪問を区別すること', () => {
+    const prefectures = ['埼玉県', '東京都', '神奈川県'];
     render(<PrefectureSection prefectures={prefectures} count={3} />);
 
     expect(screen.getByRole('heading', { name: '都道府県制覇' })).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: '制覇した3都道府県' })).toBeInTheDocument();
+    const list = screen.getByRole('list', { name: '47都道府県のうち3か所を制覇' });
+    const items = Array.from(list.querySelectorAll('li'));
+    expect(items).toHaveLength(47);
+    expect(items[0]).toHaveTextContent('北海道（未訪問）');
+    expect(items[46]).toHaveTextContent('沖縄県（未訪問）');
 
     prefectures.forEach((pref) => {
-      expect(screen.getByText(pref)).toBeInTheDocument();
+      expect(screen.getByText(pref).closest('li')).not.toHaveTextContent('未訪問');
     });
+    expect(screen.getByRole('progressbar', { name: '都道府県の制覇率' })).toHaveAttribute(
+      'aria-valuenow',
+      '3',
+    );
+  });
+
+  it('一覧に無い名前は行ったものとして末尾に残すこと', () => {
+    render(<PrefectureSection prefectures={['東京都', '架空県']} count={2} />);
+
+    const items = Array.from(screen.getByRole('list').querySelectorAll('li'));
+    expect(items).toHaveLength(48);
+    expect(items[47]).toHaveTextContent('架空県');
   });
 });

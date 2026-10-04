@@ -25,7 +25,7 @@ import {
 } from "../../context";
 import { getTagSuggestions, PRESET_TAGS } from "../../utils/visitStats";
 import { GeocodingResult } from "../../utils/geocoding";
-import { getSubmitBlockedReason } from "../../utils/form";
+import { fillFormFromPlace, getSubmitBlockedReason } from "../../utils/form";
 
 export interface VisitFormViewProps {
   form: VisitFormState;
@@ -85,11 +85,7 @@ export function VisitFormView({
     if (onLocationSelect) {
       onLocationSelect(result.lat, result.lng);
     }
-    setForm((prev) => ({
-      ...prev,
-      name: prev.name ? prev.name : result.name,
-      area: prev.area ? prev.area : result.addressText,
-    }));
+    setForm((prev) => fillFormFromPlace(prev, result));
   };
 
   return (

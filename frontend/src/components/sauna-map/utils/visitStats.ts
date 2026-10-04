@@ -1,5 +1,5 @@
 import { SaunaVisit, VisitStats } from "../types";
-import { extractPrefecture } from "./geo";
+import { comparePrefectures, extractPrefecture } from "./geo";
 import { getVisitCount, getVisitHistoryEntries } from "./visitHistory";
 import { isVisited, isWishlist, WISHLIST_LABEL } from "./visitStatus";
 
@@ -64,7 +64,7 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
   }
 
   const avgRating = ratingCount > 0 ? Math.round((ratingSum / ratingCount) * 10) / 10 : 0;
-  const prefectures = Array.from(prefectureSet).sort((a, b) => a.localeCompare(b, "ja"));
+  const prefectures = Array.from(prefectureSet).sort(comparePrefectures);
 
   return {
     total,

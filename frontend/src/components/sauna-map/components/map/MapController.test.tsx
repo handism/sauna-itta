@@ -1,6 +1,6 @@
 import { render, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { MapController } from "./MapController";
+import { MapController, SELECT_ZOOM } from "./MapController";
 import * as reactLeaflet from "react-leaflet";
 import * as motion from "../../utils/motion";
 
@@ -37,20 +37,21 @@ describe("MapController", () => {
     expect(mockMap.flyTo).not.toHaveBeenCalled();
   });
 
-  it("flies to target with zoom 14 when current zoom is less than 14", () => {
+  it("flies to target with SELECT_ZOOM (13) when current zoom is less than it", () => {
     mockMap.getZoom.mockReturnValue(10);
     vi.spyOn(motion, "prefersReducedMotion").mockReturnValue(false);
 
     render(<MapController target={{ lat: 35.0, lng: 139.0 }} />);
 
+    expect(SELECT_ZOOM).toBe(13);
     expect(mockMap.flyTo).toHaveBeenCalledWith(
       [35.0, 139.0],
-      14,
+      13,
       { animate: true, duration: 1.2 }
     );
   });
 
-  it("flies to target with current zoom when current zoom is 14 or greater", () => {
+  it("flies to target with current zoom when already zoomed in further", () => {
     mockMap.getZoom.mockReturnValue(16);
     vi.spyOn(motion, "prefersReducedMotion").mockReturnValue(false);
 
@@ -63,13 +64,26 @@ describe("MapController", () => {
     );
   });
 
-  it("applies correct mobile offset for zoom < 15", () => {
+  it("applies the mobile offset at zoom 13 (twice the zoom 14 offset)", () => {
+    mockMap.getZoom.mockReturnValue(10);
+    vi.spyOn(motion, "prefersReducedMotion").mockReturnValue(false);
+
+    render(<MapController target={{ lat: 35.0, lng: 139.0 }} isMobile={true} />);
+
+    expect(mockMap.flyTo).toHaveBeenCalledWith(
+      [35.0 - 0.009, 139.0],
+      13,
+      { animate: true, duration: 1.2 }
+    );
+  });
+
+  it("applies correct mobile offset for zoom 14", () => {
     mockMap.getZoom.mockReturnValue(14);
     vi.spyOn(motion, "prefersReducedMotion").mockReturnValue(false);
 
     render(<MapController target={{ lat: 35.0, lng: 139.0 }} isMobile={true} />);
 
-    // latOffset for zoom < 15 is 0.0045
+    // latOffset at zoom 14 is 0.0045
     expect(mockMap.flyTo).toHaveBeenCalledWith(
       [35.0 - 0.0045, 139.0],
       14,
@@ -77,15 +91,14 @@ describe("MapController", () => {
     );
   });
 
-  it("applies correct mobile offset for zoom >= 15", () => {
+  it("halves the mobile offset at zoom 15", () => {
     mockMap.getZoom.mockReturnValue(15);
     vi.spyOn(motion, "prefersReducedMotion").mockReturnValue(false);
 
     render(<MapController target={{ lat: 35.0, lng: 139.0 }} isMobile={true} />);
 
-    // latOffset for zoom >= 15 is 0.0025
     expect(mockMap.flyTo).toHaveBeenCalledWith(
-      [35.0 - 0.0025, 139.0],
+      [35.0 - 0.00225, 139.0],
       15,
       { animate: true, duration: 1.2 }
     );

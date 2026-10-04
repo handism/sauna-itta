@@ -73,3 +73,18 @@ export function getSubmitBlockedReason(
   return null;
 }
 
+
+/**
+ * 地点検索の結果からサウナ名・エリアを補う。利用者がすでに入力した値は上書きしない。
+ * 登録フォームの検索欄と、モバイルの場所選択中の検索欄（MobilePinHint）で共有する。
+ */
+export function fillFormFromPlace(
+  form: VisitFormState,
+  place: { name: string; addressText: string },
+): VisitFormState {
+  return {
+    ...form,
+    name: form.name ? form.name : place.name,
+    area: form.area ? form.area : place.addressText,
+  };
+}

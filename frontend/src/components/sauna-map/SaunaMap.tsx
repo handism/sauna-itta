@@ -18,6 +18,7 @@ import {
   useVisitFiltersContext,
   useSaunaEditorState,
   useSaunaEditorActions,
+  useSaunaEditorForm,
   useSaunaMapState,
   useVisitsStatus,
   useVisitsActions,
@@ -26,6 +27,25 @@ import { CurrentLocation } from "./types";
 import { MobilePinHint } from "./components/map/MobilePinHint";
 import { SaunaMapLayer } from "./components/map/SaunaMapLayer";
 import { ApiAccessGate } from "./components/ApiAccessGate";
+import { fillFormFromPlace } from "./utils/form";
+import type { GeocodingResult } from "./utils/geocoding";
+
+/**
+ * モバイルの場所選択中の案内。地点検索で選んだときは、登録フォームの検索欄と同じく
+ * サウナ名・エリアを補ってから場所を確定する（確定するとフォームへ進む）。
+ * 入力中のフォーム値を購読するため、画面全体の親（SaunaMapContent）から切り離している。
+ */
+function MobileLocationPickHint({ onCancel }: { onCancel: () => void }) {
+  const { handleLocationSelect } = useSaunaEditorActions();
+  const { setForm } = useSaunaEditorForm();
+
+  const handleSelectSearchResult = (result: GeocodingResult) => {
+    setForm((prev) => fillFormFromPlace(prev, result));
+    handleLocationSelect(result.lat, result.lng);
+  };
+
+  return <MobilePinHint onCancel={onCancel} onSelectSearchResult={handleSelectSearchResult} />;
+}
 
 function SaunaMapContent() {
   const [currentLocation, setCurrentLocation] = useState<CurrentLocation | null>(null);
@@ -81,7 +101,7 @@ function SaunaMapContent() {
       />
 
       {isMobilePickingLocation && (
-        <MobilePinHint onCancel={handleCancelEditing} />
+        <MobileLocationPickHint onCancel={handleCancelEditing} />
       )}
 
       {/* デスクトップの新規登録は、場所を選ぶまで地図側にも次の手順を出す */}

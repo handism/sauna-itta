@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Pencil, X } from "lucide-react";
-import { getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
+import { getDisplayRating, getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import { RatingStars } from "../common/RatingStars";
 import { RouteLink } from "../common/RouteLink";
@@ -89,7 +89,7 @@ function VisitCardItemComponent({
         </div>
       </div>
       {visit.area && <div className="sauna-card-area">{visit.area}</div>}
-      <RatingStars rating={visit.rating ?? 0} className="sauna-card-rating" showUnrated={!wishlist} />
+      <RatingStars rating={getDisplayRating(visit)} className="sauna-card-rating" showUnrated={!wishlist} />
       <VisitTagList
         tags={getDisplayTags(visit)}
         onSelectTag={(tag) => setFilters((prev) => ({ ...prev, selectedTag: tag }))}
