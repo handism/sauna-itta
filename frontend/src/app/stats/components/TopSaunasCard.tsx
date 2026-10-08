@@ -69,7 +69,7 @@ export function TopSaunasCard({ ranked }: TopSaunasCardProps) {
                       title={`${sauna.name}を地図で見る`}
                       aria-label={`${sauna.name}を地図で見る`}
                     >
-                      <MapPin size={12} /> <span>地図で見る</span>
+                      <MapPin size={12} /> <span className={styles.mapJumpLabel}>地図で見る</span>
                     </Link>
                   </div>
                 </div>

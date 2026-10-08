@@ -121,6 +121,21 @@
 }
 
 /*
+ * 統計画面への入口だけは文字を添える。テーマ・メニュー・折りたたみと同じアイコンだけの
+ * ボタンに並ぶと、別画面へ移る操作だと読み取れない。読み上げは aria-label が担う
+ * （表示の「統計」は aria-label の先頭に含まれる）。
+ */
+.sidebar-action-btn.sidebar-action-btn--labeled {
+  width: auto;
+  padding: 0 0.5rem;
+  gap: 0.25rem;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+/*
  * 主役の操作（新規登録）だけを塗りのボタンにし、テーマ切替やメニューと
  * 同じ重みに並ばないようにする。文字色は .btn-primary と同じく白で固定する。
  * modal.css の .mobile-menu-btn が後から読み込まれるため、クラスを重ねて詳細度を上げる。
@@ -160,9 +175,13 @@
   }
 }
 
+/*
+ * ヘッダーは「タイトル＋操作 5 つ（うち統計は文字付き）」を 420px の面の内側（約 367px）に収める。
+ * 操作を足すときやタイトルを大きくするときは、折りたたみボタンが面の外へはみ出さないか確認すること。
+ */
 .sidebar-header {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   justify-content: space-between;
   align-items: flex-start;
   padding: 1.6rem 1.6rem 1.2rem;
@@ -175,7 +194,7 @@
 
 .sidebar-header-main h1 {
   color: var(--primary);
-  font-size: var(--text-3xl);
+  font-size: var(--text-2xl);
   line-height: 1.2;
   white-space: nowrap;
 }

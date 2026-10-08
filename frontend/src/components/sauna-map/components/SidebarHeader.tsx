@@ -142,12 +142,14 @@ export function SidebarHeaderView({
         <Link
           href="/stats"
           prefetch={false}
-          className="mobile-menu-btn sidebar-action-btn"
+          className="mobile-menu-btn sidebar-action-btn sidebar-action-btn--labeled"
           onClick={onCloseMobileMenu}
           aria-label="統計ダッシュボード"
           title="統計ダッシュボード"
         >
+          {/* 別画面への入口なので、アイコンだけの設定系ボタンと見分けられるよう文字を添える */}
           <BarChart3 size={18} />
+          <span aria-hidden="true">統計</span>
         </Link>
         <button
           type="button"

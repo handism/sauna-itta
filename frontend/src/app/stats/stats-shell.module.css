@@ -42,6 +42,10 @@
   text-transform: uppercase;
 }
 
+.titleBlock {
+  min-width: 0;
+}
+
 .sparkleIcon {
   color: var(--primary);
 }
@@ -58,6 +62,9 @@
   font-size: clamp(1.75rem, 3vw, 2.35rem);
   font-weight: 700;
   letter-spacing: -0.03em;
+  /* 幅が足りないときに「ダッシュボー／ド」のように語の途中で 1 文字だけ折り返さない */
+  word-break: keep-all;
+  text-wrap: balance;
 }
 
 .headerActions {
@@ -155,6 +162,8 @@
   .eyebrow {
     margin-bottom: 0.2rem;
     font-size: var(--text-xs);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
   }
 
   .description h1 {
@@ -177,6 +186,26 @@
     flex-shrink: 0;
     gap: 5px;
     font-size: var(--text-sm);
+    white-space: nowrap;
+  }
+
+  /*
+   * モバイルでは「マップに戻る」をアイコンだけにし、見出しが 1 行に収まる幅を残す
+   * （文字付きだと 390px 幅で見出しが「統計ダッシュボー／ド」と折り返した）。
+   * 文言は読み上げ用に残すため display: none ではなく見た目だけ隠す。
+   */
+  /* 空状態の操作（文言のみ）は文字付きのまま残すため、ヘッダー内に限る */
+  .headerActions .backLink {
+    width: 44px;
+    padding: 0;
+  }
+
+  .backLinkLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
     white-space: nowrap;
   }
 }

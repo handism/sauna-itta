@@ -152,6 +152,15 @@
   --shadow-marker: 0 6px 18px rgba(0, 0, 0, 0.4);
   --shadow-marker-lifted: 0 8px 24px rgba(0, 0, 0, 0.4);
   --shadow-glow: 0 0 20px var(--primary-glow);
+  /*
+   * 地図ピンの上のピル（評価・訪問回数・行きたい）。地図タイルの上に乗るため、
+   * --shadow-marker 系と同じく両テーマ共通にする（テーマで薄めるとタイルに溶ける）。
+   */
+  --marker-pill-bg: rgba(15, 23, 42, 0.92);
+  --marker-pill-border: rgba(255, 255, 255, 0.5);
+  --marker-pill-count-bg: rgba(234, 108, 24, 0.95);
+  --marker-pill-wishlist-bg: rgba(16, 185, 129, 0.95);
+  --marker-pill-wishlist-text: #04241a;
   /* --error は面の色、--error-text は文字色（各テーマでコントラスト比 4.5:1 以上） */
   --error-text: #fca5a5;
 }
@@ -170,8 +179,8 @@
   --accent-water-deep: #0369a1;
   --water-glow: rgba(2, 132, 199, 0.3);
   /*
-   * wishlist 系は両テーマ共通。ライトでは .segmented-btn--wishlist.is-active の
-   * 面としてダーク文字を載せるため（#10b981 上で約 7:1）、ここを濃くすると逆に読めなくなる。
+   * wishlist 系は両テーマ共通。地図の行きたいピン（グラデーションの面）に白い星を載せるため、
+   * 両テーマで同じ明るさに保つ。
    */
   --accent-wishlist: #10b981;
   --accent-wishlist-deep: #34d399;

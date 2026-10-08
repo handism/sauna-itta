@@ -144,6 +144,8 @@
   transform: rotate(45deg);
   display: flex;
   flex-direction: column;
+  /* 既定の stretch だと短いピル（「2回」）が長いピル（「★4.0」）の幅まで伸び、文字が左に寄る */
+  align-items: flex-start;
   gap: 3px;
   pointer-events: none;
   z-index: var(--z-map-overlay);
@@ -163,25 +165,27 @@
   box-shadow: var(--shadow-marker-sm);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--marker-pill-border);
 }
 
+/*
+ * 評価のピルは地図タイルの上に乗るため、ダークの地図に溶けないよう
+ * 枠を星の色ではっきり出す（40% では枠が見えず、星と数字だけが浮いて見えた）。
+ */
 .sauna-marker-pill--rating {
-  background: rgba(30, 30, 30, 0.85);
+  background: var(--marker-pill-bg);
   color: var(--star-color);
-  border-color: color-mix(in srgb, var(--star-color) 40%, transparent);
+  border-color: color-mix(in srgb, var(--star-color) 75%, transparent);
 }
 
 .sauna-marker-pill--count {
-  background: rgba(255, 140, 56, 0.9);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--marker-pill-count-bg);
+  color: var(--text-on-primary);
 }
 
 .sauna-marker-pill--wishlist {
-  background: rgba(16, 185, 129, 0.9);
-  color: #04241a;
-  border-color: rgba(255, 255, 255, 0.5);
+  background: var(--marker-pill-wishlist-bg);
+  color: var(--marker-pill-wishlist-text);
 }
 
 @keyframes badgeFadeIn {
@@ -252,11 +256,29 @@
   pointer-events: auto;
 }
 
+/*
+ * 拡大・縮小は 1 つのピルにつなげ、右上の操作が丸ボタン 4 つの列に見えないようにする。
+ * モバイルでもボタン自体は外さないこと（ピンチだけにすると、指 1 本で縮小する手段が無くなる。
+ * WCAG 2.5.1）。影は各ボタンではなくピル全体に付ける（後ろのボタンの影が前のボタンに落ちるため）。
+ */
 .map-zoom-control .leaflet-control-zoom {
   border: none !important;
   margin: 0 !important;
   display: flex;
-  gap: 0.5rem;
+  gap: 0;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+}
+
+.map-zoom-control .leaflet-control-zoom-in {
+  border-radius: var(--radius-full) 0 0 var(--radius-full) !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+.map-zoom-control .leaflet-control-zoom-out {
+  border-radius: 0 var(--radius-full) var(--radius-full) 0 !important;
+  box-shadow: none !important;
 }
 
 .leaflet-control-zoom-in,

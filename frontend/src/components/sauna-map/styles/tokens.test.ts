@@ -131,11 +131,17 @@ describe("CSS デザイントークンの規約", () => {
      * ライトテーマで意図的に共有するトークン。増やす場合は必ず理由を添えること。
      * --shadow-marker 系: 地図タイル上のマーカー用。弱めるとタイルに溶けて位置が読めない。
      * --error:            面の色として両テーマで成立する（文字色には --error-text を使う）。
+     * --marker-pill-*:    地図ピンの上のピル。--shadow-marker 系と同じくタイル上の視認性を優先する。
      */
     const SHARED_ON_PURPOSE = new Set([
       "--shadow-marker-sm",
       "--shadow-marker",
       "--shadow-marker-lifted",
+      "--marker-pill-bg",
+      "--marker-pill-border",
+      "--marker-pill-count-bg",
+      "--marker-pill-wishlist-bg",
+      "--marker-pill-wishlist-text",
       "--error",
     ]);
 

@@ -14,7 +14,7 @@ export function StatsHeader({ showBackLink = true, theme, onToggleTheme }: Stats
 
   return (
     <header className={styles.description}>
-      <div>
+      <div className={styles.titleBlock}>
         <p className={styles.eyebrow}>
           <Sparkles size={14} className={styles.sparkleIcon} />
           Sauna Itta Analytics
@@ -37,7 +37,7 @@ export function StatsHeader({ showBackLink = true, theme, onToggleTheme }: Stats
           )}
           <Link href="/" className={styles.backLink}>
             <ArrowLeft size={16} />
-            <span>マップに戻る</span>
+            <span className={styles.backLinkLabel}>マップに戻る</span>
           </Link>
         </div>
       )}

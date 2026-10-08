@@ -1071,12 +1071,16 @@
   box-shadow: inset 0 0 0 1px var(--overlay-subtle);
 }
 
+/*
+ * 1 日に 1 回の訪問が大半のため、ほとんどのマスはこの段階になる。35% ではダークの空のマスと
+ * 見分けにくかったため、空のマスとの差を優先して濃くし、2・3 回の段階はその上に詰める。
+ */
 .heatmapLevel1 {
-  background: color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 60%, transparent);
 }
 
 .heatmapLevel2 {
-  background: color-mix(in srgb, var(--primary) 65%, transparent);
+  background: color-mix(in srgb, var(--primary) 80%, transparent);
 }
 
 .heatmapLevel3 {
@@ -1142,6 +1146,25 @@
   .monthVisitRow .mapJumpLink {
     min-width: 44px;
     min-height: 44px;
+  }
+
+  /*
+   * ランキングの「地図で見る」はモバイルではピンのアイコンだけにする。文字付きの枠線ボタンが
+   * 行ごとに並ぶと施設名が「スカイスパYOKOHA…」のように省略される。読み上げは aria-label が担う。
+   */
+  .topSaunaActions .mapJumpLink {
+    justify-content: center;
+    min-width: 44px;
+    padding: 0;
+  }
+
+  .topSaunaActions .mapJumpLabel {
+    display: none;
+  }
+
+  .topSaunaActions .mapJumpLink svg {
+    width: 16px;
+    height: 16px;
   }
 
   .summaryGrid {
