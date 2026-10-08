@@ -7,6 +7,11 @@
   margin: 0 auto;
 }
 
+/* ボタンは既定で書体を継承しないため、見出しの年月や日付がブラウザ既定の書体になる */
+.react-calendar button {
+  font-family: inherit;
+}
+
 .react-calendar {
   width: 100%;
   border: 1px solid var(--color-border);
@@ -53,7 +58,6 @@
   font-size: var(--text-sm);
   text-decoration: none;
   padding: 0.5rem 0;
-  text-transform: uppercase;
 }
 .react-calendar__month-view__weekdays__weekday abbr {
   text-decoration: none;

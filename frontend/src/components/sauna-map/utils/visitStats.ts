@@ -1,6 +1,11 @@
 import { SaunaVisit, VisitStats } from "../types";
 import { comparePrefectures, extractPrefecture } from "./geo";
-import { getVisitCount, getVisitHistoryEntries, syncLatestFromHistory } from "./visitHistory";
+import {
+  FlatVisitHistoryEntry,
+  getVisitCount,
+  getVisitHistoryEntries,
+  syncLatestFromHistory,
+} from "./visitHistory";
 import { isVisited, isWishlist, WISHLIST_LABEL } from "./visitStatus";
 
 /*
@@ -289,4 +294,36 @@ export function filterVisitsByYear(visits: SaunaVisit[], year: string | null): S
     result.push({ ...visit, ...syncLatestFromHistory(entries) });
   }
   return result;
+}
+
+/** 統計画面のカレンダーの横に並べる、ある月の訪問 1 件 */
+export interface MonthVisitEntry {
+  visit: SaunaVisit;
+  /** 訪問日（YYYY-MM-DD） */
+  date: string;
+  rating: number;
+}
+
+/**
+ * 訪問済みの履歴エントリのうち、指定した月（month は 0 始まり）の分を日付の古い順に返す。
+ * 同じ日は施設名の順。施設名などは記録本体（visits）から引き、本体の無いエントリは除く。
+ */
+export function getVisitEntriesInMonth(
+  visits: SaunaVisit[],
+  entries: FlatVisitHistoryEntry[],
+  year: number,
+  month: number,
+): MonthVisitEntry[] {
+  const prefix = `${year}-${String(month + 1).padStart(2, "0")}-`;
+  const byId = new Map(visits.map((visit) => [visit.id, visit]));
+  const result: MonthVisitEntry[] = [];
+  for (const entry of entries) {
+    if (!entry.date.startsWith(prefix)) continue;
+    const visit = byId.get(entry.visitId);
+    if (!visit) continue;
+    result.push({ visit, date: entry.date, rating: entry.rating ?? 0 });
+  }
+  return result.sort(
+    (a, b) => a.date.localeCompare(b.date) || a.visit.name.localeCompare(b.visit.name, "ja"),
+  );
 }

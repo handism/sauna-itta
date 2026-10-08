@@ -404,10 +404,10 @@ describe("getSubmitBlockedReason", () => {
 
   it("returns reason when location is not selected", () => {
     expect(getSubmitBlockedReason(null, "サウナしきじ", false)).toBe(
-      "地図上をクリックして場所を選択してください",
+      "場所が未選択です（地図をクリック、または下の検索で選択）",
     );
     expect(getSubmitBlockedReason(undefined, "サウナしきじ", false)).toBe(
-      "地図上をクリックして場所を選択してください",
+      "場所が未選択です（地図をクリック、または下の検索で選択）",
     );
   });
 

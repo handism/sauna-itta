@@ -75,7 +75,11 @@
   padding: 1.15rem 1.2rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  /*
+   * 値は見出しの直後に置く。space-between で散らすと、補足（.statNote）の無いカードだけ
+   * 値が下端へ寄り、同じ行のカードで数字の高さが揃わない。
+   */
+  justify-content: flex-start;
 }
 
 .statCardHeader {
@@ -116,13 +120,7 @@
   margin-left: 2px;
 }
 
-.statSubText {
-  font-size: var(--text-sm);
-  font-weight: 600;
-  opacity: 0.65;
-}
-
-/* 数値が出せない理由などの補足。カードの下端に小さく添える */
+/* 数値が出せない理由・内訳などの補足。値の下に小さく添える */
 .statNote {
   margin: 0.35rem 0 0;
   font-size: var(--text-xs);
@@ -705,6 +703,115 @@
   box-shadow: none;
 }
 
+/* 一覧に無い名前（表記揺れ等）。地図の形の表示では沖縄の右に流す */
+.prefectureBadgeExtra {
+  grid-row: 12;
+}
+
+/* チップの並びでは「県」まで出す（地図の形の表示ではマスに収まらないため隠す） */
+.prefectureSuffix {
+  display: inline;
+}
+
+/* 地図の形と地方ごとの制覇数。狭い画面では縦に積む */
+.prefectureBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+.regionList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  align-content: start;
+}
+
+.regionRow {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--text-sm);
+}
+
+.regionName {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.regionBar {
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--overlay-subtle);
+  overflow: hidden;
+}
+
+.regionBarFill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--primary) 65%, transparent);
+}
+
+/* 制覇した地方だけ濃い色にして、残っている地方と見分ける */
+.regionBarComplete {
+  background: linear-gradient(90deg, var(--primary), var(--accent-sauna));
+}
+
+.regionCount {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/*
+ * 内容幅の都合による境界。14 列のマスに県名（3 文字）が収まる幅でだけ、日本地図の形に並べる。
+ * 位置は各 li の style（grid-column / grid-row）が持つ。
+ */
+@media (min-width: 1024px) {
+  .prefectureBody {
+    grid-template-columns: minmax(0, 46rem) minmax(14rem, 1fr);
+    align-items: start;
+  }
+
+  .prefectureTiles {
+    display: grid;
+    grid-template-columns: repeat(14, minmax(0, 1fr));
+    grid-auto-rows: 2rem;
+    gap: 4px;
+  }
+
+  .prefectureTiles .prefectureBadge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    padding: 0;
+    border-radius: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* 見た目だけ隠す（読み上げは「神奈川県」のまま） */
+  .prefectureTiles .prefectureSuffix {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .regionList {
+    grid-template-columns: 1fr;
+  }
+}
+
 /*
  * 訪問カレンダーのカード。上に年間ヒートマップをカード幅いっぱいに、下に月のカレンダーを置く。
  * 月のカレンダーだけを中央に置くと、カードの両脇が大きく空く。横並びにするとヒートマップの
@@ -714,6 +821,147 @@
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+/*
+ * ヒートマップの下の段。月のカレンダーと、その月（選んだ日）の訪問の一覧を並べる。
+ * カレンダーだけを中央に置くと両脇が空くうえ、点だけではどこへ行ったのかが分からない。
+ * 狭い画面では縦に積む。
+ */
+.calendarBody {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* 内容幅の都合による境界（カレンダーと一覧がそれぞれ 340px 程度を確保できる幅） */
+@media (min-width: 860px) {
+  .calendarBody {
+    grid-template-columns: minmax(320px, 440px) minmax(0, 1fr);
+  }
+}
+
+.monthVisits {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.monthVisitsHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.monthVisitsHeader h3 {
+  margin: 0;
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.monthVisitsCount {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.monthVisitsBack {
+  align-self: flex-start;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.monthVisitsBack:hover {
+  background: var(--overlay-hover);
+}
+
+.monthVisitsEmpty {
+  margin: 0;
+  padding: 1.5rem 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+/* カレンダー（6 週）と同じくらいの高さを超えたら一覧の中でスクロールする */
+.monthVisitsList {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.25rem 0 0;
+  max-height: 22rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
+}
+
+.monthVisitRow {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.monthVisitRow:last-child {
+  border-bottom: none;
+}
+
+.monthVisitDate {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.monthVisitBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.monthVisitName,
+.monthVisitArea {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.monthVisitName {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.monthVisitArea {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.monthVisitRating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--star-color);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+/* アイコンだけのリンクなので、押せる大きさを確保する */
+.monthVisitRow .mapJumpLink {
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
 }
 
 .heatmap {
@@ -758,8 +1006,15 @@
 
 .heatmapWeekdays {
   display: grid;
-  /* 週の列と同じ高さに引き伸ばされ、7 行を等分してマスの行に揃う */
-  grid-template-rows: 14px repeat(7, 1fr);
+  /*
+   * 週の列と同じ高さに引き伸ばされ、7 行を等分してマスの行に揃う。
+   * contain: size で曜日の文字の高さを表の高さの計算から外す（外さないと 12px の文字の
+   * 行の高さ（約 24px）で表の高さが決まり、正方形のマスがその高さに合わせて列幅より広く
+   * なって隣の週へ重なる）。そのぶん幅は文字 1 つぶんを明示する。
+   */
+  contain: size;
+  width: calc(1em + 0.15rem);
+  grid-template-rows: 14px repeat(7, minmax(0, 1fr));
   gap: 3px;
   padding-right: 0.15rem;
   color: var(--text-muted);
@@ -769,6 +1024,7 @@
 .heatmapWeekdays span {
   display: flex;
   align-items: center;
+  line-height: 1;
 }
 
 .heatmapWeeks {
@@ -780,6 +1036,8 @@
 
 .heatmapWeek {
   display: grid;
+  /* マスの幅を週の列幅に収める（auto の列だとマスの大きさに合わせて広がる） */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 14px;
   grid-auto-rows: auto;
   gap: 3px;
@@ -876,7 +1134,13 @@
   .tagPill,
   .tagCloudToggle,
   .mapJumpLink,
+  .monthVisitsBack,
   .yearFilterBtn {
+    min-height: 44px;
+  }
+
+  .monthVisitRow .mapJumpLink {
+    min-width: 44px;
     min-height: 44px;
   }
 

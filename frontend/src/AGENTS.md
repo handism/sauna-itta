@@ -43,6 +43,11 @@
 - **タグのチップは面と違う色にすること**: `.sauna-tag` は `--glass` のカードの上に乗るため、背景は `--overlay-subtle` ＋ `--glass-border` の枠線にしています。カードと同じ `--glass` に戻すとチップの形が見えず、折り返した行が字下げされた文字列のように見えます。
 - **統計画面の react-calendar**: `calendar.css` の色は react-calendar 用の固定色ではなくアプリのトークン（`--foreground` / `--primary` 等）から取ります。選択中の日はアンバーの面に白文字だとコントラストが足りないため、薄い面＋枠線で示します。
 - **フォント**: `--font-main` は `layout.tsx` の `next/font` (Outfit) が注入する `--font-outfit` を参照します。Outfit はラテン文字だけなので、日本語は後続の各 OS の日本語ゴシック（ヒラギノ／Noto Sans JP／Yu Gothic UI／メイリオ）で表示します。フォールバックから日本語書体を外すと Windows 等で旧来のゴシックに落ちるため削らないこと。日本語 Web フォントを `next/font` で同梱する場合も、サイズとビルド時のネットワーク取得を考慮してください。CSS からの Web フォント `@import` は追加しないでください（PWA のオフライン動作を壊します）。`outfit.variable` のクラスは `body` ではなく `<html>` に付けること（`--font-main` は `:root` で `var(--font-outfit)` を参照するため、`body` に付けると `:root` では未定義になり、`--font-main` ごと無効値になってブラウザ既定の書体へ落ちます。`layout.test.tsx` が検査しています）。地図のポップアップは leaflet.css の `.leaflet-container` の書体・`.leaflet-popup-content p` の余白・`.leaflet-container a` のリンク色が本アプリの CSS より後に読み込まれて勝つため、`map.css` で親クラスを付けて詳細度を上げて上書きしています。ポップアップに共通部品を足したときは、Leaflet 既定が漏れていないか実ブラウザで確認してください。
+- **ヒートマップのマスは列幅に収めること**: `stats.module.css` の `.heatmapWeekdays` は `contain: size` で曜日の文字の高さを表の高さの計算から外し、幅を明示しています。外すと 12px の文字の行の高さ（約 24px）で表の高さが決まり、正方形のマス（`aspect-ratio: 1`）が列幅より広くなって隣の週へ重なります。`.heatmapWeek` の `grid-template-columns: minmax(0, 1fr)` も同じ理由で外さないこと。
+- **react-calendar のボタンは書体を継承させること**: `calendar.css` の `.react-calendar button { font-family: inherit; }` を外すと、見出しの年月や日付がブラウザ既定の書体になります。曜日は日本語ロケールのため `text-transform: uppercase` は付けません。
+- **新規登録のフォーム下端は 1 行にすること**: 削除ボタンの無い新規登録では、`.form-actions` を `:has(> .form-actions-secondary--single)` で 2 列の grid にし、保存とキャンセルを横に並べます（押せない理由は 2 行目に全幅）。縦に積むとボタンだけで約 120px を取り、固定した面が入力欄を覆います。
+- **コンパクト行の操作ボタンの上余白は行の側に持たせること**: `.route-link` / `.revisit-btn` は単独で置くための `margin-top` を持つため、「閉じる」と並ぶ `.sauna-compact-footer-actions` の中では 0 にし、余白は行の `margin-top` にまとめています（戻すと「閉じる」だけが上にずれます）。
+- **タッチ端末のコンパクト行の編集ボタンはアイコンだけにすること**: モバイルでは全行に常に出すため、`.sauna-card-edit-btn.compact-edit-btn` の面と枠を消し（押せる範囲は 44px のまま）、展開している行（`.is-selected`）だけ枠を戻します。詳細度を 2 クラスにしているのは、後から読み込まれる `visit-card.css` の `.sauna-card-edit-btn` に負けないためです。
 
 ## 2. アクセシビリティ ＆ モーション
 - `base.css` のグローバル `:focus-visible` リングを維持してください。`outline: none` を書く際は代替の可視化を必ず用意すること。

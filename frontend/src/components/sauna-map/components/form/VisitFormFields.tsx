@@ -28,6 +28,8 @@ export function FormHeader({
         /*
           新規登録で最初に必要なのは場所の選択なので、補足文ではなく状態表示として目立たせる。
           選択の前後で文言が変わるため、支援技術へも role="status" で伝える。
+          デスクトップでは地図側の案内（MobilePinHint）が「地図をクリック」と指示するため、
+          ここは同じ指示を繰り返さず、未選択という状態と、検索でも選べることを示す。
         */
         <p
           key={attentionKey}
@@ -40,7 +42,7 @@ export function FormHeader({
             </>
           ) : (
             <>
-              <MapPin size={16} aria-hidden="true" /> 地図上をクリックして場所を選択してください
+              <MapPin size={16} aria-hidden="true" /> 場所が未選択です（地図をクリック、または下の検索で選択）
             </>
           )}
         </p>

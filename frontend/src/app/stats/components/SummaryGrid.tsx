@@ -49,13 +49,18 @@ export function SummaryGrid({ stats }: SummaryGridProps) {
       <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-visited">
         <div className={styles.statCardHeader}>
           <CheckCircle size={18} className={styles.statIconSuccess} />
-          {/* 内訳は値の側に「行った / 行きたい」と出すため、見出しは 1 行に収まる短さにする */}
-          <h3 id="stat-visited">施設数</h3>
+          {/*
+            「施設数 97 行った / 2 行きたい」では 97 が何の数かを読み取りにくいため、
+            見出しで行った施設の数だと示し、行きたいの件数は補足に回す。
+          */}
+          <h3 id="stat-visited">行った施設</h3>
         </div>
         <p className={styles.statValue}>
-          {stats.visitedCount} <span className={styles.statUnit}>行った</span>
-          <span className={styles.statSubText}> / {stats.wishlistCount} 行きたい</span>
+          {stats.visitedCount} <span className={styles.statUnit}>施設</span>
         </p>
+        {stats.wishlistCount > 0 && (
+          <p className={styles.statNote}>ほかに行きたい {stats.wishlistCount} 件</p>
+        )}
       </article>
 
       <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-areas">

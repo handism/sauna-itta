@@ -142,7 +142,7 @@ describe("VisitFormView", () => {
     expect(submit).toHaveAttribute("aria-disabled", "true");
     expect(submit).toHaveAttribute("aria-describedby", "submit-blocked-reason");
     const reason = document.getElementById("submit-blocked-reason");
-    expect(reason).toHaveTextContent("地図上をクリックして場所を選択してください");
+    expect(reason).toHaveTextContent("場所が未選択です（地図をクリック、または下の検索で選択）");
     // フォーム先頭の場所の案内と同じ文なので、見た目には出さず読み上げにだけ残す
     expect(reason).toHaveClass("sr-only");
   });
@@ -195,7 +195,7 @@ describe("VisitFormView", () => {
     );
 
     const status = document.querySelector(".location-status");
-    expect(status).toHaveTextContent("地図上をクリックして場所を選択してください");
+    expect(status).toHaveTextContent("場所が未選択です（地図をクリック、または下の検索で選択）");
     expect(status).not.toHaveClass("is-selected");
 
     rerender(<VisitFormView {...defaultProps} editingId={null} />);

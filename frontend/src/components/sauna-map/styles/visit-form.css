@@ -309,6 +309,33 @@ input[type="date"].input {
   grid-template-columns: 1fr;
 }
 
+/*
+ * 新規登録（削除の無いとき）は保存とキャンセルを 1 行に並べる。縦に積むとボタンだけで
+ * 約 120px を取り、下端に固定した面がステータスの切り替えなどの入力欄を覆う。
+ * 押せない理由（.form-hint--blocked）は 2 行目に全幅で出す。
+ */
+.form-actions:has(> .form-actions-secondary--single) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+}
+
+.form-actions:has(> .form-actions-secondary--single) > .form-actions-secondary {
+  grid-row: 1;
+  grid-column: 2;
+  width: auto;
+}
+
+.form-actions:has(> .form-actions-secondary--single) > .form-hint--blocked {
+  grid-row: 2;
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.form-actions-secondary--single .btn {
+  height: 100%;
+}
+
 /* Buttons */
 .btn {
   width: 100%;

@@ -4,8 +4,8 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import L from "leaflet";
 import { EditVisitHandler, SaunaVisit } from "../../types";
 import { getDisplayRating, getVisitCount, isWishlist } from "../../utils";
-import { getSaunaIcon } from "../common/markerIcon";
-import { flameIconSvg } from "../common/iconSvg";
+import { getSaunaIcon, isWishlistIcon } from "../common/markerIcon";
+import { flameIconSvg, starIconSvg } from "../common/iconSvg";
 import { SaunaMarkerPopup } from "./SaunaMarkerPopup";
 import { useImageLightbox } from "../../hooks/useImageLightbox";
 
@@ -22,13 +22,21 @@ interface VisitMarkersProps {
 
 interface MarkerClusterLike {
   getChildCount(): number;
+  getAllChildMarkers?(): L.Marker[];
 }
 
-const clusterIconCache = new Map<number, L.DivIcon>();
+const clusterIconCache = new Map<string, L.DivIcon>();
 
+/**
+ * 行きたい記録もクラスタにまとめ、含むクラスタには星のバッジを付ける。
+ * 行きたいピンをクラスタの外に置くと、同じ地域のクラスタの上に重なって件数が読めなくなる。
+ */
 export const createCustomClusterIcon = (cluster: MarkerClusterLike) => {
   const count = cluster.getChildCount();
-  const cached = clusterIconCache.get(count);
+  const hasWishlist =
+    cluster.getAllChildMarkers?.().some((marker) => isWishlistIcon(marker.options.icon)) ?? false;
+  const cacheKey = `${count}_${hasWishlist ? 1 : 0}`;
+  const cached = clusterIconCache.get(cacheKey);
   if (cached) return cached;
 
   let sizeClass = "sauna-cluster--small";
@@ -38,14 +46,18 @@ export const createCustomClusterIcon = (cluster: MarkerClusterLike) => {
     sizeClass = "sauna-cluster--medium";
   }
 
+  const wishlistBadge = hasWishlist
+    ? `<span class="sauna-cluster-wishlist" title="行きたいを含む">${starIconSvg(10)}</span>`
+    : "";
+
   const icon = L.divIcon({
-    html: `<div class="sauna-cluster ${sizeClass}"><span class="sauna-cluster-icon">${flameIconSvg(16)}</span><span class="sauna-cluster-count">${count}</span></div>`,
+    html: `<div class="sauna-cluster ${sizeClass}"><span class="sauna-cluster-icon">${flameIconSvg(16)}</span><span class="sauna-cluster-count">${count}</span>${wishlistBadge}</div>`,
     className: "custom-cluster-marker",
     iconSize: [42, 42],
     iconAnchor: [21, 21],
   });
 
-  clusterIconCache.set(count, icon);
+  clusterIconCache.set(cacheKey, icon);
   return icon;
 };
 
@@ -108,7 +120,8 @@ function VisitMarkersComponent({
     const len = visits.length;
     for (let i = 0; i < len; i++) {
       const visit = visits[i];
-      if (visit.id === selectedId || visit.id === editingId || isWishlist(visit)) {
+      // 選択中・編集中のピンだけはクラスタに隠さない（行きたいはクラスタのバッジで示す）
+      if (visit.id === selectedId || visit.id === editingId) {
         priority.push(visit);
       } else {
         normal.push(visit);

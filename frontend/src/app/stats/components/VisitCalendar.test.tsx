@@ -25,6 +25,8 @@ describe('VisitCalendar', () => {
         date={today}
         setDate={mockSetDate}
         visitDates={mockVisitDates}
+        visits={[]}
+        entries={[]}
       />
     );
 
@@ -42,6 +44,8 @@ describe('VisitCalendar', () => {
         date={today}
         setDate={mockSetDate}
         visitDates={mockVisitDates}
+        visits={[]}
+        entries={[]}
       />
     );
 
@@ -57,6 +61,8 @@ describe('VisitCalendar', () => {
         date={today}
         setDate={mockSetDate}
         visitDates={mockVisitDates}
+        visits={[]}
+        entries={[]}
       />
     );
 
@@ -79,6 +85,8 @@ describe('VisitCalendar', () => {
         date={today}
         setDate={mockSetDate}
         visitDates={mockVisitDates}
+        visits={[]}
+        entries={[]}
       />
     );
 
@@ -100,6 +108,8 @@ describe('VisitCalendar', () => {
         date={today}
         setDate={mockSetDate}
         visitDates={new Map<string, number>()}
+        visits={[]}
+        entries={[]}
       />
     );
 
@@ -120,6 +130,8 @@ describe('VisitCalendar', () => {
         date={null}
         setDate={mockSetDate}
         visitDates={mockVisitDates}
+        visits={[]}
+        entries={[]}
       />
     );
 
@@ -134,6 +146,8 @@ describe('VisitCalendar', () => {
         date={null}
         setDate={mockSetDate}
         visitDates={mockVisitDates}
+        visits={[]}
+        entries={[]}
         year="2024"
       />
     );
@@ -142,5 +156,42 @@ describe('VisitCalendar', () => {
     expect(screen.getByRole('figure')).toHaveTextContent('2024年は 1 日 訪問');
     // 1 月 10 日で訪問が途切れていても、右端はその年の大みそか
     expect(screen.getByRole('img', { name: /〜2024\/12\/31の/ })).toBeInTheDocument();
+  });
+
+  it('表示している月の訪問を横に並べ、日を選ぶとその日の訪問に絞り込む', () => {
+    const visit = {
+      id: 'v1',
+      name: 'テスト湯',
+      area: '東京都 台東区',
+      lat: 35.7,
+      lng: 139.8,
+      date: '2024-01-10',
+      comment: '',
+      rating: 4,
+      status: 'visited' as const,
+    };
+    const entries = [{ date: '2024-01-10', comment: '', rating: 4, visitId: 'v1', status: 'visited' as const }];
+
+    render(
+      <VisitCalendar
+        theme="dark"
+        date={null}
+        setDate={mockSetDate}
+        visitDates={mockVisitDates}
+        visits={[visit]}
+        entries={entries}
+      />
+    );
+
+    expect(screen.getByRole('heading', { name: '2024年1月の訪問' })).toBeInTheDocument();
+    expect(screen.getByText('テスト湯')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'テスト湯を地図で見る' })).toHaveAttribute('href', '/?id=v1');
+
+    fireEvent.click(screen.getAllByText('16')[0].closest('button')!);
+    expect(screen.getByRole('heading', { name: '1月16日（火）の訪問' })).toBeInTheDocument();
+    expect(screen.getByText('この日の訪問はありません')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '1月の訪問をすべて表示' }));
+    expect(screen.getByText('テスト湯')).toBeInTheDocument();
   });
 });

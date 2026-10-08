@@ -1,7 +1,7 @@
 import { render, screen, cleanup } from '@testing-library/react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import '@testing-library/jest-dom/vitest';
-import MonthlyVisitsChart from './MonthlyVisitsChart';
+import MonthlyVisitsChart, { formatMonthTick, getMonthTicks } from './MonthlyVisitsChart';
 import { FlatVisitHistoryEntry } from '@/components/sauna-map/utils/visitHistory';
 
 vi.mock('recharts', async (importOriginal) => {
@@ -63,5 +63,44 @@ describe('MonthlyVisitsChart', () => {
     render(<MonthlyVisitsChart entries={mockEntries} theme="dark" />);
     const chart = screen.getByRole('img', { name: /月別訪問数の棒グラフ/ });
     expect(chart).toBeInTheDocument();
+  });
+});
+
+describe('getMonthTicks', () => {
+  const monthsFrom = (startYear: number, startMonth: number, count: number) =>
+    Array.from({ length: count }, (_, i) => {
+      const d = new Date(startYear, startMonth - 1 + i, 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    });
+
+  it('6 か月以内は毎月に目盛りを付ける', () => {
+    expect(getMonthTicks(monthsFrom(2025, 3, 4))).toEqual(['2025-03', '2025-04', '2025-05', '2025-06']);
+  });
+
+  it('1 年半ほどなら 1・4・7・10 月の 3 か月おきに揃える', () => {
+    expect(getMonthTicks(monthsFrom(2024, 3, 18))).toEqual([
+      '2024-04',
+      '2024-07',
+      '2024-10',
+      '2025-01',
+      '2025-04',
+      '2025-07',
+    ]);
+  });
+
+  it('長い期間は 1 月だけにする', () => {
+    expect(getMonthTicks(monthsFrom(2018, 5, 80))).toEqual([
+      '2019-01',
+      '2020-01',
+      '2021-01',
+      '2022-01',
+      '2023-01',
+      '2024-01',
+    ]);
+  });
+
+  it('目盛りは「3月」の形で出す', () => {
+    expect(formatMonthTick('2024-03')).toBe('3月');
+    expect(formatMonthTick('2024-12')).toBe('12月');
   });
 });

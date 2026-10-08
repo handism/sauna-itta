@@ -127,6 +127,8 @@ export default function StatsPage() {
                 date={date}
                 setDate={setDate}
                 visitDates={visitDates}
+                visits={visits}
+                entries={visitedEntries}
                 year={year}
               />
             </div>

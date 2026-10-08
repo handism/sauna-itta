@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { comparePrefectures, extractPrefecture, getDirectionsUrl, isInBounds, PREFECTURES } from "./geo";
+import {
+  comparePrefectures,
+  extractPrefecture,
+  getDirectionsUrl,
+  isInBounds,
+  PREFECTURE_REGIONS,
+  PREFECTURE_TILES,
+  PREFECTURES,
+  splitPrefectureSuffix,
+} from "./geo";
 import { normalizeVisits } from "./visitHistory";
 import { SaunaVisit } from "../types";
 
@@ -296,5 +305,30 @@ describe("PREFECTURES / comparePrefectures", () => {
 
   it("一覧に無い名前は末尾に置く", () => {
     expect(["架空県", "大阪府"].sort(comparePrefectures)).toEqual(["大阪府", "架空県"]);
+  });
+});
+
+describe("PREFECTURE_TILES / PREFECTURE_REGIONS", () => {
+  it("47 都道府県すべてに、重ならない位置を持たせる", () => {
+    const positions = PREFECTURES.map((pref) => {
+      const tile = PREFECTURE_TILES[pref];
+      return `${tile.col},${tile.row}`;
+    });
+    expect(new Set(positions).size).toBe(47);
+  });
+
+  it("地方区分は 47 都道府県をちょうど 1 回ずつ含む", () => {
+    const all = PREFECTURE_REGIONS.flatMap((region) => region.prefectures);
+    expect(all).toHaveLength(47);
+    expect(new Set(all)).toEqual(new Set(PREFECTURES));
+  });
+});
+
+describe("splitPrefectureSuffix", () => {
+  it("県・府・都を接尾辞として分け、北海道はそのまま返す", () => {
+    expect(splitPrefectureSuffix("神奈川県")).toEqual({ short: "神奈川", suffix: "県" });
+    expect(splitPrefectureSuffix("京都府")).toEqual({ short: "京都", suffix: "府" });
+    expect(splitPrefectureSuffix("東京都")).toEqual({ short: "東京", suffix: "都" });
+    expect(splitPrefectureSuffix("北海道")).toEqual({ short: "北海道", suffix: "" });
   });
 });

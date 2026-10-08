@@ -16,6 +16,22 @@ import { FlatVisitHistoryEntry, getMonthlyVisitCounts } from "@/components/sauna
 import { ChartTheme, getChartColors, getTooltipStyle } from "./chartTheme";
 import { ChartEmptyState } from "./ChartEmptyState";
 
+/**
+ * 横軸に目盛りを付ける月（"YYYY-MM"）。Recharts の自動の間引きは幅だけで決めるため、
+ * 「2024-03, 2024-06, 2024-09, 2024-11」のように間隔が不揃いになる。
+ * 月の数に応じて 1・2・3・6・12 か月おきの刻みを選び、1 月を起点にした月（3 か月おきなら 1・4・7・10 月）に揃える。
+ */
+export function getMonthTicks(months: string[]): string[] {
+  const count = months.length;
+  const step = count <= 6 ? 1 : count <= 12 ? 2 : count <= 36 ? 3 : count <= 72 ? 6 : 12;
+  return months.filter((month) => (Number(month.slice(5, 7)) - 1) % step === 0);
+}
+
+/** 目盛りは「3月」の形にする。年は年の境目の縦線のラベルが示す */
+export function formatMonthTick(month: string): string {
+  return `${Number(month.slice(5, 7))}月`;
+}
+
 interface MonthlyVisitsChartProps {
   /** 訪問済みの履歴エントリ。平坦化と status の絞り込みは useStatsData で済ませてある */
   entries: FlatVisitHistoryEntry[];
@@ -28,6 +44,7 @@ export default function MonthlyVisitsChart({
 }: MonthlyVisitsChartProps) {
   // 訪問の無い月も 0 件で埋める（飛び飛びの月を等間隔に並べると空白期間が読めない）
   const data = useMemo(() => getMonthlyVisitCounts(entries), [entries]);
+  const ticks = useMemo(() => getMonthTicks(data.map((d) => d.month)), [data]);
 
   const yearBoundaries = useMemo(() => {
     return data.reduce<{ month: string; year: string }[]>((acc, d) => {
@@ -83,6 +100,9 @@ export default function MonthlyVisitsChart({
             />
             <XAxis
               dataKey="month"
+              ticks={ticks}
+              interval={0}
+              tickFormatter={formatMonthTick}
               tick={{ fill: tickColor, fontSize: 11 }}
               axisLine={{ stroke: gridColor }}
               tickLine={false}
@@ -96,6 +116,9 @@ export default function MonthlyVisitsChart({
             <Tooltip
               cursor={{ fill: cursorFill }}
               contentStyle={getTooltipStyle(theme)}
+              labelFormatter={(label) =>
+                typeof label === "string" ? `${label.slice(0, 4)}年${formatMonthTick(label)}` : label
+              }
               formatter={(value) => [`${value ?? 0} 回`, "訪問数"] as const}
             />
             <Bar

@@ -309,7 +309,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-top: 0.2rem;
+  margin-top: 0.7rem;
+}
+
+/*
+ * 経路リンクと「また行った」は単独で置くときのために上の余白を持つが、この行では
+ * 「閉じる」だけが余白を持たず上にずれて見えるため、余白は行の側（margin-top）にまとめる。
+ */
+.sauna-compact-footer-actions > .route-link,
+.sauna-compact-footer-actions > .revisit-btn {
+  margin-top: 0;
 }
 
 /* 経路リンクと「また行った」は左に寄せ、「閉じる」だけを右端に置く */
@@ -901,9 +910,28 @@
     min-height: 44px;
   }
 
+  /*
+   * タッチ端末では全行に常に出すため、枠と面を消してアイコンだけにする（押せる範囲は 44px のまま）。
+   * 枠付きの 44px のボタンが行ごとに並ぶと、一覧の右側がボタンの列になって星や施設名より目立つ。
+   * 展開している行では編集の対象がはっきりしているので、枠を戻して押せることを示す。
+   * 面と枠の指定は後から読み込まれる visit-card.css の .sauna-card-edit-btn に負けないよう、
+   * 2 つのクラスで詳細度を上げる。
+   */
   .compact-edit-btn {
     min-width: 44px;
     min-height: 44px;
+  }
+
+  .sauna-card-edit-btn.compact-edit-btn {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-muted);
+  }
+
+  .sauna-compact-item.is-selected .sauna-card-edit-btn.compact-edit-btn {
+    background: var(--overlay-subtle);
+    border-color: var(--glass-border);
+    color: var(--foreground);
   }
 
   /* 32px 固定の指定を上書きするため !important 側に合わせる */

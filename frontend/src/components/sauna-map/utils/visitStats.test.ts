@@ -12,7 +12,9 @@ import {
   PRESET_TAGS,
   getVisitYears,
   filterVisitsByYear,
+  getVisitEntriesInMonth,
 } from "./visitStats";
+import { flattenVisitHistory } from "./visitHistory";
 import { SaunaVisit } from "../types";
 
 describe("calculateStats", () => {
@@ -473,5 +475,48 @@ describe("getVisitYears / filterVisitsByYear", () => {
     const legacy = makeVisit({ id: "d", date: "2026-04-01", visitCount: 10 });
     const [filtered] = filterVisitsByYear([legacy], "2026");
     expect(filtered.visitCount).toBe(1);
+  });
+});
+
+describe("getVisitEntriesInMonth", () => {
+  const makeVisit = (overrides: Partial<SaunaVisit> & { id: string }): SaunaVisit => ({
+    name: overrides.id,
+    lat: 35.68,
+    lng: 139.76,
+    date: "2025-08-01",
+    comment: "",
+    rating: 0,
+    status: "visited",
+    ...overrides,
+  });
+
+  const repeat = makeVisit({
+    id: "b-sauna",
+    history: [
+      { date: "2025-07-30", comment: "", rating: 3 },
+      { date: "2025-08-20", comment: "", rating: 5 },
+    ],
+    date: "2025-08-20",
+    rating: 5,
+  });
+  const sameDay = makeVisit({ id: "a-sauna", date: "2025-08-20", rating: 4 });
+  const early = makeVisit({ id: "c-sauna", date: "2025-08-03", rating: 2 });
+
+  it("その月の訪問だけを日付順（同じ日は施設名順）に、その回の評価付きで返す", () => {
+    const visits = [repeat, sameDay, early];
+    const entries = flattenVisitHistory(visits, "visited");
+
+    const result = getVisitEntriesInMonth(visits, entries, 2025, 7);
+
+    expect(result.map((e) => [e.date, e.visit.id, e.rating])).toEqual([
+      ["2025-08-03", "c-sauna", 2],
+      ["2025-08-20", "a-sauna", 4],
+      ["2025-08-20", "b-sauna", 5],
+    ]);
+  });
+
+  it("訪問の無い月は空配列を返す", () => {
+    const visits = [repeat];
+    expect(getVisitEntriesInMonth(visits, flattenVisitHistory(visits, "visited"), 2025, 0)).toEqual([]);
   });
 });

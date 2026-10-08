@@ -26,15 +26,16 @@ describe("SummaryGrid", () => {
   it("renders correctly with full stats", () => {
     render(<SummaryGrid stats={mockStats} />);
 
-    // 先頭は延べ訪問回数。登録施設数は「行った / 行きたい」と重なるため出さない
+    // 先頭は延べ訪問回数。登録施設数は「行った施設＋行きたい」と重なるため出さない
     const totalArticle = screen.getByRole("listitem", { name: "延べ訪問回数" });
     expect(totalArticle).toHaveTextContent("15 回");
     expect(screen.queryByText("登録サウナ総数")).toBeNull();
 
     // Check visited / wishlist
-    const visitedArticle = screen.getByRole("listitem", { name: "施設数" });
-    expect(visitedArticle).toHaveTextContent("6");
-    expect(visitedArticle).toHaveTextContent("/ 4 行きたい");
+    // 主の値は行った施設の数で、行きたいの件数は補足に回す
+    const visitedArticle = screen.getByRole("listitem", { name: "行った施設" });
+    expect(visitedArticle).toHaveTextContent("6 施設");
+    expect(visitedArticle).toHaveTextContent("ほかに行きたい 4 件");
 
     // Check areas
     const areasArticle = screen.getByRole("listitem", { name: "訪問エリア数" });
@@ -77,9 +78,10 @@ describe("SummaryGrid", () => {
     const totalArticle = screen.getByRole("listitem", { name: "延べ訪問回数" });
     expect(totalArticle).toHaveTextContent("0 回");
 
-    const visitedArticle = screen.getByRole("listitem", { name: "施設数" });
-    expect(visitedArticle).toHaveTextContent("0");
-    expect(visitedArticle).toHaveTextContent("/ 0 行きたい");
+    // 行きたいが 0 件のときは補足を出さない
+    const visitedArticle = screen.getByRole("listitem", { name: "行った施設" });
+    expect(visitedArticle).toHaveTextContent("0 施設");
+    expect(visitedArticle).not.toHaveTextContent("行きたい");
 
     const areasArticle = screen.getByRole("listitem", { name: "訪問エリア数" });
     expect(areasArticle).toHaveTextContent("0");

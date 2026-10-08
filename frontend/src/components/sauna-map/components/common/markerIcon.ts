@@ -2,6 +2,16 @@ import L from "leaflet";
 import { flameIconSvg, starIconSvg } from "./iconSvg";
 
 const iconCache = new Map<string, L.DivIcon>();
+/** 行きたいピンのアイコン。クラスタが行きたい記録を含むかの判定に使う */
+const wishlistIcons = new WeakSet<L.Icon | L.DivIcon>();
+
+/**
+ * マーカーのアイコンが行きたいピンかどうか。
+ * クラスタのアイコンは子のマーカー（L.Marker）しか受け取れないため、記録ではなくアイコンから判定する。
+ */
+export function isWishlistIcon(icon: L.Icon | L.DivIcon | undefined): boolean {
+  return icon ? wishlistIcons.has(icon) : false;
+}
 
 /**
  * この回数以上行った施設のピンを一回り大きくし、金の縁取りを付ける。
@@ -84,5 +94,6 @@ export function getSaunaIcon(options: SaunaIconOptions = {}): L.DivIcon {
   });
 
   iconCache.set(key, icon);
+  if (wishlist) wishlistIcons.add(icon);
   return icon;
 }

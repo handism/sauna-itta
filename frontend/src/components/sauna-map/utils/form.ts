@@ -91,7 +91,7 @@ export function getSubmitBlockedReason(
   imageUploading: boolean,
 ): string | null {
   if (!selectedLocation) {
-    return "地図上をクリックして場所を選択してください";
+    return "場所が未選択です（地図をクリック、または下の検索で選択）";
   }
   if (!name || !name.trim()) {
     return "サウナ名を入力してください";
