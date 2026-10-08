@@ -1,6 +1,6 @@
 import { SaunaVisit, VisitStats } from "../types";
 import { comparePrefectures, extractPrefecture } from "./geo";
-import { getVisitCount, getVisitHistoryEntries } from "./visitHistory";
+import { getVisitCount, getVisitHistoryEntries, syncLatestFromHistory } from "./visitHistory";
 import { isVisited, isWishlist, WISHLIST_LABEL } from "./visitStatus";
 
 /*
@@ -250,6 +250,43 @@ export function getMonthlyVisitCounts(entries: { date: string }[]): MonthlyVisit
       month = 1;
       year += 1;
     }
+  }
+  return result;
+}
+
+/** 行った記録の訪問がある年（"2026" の形）を新しい順に返す。統計ページの期間の切り替えに使う。 */
+export function getVisitYears(visits: SaunaVisit[]): string[] {
+  const years = new Set<string>();
+  for (const visit of visits) {
+    if (!isVisited(visit)) continue;
+    for (const entry of getVisitHistoryEntries(visit)) {
+      const year = entry.date.slice(0, 4);
+      if (/^\d{4}$/.test(year)) years.add(year);
+    }
+  }
+  return [...years].sort((a, b) => b.localeCompare(a));
+}
+
+/**
+ * 統計ページの集計対象を年で絞り込む。`year` が null なら全期間（そのまま返す）。
+ *
+ * - 行った記録は、その年の履歴だけを残した記録に作り直す（その年に行っていなければ除く）。
+ *   本体の date / rating などは `syncLatestFromHistory()` で残した履歴の末尾から写すため、
+ *   サマリー・ランキング・グラフ・カレンダーがすべて同じ年の訪問だけを見る。
+ *   旧形式の `visitCount`（履歴より多い回数）はどの年の訪問か分からないため数えない。
+ * - 行きたい記録は期間に関係しない（行った日が無い）ため、そのまま残す。
+ */
+export function filterVisitsByYear(visits: SaunaVisit[], year: string | null): SaunaVisit[] {
+  if (year === null) return visits;
+  const result: SaunaVisit[] = [];
+  for (const visit of visits) {
+    if (!isVisited(visit)) {
+      result.push(visit);
+      continue;
+    }
+    const entries = getVisitHistoryEntries(visit).filter((entry) => entry.date.startsWith(year));
+    if (entries.length === 0) continue;
+    result.push({ ...visit, ...syncLatestFromHistory(entries) });
   }
   return result;
 }

@@ -309,7 +309,7 @@
 }
 
 .confirm-message {
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   opacity: 0.85;
   margin: 0 0 1rem;
 }
@@ -334,7 +334,7 @@
   -webkit-backdrop-filter: var(--backdrop-blur);
   box-shadow: var(--shadow-lg), 0 0 20px var(--primary-glow);
   padding: 0.8rem 0.9rem 0.8rem 1rem;
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   display: flex;
   align-items: center;
   justify-content: space-between;

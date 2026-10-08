@@ -120,6 +120,41 @@ describe("useStatsData", () => {
     ).toBe(false);
   });
 
+  it("年を選ぶと、その年の訪問だけで集計し直すこと", async () => {
+    const multiYear: SaunaVisit[] = [
+      ...mockVisits,
+      {
+        id: "visited-old",
+        name: "かるまる",
+        lat: 35.73,
+        lng: 139.71,
+        date: "2025-11-20",
+        comment: "",
+        rating: 4,
+        status: "visited",
+      },
+    ];
+    vi.mocked(getVisitRepository).mockReturnValueOnce({
+      dataSource: "local",
+      getSession: vi.fn().mockResolvedValue({ authenticated: true, user: null, csrfToken: null }),
+      list: vi.fn().mockResolvedValue(multiYear),
+    } as unknown as ReturnType<typeof getVisitRepository>);
+
+    const { result } = await renderMounted();
+
+    expect(result.current.years).toEqual(["2026", "2025"]);
+    expect(result.current.year).toBeNull();
+    expect(result.current.stats.totalVisits).toBe(4);
+
+    act(() => result.current.setYear("2025"));
+
+    expect(result.current.year).toBe("2025");
+    expect(result.current.stats.totalVisits).toBe(1);
+    expect(result.current.visitedEntries.map((e) => e.visitId)).toEqual(["visited-old"]);
+    // 行きたい記録は期間に関係しないため残る
+    expect(result.current.stats.wishlistCount).toBe(1);
+  });
+
   it("visitedEntries が同一参照で安定し、再レンダリングで再計算されないこと", async () => {
     const { result, rerender } = await renderMounted();
 

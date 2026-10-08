@@ -126,5 +126,21 @@ describe('VisitCalendar', () => {
     const calendarElement = container.querySelector('.react-calendar');
     expect(calendarElement).toBeInTheDocument();
   });
-});
 
+  it('年を選んでいるときは、その年の 1〜12 月をヒートマップに並べ、見出しも年にする', () => {
+    render(
+      <VisitCalendar
+        theme="dark"
+        date={null}
+        setDate={mockSetDate}
+        visitDates={mockVisitDates}
+        year="2024"
+      />
+    );
+
+    expect(screen.getByText('2024年のペースと、月ごとの訪問日')).toBeInTheDocument();
+    expect(screen.getByRole('figure')).toHaveTextContent('2024年は 1 日 訪問');
+    // 1 月 10 日で訪問が途切れていても、右端はその年の大みそか
+    expect(screen.getByRole('img', { name: /〜2024\/12\/31の/ })).toBeInTheDocument();
+  });
+});

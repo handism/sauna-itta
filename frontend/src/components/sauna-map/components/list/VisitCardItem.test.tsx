@@ -362,6 +362,18 @@ describe("再訪の記録（また行った／行った！）", () => {
     onOpenImage: vi.fn(),
   };
 
+  it("カードは選択中だけ経路と「また行った」を出す", () => {
+    const { rerender } = render(
+      <VisitCardItem {...itemProps} visit={mockVisit} isSelected={false} onEdit={vi.fn()} />
+    );
+    expect(screen.queryByRole("button", { name: /また行った記録をつける/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: /ここへ行く/ })).toBeNull();
+
+    rerender(<VisitCardItem {...itemProps} visit={mockVisit} isSelected onEdit={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "天空サウナにまた行った記録をつける" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /ここへ行く/ })).toBeInTheDocument();
+  });
+
   it("カードの「また行った」は再訪として編集を開き、カードの選択を伝播させない", () => {
     const handleEdit = vi.fn();
     const handleSelect = vi.fn();
@@ -369,7 +381,7 @@ describe("再訪の記録（また行った／行った！）", () => {
       <VisitCardItem
         {...itemProps}
         visit={mockVisit}
-        isSelected={false}
+        isSelected
         onSelectVisit={handleSelect}
         onEdit={handleEdit}
       />
@@ -385,7 +397,7 @@ describe("再訪の記録（また行った／行った！）", () => {
     const wishlistVisit = { ...mockVisit, status: "wishlist" as const };
     const handleEdit = vi.fn();
     render(
-      <VisitCardItem {...itemProps} visit={wishlistVisit} isSelected={false} onEdit={handleEdit} />
+      <VisitCardItem {...itemProps} visit={wishlistVisit} isSelected onEdit={handleEdit} />
     );
 
     const button = screen.getByRole("button", { name: "天空サウナに行った記録をつける" });

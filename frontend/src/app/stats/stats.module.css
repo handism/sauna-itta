@@ -16,6 +16,46 @@
  * カードは 6 枚なので、列数は 6 の約数（6 / 3 / 2）に固定する。
  * auto-fit にすると 5 列になる幅で 1 枚だけが次の行に取り残される。
  */
+/*
+ * 集計する期間の切り替え。年が増えても折り返さず横に流し、スクロールバーは隠さない
+ * （横に続きがあることが分からなくなるため。frontend/src/AGENTS.md の「横スクロールを隠さないこと」）。
+ * 選んでいる年はアンバーの塗りに白文字だとコントラストが足りないため、薄い面＋枠線で示す。
+ */
+.yearFilter {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 0.25rem;
+}
+
+.yearFilterBtn {
+  flex-shrink: 0;
+  padding: 0.4rem 1rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--glass-border);
+  background: var(--overlay-subtle);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.yearFilterBtn:hover {
+  background: var(--overlay-hover);
+  color: var(--foreground);
+}
+
+.yearFilterBtn[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  border-color: var(--primary);
+  color: var(--foreground);
+}
+
 .summaryGrid {
   width: 100%;
   display: grid;
@@ -64,14 +104,14 @@
 .statValue {
   margin: 0;
   font-size: var(--text-3xl);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
 .statUnit {
   font-size: var(--text-sm);
-  font-weight: 500;
+  font-weight: 600;
   opacity: 0.7;
   margin-left: 2px;
 }
@@ -85,7 +125,7 @@
 /* 数値が出せない理由などの補足。カードの下端に小さく添える */
 .statNote {
   margin: 0.35rem 0 0;
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--text-muted);
 }
@@ -138,18 +178,13 @@
   border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
   color: var(--primary);
   font-size: var(--text-xs);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0.06em;
 }
 
 .flameIcon {
+  /* 静的な情報カードのアイコンなので動かさない（脈打たせると数値より目を引く） */
   color: var(--primary);
-  animation: pulseFlame 2s ease-in-out infinite;
-}
-
-@keyframes pulseFlame {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.15); opacity: 0.85; }
 }
 
 .homeSaunaCount {
@@ -196,7 +231,7 @@
 
 .homeSaunaTitle {
   font-size: var(--text-3xl);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   margin: 0 0 0.4rem;
 }
@@ -335,7 +370,7 @@
   align-items: center;
   justify-content: center;
   font-size: var(--text-md);
-  font-weight: 800;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -374,7 +409,7 @@
 }
 
 .topSaunaName {
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -556,7 +591,7 @@
 }
 
 .tagPillRare {
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-muted);
 }
 
@@ -582,7 +617,7 @@
 }
 
 .tagPillCount {
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   padding: 1px 6px;
   border-radius: 999px;
   background: var(--overlay-hover);
@@ -622,7 +657,7 @@
 .prefectureProgressLabel strong {
   color: var(--foreground);
   font-size: var(--text-xl);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .prefectureProgress {
@@ -665,7 +700,7 @@
 .prefectureBadgeUnvisited {
   background: transparent;
   color: var(--text-muted);
-  font-weight: 500;
+  font-weight: 600;
   border: 1px dashed var(--glass-border);
   box-shadow: none;
 }
@@ -695,7 +730,7 @@
 .heatmapCaption strong {
   color: var(--foreground);
   font-size: var(--text-xl);
-  font-weight: 800;
+  font-weight: 700;
 }
 
 /*
@@ -728,7 +763,7 @@
   gap: 3px;
   padding-right: 0.15rem;
   color: var(--text-muted);
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
 }
 
 .heatmapWeekdays span {
@@ -756,7 +791,7 @@
   overflow: visible;
   white-space: nowrap;
   color: var(--text-muted);
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
   line-height: 14px;
 }
 
@@ -797,7 +832,7 @@
   gap: 3px;
   margin-top: 0.4rem;
   color: var(--text-muted);
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
 }
 
 .heatmapLegend span:first-child {
@@ -840,7 +875,8 @@
   /* タップ操作のターゲットサイズを確保する */
   .tagPill,
   .tagCloudToggle,
-  .mapJumpLink {
+  .mapJumpLink,
+  .yearFilterBtn {
     min-height: 44px;
   }
 

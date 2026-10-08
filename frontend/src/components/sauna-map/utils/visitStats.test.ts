@@ -10,6 +10,8 @@ import {
   sortRankedByRating,
   getTagSuggestions,
   PRESET_TAGS,
+  getVisitYears,
+  filterVisitsByYear,
 } from "./visitStats";
 import { SaunaVisit } from "../types";
 
@@ -409,5 +411,67 @@ describe("getTagSuggestions", () => {
     const result = getTagSuggestions(visits, 4);
 
     expect(result).toEqual(["A", "B", "C", PRESET_TAGS[0]]);
+  });
+});
+
+describe("getVisitYears / filterVisitsByYear", () => {
+  const makeVisit = (overrides: Partial<SaunaVisit> & { id: string }): SaunaVisit => ({
+    name: overrides.id,
+    lat: 35.68,
+    lng: 139.76,
+    date: "2026-01-01",
+    comment: "",
+    rating: 0,
+    status: "visited",
+    ...overrides,
+  });
+
+  const twoYears = makeVisit({
+    id: "a",
+    history: [
+      { date: "2025-03-01", comment: "初回", rating: 3 },
+      { date: "2026-02-01", comment: "2回目", rating: 4 },
+      { date: "2026-05-01", comment: "3回目", rating: 5 },
+    ],
+    date: "2026-05-01",
+    rating: 5,
+    visitCount: 3,
+  });
+  const onlyOld = makeVisit({ id: "b", date: "2024-08-10", rating: 2 });
+  const wishlist = makeVisit({ id: "c", status: "wishlist", date: "2023-01-01" });
+
+  it("行った記録の訪問がある年を新しい順に返し、行きたい記録の日付は数えない", () => {
+    expect(getVisitYears([twoYears, onlyOld, wishlist])).toEqual(["2026", "2025", "2024"]);
+  });
+
+  it("null なら全期間としてそのまま返す", () => {
+    const visits = [twoYears, onlyOld, wishlist];
+    expect(filterVisitsByYear(visits, null)).toBe(visits);
+  });
+
+  it("行った記録はその年の履歴だけに絞り、本体の値と回数も揃える", () => {
+    const [a] = filterVisitsByYear([twoYears], "2026");
+
+    expect(a.history?.map((entry) => entry.date)).toEqual(["2026-02-01", "2026-05-01"]);
+    expect(a.visitCount).toBe(2);
+    expect(a.date).toBe("2026-05-01");
+    expect(a.rating).toBe(5);
+
+    const [old] = filterVisitsByYear([twoYears], "2025");
+    // 最新の写しも、その年の最後の訪問から取る
+    expect(old.date).toBe("2025-03-01");
+    expect(old.comment).toBe("初回");
+    expect(old.visitCount).toBe(1);
+  });
+
+  it("その年に行っていない記録は除き、行きたい記録は残す", () => {
+    const ids = filterVisitsByYear([twoYears, onlyOld, wishlist], "2025").map((visit) => visit.id);
+    expect(ids).toEqual(["a", "c"]);
+  });
+
+  it("旧形式の訪問回数（履歴より多い回数）は年で絞ると数えない", () => {
+    const legacy = makeVisit({ id: "d", date: "2026-04-01", visitCount: 10 });
+    const [filtered] = filterVisitsByYear([legacy], "2026");
+    expect(filtered.visitCount).toBe(1);
   });
 });

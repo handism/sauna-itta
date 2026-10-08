@@ -13,6 +13,7 @@ import { HomeSaunaCard } from './components/HomeSaunaCard';
 import { TopSaunasCard } from './components/TopSaunasCard';
 import { TagCloudCard } from './components/TagCloudCard';
 import { StatsEmptyState } from './components/StatsEmptyState';
+import { YearFilter } from './components/YearFilter';
 import { ApiAccessGate } from '@/components/sauna-map/components/ApiAccessGate';
 import { cx } from '@/components/sauna-map/utils';
 
@@ -34,6 +35,9 @@ const VisitCalendar = dynamic(() => import('./components/VisitCalendar').then((m
 export default function StatsPage() {
   const {
     visits,
+    years,
+    year,
+    setYear,
     theme,
     toggleTheme,
     date,
@@ -86,6 +90,7 @@ export default function StatsPage() {
     <div className={cx(shellStyles.page, theme === 'light' && 'light-theme')}>
       <main className={shellStyles.main}>
         <StatsHeader theme={theme} onToggleTheme={toggleTheme} />
+        <YearFilter years={years} year={year} onChange={setYear} />
 
         {/*
           記録が 0 件のときは、0 が並ぶサマリーや空のグラフを出さずに
@@ -110,13 +115,29 @@ export default function StatsPage() {
             {/* 1. Key Statistics Summary */}
             <SummaryGrid stats={stats} />
 
-            {/* 2. Featured Home Sauna & Top 5 Ranking Section */}
+            {/*
+              2. 訪問カレンダー（年間ヒートマップ）。いつ・どれくらいの頻度で行ったかは、
+              ページの最下部まで読まないと分からない位置だと見られないため、サマリーの直後に置く。
+              年を切り替えたときは、最後に訪問した月を開き直すよう作り直す。
+            */}
+            <div className={styles.sectionWrap}>
+              <VisitCalendar
+                key={year ?? "all"}
+                theme={theme}
+                date={date}
+                setDate={setDate}
+                visitDates={visitDates}
+                year={year}
+              />
+            </div>
+
+            {/* 3. Featured Home Sauna & Top 5 Ranking Section */}
             <div className={styles.featuredGrid}>
               <HomeSaunaCard ranked={rankedVisits} />
               <TopSaunasCard ranked={rankedVisits} />
             </div>
 
-            {/* 3. Charts Section */}
+            {/* 4. Charts Section */}
             <div className={styles.chartsWrap}>
               <div className={styles.chartGrid}>
                 <section className={`${styles.glassCard} ${styles.chartCard}`}>
@@ -141,27 +162,17 @@ export default function StatsPage() {
               </div>
             </div>
 
-            {/* 4. Tags & Features Cloud */}
+            {/* 5. Tags & Features Cloud */}
             <div className={styles.sectionWrap}>
               <TagCloudCard visits={visits} />
             </div>
 
-            {/* 5. Prefecture Conquest（0 件のとき中身は描画されないため、余白ごと出さない） */}
+            {/* 6. Prefecture Conquest（0 件のとき中身は描画されないため、余白ごと出さない） */}
             {stats.prefectureCount > 0 && (
               <div className={styles.sectionWrap}>
                 <PrefectureSection prefectures={stats.prefectures} count={stats.prefectureCount} />
               </div>
             )}
-
-            {/* 6. Calendar View */}
-            <div className={styles.sectionWrap}>
-              <VisitCalendar
-                theme={theme}
-                date={date}
-                setDate={setDate}
-                visitDates={visitDates}
-              />
-            </div>
           </>
         )}
       </main>

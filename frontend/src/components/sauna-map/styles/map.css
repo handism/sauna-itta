@@ -73,7 +73,11 @@
   background: linear-gradient(135deg, var(--accent-water) 0%, var(--accent-water-deep) 100%);
   box-shadow: 0 6px 20px var(--water-glow), 0 0 16px var(--accent-water);
   z-index: var(--z-map-controls) !important;
-  animation: pulseRingSelected 1.8s infinite;
+  /*
+   * 選んだ直後に地図上の位置を探せるよう 3 回だけ波紋を出し、その後は静止させる。
+   * 無限に続けると、選択中はずっと地図の中でいちばん動くものになり、周りのピンが読みにくい。
+   */
+  animation: pulseRingSelected 1.8s 3;
 }
 
 .sauna-marker--wishlist {
@@ -365,7 +369,7 @@
 }
 
 .popup-comment {
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   opacity: 0.86;
   white-space: pre-wrap;
 }
@@ -651,7 +655,7 @@
   background: linear-gradient(135deg, #ff7a00 0%, #e64a19 100%);
   width: 46px;
   height: 46px;
-  font-size: var(--text-base);
+  font-size: var(--text-md);
 }
 
 .sauna-cluster--large {

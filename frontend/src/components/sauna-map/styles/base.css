@@ -102,18 +102,17 @@
   /*
    * デザイントークン: 文字サイズ
    * font-size は直書きせず、必ずこの段階から選ぶこと（styles/tokens.test.ts が検査します）。
-   * 0.01rem 刻みの値が増えると見出し・本文・補足の強弱が画面ごとにずれるため、
-   * 新しい段階を足す前に既存の段階で足りないかを確認すること。
-   * 2xs/xs: 補足・バッジ・メタ情報  sm/md: ラベル・ボタン・小さな本文
-   * base/lg: 本文・メニュー項目   xl/2xl/3xl: 見出し・強調する数値
+   * 以前は 0.7〜1rem を 0.05rem 刻みの 6 段階に分けていたが、隣の段階との差が 1px に満たず
+   * 見分けが付かないため、大きさの差がはっきり出る 7 段階（px で 12/13/14/16/18/20/24）にしている。
+   * 日本語は 12px を下回ると画数の多い字が潰れるため、--text-xs より小さい段階を作らないこと。
+   * xs: 補足・バッジ・メタ情報  sm: ラベル・ボタン  md: 小さな本文・メニュー項目
+   * lg: 本文・入力欄   xl/2xl/3xl: 見出し・強調する数値
    */
-  --text-2xs: 0.7rem;
   --text-xs: 0.75rem;
-  --text-sm: 0.8rem;
-  --text-md: 0.85rem;
-  --text-base: 0.9rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.875rem;
   --text-lg: 1rem;
-  --text-xl: 1.15rem;
+  --text-xl: 1.125rem;
   --text-2xl: 1.25rem;
   --text-3xl: 1.5rem;
 
@@ -288,7 +287,7 @@ span.rating-unrated {
   color: var(--foreground);
   opacity: 0.6;
   text-align: center;
-  font-size: var(--text-base);
+  font-size: var(--text-md);
 }
 
 .chart-empty-state svg {

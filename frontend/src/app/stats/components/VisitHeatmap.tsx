@@ -4,8 +4,10 @@ import styles from '../stats.module.css';
 
 interface VisitHeatmapProps {
   visitDates: Map<string, number>;
-  /** 右端の週に含める日（最後に訪問した日） */
+  /** 右端の週に含める日（最後に訪問した日、年を選んでいるときはその年の大みそか） */
   end: Date;
+  /** 集計している年（"2026" の形）。null は全期間で、見出しは「直近1年」になる */
+  year?: string | null;
 }
 
 const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -30,14 +32,14 @@ function toIsoDate(date: Date): string {
  * マスは見た目用（aria-hidden）で、読み上げには期間と訪問日数の要約を渡す。
  * 日ごとの訪問は隣の月のカレンダーから辿れる。
  */
-export function VisitHeatmap({ visitDates, end }: VisitHeatmapProps) {
+export function VisitHeatmap({ visitDates, end, year = null }: VisitHeatmapProps) {
   const { weeks, start, end: endDay, activeDays, totalVisits } = buildVisitHeatmap(visitDates, end);
   const summary = `${formatShortDate(toIsoDate(start))}〜${formatShortDate(toIsoDate(endDay))}の${activeDays}日に${totalVisits}回訪問`;
 
   return (
     <figure className={styles.heatmap}>
       <figcaption className={styles.heatmapCaption}>
-        直近1年で <strong>{activeDays}</strong> 日 訪問
+        {year ? `${year}年は` : '直近1年で'} <strong>{activeDays}</strong> 日 訪問
       </figcaption>
       <div className={styles.heatmapScroll}>
         <div className={styles.heatmapGrid} role="img" aria-label={summary}>

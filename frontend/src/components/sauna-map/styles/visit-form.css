@@ -10,10 +10,10 @@
 .form-group .form-group-label {
   display: block;
   margin-bottom: 0.5rem;
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   color: var(--foreground);
   opacity: 0.85;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .label-row-with-actions {
@@ -49,6 +49,91 @@
   border-color: var(--primary);
 }
 
+/*
+ * タグ入力。付けたタグをチップで並べ、その後ろに次の 1 件を打つ入力欄を置く。
+ * 外枠は .input の見た目を借り、フォーカスは内側の入力欄が持つため :focus-within で示す。
+ */
+.tag-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.6rem;
+  cursor: text;
+}
+
+.tag-input:focus-within {
+  border-color: var(--primary);
+  background: var(--glass-heavy);
+  box-shadow: 0 0 16px var(--primary-glow);
+}
+
+.tag-input-chips {
+  display: contents;
+  list-style: none;
+}
+
+.tag-input-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  max-width: 100%;
+  padding: 0.2rem 0.2rem 0.2rem 0.65rem;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.tag-input-chip > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-input-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.tag-input-chip-remove:hover {
+  background: var(--overlay-hover);
+  color: var(--foreground);
+}
+
+.tag-input-field {
+  flex: 1 1 8em;
+  min-width: 8em;
+  min-height: 32px;
+  padding: 0.2rem 0.4rem;
+  border: none;
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+}
+
+/* 外枠（.tag-input:focus-within）で示すため、内側の入力欄には輪郭を重ねない */
+.tag-input-field:focus-visible {
+  outline: none;
+}
+
+.tag-input-field::placeholder {
+  color: var(--foreground);
+  opacity: 0.72;
+}
+
 .preset-tags {
   display: flex;
   flex-wrap: wrap;
@@ -82,7 +167,7 @@
   color: #ffffff;
   border-color: var(--primary);
   opacity: 1;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 /*
@@ -210,7 +295,7 @@ input[type="date"].input {
 .form-actions-secondary .btn {
   min-height: 40px;
   padding: 0.5rem 1rem;
-  font-size: var(--text-base);
+  font-size: var(--text-md);
 }
 
 .form-actions-secondary {
@@ -410,6 +495,17 @@ input[type="date"].input {
     min-height: 44px;
   }
 
+  /* チップの高さを 44px にすると入力欄の中が間延びするため、外す操作だけ外側へ広げる */
+  .tag-input-chip-remove {
+    width: 44px;
+    height: 44px;
+    margin: -10px -6px;
+  }
+
+  .tag-input {
+    padding: 0.5rem 0.6rem;
+  }
+
   .form-actions-secondary .btn {
     min-height: 44px;
   }
@@ -455,7 +551,7 @@ input[type="date"].input {
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-md);
   color: var(--foreground);
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 

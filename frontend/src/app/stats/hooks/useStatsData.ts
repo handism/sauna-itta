@@ -3,6 +3,8 @@ import { SaunaVisit } from "@/components/sauna-map/types";
 import {
   flattenVisitHistory,
   calculateStats,
+  filterVisitsByYear,
+  getVisitYears,
   rankVisitsByCount,
   toDateString,
 } from "@/components/sauna-map/utils";
@@ -11,7 +13,9 @@ import { useVisitSession } from "@/components/sauna-map/hooks/useVisitSession";
 import { getVisitRepository } from "@/components/sauna-map/repositories";
 
 export function useStatsData() {
-  const [visits, setVisits] = useState<SaunaVisit[]>([]);
+  const [allVisits, setAllVisits] = useState<SaunaVisit[]>([]);
+  // 集計する年（"2026" の形）。null は全期間
+  const [selectedYear, setSelectedYear] = useState<string | null>(null);
   const [date, setDate] = useState<Date | null>(null);
   // テーマと日付の初期化が済んだか。date は利用者がカレンダーで選択を外すと null に戻るため、
   // マウント済みの判定には使えない
@@ -19,7 +23,7 @@ export function useStatsData() {
   const [repository] = useState(() => getVisitRepository());
   // セッション確認と記録の読み込みは地図側と同じ手順を共有する
   const { loading, authenticated, csrfToken, loadError } = useVisitSession(repository, {
-    onVisitsLoaded: setVisits,
+    onVisitsLoaded: setAllVisits,
   });
 
   // 統計ページは静的プリレンダリングされるため、保存値の読み取りはマウント後まで遅らせる。
@@ -45,6 +49,17 @@ export function useStatsData() {
   }, [syncFromStorage]);
 
   const mounted = initialized && !loading;
+
+  /** 訪問がある年（新しい順）。期間の切り替えの選択肢になる */
+  const years = useMemo(() => getVisitYears(allVisits), [allVisits]);
+  // 記録が読み込み直されて選んでいた年が無くなったときは全期間へ戻す
+  const year = selectedYear !== null && years.includes(selectedYear) ? selectedYear : null;
+
+  /**
+   * 選んだ年で絞り込んだ記録。サマリー・ランキング・グラフ・タグ・カレンダーはすべてこれを見る
+   * （一部だけ全期間のままだと、同じ画面の数字同士が食い違う）。
+   */
+  const visits = useMemo(() => filterVisitsByYear(allVisits, year), [allVisits, year]);
 
   const stats = useMemo(() => calculateStats(visits), [visits]);
 
@@ -82,6 +97,9 @@ export function useStatsData() {
 
   return {
     visits,
+    years,
+    year,
+    setYear: setSelectedYear,
     theme,
     toggleTheme,
     date,

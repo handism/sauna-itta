@@ -27,6 +27,12 @@ describe("VisitHeatmap", () => {
     expect(screen.getByRole("figure")).toHaveTextContent("直近1年で 2 日 訪問");
   });
 
+  it("年を選んでいるときは見出しをその年にする", () => {
+    render(<VisitHeatmap visitDates={visitDates} end={new Date(2026, 11, 31)} year="2026" />);
+
+    expect(screen.getByRole("figure")).toHaveTextContent("2026年は 2 日 訪問");
+  });
+
   it("各マスの title に日付と訪問回数を出す", () => {
     const { container } = render(<VisitHeatmap visitDates={visitDates} end={new Date(2026, 9, 3)} />);
 

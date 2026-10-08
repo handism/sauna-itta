@@ -106,7 +106,7 @@ export default function RatingDistributionChart({
             <div
               style={{
                 fontSize: "1.75rem",
-                fontWeight: 800,
+                fontWeight: 700,
                 color: textColor,
                 lineHeight: 1,
                 display: "flex",
@@ -123,7 +123,7 @@ export default function RatingDistributionChart({
             </div>
             <div
               style={{
-                fontSize: "var(--text-2xs)",
+                fontSize: "var(--text-xs)",
                 opacity: 0.65,
                 marginTop: "2px",
                 letterSpacing: "0.05em",

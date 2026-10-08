@@ -121,7 +121,8 @@ describe("VisitFormView", () => {
     expect(screen.getByLabelText("サウナ名")).toHaveValue("テストサウナ");
     expect(screen.getByLabelText("エリア（任意）")).toHaveValue("東京");
     expect(screen.getByLabelText("行った日")).toHaveValue("2026-07-25");
-    expect(screen.getByLabelText("タグ（カンマ区切り）")).toHaveValue("サウナ,水風呂");
+    expect(screen.getByLabelText("タグを追加")).toHaveValue("");
+    expect(screen.getByRole("list", { name: "付けたタグ" })).toHaveTextContent("サウナ水風呂");
     expect(screen.getByLabelText("感想・メモ")).toHaveValue("良かったです");
   });
 
@@ -315,7 +316,6 @@ describe("VisitFormView", () => {
   it.each([
     ["サウナ名", "しきじ", "name"],
     ["エリア（任意）", "静岡県", "area"],
-    ["タグ（カンマ区切り）", "薬草", "tagsText"],
     ["感想・メモ", "水がうまい", "comment"],
     ["行った日", "2026-08-01", "date"],
   ] as const)("%s の入力をフォーム状態へ反映する", (label, value, key) => {

@@ -90,22 +90,35 @@ function VisitCardItemComponent({
           </button>
         </div>
       </div>
-      {visit.area && <div className="sauna-card-area">{visit.area}</div>}
-      <RatingStars rating={getDisplayRating(visit)} className="sauna-card-rating" showUnrated={!wishlist} />
+      {/*
+        エリアと満足度は 1 行にまとめる。別々の行にすると、カードの上半分が細い行の積み重ねになり、
+        一覧を眺めたときに名前と写真以外がどれも同じ重みに見える。
+      */}
+      <div className="sauna-card-summary">
+        {visit.area && <span className="sauna-card-area">{visit.area}</span>}
+        <RatingStars rating={getDisplayRating(visit)} className="sauna-card-rating" showUnrated={!wishlist} />
+      </div>
       <VisitTagList
         tags={getDisplayTags(visit)}
         onSelectTag={(tag) => setFilters((prev) => ({ ...prev, selectedTag: tag }))}
       />
       <VisitComment text={visit.comment} className="sauna-card-comment" />
       <VisitMetaInfo date={visit.date} visitCount={visitCount} isWishlist={wishlist} />
-      <div className="sauna-card-footer-actions">
-        <RouteLink lat={visit.lat} lng={visit.lng} />
-        <RevisitButton
-          visitName={visit.name}
-          isWishlist={wishlist}
-          onRevisit={() => onEdit(visit, { revisit: true })}
-        />
-      </div>
+      {/*
+        経路と「また行った」は選んだカードにだけ出す（コンパクト行の展開時と同じ）。
+        全カードに枠線のボタンが 2 つずつ並ぶと、一覧の大半がボタンの列になって記録の中身が埋もれる。
+        カードはどこを押しても選択されるため、1 回押せば届く。
+      */}
+      {isSelected && (
+        <div className="sauna-card-footer-actions">
+          <RouteLink lat={visit.lat} lng={visit.lng} />
+          <RevisitButton
+            visitName={visit.name}
+            isWishlist={wishlist}
+            onRevisit={() => onEdit(visit, { revisit: true })}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -53,11 +53,19 @@ export function toRevisitFormState(visit: SaunaVisit): VisitFormState {
   };
 }
 
+/**
+ * タグの区切り。半角カンマに加えて、日本語入力で打ちやすい全角カンマ「，」と読点「、」も区切りとして扱う
+ * （半角だけだと「外気浴、水風呂」が 1 つのタグとして保存される）。
+ */
+export const TAG_SEPARATOR_PATTERN = /[,，、]/;
+
 export function toNormalizedTags(tagsText: string): string[] {
-  return tagsText
-    .split(",")
+  const tags = tagsText
+    .split(TAG_SEPARATOR_PATTERN)
     .map((t) => t.trim())
     .filter(Boolean);
+  // 同じタグを 2 回付けても 1 つにする（チップが重複して並び、片方を外すと両方消えるため）
+  return [...new Set(tags)];
 }
 
 export type VisitFormValidationResult =

@@ -389,6 +389,14 @@ describe("toNormalizedTags", () => {
   it("returns an empty array for strings with only spaces or commas", () => {
     expect(toNormalizedTags("  , ,  ")).toEqual([]);
   });
+
+  it("全角カンマと読点も区切りとして扱う", () => {
+    expect(toNormalizedTags("外気浴、水風呂，ソロ向き")).toEqual(["外気浴", "水風呂", "ソロ向き"]);
+  });
+
+  it("重複したタグは最初の 1 つだけ残す", () => {
+    expect(toNormalizedTags("外気浴, 水風呂, 外気浴")).toEqual(["外気浴", "水風呂"]);
+  });
 });
 
 describe("getSubmitBlockedReason", () => {

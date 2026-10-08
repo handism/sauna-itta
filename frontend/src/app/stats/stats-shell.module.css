@@ -56,7 +56,7 @@
   background-clip: text;
   color: transparent;
   font-size: clamp(1.75rem, 3vw, 2.35rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.03em;
 }
 
@@ -96,7 +96,7 @@
   gap: 8px;
   padding: 0 1.2rem;
   border-radius: var(--radius-full);
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   font-weight: 600;
   text-decoration: none;
 }
@@ -136,7 +136,7 @@
 .emptyStateBody {
   max-width: 34rem;
   margin: 0 0 0.25rem;
-  font-size: var(--text-base);
+  font-size: var(--text-md);
   line-height: 1.7;
   opacity: 0.85;
 }
@@ -154,7 +154,7 @@
 
   .eyebrow {
     margin-bottom: 0.2rem;
-    font-size: var(--text-2xs);
+    font-size: var(--text-xs);
   }
 
   .description h1 {

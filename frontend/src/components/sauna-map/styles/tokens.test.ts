@@ -238,6 +238,26 @@ describe("CSS デザイントークンの規約", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("font-weight は 400 / 600 / 700 の 3 段階だけを使うこと", () => {
+    const calendar = {
+      file: "app/stats/calendar.css",
+      css: readFileSync(resolve(STYLE_DIR, "../../../app/stats/calendar.css"), "utf8"),
+    };
+    /*
+     * 500 と 800 は日本語の OS フォント（ヒラギノ／Yu Gothic UI 等）で隣の太さと見分けが付かないか、
+     * 字形が無く近い太さへ丸められる。段階を増やすと強弱が画面ごとにずれるため 3 つに限る。
+     */
+    const ALLOWED = new Set(["400", "600", "700", "normal", "inherit"]);
+    const offenders = [...allStyleFiles, calendar].flatMap(({ file, css }) =>
+      [...css.matchAll(/font-weight:\s*([^;!]+?)\s*(?:!important)?;/g)]
+        .map((m) => m[1])
+        .filter((value) => !ALLOWED.has(value))
+        .map((value) => `${file}: ${value}`)
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
   it("max-width のブレークポイントはモバイル境界（767px）か、理由のある内容幅だけであること", () => {
     // 画面ごとに境界がずれると、同じ幅でも片方だけモバイル表示（44px ターゲット）になる
     const CONTENT_BREAKPOINTS: Record<string, string> = {
