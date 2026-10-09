@@ -71,6 +71,24 @@ describe("VisitFormView", () => {
     imageUploading: false,
   };
 
+  it("新規登録は任意項目を閉じ、編集時は開いて表示する", () => {
+    const { container, rerender } = render(<VisitFormView {...defaultProps} editingId={null} />);
+    const details = container.querySelector("details.form-details") as HTMLDetailsElement;
+    expect(details.open).toBe(false);
+    expect(screen.getByLabelText("サウナ名")).toBeRequired();
+    expect(screen.getByLabelText("行った日")).toBeRequired();
+    rerender(<VisitFormView {...defaultProps} />);
+    expect(details.open).toBe(true);
+    expect(screen.getByLabelText("感想・メモ")).toHaveValue(defaultForm.comment);
+    // 閉じた後も値を消さず、再び開いたときに見返せる
+    fireEvent.click(details.querySelector("summary")!);
+    expect(details.open).toBe(false);
+    expect(screen.getByLabelText("感想・メモ")).toHaveValue(defaultForm.comment);
+    fireEvent.click(details.querySelector("summary")!);
+    expect(details.open).toBe(true);
+    expect(screen.getByRole("list", { name: "付けたタグ" })).toHaveTextContent("サウナ水風呂");
+  });
+
   it("訪問済みの編集では保存のしかたを排他の切り替えで公開する", () => {
     render(<VisitFormView {...defaultProps} />);
 
@@ -108,10 +126,10 @@ describe("VisitFormView", () => {
     const headings = screen
       .getAllByRole("heading", { level: 3 })
       .map((heading) => heading.textContent);
-    expect(headings).toEqual(["場所", "記録の内容", "タグ", "これまでの訪問"]);
+    expect(headings).toEqual(["場所（必須）", "記録の内容", "タグ", "これまでの訪問"]);
     // 必須のサウナ名は場所の区切りに置く
     expect(
-      within(screen.getByRole("region", { name: "場所" })).getByLabelText("サウナ名")
+      within(screen.getByRole("region", { name: "場所（必須）" })).getByLabelText("サウナ名")
     ).toBeInTheDocument();
   });
 

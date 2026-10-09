@@ -32,7 +32,7 @@ describe("SidebarHeaderView", () => {
 
   it("新規ピンボタンクリックで onStartNewVisit が呼ばれる", () => {
     render(<SidebarHeaderView {...defaultProps} />);
-    const plusBtn = screen.getByLabelText("新規ピンを立てる");
+    const plusBtn = screen.getByLabelText("記録する（新規ピンを立てる）");
     fireEvent.click(plusBtn);
     expect(defaultProps.onStartNewVisit).toHaveBeenCalledTimes(1);
     expect(defaultProps.onCloseMobileMenu).toHaveBeenCalledTimes(1);

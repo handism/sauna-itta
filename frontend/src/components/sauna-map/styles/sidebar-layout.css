@@ -184,6 +184,7 @@
   gap: 0.5rem;
   justify-content: space-between;
   align-items: flex-start;
+  flex-wrap: wrap;
   padding: 1.6rem 1.6rem 1.2rem;
   border-bottom: 1px solid var(--glass-border);
 }
@@ -211,6 +212,9 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 1.3rem 1.6rem;
+  /* 本文は不透明にし、背後の地名と入力・記録の文字が重ならないようにする */
+  background: linear-gradient(var(--glass-heavy), var(--glass-heavy)), var(--background);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   /* 既定のスクロールバーは明るいグレーでパネルから浮くため、面の枠線と同じ色に揃える */
   scrollbar-width: thin;
   scrollbar-color: var(--glass-border) transparent;
@@ -325,5 +329,25 @@
 
   .sidebar.collapsed .mobile-toggle {
     transform: translateX(-50%);
+  }
+}
+
+@media (min-width: 768px) {
+  .sidebar-header-main {
+    width: 100%;
+  }
+
+  .sidebar-action-btn.sidebar-action-btn--primary {
+    width: auto;
+    padding: 0 0.65rem;
+    gap: 0.3rem;
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+}
+
+@media (max-width: 767px) {
+  .sidebar-add-label {
+    display: none;
   }
 }

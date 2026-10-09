@@ -18,7 +18,7 @@ function FilterToggleButtonComponent({
       type="button"
       className={cx("filters-open-btn", (isFilterPanelOpen || isFilterActive) && "is-active")}
       onClick={toggleFilterPanel}
-      title="詳細フィルター（最低満足度・マップ表示エリア）"
+      title="詳細フィルター（地域・タグ・最低満足度・マップ表示エリア）"
       aria-expanded={isFilterPanelOpen}
       aria-label="詳細フィルターの表示切り替え"
     >

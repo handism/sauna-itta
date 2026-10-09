@@ -66,6 +66,7 @@ function VisitListSearchComponent({
       <div className="sauna-search-box">
         <FilterPanel
           isOpen={isFilterPanelOpen}
+          visits={visits}
           filters={filters}
           setFilters={setFilters}
           isFilterActive={Boolean(isFilterActive && onClearFilters)}
@@ -77,6 +78,8 @@ function VisitListSearchComponent({
           filters={filters}
           setFilters={setFilters}
           visits={visits}
+          onOpenCategories={toggleFilterPanel}
+          isCategoriesOpen={isFilterPanelOpen}
           activeFilterCount={activeFilterCount}
           onClearFilters={onClearFilters}
         />

@@ -112,34 +112,10 @@ export default function StatsPage() {
           </>
         ) : (
           <>
-            {/* 1. Key Statistics Summary */}
+            {/* 1. 集計サマリー */}
             <SummaryGrid stats={stats} />
 
-            {/*
-              2. 訪問カレンダー（年間ヒートマップ）。いつ・どれくらいの頻度で行ったかは、
-              ページの最下部まで読まないと分からない位置だと見られないため、サマリーの直後に置く。
-              年を切り替えたときは、最後に訪問した月を開き直すよう作り直す。
-            */}
-            <div className={styles.sectionWrap}>
-              <VisitCalendar
-                key={year ?? "all"}
-                theme={theme}
-                date={date}
-                setDate={setDate}
-                visitDates={visitDates}
-                visits={visits}
-                entries={visitedEntries}
-                year={year}
-              />
-            </div>
-
-            {/* 3. Featured Home Sauna & Top 5 Ranking Section */}
-            <div className={styles.featuredGrid}>
-              <HomeSaunaCard ranked={rankedVisits} />
-              <TopSaunasCard ranked={rankedVisits} />
-            </div>
-
-            {/* 4. Charts Section */}
+            {/* 2. 月別訪問数・満足度の傾向 */}
             <div className={styles.chartsWrap}>
               <div className={styles.chartGrid}>
                 <section className={`${styles.glassCard} ${styles.chartCard}`}>
@@ -164,12 +140,35 @@ export default function StatsPage() {
               </div>
             </div>
 
-            {/* 5. Tags & Features Cloud */}
+            {/*
+              3. 訪問カレンダー（年間ヒートマップ）。数字と傾向を見た後、個別の訪問日を確認する。
+              年を切り替えたときは、最後に訪問した月を開き直すよう作り直す。
+            */}
+            <div className={styles.sectionWrap}>
+              <VisitCalendar
+                key={year ?? "all"}
+                theme={theme}
+                date={date}
+                setDate={setDate}
+                visitDates={visitDates}
+                visits={visits}
+                entries={visitedEntries}
+                year={year}
+              />
+            </div>
+
+            {/* 4. ホームサウナ・施設ランキング */}
+            <div className={styles.featuredGrid}>
+              <HomeSaunaCard ranked={rankedVisits} />
+              <TopSaunasCard ranked={rankedVisits} />
+            </div>
+
+            {/* 5. タグ */}
             <div className={styles.sectionWrap}>
               <TagCloudCard visits={visits} />
             </div>
 
-            {/* 6. Prefecture Conquest（0 件のとき中身は描画されないため、余白ごと出さない） */}
+            {/* 6. 都道府県制覇（0 件のとき中身は描画されないため、余白ごと出さない） */}
             {stats.prefectureCount > 0 && (
               <div className={styles.sectionWrap}>
                 <PrefectureSection prefectures={stats.prefectures} count={stats.prefectureCount} />

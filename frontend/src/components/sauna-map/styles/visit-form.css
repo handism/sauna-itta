@@ -734,3 +734,40 @@ input[type="date"].input {
     min-height: 44px;
   }
 }
+
+.required-field-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.required-field-badge {
+  color: var(--primary);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.form-details {
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  background: var(--overlay-subtle);
+}
+
+.form-details-summary {
+  padding: 0.85rem;
+  cursor: pointer;
+  color: var(--foreground);
+  font-size: var(--text-md);
+  font-weight: 600;
+  min-height: 44px;
+}
+
+.form-details-summary:hover {
+  background: var(--overlay-hover);
+}
+
+.form-details-content {
+  padding: 0.85rem;
+  border-top: 1px solid var(--glass-border);
+}

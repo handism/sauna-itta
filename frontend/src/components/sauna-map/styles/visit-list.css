@@ -204,28 +204,33 @@
 
 .sauna-compact-meta {
   display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.4rem;
   min-width: 0;
   font-size: var(--text-xs);
   color: var(--text-muted);
   white-space: nowrap;
 }
 
-/* flex にすると省略記号（…）が出ないため、施設名は block のまま省略する */
+/* 施設名は最大2行で読み取り、長い名前だけを省略する */
 .sauna-compact-title {
-  display: block;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   font-size: var(--text-md);
   font-weight: 600;
   margin: 0;
   color: var(--foreground);
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
 }
 
 /* 2 行目で幅が足りないときに省略するのはエリアだけにする */
 .sauna-compact-area {
+  flex-basis: 100%;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -241,10 +246,6 @@
   font-size: var(--text-xs);
 }
 
-.sauna-compact-area + .sauna-compact-visits::before {
-  content: "·";
-  margin-right: 0.4rem;
-}
 
 .sauna-compact-side-info {
   display: flex;
@@ -872,6 +873,24 @@
     pointer-events: none;
   }
 
+  /* 狭い幅でも「行きたい」と並び順が重ならないよう、横の余白を抑える */
+  .controls-row {
+    gap: 0.35rem;
+  }
+
+  .status-tab {
+    padding-inline: 0.15rem;
+  }
+
+  .quick-sort-trigger {
+    padding-inline: 0.4rem;
+    gap: 0.25rem;
+  }
+
+  .quick-sort-trigger-content {
+    gap: 0.25rem;
+  }
+
   /* 一覧の上の操作部を詰め、シートの限られた高さを記録に回す */
   .sauna-list-header {
     margin-bottom: 0.5rem;
@@ -955,6 +974,7 @@
   }
 
   /* 並び順ドロップダウンは開閉・選択ともに主要動線なので必ず 44px を確保する */
+  .filters-panel-body .input,
   .quick-sort-trigger,
   .quick-sort-option,
   .filters-panel-close,

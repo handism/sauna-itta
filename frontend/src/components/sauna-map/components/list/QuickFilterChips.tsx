@@ -11,6 +11,8 @@ interface QuickFilterChipsProps {
   activeFilterCount?: number;
   onClearFilters?: () => void;
   resultCount?: number;
+  onOpenCategories?: () => void;
+  isCategoriesOpen?: boolean;
 }
 
 interface ChipItem {
@@ -98,13 +100,15 @@ export function QuickFilterChips({
   visits = [],
   activeFilterCount = 0,
   onClearFilters,
+  onOpenCategories,
+  isCategoriesOpen = false,
 }: QuickFilterChipsProps) {
-  const popularAreas = useMemo(() => getPopularAreas(visits, 4), [visits]);
-  const popularTags = useMemo(() => getPopularTags(visits, 5), [visits]);
+  const popularAreas = useMemo(() => getPopularAreas(visits, 1), [visits]);
+  const popularTags = useMemo(() => getPopularTags(visits, 1), [visits]);
 
   /*
    * 検索やステータス、マップ範囲内絞り込みなど、
-   * 通常のクイックフィルター候補に含まれない有効なフィルター条件を個別チップとして集約する。
+   * 少数のクイックフィルター候補に含まれない有効なフィルター条件を個別チップとして集約する。
    */
   const activeExtraChips: ChipItem[] = useMemo(
     () => getActiveExtraChips(filters, popularAreas, popularTags, setFilters),
@@ -157,7 +161,7 @@ export function QuickFilterChips({
        * 文字ではなく矢印だけで示す。右端のチップに「横にスワイプ」の文字が重なると、
        * 隠れたチップのアイコンと並んでそういう名前のチップがあるように読めた。
        */}
-      {allChips.length > 3 && (
+      {allChips.length + (onOpenCategories ? 1 : 0) > 3 && (
         <span className="quick-filter-scroll-hint" aria-hidden="true">
           <ChevronRight size={18} />
         </span>
@@ -176,7 +180,19 @@ export function QuickFilterChips({
           </button>
         )}
 
-        {/* アクティブな特別チップ → ★4以上 → 人気エリア → 人気タグの順に並ぶ */}
+        {onOpenCategories && (
+          <button
+            type="button"
+            className="chip-btn"
+            onClick={onOpenCategories}
+            aria-expanded={isCategoriesOpen}
+            aria-controls={isCategoriesOpen ? "visit-filter-panel" : undefined}
+          >
+            <SlidersHorizontal size={13} aria-hidden="true" /> 地域・タグ
+          </button>
+        )}
+
+        {/* 有効な条件 → ★4以上 → 最も多い地域・タグだけを並べる */}
         {allChips.map(({ key, icon, label, isActive, onToggle }) => (
           <button
             key={key}

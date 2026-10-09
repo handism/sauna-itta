@@ -66,7 +66,7 @@ describe("DesktopSidebarView", () => {
 
   it("shows and hides 'New Visit' button based on isAdding state", () => {
     const { props: propsNotAdding, unmount } = renderSidebar({ isAdding: false });
-    const newVisitBtn = screen.getByRole("button", { name: "新規ピンを立てる" });
+    const newVisitBtn = screen.getByRole("button", { name: "記録する（新規ピンを立てる）" });
     expect(newVisitBtn).toBeInTheDocument();
 
     fireEvent.click(newVisitBtn);
@@ -77,8 +77,8 @@ describe("DesktopSidebarView", () => {
 
     renderSidebar({ isAdding: true });
     // 登録中はヘッダーの配置がずれないよう、消さずに押せない状態で残す
-    expect(screen.queryByRole("button", { name: "新規ピンを立てる" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "記録を入力中" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "記録する（新規ピンを立てる）" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "記録する（入力中）" })).toBeDisabled();
   });
 
   it("toggles theme correctly", () => {

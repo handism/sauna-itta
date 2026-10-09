@@ -70,6 +70,7 @@ function formPayload(location: LatLng, form: VisitFormState, lockVersion?: numbe
 
 export class ApiVisitRepository implements VisitRepository {
   readonly dataSource = "api" as const;
+  private sessionGeneration = 0;
   private csrfToken: string | null = null;
   /** エラー報告の送信可否。サーバーはログイン中の報告だけを受け付ける */
   private authenticated = false;
@@ -106,15 +107,20 @@ export class ApiVisitRepository implements VisitRepository {
   }
 
   async getSession(): Promise<SessionState> {
+    const generation = ++this.sessionGeneration;
     const body = await this.request<unknown>("/api/v1/session");
     const session: SessionState = parseResponse(SessionStateSchema, body);
-    this.csrfToken = session.csrfToken;
-    this.authenticated = session.authenticated;
+    // 古いセッション応答で、次の変更系リクエストに使うトークンを戻さない。
+    if (generation === this.sessionGeneration) {
+      this.csrfToken = session.csrfToken;
+      this.authenticated = session.authenticated;
+    }
     return session;
   }
 
   async logout(): Promise<void> {
     await this.request<void>("/api/v1/session", { method: "DELETE" });
+    this.sessionGeneration += 1;
     this.csrfToken = null;
     this.authenticated = false;
   }

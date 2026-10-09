@@ -25,7 +25,102 @@ function repository(overrides: Partial<VisitRepository> = {}): VisitRepository {
   };
 }
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((done, fail) => { resolve = done; reject = fail; });
+  return { promise, resolve, reject };
+}
+
 describe("useVisitSession", () => {
+  it.each(["成功", "通信失敗", "セッション喪失"])("古い再読み込みの%sを反映しないこと", async (outcome) => {
+    const old = deferred<SaunaVisit[]>();
+    const latest = deferred<SaunaVisit[]>();
+    const source = repository({ list: vi.fn().mockResolvedValueOnce(loadedVisits).mockReturnValueOnce(old.promise).mockReturnValueOnce(latest.promise) });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    let first!: Promise<boolean>;
+    let second!: Promise<boolean>;
+    act(() => { first = result.current.reload(); second = result.current.reload(); });
+    onVisitsLoaded.mockClear();
+    await act(async () => {
+      if (outcome === "成功") old.resolve(loadedVisits);
+      else old.reject(new RepositoryError("古い失敗", outcome === "セッション喪失" ? "unauthenticated" : "network_error"));
+      expect(await first).toBe(false);
+    });
+    expect(onVisitsLoaded).not.toHaveBeenCalled();
+    expect(result.current.loadError).toBeNull();
+    expect(result.current.loading).toBe(true);
+    expect(source.getSession).toHaveBeenCalledOnce();
+    await act(async () => { latest.resolve([{ ...loadedVisits[0], name: "最新" }]); expect(await second).toBe(true); });
+    expect(result.current.loading).toBe(false);
+    expect(onVisitsLoaded).toHaveBeenLastCalledWith([{ ...loadedVisits[0], name: "最新" }]);
+  });
+
+  it("最新の一覧の後に古い一覧が届いても上書きしないこと", async () => {
+    const old = deferred<SaunaVisit[]>();
+    const source = repository({ list: vi.fn().mockResolvedValueOnce(loadedVisits).mockReturnValueOnce(old.promise).mockResolvedValueOnce([]) });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    let pending!: Promise<boolean>;
+    act(() => { pending = result.current.reload(); });
+    await act(async () => { await result.current.reload(); });
+    onVisitsLoaded.mockClear();
+    await act(async () => { old.resolve(loadedVisits); expect(await pending).toBe(false); });
+    expect(onVisitsLoaded).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])("ログアウト後に届く一覧を破棄すること（再読み込み: %s）", async (reload) => {
+    const old = deferred<SaunaVisit[]>();
+    const source = repository({
+      list: reload ? vi.fn().mockResolvedValueOnce(loadedVisits).mockReturnValueOnce(old.promise) : vi.fn().mockReturnValue(old.promise),
+      getSession: vi.fn().mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "old" }).mockResolvedValueOnce({ authenticated: false, user: null, csrfToken: "new" }),
+    });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(source.list).toHaveBeenCalledOnce());
+    let pending: Promise<boolean> | undefined;
+    if (reload) act(() => { pending = result.current.reload(); });
+    await act(async () => { await result.current.resetSession(); });
+    onVisitsLoaded.mockClear();
+    await act(async () => { old.resolve(loadedVisits); await old.promise; if (pending) expect(await pending).toBe(false); });
+    expect(onVisitsLoaded).not.toHaveBeenCalled();
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.csrfToken).toBe("new");
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("セッション再取得の古い応答を反映しないこと", async () => {
+    const old = deferred<Awaited<ReturnType<VisitRepository["getSession"]>>>();
+    const source = repository({ getSession: vi.fn().mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "initial" }).mockReturnValueOnce(old.promise).mockResolvedValueOnce({ authenticated: false, user: null, csrfToken: "new" }) });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    let pending!: Promise<void>;
+    act(() => { pending = result.current.revalidateSessionOnError(new RepositoryError("失効", "invalid_csrf")); });
+    await act(async () => { await result.current.resetSession(); });
+    await act(async () => { old.resolve({ authenticated: true, user: { email: "old@example.com" }, csrfToken: "old" }); await pending; });
+    expect(result.current.authenticated).toBe(false);
+    expect(result.current.user).toBeNull();
+    expect(result.current.csrfToken).toBe("new");
+  });
+
+  it("アンマウント後の再読み込み結果を通知しないこと", async () => {
+    const old = deferred<SaunaVisit[]>();
+    const source = repository({ list: vi.fn().mockResolvedValueOnce(loadedVisits).mockReturnValueOnce(old.promise) });
+    const onVisitsLoaded = vi.fn();
+    const { result, unmount } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    let pending!: Promise<boolean>;
+    act(() => { pending = result.current.reload(); });
+    unmount();
+    onVisitsLoaded.mockClear();
+    old.resolve(loadedVisits);
+    expect(await pending).toBe(false);
+    expect(onVisitsLoaded).not.toHaveBeenCalled();
+  });
   it("ログイン済みならセッションを反映して記録を読み込むこと", async () => {
     const onVisitsLoaded = vi.fn();
     const source = repository();

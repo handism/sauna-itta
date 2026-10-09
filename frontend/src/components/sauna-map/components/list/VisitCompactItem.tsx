@@ -64,13 +64,13 @@ function VisitCompactItemComponent({
               </span>
               <span className="sauna-compact-text">
                 {/*
-                  1 行目は施設名だけにする。エリアを同じ行へ並べると、縮まないエリアに押されて
+                  施設名は最大2行にする。エリアを同じ行へ並べると、縮まないエリアに押されて
                   施設名がほとんど読めないほど省略される。
                 */}
                 <span className="sauna-compact-title">{visit.name}</span>
                 {/*
-                  2 行目はエリアと「何回・いつ行ったか」。行きたい記録も同じ 2 行構成にして、
-                  一覧の行の高さを揃える。省略されるのはエリアだけ（回数・日付は縮めない）。
+                  エリアと「何回・いつ行ったか」は別の行へ分け、地名を読む幅を確保する。
+                  行きたい記録は状態とエリアを表示する。
                 */}
                 <span className="sauna-compact-meta">
                   {wishlist && <WishlistChip compact />}
@@ -87,7 +87,7 @@ function VisitCompactItemComponent({
               {thumbSrc && (
                 <Image src={thumbSrc} className="sauna-compact-thumb" alt="" width={28} height={28} unoptimized />
               )}
-              <RatingStars rating={getDisplayRating(visit)} className="sauna-compact-rating" />
+              <RatingStars rating={getDisplayRating(visit)} className="sauna-compact-rating" size={12} />
             </span>
           </button>
         </h3>

@@ -64,3 +64,9 @@
 - 本番イメージはルート`Dockerfile`（ビルドコンテキストはリポジトリルート）でAPIモードのNext.js静的成果物とRailsだけを組み込み、非rootでPumaを起動します。ローカルは`frontend`／`api`／`postgres`のDocker Composeを使用します。フロント依存関係は`frontend/Dockerfile.frontend.dev`のビルド時に`npm ci`でインストールします（ビルドコンテキストは`./frontend`）。APIは起動時に`/app/tmp/pids/server.pid`を除去し、`bin/rails db:prepare`の成功後にRailsを`exec`起動します。依存関係変更時は`docker-compose up --build`でフロントイメージを再ビルドしてください。APIのgemは名前付きボリューム`backend_bundle`が`/usr/local/bundle`を覆うため`--build`では更新されません。`Gemfile`変更時は`docker compose run --rm --no-deps api bundle install`でボリューム側へ反映します（`docker compose down -v`は`postgres_data`まで削除するため使わないこと）。
 - CIのNode.js／Rubyのバージョンは、`.nvmrc`／`backend/.ruby-version`から読みます（`node-version-file`、`ruby-version`は省略）。ワークフローへバージョンを直接書かないでください。`frontend/package.json`の`engines.node`も`.nvmrc`と同じ版にします（`frontend/nodeVersion.test.ts`が検査し、`vitest.config.ts`は`engines`より古いNode.jsでは実行前に止めます。古い版ではjsdomの`FileReader`がNode本体の`Blob`を受け付けず、原因の分かりにくい失敗になるため）。DockerfileのベースイメージはDependabotが更新するため、`.ruby-version`と食い違ったら揃えます。
 - CIの本番イメージ検証はビルドだけで終えず、PostgreSQLへ`db:prepare`したうえでproductionコンテナを起動し、`GET /up`が成功するところまで確認します。スモークテストでは外部GCSへ接続しないよう`ACTIVE_STORAGE_SERVICE=local`を指定します。環境変数はワークフロー内の`smoke.env`の1か所にまとめ、DB準備とコンテナ起動の両方へ`--env-file`で渡します。イメージのビルドはbuildxのGitHub Actionsキャッシュ（`type=gha`）を使います。
+
+## UIの情報整理
+
+地図・登録・統計は両モード共通のUIです。サイドバー本文の不透明化、2行の施設名、用途の分かる登録操作、地域・タグを分類した詳細フィルター、任意の詳細入力の折りたたみを維持します。統計はサマリー→傾向のグラフ→訪問カレンダーの順で表示します。詳細は `frontend/src/AGENTS.md` と `frontend/src/components/sauna-map/AGENTS.md` を参照してください。
+
+- `useVisitSession`は初回読み込み・再読み込み・セッション再取得の世代を共有し、最新の操作だけが一覧・認証・エラー・読み込み中状態を反映します。ログアウト後のリセットとアンマウントでは古い取得を無効化し、無効化された`reload`は`false`を返します。`ApiVisitRepository`もセッション取得の世代を管理し、古い応答で内部のCSRFトークンや認証状態を戻さないようにします。

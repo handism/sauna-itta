@@ -50,9 +50,10 @@ describe("QuickFilterChips", () => {
   it("横スクロールが必要な候補数では視覚的なスワイプヒントを表示すること", () => {
     const { container } = render(
       <QuickFilterChips
-        filters={filters}
         setFilters={vi.fn()}
         visits={visits}
+        activeFilterCount={2}
+        filters={{ ...filters, search: "サウナ", status: "visited" }}
       />
     );
 
@@ -109,9 +110,10 @@ describe("QuickFilterChips", () => {
   });
 
   // 人気エリアは extractPrefecture を通すため、都道府県名まで入った area が必要
-  const prefectureVisits: SaunaVisit[] = visits.map((visit, index) => ({
+  const prefectureVisits: SaunaVisit[] = visits.map((visit) => ({
     ...visit,
-    area: index === 0 ? "東京都渋谷区" : "神奈川県横浜市",
+    area: "東京都渋谷区",
+    tags: ["外気浴"],
   }));
 
   it("人気エリア・人気タグはプリセットのため専用チップを重複表示しない", () => {
@@ -200,6 +202,20 @@ describe("QuickFilterChips", () => {
 
     fireEvent.click(clearButton);
     expect(onClearFilters).toHaveBeenCalledOnce();
+  });
+
+  it("少数の候補から地域・タグを開き、展開状態を伝える", () => {
+    const onOpenCategories = vi.fn();
+    const { rerender } = render(<QuickFilterChips filters={filters} setFilters={vi.fn()} visits={visits}
+      onOpenCategories={onOpenCategories} />);
+    const button = screen.getByRole("button", { name: "地域・タグ" });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("button", { name: "水風呂" })).not.toBeInTheDocument();
+    fireEvent.click(button);
+    expect(onOpenCategories).toHaveBeenCalledOnce();
+    rerender(<QuickFilterChips filters={filters} setFilters={vi.fn()} visits={visits}
+      onOpenCategories={onOpenCategories} isCategoriesOpen />);
+    expect(screen.getByRole("button", { name: "地域・タグ" })).toHaveAttribute("aria-expanded", "true");
   });
 
   it("候補が少なければスワイプヒントを出さない", () => {

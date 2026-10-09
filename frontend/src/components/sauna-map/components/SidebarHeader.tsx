@@ -134,10 +134,11 @@ export function SidebarHeaderView({
             onCloseMobileMenu();
           }}
           disabled={isAdding}
-          aria-label={isAdding ? "記録を入力中" : "新規ピンを立てる"}
+          aria-label={isAdding ? "記録する（入力中）" : "記録する（新規ピンを立てる）"}
           title={isAdding ? "記録を入力中" : "新規ピンを立てる"}
         >
-          <Plus size={18} />
+          <Plus size={18} aria-hidden="true" />
+          <span className="sidebar-add-label" aria-hidden="true">記録する</span>
         </button>
         <Link
           href="/stats"

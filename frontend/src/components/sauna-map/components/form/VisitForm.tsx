@@ -129,7 +129,7 @@ export function VisitFormView({
         項目は「どこの」「どんな記録か」「タグ」の順にまとめる。必須のサウナ名を
         場所の直後に置き、ステータスで出し分ける項目は「記録の内容」の中に閉じ込める。
       */}
-      <FormSection id="visit-form-place" title="場所">
+      <FormSection id="visit-form-place" title="場所（必須）">
         <LocationSearchField onSelectLocation={handleGeocodingSelect} />
 
         <NameField
@@ -168,37 +168,42 @@ export function VisitFormView({
               date={form.date}
               onChange={(date) => setForm((prev) => ({ ...prev, date }))}
             />
+          </>
+        )}
+      </FormSection>
 
+      <details className="form-details" open={editingId !== null || undefined}>
+        <summary className="form-details-summary">詳しく記録する（任意）</summary>
+        <div className="form-details-content">
+          {form.status === "visited" && (
             <RatingField
               rating={form.rating}
               onChange={(rating) => setForm((prev) => ({ ...prev, rating }))}
             />
-          </>
-        )}
-
-        <CommentField
-          status={form.status}
-          comment={form.comment}
-          onChange={(comment) => setForm((prev) => ({ ...prev, comment }))}
-        />
-
-        {form.status === "visited" && (
-          <VisitImageField
-            image={form.image}
-            onFile={onImageFile}
-            onRemove={onRemoveImage}
-            uploading={imageUploading}
+          )}
+          <CommentField
+            status={form.status}
+            comment={form.comment}
+            onChange={(comment) => setForm((prev) => ({ ...prev, comment }))}
           />
-        )}
-      </FormSection>
 
-      <FormSection id="visit-form-tags" title="タグ">
-        <VisitTagsField
-          tagsText={form.tagsText}
-          onChange={(tagsText) => setForm((prev) => ({ ...prev, tagsText }))}
-          suggestedTags={suggestedTags}
-        />
-      </FormSection>
+          {form.status === "visited" && (
+            <VisitImageField
+              image={form.image}
+              onFile={onImageFile}
+              onRemove={onRemoveImage}
+              uploading={imageUploading}
+            />
+          )}
+          <FormSection id="visit-form-tags" title="タグ">
+            <VisitTagsField
+              tagsText={form.tagsText}
+              onChange={(tagsText) => setForm((prev) => ({ ...prev, tagsText }))}
+              suggestedTags={suggestedTags}
+            />
+          </FormSection>
+        </div>
+      </details>
 
       {/* 過去の訪問は見返す・消すときだけ使うので、入力欄の後ろに折りたたんで置く */}
       {editingId && (

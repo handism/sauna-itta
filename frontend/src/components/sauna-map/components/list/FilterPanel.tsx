@@ -1,6 +1,7 @@
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useMemo } from "react";
 import { Map, ChevronUp, RotateCcw } from "lucide-react";
-import { VisitFilters } from "../../types";
+import { SaunaVisit, VisitFilters } from "../../types";
+import { getPopularAreas, getPopularTags } from "../../utils";
 import { cx } from "../../utils/classNames";
 
 const MIN_RATING_OPTIONS = [
@@ -14,6 +15,7 @@ const MIN_RATING_OPTIONS = [
 
 interface FilterPanelProps {
   isOpen: boolean;
+  visits?: SaunaVisit[];
   filters: VisitFilters;
   setFilters: Dispatch<SetStateAction<VisitFilters>>;
   isFilterActive: boolean;
@@ -23,18 +25,22 @@ interface FilterPanelProps {
 
 export function FilterPanel({
   isOpen,
+  visits = [],
   filters,
   setFilters,
   isFilterActive,
   onClearFilters,
   onClose,
 }: FilterPanelProps) {
+  const areas = useMemo(() => getPopularAreas(visits, visits.length), [visits]);
+  const tags = useMemo(() => getPopularTags(visits, Number.MAX_SAFE_INTEGER), [visits]);
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="filters-panel" role="region" aria-label="詳細フィルター">
+    <div id="visit-filter-panel" className="filters-panel" role="region" aria-label="詳細フィルター">
       <div className="filters-panel-header">
         <span className="filters-panel-title">詳細フィルター</span>
         <button
@@ -49,6 +55,46 @@ export function FilterPanel({
       </div>
 
       <div className="filters-panel-body">
+        <div className="form-group">
+          <label htmlFor="filter-area">地域</label>
+          <select
+            id="filter-area"
+            className="input select-input"
+            value={filters.selectedArea}
+            onChange={(e) => {
+              const selectedArea = e.target.value;
+              setFilters((prev) => ({ ...prev, selectedArea }));
+            }}
+          >
+            <option value="">すべての地域</option>
+            {filters.selectedArea && !areas.includes(filters.selectedArea) && (
+              <option value={filters.selectedArea}>{filters.selectedArea}</option>
+            )}
+            {areas.map((area) => (
+              <option key={area} value={area}>{area}</option>
+            ))}
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="filter-tag">タグ</label>
+          <select
+            id="filter-tag"
+            className="input select-input"
+            value={filters.selectedTag}
+            onChange={(e) => {
+              const selectedTag = e.target.value;
+              setFilters((prev) => ({ ...prev, selectedTag }));
+            }}
+          >
+            <option value="">すべてのタグ</option>
+            {filters.selectedTag && !tags.includes(filters.selectedTag) && (
+              <option value={filters.selectedTag}>{filters.selectedTag}</option>
+            )}
+            {tags.map((tag) => (
+              <option key={tag} value={tag}>{tag}</option>
+            ))}
+          </select>
+        </div>
         <div className="form-group">
           <label className="filters-label" htmlFor="filter-min-rating">
             最低満足度

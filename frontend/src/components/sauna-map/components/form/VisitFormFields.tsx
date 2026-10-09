@@ -344,7 +344,10 @@ export function NameField({
 }) {
   return (
     <div className="form-group">
-      <label htmlFor="visit-name">サウナ名</label>
+      <div className="required-field-heading">
+        <label htmlFor="visit-name">サウナ名</label>
+        <span className="required-field-badge">必須</span>
+      </div>
       <input
         id="visit-name"
         className="input"
@@ -393,7 +396,10 @@ export function DateField({
   return (
     <div className="form-group">
       <div className="label-row-with-actions">
-        <label htmlFor="visit-date">行った日</label>
+        <div className="required-field-heading">
+          <label htmlFor="visit-date">行った日</label>
+          <span className="required-field-badge">必須</span>
+        </div>
         <div className="quick-date-actions">
           <button
             type="button"

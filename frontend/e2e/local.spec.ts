@@ -40,7 +40,7 @@ test("地点検索は入力だけでは送信せず、明示操作で一度だ�
   });
 
   await page.goto("./");
-  await page.getByRole("button", { name: "新規ピンを立てる" }).click();
+  await page.getByRole("button", { name: "記録する（新規ピンを立てる）" }).click();
   const input = page.getByRole("combobox", { name: "地点検索" });
   await input.fill("東京駅");
   await page.waitForTimeout(500);

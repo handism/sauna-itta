@@ -37,6 +37,39 @@ function visitJson(overrides: Partial<SaunaVisit>): SaunaVisit {
 afterEach(() => vi.restoreAllMocks());
 
 describe("ApiVisitRepository", () => {
+  it("逆順で届くセッション応答で変更系のCSRFトークンを戻さない", async () => {
+    let resolveOld!: (response: Response) => void;
+    const old = new Promise<Response>((resolve) => { resolveOld = resolve; });
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockReturnValueOnce(old)
+      .mockResolvedValueOnce(jsonResponse({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "new" }))
+      .mockResolvedValueOnce(jsonResponse({ saunaVisit: visitJson({}) }));
+    const repository = new ApiVisitRepository();
+    const pending = repository.getSession();
+    await repository.getSession();
+    resolveOld(jsonResponse({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "old" }));
+    await pending;
+    await repository.create({ lat: 35, lng: 139 }, form);
+    expect(new Headers(fetchMock.mock.calls[2][1]?.headers).get("X-CSRF-Token")).toBe("new");
+  });
+  it("ログアウト前に開始したセッション応答で認証状態やトークンを戻さない", async () => {
+    let resolveOld!: (response: Response) => void;
+    const old = new Promise<Response>((resolve) => { resolveOld = resolve; });
+    const fetchMock = vi.spyOn(globalThis, "fetch")
+      .mockReturnValueOnce(old)
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(jsonResponse({ saunaVisit: visitJson({}) }));
+    const repository = new ApiVisitRepository();
+    const pending = repository.getSession();
+    await repository.logout();
+    resolveOld(jsonResponse({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "old" }));
+    await pending;
+    await repository.reportClientError({ message: "テスト", source: "window.error" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await repository.create({ lat: 35, lng: 139 }, form);
+    expect(new Headers(fetchMock.mock.calls[2][1]?.headers).get("X-CSRF-Token")).toBeNull();
+  });
+
   it("セッションのCSRFトークンを変更系リクエストへ付与する", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch")
       .mockResolvedValueOnce(new Response(JSON.stringify({
