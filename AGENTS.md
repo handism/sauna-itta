@@ -70,3 +70,9 @@
 地図・登録・統計は両モード共通のUIです。サイドバー本文の不透明化、2行の施設名、用途の分かる登録操作、地域・タグを分類した詳細フィルター、任意の詳細入力の折りたたみを維持します。統計はサマリー→傾向のグラフ→訪問カレンダーの順で表示します。詳細は `frontend/src/AGENTS.md` と `frontend/src/components/sauna-map/AGENTS.md` を参照してください。
 
 - `useVisitSession`は初回読み込み・再読み込み・セッション再取得の世代を共有し、最新の操作だけが一覧・認証・エラー・読み込み中状態を反映します。ログアウト後のリセットとアンマウントでは古い取得を無効化し、無効化された`reload`は`false`を返します。`ApiVisitRepository`もセッション取得の世代を管理し、古い応答で内部のCSRFトークンや認証状態を戻さないようにします。
+
+## API通信とインポートの責務
+
+- APIのJSON・写真取得は`repositories/apiRequest.ts`の共通通信処理を使います。1リクエストの本文読み込みまでを30秒で打ち切り、`request_timeout`で通知します。変更系は保存済みの可能性があるため自動再送せず、再読み込みで結果を確認する案内を維持してください。壊れた成功JSONは`invalid_response`、通信・本文受信の失敗は`network_error`です。
+- 一覧のページ取得は返されたカーソルを記録し、再出現したら`invalid_response`で終了します。途中までの一覧を成功として返さず、最大ページ数の制限も維持してください。
+- インポートの検証・正規化・画像URL除外・チャンク分割は`utils/visitImport.ts`、ファイル入出力・Repository経由の取り込み・再読み込みは`services/visitImportExport.ts`、画面状態と通知は`hooks/useVisitImportExport.ts`へ分けます。サービスは進捗を件数のコールバックで渡し、Reactやトーストに依存させません。

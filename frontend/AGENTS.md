@@ -35,3 +35,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## API通信の失敗と待ち時間
+
+- `repositories/apiRequest.ts`がJSON・写真取得の通信と本文受信を包み、1リクエスト30秒の上限（`API_REQUEST_TIMEOUT_MS`）を設けます。タイムアウトでは通信を中断して`RepositoryError`の`request_timeout`を返し、更新を自動再送しません。タイマーは成功・失敗どちらでも解除し、中断を無視した遅延応答で成功へ戻さないこと。
+- 成功応答のJSON解析エラーは`invalid_response`、接続と本文受信の失敗は`network_error`にします。HTTPエラーの本文がHTML・壊れたJSON・不正な形式ならステータスを保持した`request_failed`とし、有効なエラー応答の`code`・文言・`details`は維持してください。
+- `ApiVisitRepository#list`はカーソルの再出現（直前と同じ値だけでなく循環も）で即座に`invalid_response`とします。重複記録の除外、カーソルなしの旧サーバーとの互換、最大ページ数、途中失敗時に部分一覧を返さない規約も維持してください。

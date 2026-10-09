@@ -3,6 +3,7 @@ import { SaunaVisitSchema, type LatLng, type SaunaVisit, type VisitFormState } f
 import { blobToDataUrl, isApiImageUrl, toNormalizedTags } from "../utils";
 import type { ClientErrorReport, ImportResult, SessionState, VisitRepository } from "./types";
 import { RepositoryError } from "./types";
+import { requestJson, requestWithTimeout } from "./apiRequest";
 
 /*
  * サーバーの応答は型注釈だけで信用せず、localモードと同じ SaunaVisitSchema で検証する。
@@ -45,10 +46,6 @@ const MAX_LIST_PAGES = 1000;
 
 const EXPORT_IMAGE_FAILED_MESSAGE = "写真を取得できなかったため、エクスポートを中止しました。";
 
-interface ErrorEnvelope {
-  error?: { code?: string; message?: string; details?: unknown };
-}
-
 function formPayload(location: LatLng, form: VisitFormState, lockVersion?: number) {
   return {
     saunaVisit: {
@@ -75,7 +72,7 @@ export class ApiVisitRepository implements VisitRepository {
   /** エラー報告の送信可否。サーバーはログイン中の報告だけを受け付ける */
   private authenticated = false;
 
-  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  private request(path: string, init: RequestInit = {}): Promise<unknown> {
     const method = init.method ?? "GET";
     const headers = new Headers(init.headers);
     headers.set("Accept", "application/json");
@@ -84,31 +81,12 @@ export class ApiVisitRepository implements VisitRepository {
       headers.set("X-CSRF-Token", this.csrfToken);
     }
 
-    let response: Response;
-    try {
-      response = await fetch(path, { ...init, headers, credentials: "same-origin" });
-    } catch (error) {
-      console.error(`Failed to request ${method} ${path}:`, error);
-      throw new RepositoryError("サーバーへ接続できません。通信状態を確認してください。", "network_error");
-    }
-
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as ErrorEnvelope;
-      const error = body.error;
-      throw new RepositoryError(
-        error?.message ?? "サーバー処理に失敗しました。",
-        error?.code ?? "request_failed",
-        response.status,
-        error?.details,
-      );
-    }
-    if (response.status === 204) return undefined as T;
-    return response.json() as Promise<T>;
+    return requestJson(path, { ...init, headers });
   }
 
   async getSession(): Promise<SessionState> {
     const generation = ++this.sessionGeneration;
-    const body = await this.request<unknown>("/api/v1/session");
+    const body = await this.request("/api/v1/session");
     const session: SessionState = parseResponse(SessionStateSchema, body);
     // 古いセッション応答で、次の変更系リクエストに使うトークンを戻さない。
     if (generation === this.sessionGeneration) {
@@ -119,7 +97,7 @@ export class ApiVisitRepository implements VisitRepository {
   }
 
   async logout(): Promise<void> {
-    await this.request<void>("/api/v1/session", { method: "DELETE" });
+    await this.request("/api/v1/session", { method: "DELETE" });
     this.sessionGeneration += 1;
     this.csrfToken = null;
     this.authenticated = false;
@@ -132,11 +110,12 @@ export class ApiVisitRepository implements VisitRepository {
   async list(): Promise<SaunaVisit[]> {
     const visits: SaunaVisit[] = [];
     const seen = new Set<string>();
+    const seenCursors = new Set<string>();
     let cursor: string | null = null;
     for (let page = 0; page < MAX_LIST_PAGES; page += 1) {
       const params = new URLSearchParams({ limit: String(LIST_PAGE_SIZE) });
       if (cursor) params.set("cursor", cursor);
-      const body = await this.request<unknown>(`/api/v1/sauna_visits?${params.toString()}`);
+      const body = await this.request(`/api/v1/sauna_visits?${params.toString()}`);
       const result = parseResponse(VisitPageEnvelopeSchema, body);
       for (const visit of result.saunaVisits) {
         if (seen.has(visit.id)) continue;
@@ -145,12 +124,16 @@ export class ApiVisitRepository implements VisitRepository {
       }
       cursor = result.nextCursor ?? null;
       if (!cursor) return visits;
+      if (seenCursors.has(cursor)) {
+        throw new RepositoryError("記録の読み込みで同じページが繰り返されました。", "invalid_response");
+      }
+      seenCursors.add(cursor);
     }
     throw new RepositoryError("記録の読み込みが終わりませんでした。", "invalid_response");
   }
 
   async create(location: LatLng, form: VisitFormState): Promise<SaunaVisit> {
-    const body = await this.request<unknown>("/api/v1/sauna_visits", {
+    const body = await this.request("/api/v1/sauna_visits", {
       method: "POST",
       body: JSON.stringify(formPayload(location, form)),
     });
@@ -165,7 +148,7 @@ export class ApiVisitRepository implements VisitRepository {
         "missing_lock_version",
       );
     }
-    const body = await this.request<unknown>(`/api/v1/sauna_visits/${encodeURIComponent(visit.id)}`, {
+    const body = await this.request(`/api/v1/sauna_visits/${encodeURIComponent(visit.id)}`, {
       method: "PATCH",
       body: JSON.stringify(formPayload(location, form, visit.lockVersion)),
     });
@@ -173,13 +156,13 @@ export class ApiVisitRepository implements VisitRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.request<void>(`/api/v1/sauna_visits/${encodeURIComponent(id)}`, { method: "DELETE" });
+    await this.request(`/api/v1/sauna_visits/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 
   async deleteHistoryEntry(visit: SaunaVisit, index: number): Promise<SaunaVisit> {
     const historyId = visit.history?.[index]?.id;
     if (!historyId) throw new RepositoryError("削除対象の履歴IDがありません。", "missing_history_id");
-    const body = await this.request<unknown>(
+    const body = await this.request(
       `/api/v1/sauna_visits/${encodeURIComponent(visit.id)}/history_entries/${encodeURIComponent(historyId)}`,
       { method: "DELETE" },
     );
@@ -187,7 +170,7 @@ export class ApiVisitRepository implements VisitRepository {
   }
 
   async importBatch(visits: SaunaVisit[]): Promise<ImportResult> {
-    const body = await this.request<unknown>("/api/v1/sauna_visits/imports", {
+    const body = await this.request("/api/v1/sauna_visits/imports", {
       method: "POST",
       body: JSON.stringify({ saunaVisits: visits }),
     });
@@ -226,32 +209,29 @@ export class ApiVisitRepository implements VisitRepository {
   async reportClientError(report: ClientErrorReport): Promise<void> {
     // ログイン前はサーバーが受け付けない（401）ため送らない
     if (!this.authenticated) return;
-    await this.request<void>("/api/v1/client_errors", {
+    await this.request("/api/v1/client_errors", {
       method: "POST",
       body: JSON.stringify({ clientError: report }),
     });
   }
 
   private async fetchImageAsDataUrl(url: string): Promise<string> {
-    let response: Response;
-    try {
-      response = await fetch(url, { credentials: "same-origin" });
-    } catch (error) {
-      console.error(`Failed to request GET ${url}:`, error);
-      throw new RepositoryError("サーバーへ接続できません。通信状態を確認してください。", "network_error");
-    }
-    // セッションの喪失は写真の取得失敗と区別する（errorMessages.ts の isSessionLostError で判定し、useVisitSession がログイン画面へ戻す）
-    if (response.status === 401) {
-      throw new RepositoryError("ログインが必要です。", "unauthenticated", response.status);
-    }
-    if (!response.ok) {
-      throw new RepositoryError(EXPORT_IMAGE_FAILED_MESSAGE, "export_image_failed", response.status);
-    }
-    try {
-      return await blobToDataUrl(await response.blob());
-    } catch (error) {
-      console.error(`Failed to read image ${url}:`, error);
-      throw new RepositoryError(EXPORT_IMAGE_FAILED_MESSAGE, "export_image_failed");
-    }
+    return requestWithTimeout(url, {}, async (response, signal) => {
+      // 写真取得の401もセッション再確認の対象にする。
+      if (response.status === 401) {
+        throw new RepositoryError("ログインが必要です。", "unauthenticated", response.status);
+      }
+      if (!response.ok) {
+        throw new RepositoryError(EXPORT_IMAGE_FAILED_MESSAGE, "export_image_failed", response.status);
+      }
+      const blob = await response.blob();
+      signal.throwIfAborted();
+      try {
+        return await blobToDataUrl(blob);
+      } catch (error) {
+        console.error(`写真の読み込みに失敗しました (${url}):`, error);
+        throw new RepositoryError(EXPORT_IMAGE_FAILED_MESSAGE, "export_image_failed");
+      }
+    });
   }
 }

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ApiVisitRepository, LIST_PAGE_SIZE } from "./apiVisitRepository";
+import { API_REQUEST_TIMEOUT_MS } from "./apiRequest";
 import { RepositoryError } from "./types";
 import type { SaunaVisit } from "../types";
 
@@ -142,7 +143,7 @@ describe("ApiVisitRepository", () => {
     });
 
     // どのリクエストが失敗したかをログから追えるようにする
-    expect(consoleSpy).toHaveBeenCalledWith(`Failed to request GET /api/v1/sauna_visits?limit=${LIST_PAGE_SIZE}:`, error);
+    expect(consoleSpy).toHaveBeenCalledWith(`通信に失敗しました (GET /api/v1/sauna_visits?limit=${LIST_PAGE_SIZE}):`, error);
   });
 
   it("エラー本文がJSONでなくても既定のメッセージを返す", async () => {
@@ -230,6 +231,16 @@ describe("ApiVisitRepository", () => {
       `/api/v1/sauna_visits?limit=${LIST_PAGE_SIZE}`,
       `/api/v1/sauna_visits?limit=${LIST_PAGE_SIZE}&cursor=c1`,
     ]);
+  });
+
+  it.each([["c1", "c1"], ["c1", "c2", "c1"]])("繰り返されたカーソルを検出して取得を打ち切る（%j）", async (...cursors) => {
+    const fetchMock = vi.spyOn(globalThis, "fetch");
+    for (const nextCursor of cursors) {
+      fetchMock.mockResolvedValueOnce(jsonResponse({ saunaVisits: [visitJson({})], nextCursor }));
+    }
+    const repository = new ApiVisitRepository();
+    await expect(repository.list()).rejects.toMatchObject({ code: "invalid_response" });
+    expect(fetchMock).toHaveBeenCalledTimes(cursors.length);
   });
 
   it("nextCursorを返さない古い版のサーバーでは1ページで終える", async () => {
@@ -379,6 +390,22 @@ describe("ApiVisitRepository", () => {
         code: "unauthenticated",
         status: 401,
       });
+    });
+
+    it("画像本文の受信が止まってもタイムアウトし、欠けたバックアップを返さない", async () => {
+      vi.useFakeTimers();
+      try {
+        const response = imageResponse("png");
+        vi.spyOn(response, "blob").mockReturnValue(new Promise(() => {}));
+        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(response);
+        const repository = new ApiVisitRepository();
+        const failure = expect(repository.prepareExport([visitJson({ image: API_IMAGE })])).rejects.toMatchObject({ code: "request_timeout" });
+        await vi.advanceTimersByTimeAsync(API_REQUEST_TIMEOUT_MS);
+        await failure;
+        expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it("通信できないときは network_error にする", async () => {
