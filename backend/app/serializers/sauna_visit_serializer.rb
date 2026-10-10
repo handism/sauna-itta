@@ -4,7 +4,7 @@ class SaunaVisitSerializer
   end
 
   def as_json(*)
-    Rails.cache.fetch([@visit, 'sauna_visit_serializer']) do
+    Rails.cache.fetch([ @visit, "sauna_visit_serializer" ]) do
       latest = @visit.visit_history_entries[-1]
       {
 
