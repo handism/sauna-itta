@@ -8,9 +8,12 @@ interface RouteLinkProps {
 }
 
 export function RouteLink({ lat, lng, className = "route-link" }: RouteLinkProps) {
+  const href = getDirectionsUrl(lat, lng);
+  const safeHref = href.startsWith("http") ? href : "#";
+
   return (
     <a
-      href={getDirectionsUrl(lat, lng)}
+      href={safeHref}
       target="_blank"
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
