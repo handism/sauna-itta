@@ -64,7 +64,7 @@ export default function RootLayout({
     // --font-main ごと無効値になってブラウザ既定の書体へ落ちる（Outfit も日本語の指定も効かない）
     <html lang="ja" className={outfit.variable} suppressHydrationWarning>
       <head>
-        <script id="theme-init" dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script id="theme-init">{THEME_INIT_SCRIPT}</script>
       </head>
       <body>
         <ClientErrorReporter />
