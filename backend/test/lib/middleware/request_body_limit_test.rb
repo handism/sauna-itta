@@ -3,7 +3,7 @@ require_relative "../../../lib/middleware/request_body_limit"
 
 class MiddlewareRequestBodyLimitTest < ActiveSupport::TestCase
   def setup
-    @app = ->(env) { [200, env, ["app response"]] }
+    @app = ->(env) { [ 200, env, [ "app response" ] ] }
     @middleware = RequestBodyLimit.new(@app)
     @max_bytes = RequestBodyLimit::MAX_BYTES
   end
@@ -24,7 +24,7 @@ class MiddlewareRequestBodyLimitTest < ActiveSupport::TestCase
     status, _headers, body = @middleware.call(env)
 
     assert_equal 200, status
-    assert_equal ["app response"], body
+    assert_equal [ "app response" ], body
   end
 
   test "calls app when path is under /api/ and content length is well below the limit" do
@@ -32,7 +32,7 @@ class MiddlewareRequestBodyLimitTest < ActiveSupport::TestCase
     status, _headers, body = @middleware.call(env)
 
     assert_equal 200, status
-    assert_equal ["app response"], body
+    assert_equal [ "app response" ], body
   end
 
   test "calls app when path is under /api/ and content length is not provided" do
@@ -40,7 +40,7 @@ class MiddlewareRequestBodyLimitTest < ActiveSupport::TestCase
     status, _headers, body = @middleware.call(env)
 
     assert_equal 200, status
-    assert_equal ["app response"], body
+    assert_equal [ "app response" ], body
   end
 
   test "calls app when path is not under /api/ even if content length exceeds limit" do
@@ -48,6 +48,6 @@ class MiddlewareRequestBodyLimitTest < ActiveSupport::TestCase
     status, _headers, body = @middleware.call(env)
 
     assert_equal 200, status
-    assert_equal ["app response"], body
+    assert_equal [ "app response" ], body
   end
 end
