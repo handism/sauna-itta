@@ -141,6 +141,7 @@ export function countTags(
   { excludeWishlist = false }: { excludeWishlist?: boolean } = {},
 ): TagCount[] {
   const tagCounts = new Map<string, number>();
+  const trimCache = new Map<string, string>();
 
   for (const visit of visits) {
     if (excludeWishlist && isWishlist(visit)) {
@@ -152,7 +153,11 @@ export function countTags(
     }
 
     for (const tag of visit.tags) {
-      const trimmed = tag.trim();
+      let trimmed = trimCache.get(tag);
+      if (trimmed === undefined) {
+        trimmed = tag.trim();
+        trimCache.set(tag, trimmed);
+      }
       if (trimmed) {
         tagCounts.set(trimmed, (tagCounts.get(trimmed) ?? 0) + 1);
       }
