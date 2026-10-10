@@ -4,8 +4,10 @@ class SaunaVisitSerializer
   end
 
   def as_json(*)
-    latest = @visit.visit_history_entries[-1]
-    {
+    Rails.cache.fetch([@visit, 'sauna_visit_serializer']) do
+      latest = @visit.visit_history_entries[-1]
+      {
+
       id: @visit.external_id,
       name: @visit.name,
       lat: @visit.latitude.to_f,
@@ -20,7 +22,8 @@ class SaunaVisitSerializer
       rating: latest&.rating&.to_f,
       image: image_url(latest),
       history: @visit.visit_history_entries.map { |entry| history_json(entry) }
-    }.compact
+      }.compact
+    end
   end
 
   private
@@ -36,7 +39,7 @@ class SaunaVisitSerializer
   end
 
   def image_url(entry)
-    return unless entry&.image&.attached?
-    "/api/v1/images/#{entry.image.blob.signed_id}"
+    return unless entry&.image_attachment&.present?
+    "/api/v1/images/#{entry.image_attachment.blob.signed_id}"
   end
 end
