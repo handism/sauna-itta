@@ -51,12 +51,24 @@ export function flattenVisitHistory(
     }
 
     const visitId = visit.id;
-    for (const entry of getVisitHistoryEntries(visit)) {
+
+    if (Array.isArray(visit.history) && visit.history.length > 0) {
+      for (const entry of visit.history) {
+        entries.push({
+          date: entry.date,
+          comment: entry.comment,
+          rating: entry.rating,
+          image: entry.image,
+          visitId,
+          status,
+        });
+      }
+    } else {
       entries.push({
-        date: entry.date,
-        comment: entry.comment,
-        rating: entry.rating,
-        image: entry.image,
+        date: visit.date,
+        comment: visit.comment ?? "",
+        rating: visit.rating ?? 0,
+        image: visit.image,
         visitId,
         status,
       });
