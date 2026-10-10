@@ -11,7 +11,7 @@ class VisitHistoryEntry < ApplicationRecord
   ALLOWED_IMAGE_TYPES = IMAGE_TYPE_EXTENSIONS.keys.freeze
   MAX_IMAGE_BYTES = 1.megabyte
 
-  belongs_to :sauna_visit
+  belongs_to :sauna_visit, touch: true
   # 写真のblobの破棄は ImageBlobPurger に一本化する（記録・履歴の削除と差し替えで、
   # コミット後に呼び出し側が明示的に破棄する）。既定の dependent: :purge_later のままだと
   # 同じblobの破棄ジョブが二重に積まれるうえ、:async アダプタのジョブは Cloud Run が
