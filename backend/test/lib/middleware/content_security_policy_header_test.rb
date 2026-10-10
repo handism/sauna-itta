@@ -2,7 +2,7 @@ require "test_helper"
 
 class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
   def setup
-    @app = ->(env) { [200, env["mock.headers"] || { "content-type" => "text/html" }, env["mock.body"] || ["<html><head><script>alert(1)</script></head><body>Hello</body></html>"]] }
+    @app = ->(env) { [ 200, env["mock.headers"] || { "content-type" => "text/html" }, env["mock.body"] || [ "<html><head><script>alert(1)</script></head><body>Hello</body></html>" ] ] }
     @middleware = ContentSecurityPolicyHeader.new(@app)
   end
 
@@ -12,7 +12,7 @@ class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
 
     assert_equal 200, status
     assert_includes headers["content-security-policy"], "script-src 'self' 'sha256-bhHHL3z2vDgxUt0W3dWQOrprscmda2Y5pLsLg4GF+pI='"
-    assert_equal ["<html><head><script>alert(1)</script></head><body>Hello</body></html>"], body
+    assert_equal [ "<html><head><script>alert(1)</script></head><body>Hello</body></html>" ], body
   end
 
   def test_ignores_non_html
@@ -36,12 +36,12 @@ class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
     env = {
       "REQUEST_METHOD" => "GET",
       "mock.headers" => { "content-type" => "text/html", "content-encoding" => "gzip" },
-      "mock.body" => [gzipped]
+      "mock.body" => [ gzipped ]
     }
 
     status, headers, body = @middleware.call(env)
     assert_equal 200, status
-    assert_equal [gzipped], body
+    assert_equal [ gzipped ], body
 
     # Hash of "alert('gzip')"
     # Expected base64 digest
@@ -53,7 +53,7 @@ class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
     env = {
       "REQUEST_METHOD" => "GET",
       "mock.headers" => { "content-type" => "text/html", "content-encoding" => "gzip" },
-      "mock.body" => ["not gzipped content"]
+      "mock.body" => [ "not gzipped content" ]
     }
 
     status, headers, _body = @middleware.call(env)
@@ -65,7 +65,7 @@ class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
     env = {
       "REQUEST_METHOD" => "GET",
       "mock.headers" => { "content-type" => "text/html" },
-      "mock.body" => ["<html><head><script>alert(1)</script><script>alert(2)</script></head><body>Hello</body></html>"]
+      "mock.body" => [ "<html><head><script>alert(1)</script><script>alert(2)</script></head><body>Hello</body></html>" ]
     }
 
     status, headers, _body = @middleware.call(env)
@@ -80,7 +80,7 @@ class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
     env = {
       "REQUEST_METHOD" => "GET",
       "mock.headers" => { "content-type" => "text/html" },
-      "mock.body" => ["<html><head><script src='app.js'></script></head><body>Hello</body></html>"]
+      "mock.body" => [ "<html><head><script src='app.js'></script></head><body>Hello</body></html>" ]
     }
 
     status, headers, _body = @middleware.call(env)
@@ -100,7 +100,7 @@ class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
       env = {
         "REQUEST_METHOD" => "GET",
         "mock.headers" => { "content-type" => "text/html" },
-        "mock.body" => ["<html><head><script>alert(#{i})</script></head><body>Hello</body></html>"]
+        "mock.body" => [ "<html><head><script>alert(#{i})</script></head><body>Hello</body></html>" ]
       }
       @middleware.call(env)
     end
@@ -109,7 +109,7 @@ class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
     env = {
       "REQUEST_METHOD" => "GET",
       "mock.headers" => { "content-type" => "text/html" },
-      "mock.body" => ["<html><head><script>alert('new')</script></head><body>Hello</body></html>"]
+      "mock.body" => [ "<html><head><script>alert('new')</script></head><body>Hello</body></html>" ]
     }
     status, headers, _body = @middleware.call(env)
     digest = Digest::SHA256.base64digest("alert('new')")
@@ -120,7 +120,7 @@ class ContentSecurityPolicyHeaderMiddlewareTest < ActiveSupport::TestCase
     env = {
       "REQUEST_METHOD" => "GET",
       "mock.headers" => { "content-type" => "text/html", "content-length" => "10" },
-      "mock.body" => ["<html></html>"]
+      "mock.body" => [ "<html></html>" ]
     }
 
     status, headers, _body = @middleware.call(env)
