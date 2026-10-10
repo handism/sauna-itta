@@ -30,6 +30,22 @@ function repository(overrides: Partial<VisitRepository> = {}): VisitRepository {
 describe("useSaunaVisits", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("履歴の削除に失敗した場合はトーストを表示して false を返す", async () => {
+    const showToast = vi.fn();
+    const source = repository({ deleteHistoryEntry: vi.fn().mockRejectedValue(new Error("ネットワークエラー")) });
+    const { result } = renderHook(() => useSaunaVisits(showToast, source));
+    await waitFor(() => expect(result.current.visits).toEqual(initialVisits));
+
+    let removeResult: { success: boolean } | undefined;
+    await act(async () => {
+      removeResult = await result.current.actions.removeHistoryEntry(initialVisits[0], 0);
+    });
+
+    expect(result.current.visits).toEqual(initialVisits);
+    expect(showToast).toHaveBeenCalledWith("ネットワークエラー", "error");
+    expect(removeResult).toEqual({ success: false });
+  });
+
   it("セッション確認後にAPIから記録を読み込む", async () => {
     const source = repository();
     const { result } = renderHook(() => useSaunaVisits(undefined, source));
