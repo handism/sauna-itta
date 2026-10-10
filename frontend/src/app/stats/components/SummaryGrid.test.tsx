@@ -15,6 +15,7 @@ describe("SummaryGrid", () => {
     visitedCount: 6,
     wishlistCount: 4,
     totalVisits: 15,
+    repeatVisitedCount: 3,
     firstDate: "2023-01-01",
     lastDate: "2023-12-31",
     avgRating: 4.5,
@@ -29,6 +30,8 @@ describe("SummaryGrid", () => {
     // 先頭は延べ訪問回数。登録施設数は「行った施設＋行きたい」と重なるため出さない
     const totalArticle = screen.getByRole("listitem", { name: "延べ訪問回数" });
     expect(totalArticle).toHaveTextContent("15 回");
+    // 延べ回数と施設数が同じ数字で並ぶだけにならないよう、再訪した施設の数を添える
+    expect(totalArticle).toHaveTextContent("うち再訪 3 施設");
     expect(screen.queryByText("登録サウナ総数")).toBeNull();
 
     // Check visited / wishlist
@@ -66,6 +69,7 @@ describe("SummaryGrid", () => {
       visitedCount: 0,
       wishlistCount: 0,
       totalVisits: 0,
+      repeatVisitedCount: 0,
       firstDate: null,
       lastDate: null,
       avgRating: 0,
@@ -77,6 +81,8 @@ describe("SummaryGrid", () => {
 
     const totalArticle = screen.getByRole("listitem", { name: "延べ訪問回数" });
     expect(totalArticle).toHaveTextContent("0 回");
+    // 訪問が無いときは再訪の補足を出さない
+    expect(totalArticle).not.toHaveTextContent("再訪");
 
     // 行きたいが 0 件のときは補足を出さない
     const visitedArticle = screen.getByRole("listitem", { name: "行った施設" });
@@ -99,6 +105,13 @@ describe("SummaryGrid", () => {
 
     const periodArticle = screen.getByRole("listitem", { name: "記録期間" });
     expect(periodArticle).toHaveTextContent("-");
+  });
+
+  it("再訪した施設が無いときはその旨を補足に出す", () => {
+    render(<SummaryGrid stats={{ ...mockStats, totalVisits: 6, repeatVisitedCount: 0 }} />);
+
+    const totalArticle = screen.getByRole("listitem", { name: "延べ訪問回数" });
+    expect(totalArticle).toHaveTextContent("どの施設も 1 回ずつ");
   });
 });
 

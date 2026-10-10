@@ -67,7 +67,7 @@ function SaunaMapContent() {
   const { dataSource, loading, authenticated, csrfToken, loadError } = useVisitsStatus();
   const { reload } = useVisitsActions();
 
-  const { isAdding, isCreating, isMobilePickingLocation, selectedLocation } = useSaunaEditorState();
+  const { isAdding, isMobilePickingLocation } = useSaunaEditorState();
   const { confirmDelete } = useSaunaEditorActions();
 
   const {
@@ -105,11 +105,10 @@ function SaunaMapContent() {
         <MobileLocationPickHint onCancel={handleCancelEditing} />
       )}
 
-      {/* デスクトップの新規登録は、場所を選ぶまで地図側にも次の手順を出す */}
-      {!isMobile && isCreating && !selectedLocation && (
-        <MobilePinHint variant="desktop" />
-      )}
-
+      {/*
+        デスクトップの新規登録では、場所の案内をフォーム先頭の .location-status だけに出す。
+        地図側にも案内バーを出すと、同じ指示が画面の 2 か所に並ぶ
+      */}
       {!isMobilePickingLocation && !isMobile && (
         <DesktopSidebar>
           {isAdding ? <VisitForm /> : <VisitList />}

@@ -4,10 +4,8 @@ import type { GeocodingResult } from "../../utils/geocoding";
 import { cx } from "../../utils/classNames";
 
 interface MobilePinHintProps {
-  /** 省略するとキャンセルボタンを出さない（デスクトップはフォーム側にキャンセルがあるため） */
+  /** 省略するとキャンセルボタンを出さない */
   onCancel?: () => void;
-  /** デスクトップ向けの文言・配置（サイドバーを避けた地図の中央下）に切り替える */
-  variant?: "mobile" | "desktop";
   /**
    * 渡すと案内の下に地点検索を出す（モバイル用）。全国表示から目的の施設まで
    * ピンチで寄せるのは手間なので、名前や住所から直接場所を選べるようにする。
@@ -16,30 +14,22 @@ interface MobilePinHintProps {
 }
 
 /**
- * 場所の選択中に地図上へ出す案内バー。
- * モバイルはフォームを隠して地図をタップさせるため必須の案内で、デスクトップでは
- * サイドバーのフォームと並んで「次は地図をクリックする」ことを地図側でも示す。
+ * モバイルの場所の選択中に地図上へ出す案内バー。フォームを隠して地図をタップさせるため必須の案内。
+ * デスクトップはフォーム先頭の .location-status が同じ案内を出すため使わない。
  */
-export function MobilePinHint({ onCancel, variant = "mobile", onSelectSearchResult }: MobilePinHintProps) {
-  const isDesktop = variant === "desktop";
-  const showSearch = !isDesktop && onSelectSearchResult != null;
+export function MobilePinHint({ onCancel, onSelectSearchResult }: MobilePinHintProps) {
+  const showSearch = onSelectSearchResult != null;
 
   return (
-    <div
-      className={cx("pin-hint", isDesktop && "pin-hint--desktop", showSearch && "pin-hint--with-search")}
-    >
+    <div className={cx("pin-hint", showSearch && "pin-hint--with-search")}>
       {/* 案内の文言だけをライブリージョンにする（検索欄まで含めると入力のたびに読み上げが走る） */}
       <div className="pin-hint-main" role="status">
         <div className="pin-hint-icon">
           <MapPin size={20} aria-hidden="true" />
         </div>
         <div className="pin-hint-text">
-          <strong>{isDesktop ? "地図をクリックして場所を選択" : "地図をタップして場所を選択"}</strong>
-          <span>
-            {isDesktop
-              ? "選ぶと左のフォームから保存できます"
-              : "選ぶと記録の入力に進みます"}
-          </span>
+          <strong>地図をタップして場所を選択</strong>
+          <span>選ぶと記録の入力に進みます</span>
         </div>
       </div>
       {onCancel && (

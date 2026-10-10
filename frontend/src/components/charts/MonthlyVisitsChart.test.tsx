@@ -57,6 +57,8 @@ describe('MonthlyVisitsChart', () => {
     expect(chart).toBeInTheDocument();
     expect(chart.getAttribute('aria-label')).toContain('2023-01から2023-03まで');
     expect(chart.getAttribute('aria-label')).toContain('合計2件の訪問');
+    // 0 件の月も含めた 3 か月で割った平均を、グラフの平均線と同じ値で読み上げる
+    expect(chart.getAttribute('aria-label')).toContain('月平均0.7回');
   });
 
   it('renders correctly in dark theme', () => {

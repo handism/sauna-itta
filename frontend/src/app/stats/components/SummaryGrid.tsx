@@ -44,6 +44,17 @@ export function SummaryGrid({ stats }: SummaryGridProps) {
           <h3 id="stat-total-visits">延べ訪問回数</h3>
         </div>
         <p className={styles.statValue}>{stats.totalVisits} <span className={styles.statUnit}>回</span></p>
+        {/*
+          どの施設も 1 回ずつだと、延べ回数と隣の「行った施設」が同じ数字で並ぶだけになる。
+          再訪した施設の数を添えて、通い方の違いが読めるようにする。
+        */}
+        {stats.totalVisits > 0 && (
+          <p className={styles.statNote}>
+            {stats.repeatVisitedCount > 0
+              ? `うち再訪 ${stats.repeatVisitedCount} 施設`
+              : "どの施設も 1 回ずつ"}
+          </p>
+        )}
       </article>
 
       <article className={`${styles.glassCard} ${styles.statCard}`} role="listitem" aria-labelledby="stat-visited">

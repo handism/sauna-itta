@@ -247,7 +247,15 @@
     margin-bottom: 2px;
   }
 
-  /* 追加ボタンの特記スタイル */
+  /*
+   * 追加ボタンの特記スタイル。他の項目の opacity: 0.65 を引き継ぐと、塗りの丸が薄れて
+   * 無効のボタンに見え、選択中のタブより目立たなくなる。主な操作なので常に不透明にする
+   */
+  .mobile-nav-item--add {
+    opacity: 1;
+    font-weight: 600;
+  }
+
   .mobile-nav-item--add .mobile-nav-icon--add {
     width: 32px;
     height: 32px;

@@ -366,10 +366,11 @@ input[type="date"].input {
 
 /*
  * 入力不足（場所・サウナ名）の保存ボタンは押すと足りない箇所へ案内するため、
- * disabled と同じ見た目にしつつ押せることが分かるカーソルにする
+ * 押せることが分かるカーソルと不透明度にする（.btn-primary の見た目は下で上書き）
  */
 .btn[aria-disabled="true"] {
   cursor: pointer;
+  opacity: 1;
 }
 
 .btn-primary {
@@ -390,6 +391,17 @@ input[type="date"].input {
   color: var(--text-muted);
   border-color: var(--glass-border);
   opacity: 1;
+}
+
+/*
+ * 入力不足の保存ボタンは押すと足りない箇所へ案内する（押せる）。保存中・画像処理中の
+ * disabled と同じ灰色だと押しても無駄に見えるため、主操作の色の枠線で「押せるが、まだ塗りではない」状態にする。
+ * 文字色は --primary だとライトの白地で 4.5:1 に届かないため --foreground にする
+ */
+.btn-primary[aria-disabled="true"]:not(:disabled) {
+  background: var(--overlay-subtle);
+  color: var(--foreground);
+  border-color: var(--primary);
 }
 
 .btn-primary:hover:not(:disabled):not([aria-disabled="true"]) {

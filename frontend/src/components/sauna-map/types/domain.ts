@@ -63,6 +63,8 @@ export interface VisitStats {
   wishlistCount: number;
   /** 延べ訪問回数（行った記録の訪問回数の合計） */
   totalVisits: number;
+  /** 2 回以上行った施設の数（`REPEAT_VISIT_MIN_COUNT` 以上）。延べ回数と施設数が同じ値に並ぶだけにならないよう補足に出す */
+  repeatVisitedCount: number;
   firstDate: string | null;
   lastDate: string | null;
   avgRating: number;

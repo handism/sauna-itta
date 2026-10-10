@@ -183,16 +183,17 @@
   flex: 1;
 }
 
+/* 開閉の印。行の右端で中立色にし、施設名や状態より目立たせない */
 .sauna-compact-chevron {
-  font-size: var(--text-xs);
-  color: var(--primary);
+  display: inline-flex;
+  color: var(--text-muted);
   transition: transform 0.25s ease;
-  opacity: 0.8;
   flex-shrink: 0;
 }
 
 .sauna-compact-chevron.is-expanded {
-  transform: rotate(90deg);
+  color: var(--primary);
+  transform: rotate(180deg);
 }
 
 .sauna-compact-text {
@@ -240,7 +241,7 @@
   flex-shrink: 0;
 }
 
-.sauna-compact-meta .wishlist-chip {
+.sauna-compact-side-info .wishlist-chip {
   margin-left: 0;
   flex-shrink: 0;
   font-size: var(--text-xs);
@@ -760,8 +761,15 @@
     top: 0;
     right: 0;
     bottom: 0.6rem;
-    width: 1.75rem;
-    background: linear-gradient(to right, transparent, var(--glass-heavy));
+    width: 2.5rem;
+    /*
+     * 面の色は .sidebar-content と同じ重ね方（--glass-heavy の下に --background）で作り、
+     * 透明への変化は mask で付ける。--glass-heavy だけのグラデーションは半透明のため、
+     * 不透明な本文の上ではほとんど見えず、右端のチップが途中で切れているだけに見えた
+     */
+    background: linear-gradient(var(--glass-heavy), var(--glass-heavy)), var(--background);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 75%);
+    mask-image: linear-gradient(to right, transparent, #000 75%);
     pointer-events: none;
   }
 }

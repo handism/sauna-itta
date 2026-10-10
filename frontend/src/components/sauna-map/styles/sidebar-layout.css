@@ -30,7 +30,11 @@
   pointer-events: auto;
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-xl), 0 0 32px var(--primary-glow);
+  /*
+   * 発光（--primary-glow）は重ねない。ダークでは面の縁がオレンジににじみ、
+   * 地図の上で選択中・強調の表示と区別が付かなくなる。浮き上がりは影だけで示す
+   */
+  box-shadow: var(--shadow-xl);
   animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity var(--transition-normal);
 }

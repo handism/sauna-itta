@@ -12,6 +12,7 @@ const stats: VisitStats = {
   visitedCount: 2,
   wishlistCount: 0,
   totalVisits: 3,
+  repeatVisitedCount: 1,
   uniqueAreas: 1,
   prefectures: ["東京都"],
   prefectureCount: 1,

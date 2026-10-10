@@ -26,12 +26,19 @@
 }
 
 /*
- * フィルターはレイヤー（.dark-map-tiles）ではなくタイル 1 枚ずつに掛けること。
- * leaflet.css はタイル境界の隙間を mix-blend-mode: plus-lighter で埋めているが、
- * 親レイヤーに filter を掛けるとその合成が効かず、小数の devicePixelRatio
- * （Pixel 7 の 2.625 等）でタイルの継ぎ目が格子状の線として見える。
+ * フィルターはレイヤー（.dark-map-tiles）ではなくタイル 1 枚ずつに掛けること
+ * （レイヤーに掛けるとタイルごとの合成が効かず、継ぎ目が格子状の線として見える）。
+ *
+ * タイルは 1px 大きく描いて隣と重ね、継ぎ目の隙間を塞ぐ。地図は zoomSnap 0.25 の小数ズームで
+ * タイルを縮小表示するため、leaflet.css の mix-blend-mode: plus-lighter だけでは端数の位置に
+ * 背景が透ける隙間が残り、地図の上に細い線が走って見えた（小数の devicePixelRatio でも同じ）。
+ * 重ねた 1px が plus-lighter で足し合わされると明るい線になるため、合成は normal に戻す。
+ * width / height は Leaflet がインラインで 256px を指定するので !important で上書きする。
  */
-.dark-map-tiles img.leaflet-tile {
+.leaflet-container .dark-map-tiles img.leaflet-tile {
+  width: 257px !important;
+  height: 257px !important;
+  mix-blend-mode: normal;
   filter: var(--map-filter);
 }
 
@@ -550,16 +557,6 @@
   transition: background 0.2s;
 }
 
-/*
- * デスクトップはサイドバー（左余白 2rem + 幅 420px）を避け、残りの地図領域の中央下に置く。
- * 右上の地図コントロールと重ならないよう上ではなく下に出す。
- */
-.pin-hint--desktop {
-  left: calc(50% + 210px + 1rem);
-  max-width: 380px;
-  pointer-events: none;
-}
-
 .pin-hint-cancel:hover {
   background: var(--glass-border);
 }
@@ -674,15 +671,17 @@
   box-shadow: var(--shadow-marker-lifted), 0 0 20px var(--primary-glow);
 }
 
+/*
+ * 件数は大きさだけで表し、色は小・中・大で共通にする。件数で赤へ変えると、
+ * 評価や注意（エラー）を示す色のように読めて、凡例なしでは意味が分からない
+ */
 .sauna-cluster--medium {
-  background: linear-gradient(135deg, #ff7a00 0%, #e64a19 100%);
   width: 46px;
   height: 46px;
   font-size: var(--text-md);
 }
 
 .sauna-cluster--large {
-  background: linear-gradient(135deg, #ff5252 0%, #d50000 100%);
   width: 50px;
   height: 50px;
   font-size: var(--text-lg);

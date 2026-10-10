@@ -23,6 +23,7 @@ describe("calculateStats", () => {
     expect(stats.total).toBe(0);
     expect(stats.visitedCount).toBe(0);
     expect(stats.totalVisits).toBe(0);
+    expect(stats.repeatVisitedCount).toBe(0);
     expect(stats.wishlistCount).toBe(0);
     expect(stats.firstDate).toBeNull();
     expect(stats.lastDate).toBeNull();
@@ -141,6 +142,7 @@ describe("calculateStats", () => {
     const stats = calculateStats(visits);
     expect(stats.avgRating).toBe(4); // (3+5+4)/3 = 12/3 = 4
     expect(stats.totalVisits).toBe(4); // 履歴 2 件ずつ
+    expect(stats.repeatVisitedCount).toBe(2); // どちらも 2 回行っている
     expect(stats.firstDate).toBe("2023-01-01");
     expect(stats.lastDate).toBe("2023-04-01");
     expect(stats.prefectureCount).toBe(2);

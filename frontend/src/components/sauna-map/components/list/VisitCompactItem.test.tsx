@@ -230,7 +230,7 @@ describe("VisitCompactItem の操作", () => {
     expect(screen.getByText("2回 · 最終 2026/7/24")).toBeInTheDocument();
   });
 
-  it("行きたい記録は訪問回数・日付の代わりに状態とエリアを 2 行目へ出すこと", () => {
+  it("行きたい記録は訪問回数・日付を出さず、状態を星と同じ右側の位置に出すこと", () => {
     const { container } = render(
       <VisitCompactItem
         {...compactProps}
@@ -239,10 +239,10 @@ describe("VisitCompactItem の操作", () => {
       />
     );
 
-    // 訪問済みの行と同じ 2 行構成にして、一覧の行の高さを揃える
+    // 状態は行った記録の星と同じ右側の列に置き、2 行目はエリアだけにする
     const meta = container.querySelector(".sauna-compact-meta");
-    expect(meta).toHaveTextContent("行きたい");
-    expect(meta).toHaveTextContent("東京");
+    expect(meta).toHaveTextContent(/^東京$/);
+    expect(container.querySelector(".sauna-compact-side-info")).toHaveTextContent("行きたい");
     expect(screen.queryByText(/回 · 最終/)).not.toBeInTheDocument();
   });
 

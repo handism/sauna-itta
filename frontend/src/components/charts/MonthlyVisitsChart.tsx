@@ -72,7 +72,9 @@ export default function MonthlyVisitsChart({
   }
 
   const totalVisits = data.reduce((sum, d) => sum + d.visits, 0);
-  const chartSummary = `月別訪問数の棒グラフ。${data[0].month}から${data[data.length - 1].month}まで、合計${totalVisits}件の訪問。`;
+  // 毎月の件数が近いと棒の高さがそろって見え、多い月・少ない月が読めない。平均の横線を基準に置く
+  const averageVisits = Math.round((totalVisits / data.length) * 10) / 10;
+  const chartSummary = `月別訪問数の棒グラフ。${data[0].month}から${data[data.length - 1].month}まで、合計${totalVisits}件の訪問。月平均${averageVisits}回。`;
 
   return (
     <>
@@ -82,9 +84,15 @@ export default function MonthlyVisitsChart({
         style={{ width: "100%", height: 260 }}
       >
         <ResponsiveContainer width="100%" height="100%">
+          {/*
+            棒の間を空ける（既定の 10% だと隣の棒と接して 1 枚の面に見える）。
+            月の数が少ないときに棒が太くなりすぎないよう maxBarSize でも抑える
+          */}
           <BarChart
             data={data}
-            margin={{ top: 15, right: 15, left: -20, bottom: 5 }}
+            // 右の余白は平均線のラベル（「平均 4.9回」）を棒に重ねずプロットの外に置くため
+            margin={{ top: 15, right: 64, left: -20, bottom: 5 }}
+            barCategoryGap="30%"
           >
             <defs>
               <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -126,8 +134,22 @@ export default function MonthlyVisitsChart({
               fill="url(#barGradient)"
               name="訪問数"
               radius={[6, 6, 0, 0]}
-              maxBarSize={40}
+              maxBarSize={28}
             />
+            {data.length > 1 && (
+              <ReferenceLine
+                y={averageVisits}
+                stroke={tickColor}
+                strokeDasharray="4 4"
+                ifOverflow="extendDomain"
+                label={{
+                  value: `平均 ${averageVisits}回`,
+                  position: "right",
+                  fill: tickColor,
+                  fontSize: 11,
+                }}
+              />
+            )}
             {yearBoundaries.length > 1 &&
               yearBoundaries.map(({ month, year }) => (
                 <ReferenceLine

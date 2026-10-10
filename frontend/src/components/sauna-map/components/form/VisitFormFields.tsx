@@ -184,7 +184,7 @@ export function FormActions({
   /**
    * 理由の文を見た目からは隠し、読み上げ（aria-describedby）にだけ残す。
    * 場所の未選択はフォーム先頭の .location-status が同じ文で示しているため、
-   * ボタンの下にも出すと同じ案内が 2 つ並ぶ（デスクトップでは地図側の案内と合わせて 3 つ）。
+   * ボタンの下にも出すと同じ案内が 2 つ並ぶ。
    */
   hideBlockedReason?: boolean;
   onDelete: () => void;

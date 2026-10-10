@@ -57,6 +57,11 @@ export function SaunaMapLayer({
         // 記録が読み込まれるまでの仮の表示。読み込み後は InitialViewFitter が記録の範囲へ合わせる
         center={[36.0, 138.0]}
         zoom={6}
+        /*
+         * 初期表示の fitBounds は zoomSnap の倍数へ切り捨てる。整数刻みだと北海道〜沖縄が
+         * 1 段だけ収まらずズーム 5 になり、画面の大半が日本の外（大陸・太平洋）になるため細かく刻む
+         */
+        zoomSnap={0.25}
         scrollWheelZoom
         zoomControl={false}
         style={{ height: "100%", width: "100%" }}

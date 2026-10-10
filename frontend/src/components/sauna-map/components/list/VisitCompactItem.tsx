@@ -1,6 +1,6 @@
 import { memo } from "react";
 import Image from "next/image";
-import { ChevronRight, ChevronUp, Pencil } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil } from "lucide-react";
 import { formatShortDate, getDisplayRating, getDisplayTags, getVisitCount, isWishlist, sanitizeImageUrl } from "../../utils";
 import { VisitItemProps, areVisitItemPropsEqual } from "./visitItem";
 import { RatingStars } from "../common/RatingStars";
@@ -56,12 +56,6 @@ function VisitCompactItemComponent({
             }}
           >
             <span className="sauna-compact-main-info">
-              <span
-                className={cx("sauna-compact-chevron", isSelected && "is-expanded")}
-                aria-hidden="true"
-              >
-                <ChevronRight size={14} />
-              </span>
               <span className="sauna-compact-text">
                 {/*
                   施設名は最大2行にする。エリアを同じ行へ並べると、縮まないエリアに押されて
@@ -70,10 +64,9 @@ function VisitCompactItemComponent({
                 <span className="sauna-compact-title">{visit.name}</span>
                 {/*
                   エリアと「何回・いつ行ったか」は別の行へ分け、地名を読む幅を確保する。
-                  行きたい記録は状態とエリアを表示する。
+                  行きたい記録の状態は、行った記録の星と同じ右側の位置に出す。
                 */}
                 <span className="sauna-compact-meta">
-                  {wishlist && <WishlistChip compact />}
                   {visit.area && <span className="sauna-compact-area">{visit.area}</span>}
                   {!wishlist && visit.date && (
                     <span className="sauna-compact-visits">
@@ -87,7 +80,22 @@ function VisitCompactItemComponent({
               {thumbSrc && (
                 <Image src={thumbSrc} className="sauna-compact-thumb" alt="" width={28} height={28} unoptimized />
               )}
-              <RatingStars rating={getDisplayRating(visit)} className="sauna-compact-rating" size={12} />
+              {/*
+                右側の列は「行った」なら星、「行きたい」なら状態のチップにして、どの行も同じ位置に
+                状態が並ぶようにする（行きたいの行だけ右側が空くと、縦に目で追えない）
+              */}
+              {wishlist ? (
+                <WishlistChip compact />
+              ) : (
+                <RatingStars rating={getDisplayRating(visit)} className="sauna-compact-rating" size={12} />
+              )}
+              {/* 開閉の印はアコーディオンの慣例どおり右端に置く。左端だと何の印か読み取れない */}
+              <span
+                className={cx("sauna-compact-chevron", isSelected && "is-expanded")}
+                aria-hidden="true"
+              >
+                <ChevronDown size={16} />
+              </span>
             </span>
           </button>
         </h3>
