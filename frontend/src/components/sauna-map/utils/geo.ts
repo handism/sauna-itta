@@ -112,13 +112,12 @@ export function isInBounds(
   lng: number,
   bounds: BoundingBox | null | undefined,
 ): boolean {
-  if (!bounds) return false;
-  const { northEast, southWest } = bounds;
-  const minLat = Math.min(southWest.lat, northEast.lat);
-  const maxLat = Math.max(southWest.lat, northEast.lat);
-  const minLng = Math.min(southWest.lng, northEast.lng);
-  const maxLng = Math.max(southWest.lng, northEast.lng);
-
-  return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+  return (
+    !!bounds &&
+    lat >= bounds.southWest.lat &&
+    lat <= bounds.northEast.lat &&
+    lng >= bounds.southWest.lng &&
+    lng <= bounds.northEast.lng
+  );
 }
 
