@@ -21,8 +21,7 @@ module Api
 
       def create
         payload = params.require(:saunaVisits)
-        raise ActionController::BadRequest, "取り込むデータは記録の配列で指定してください。" unless payload.is_a?(Array)
-        if payload.size > MAX_BATCH_SIZE
+        unless ArraySizeValidator.validate_payload!(payload, max_size: MAX_BATCH_SIZE)
           return render_error("batch_too_large", "一度に取り込めるのは#{MAX_BATCH_SIZE}件までです。", :unprocessable_content)
         end
 
@@ -92,9 +91,7 @@ module Api
         visit = current_user.sauna_visits.build(external_id: attributes[:external_id])
         assign_visit_attributes(visit, attributes)
         histories = Array(attributes[:history])
-        if histories.size > MAX_HISTORY_PER_VISIT
-          raise ActionController::BadRequest, "1件の記録に含められる履歴は#{MAX_HISTORY_PER_VISIT}件までです。"
-        end
+        ArraySizeValidator.validate_histories!(histories, max_size: MAX_HISTORY_PER_VISIT)
         histories = [ attributes.slice(:date, :comment, :rating, :image) ] if histories.empty?
 
         # attributes は permit 後に deep_symbolize_keys 済みのため、履歴もシンボルキーで読める
