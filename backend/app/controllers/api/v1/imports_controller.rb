@@ -45,24 +45,42 @@ module Api
       end
 
       def process_payload(payload, existing_external_ids)
+        parsed_payloads = parse_payloads(payload)
+        domain_objects = map_to_domain_objects(parsed_payloads)
+        save_domain_objects(domain_objects, existing_external_ids)
+      end
+
+      def parse_payloads(payload)
+        payload.map do |raw|
+          raise ActionController::BadRequest, "取り込むデータは記録の配列で指定してください。" unless raw.is_a?(ActionController::Parameters)
+
+          raw.permit(*IMPORT_PERMITTED_KEYS).to_h.deep_symbolize_keys
+        end
+      end
+
+      def map_to_domain_objects(parsed_payloads)
+        parsed_payloads.map do |attributes|
+          external_id = attributes[:id].to_s
+          raise ActionController::BadRequest, "IDがない記録は取り込めません。" if external_id.blank?
+
+          attributes.merge(external_id: external_id)
+        end
+      end
+
+      def save_domain_objects(domain_objects, existing_external_ids)
         added = 0
         skipped = 0
 
         SaunaVisit.transaction do
-          payload.each do |raw|
-            raise ActionController::BadRequest, "取り込むデータは記録の配列で指定してください。" unless raw.is_a?(ActionController::Parameters)
-
-            attributes = raw.permit(*IMPORT_PERMITTED_KEYS).to_h.deep_symbolize_keys
-
-            external_id = attributes[:id].to_s
-            raise ActionController::BadRequest, "IDがない記録は取り込めません。" if external_id.blank?
+          domain_objects.each do |domain_object|
+            external_id = domain_object[:external_id]
 
             if existing_external_ids.include?(external_id)
               skipped += 1
               next
             end
 
-            if import_visit_unless_concurrently_added(attributes.merge(external_id: external_id))
+            if import_visit_unless_concurrently_added(domain_object)
               added += 1
             else
               skipped += 1
