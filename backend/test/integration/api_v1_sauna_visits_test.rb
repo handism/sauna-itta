@@ -4,7 +4,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
   include ApiAuthHelper
 
   test "未認証では一覧を取得できない" do
-    get "/api/v1/sauna_visits"
+    get "/api/v1/sauna_visits", params: { limit: 100 }
     assert_response :unauthorized
     assert_equal "unauthenticated", response.parsed_body.dig("error", "code")
   end
@@ -120,7 +120,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal 1, SaunaVisit.find_by!(external_id: visit["id"]).legacy_visit_count
   end
 
-  test "一覧(index)は更新日時順で取得でき、正しくシリアライズされる" do
+  test "一覧(index)は作成日時(id)順で取得でき、正しくシリアライズされる" do
     csrf = sign_in
 
     # 1件目作成
@@ -157,7 +157,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
       queries += 1 if payload[:sql].match?(/SELECT /i)
     end
 
-    get "/api/v1/sauna_visits"
+    get "/api/v1/sauna_visits", params: { limit: 100 }
     assert_response :success
 
     ActiveSupport::Notifications.unsubscribe(subscriber)
@@ -168,12 +168,12 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     visits = response.parsed_body["saunaVisits"]
     assert_equal 3, visits.size
 
-    # 更新日時(updated_at)の降順になっているか確認: 最後に更新されたC, 次にA(更新), 最後にB
+    # 作成順(idの降順)になっているか確認: C, B, A
     assert_equal visit_c["id"], visits[0]["id"]
-    assert_equal visit_a["id"], visits[1]["id"]
-    assert_equal visit_b["id"], visits[2]["id"]
+    assert_equal visit_b["id"], visits[1]["id"]
+    assert_equal visit_a["id"], visits[2]["id"]
 
-    assert_equal "サウナA(更新)", visits[1]["name"]
+    assert_equal "サウナA(更新)", visits[2]["name"]
 
     # シリアライズの検証
     assert_includes visits[0], "id"
@@ -198,7 +198,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     other = User.create!(google_subject: "other", email: "other@example.com")
     other.sauna_visits.create!(name: "他人", latitude: 35, longitude: 139, status: "visited")
 
-    get "/api/v1/sauna_visits"
+    get "/api/v1/sauna_visits", params: { limit: 100 }
     assert_equal [ external_id ], response.parsed_body["saunaVisits"].pluck("id")
 
     patch "/api/v1/sauna_visits/#{other.sauna_visits.first.external_id}",
@@ -216,7 +216,7 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     delete "/api/v1/sauna_visits/#{external_id}", headers: csrf_header(csrf)
     assert_response :no_content
 
-    get "/api/v1/sauna_visits"
+    get "/api/v1/sauna_visits", params: { limit: 100 }
     assert_empty response.parsed_body["saunaVisits"]
   end
 

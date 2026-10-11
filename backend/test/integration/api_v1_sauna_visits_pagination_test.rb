@@ -42,15 +42,6 @@ class ApiV1SaunaVisitsPaginationTest < ActionDispatch::IntegrationTest
 
     assert_equal @ids.sort, (first_page + rest).sort
   end
-
-  test "limitを指定しない呼び出しは従来どおり全件を更新日時順で返す" do
-    get "/api/v1/sauna_visits"
-
-    assert_response :success
-    assert_equal 5, response.parsed_body["saunaVisits"].size
-    assert_not response.parsed_body.key?("nextCursor")
-  end
-
   test "limitは上限で切り詰める" do
     get "/api/v1/sauna_visits", params: { limit: 10_000 }
 
@@ -60,7 +51,7 @@ class ApiV1SaunaVisitsPaginationTest < ActionDispatch::IntegrationTest
   end
 
   test "不正なlimitとcursorは422で返す" do
-    [ { limit: 0 }, { limit: "abc" }, { limit: 2, cursor: "!!!" }, { limit: 2, cursor: Base64.urlsafe_encode64("x") } ].each do |params|
+    [ {}, { limit: 0 }, { limit: "abc" }, { limit: 2, cursor: "!!!" }, { limit: 2, cursor: Base64.urlsafe_encode64("x") } ].each do |params|
       get "/api/v1/sauna_visits", params: params
 
       assert_response :unprocessable_content, "params: #{params}"

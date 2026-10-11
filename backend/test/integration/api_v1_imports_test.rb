@@ -198,7 +198,7 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal 1, response.parsed_body["added"]
 
-    get "/api/v1/sauna_visits"
+    get "/api/v1/sauna_visits", params: { limit: 100 }
     visit = response.parsed_body["saunaVisits"].sole
     assert_equal %w[history-1 history-2], visit["history"].pluck("id")
     assert_equal 5, visit["visitCount"]

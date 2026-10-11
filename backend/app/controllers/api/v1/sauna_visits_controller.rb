@@ -10,16 +10,10 @@ module Api
       # 1ページの既定件数と上限
       DEFAULT_PAGE_SIZE = 100
       MAX_PAGE_SIZE = 200
-
-      # limit を指定したときだけページ単位で返す。指定が無い呼び出しは従来どおり全件を返す
-      # （デプロイ直後に古い版のフロントが残っていても、記録の一部だけが表示される状態にしない）。
-      #
       # ページの並びは主キーの降順にする。updated_at はページ取得の合間に更新された記録が
       # カーソルより前へ移り、どのページにも現れなくなるため、カーソルには使えない。
       def index
         visits = current_user.sauna_visits.with_history_images
-        return render_all(visits) unless params.key?(:limit)
-
         page_size = page_size_param
         visits = visits.order(id: :desc).limit(page_size + 1)
         visits = visits.where(id: ...cursor_param) if params[:cursor].present?
@@ -70,15 +64,6 @@ module Api
       end
 
       private
-
-      # limit を付けない古い版のフロント向けの互換経路。ページング導入 (#323) の直後に
-      # 開いたままのタブだけが通る想定のため、ログで呼び出しが途絶えたことを確かめてから消す。
-      def render_all(visits)
-        Rails.logger.info("legacy_unpaged_index user_id=#{current_user.id}")
-        visits = visits.order(updated_at: :desc)
-        render json: { saunaVisits: visits.map { |visit| SaunaVisitSerializer.new(visit).as_json } }
-      end
-
       def page_size_param
         size = Integer(params[:limit], exception: false)
         raise ActionController::BadRequest, "limitは1以上の整数で指定してください。" unless size&.positive?

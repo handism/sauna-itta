@@ -7,11 +7,11 @@ class ApiRateLimitTest < ActionDispatch::IntegrationTest
     sign_in
 
     120.times do
-      get "/api/v1/sauna_visits"
+      get "/api/v1/sauna_visits", params: { limit: 100 }
       assert_response :success
     end
 
-    get "/api/v1/sauna_visits"
+    get "/api/v1/sauna_visits", params: { limit: 100 }
     assert_response :too_many_requests
     assert_equal "rate_limited", response.parsed_body.dig("error", "code")
   end
@@ -19,8 +19,8 @@ class ApiRateLimitTest < ActionDispatch::IntegrationTest
   test "読み取りの上限は書き込みの回数と別に数える" do
     csrf = sign_in
 
-    120.times { get "/api/v1/sauna_visits" }
-    get "/api/v1/sauna_visits"
+    120.times { get "/api/v1/sauna_visits", params: { limit: 100 } }
+    get "/api/v1/sauna_visits", params: { limit: 100 }
     assert_response :too_many_requests
 
     post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
@@ -29,7 +29,7 @@ class ApiRateLimitTest < ActionDispatch::IntegrationTest
   end
 
   test "未ログインの呼び出しは数えずに401で返す" do
-    121.times { get "/api/v1/sauna_visits" }
+    121.times { get "/api/v1/sauna_visits", params: { limit: 100 } }
 
     assert_response :unauthorized
   end
