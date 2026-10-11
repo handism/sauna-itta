@@ -46,18 +46,11 @@ module Api
         attributes = visit_params
         stale_image_blobs = []
 
-        # lockVersion が無い更新を黙って通すと、楽観ロックを経ずに他タブの変更を上書きする
-        raise ActionController::ParameterMissing, :lockVersion if attributes[:lockVersion].blank?
-
-        visit.lock_version = attributes[:lockVersion]
-        # 履歴（コメント・評価・写真）だけの変更では親の列が変わらず UPDATE が発行されないため、
-        # lock_version が進まず、同じ版を持つ別タブの更新が競合にならない。
-        # updated_at を必ず書き換えて、どの更新でも親行のロック確認と lock_version の加算を通す。
-        visit.updated_at = Time.current
+        apply_optimistic_lock!(visit, attributes)
         save_visit_in_transaction(
           visit,
           attributes,
-          append: ActiveModel::Type::Boolean.new.cast(attributes[:appendHistory]),
+          append: append_history?(attributes),
           stale_image_blobs: stale_image_blobs
         )
         purge_stale_image_blobs(stale_image_blobs)
@@ -70,6 +63,21 @@ module Api
       end
 
       private
+
+      def apply_optimistic_lock!(visit, attributes)
+        # lockVersion が無い更新を黙って通すと、楽観ロックを経ずに他タブの変更を上書きする
+        raise ActionController::ParameterMissing, :lockVersion if attributes[:lockVersion].blank?
+
+        visit.lock_version = attributes[:lockVersion]
+        # 履歴（コメント・評価・写真）だけの変更では親の列が変わらず UPDATE が発行されないため、
+        # lock_version が進まず、同じ版を持つ別タブの更新が競合にならない。
+        # updated_at を必ず書き換えて、どの更新でも親行のロック確認と lock_version の加算を通す。
+        visit.updated_at = Time.current
+      end
+
+      def append_history?(attributes)
+        ActiveModel::Type::Boolean.new.cast(attributes[:appendHistory])
+      end
 
       # limit を付けない古い版のフロント向けの互換経路。ページング導入 (#323) の直後に
       # 開いたままのタブだけが通る想定のため、ログで呼び出しが途絶えたことを確かめてから消す。
