@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useVisitCrud, UseVisitCrudOptions } from "./useVisitCrud";
-import { VisitFormState } from "../types";
+import { SaunaVisit, VisitFormState } from "../types";
 import { getDefaultForm } from "../utils";
 
 describe("useVisitCrud", () => {
@@ -192,5 +192,84 @@ describe("useVisitCrud", () => {
 
     expect(options.showToast).toHaveBeenCalledWith("サウナの場所が選択されていません。", "error");
     expect(options.addVisit).not.toHaveBeenCalled();
+  });
+
+  describe("handleDeleteHistoryEntry", () => {
+    const history = [
+      { id: "h1", date: "2026-01-01", comment: "初回", rating: 3 },
+      { id: "h2", date: "2026-03-01", comment: "2回目", rating: 2, image: "data:image/png;base64,AA" },
+      { id: "h3", date: "2026-05-01", comment: "前回", rating: 4 },
+    ];
+    const visit = { id: "v1", name: "サウナ北欧", lat: 0, lng: 0, history } as SaunaVisit;
+
+    /** setForm の更新関数を、指定したフォームに当てた結果を返す */
+    async function deleteEntry(index: number, form: VisitFormState) {
+      let current = form;
+      const setForm = vi.fn((update: React.SetStateAction<VisitFormState>) => {
+        current = typeof update === "function" ? update(current) : update;
+      });
+      const options = {
+        ...defaultOptions,
+        editingId: "v1",
+        editingVisit: visit,
+        historyEntries: history,
+        setForm,
+        removeHistoryEntry: vi.fn().mockResolvedValue({ success: true }),
+      };
+      const { result } = renderHook(() => useVisitCrud(options));
+      await act(() => result.current.handleDeleteHistoryEntry(index));
+      return { form: current, options };
+    }
+
+    it("修正中に最新の履歴を消すと、フォームを残った最新の履歴へ揃えること", async () => {
+      const form = { ...getDefaultForm("2026-05-01"), name: "サウナ北欧", comment: "前回", rating: 4 };
+      const { form: next, options } = await deleteEntry(2, form);
+
+      expect(options.removeHistoryEntry).toHaveBeenCalledWith(visit, 2);
+      expect(next).toMatchObject({
+        date: "2026-03-01",
+        comment: "2回目",
+        rating: 2,
+        image: "data:image/png;base64,AA",
+      });
+    });
+
+    it("最新以外の履歴を消しても、修正中の入力を書き換えないこと", async () => {
+      const form = { ...getDefaultForm("2026-05-01"), name: "サウナ北欧", comment: "書きかけ", rating: 5 };
+      const { form: next } = await deleteEntry(0, form);
+
+      expect(next).toBe(form);
+    });
+
+    it("新しい訪問を追加する入力中に履歴を消しても、入力を前回の訪問で上書きしないこと", async () => {
+      const form = {
+        ...getDefaultForm("2026-10-14"),
+        name: "サウナ北欧",
+        comment: "今日の感想",
+        rating: 5,
+        appendHistory: true,
+      };
+      const { form: next } = await deleteEntry(2, form);
+
+      expect(next).toEqual(form);
+    });
+
+    it("削除に失敗したらフォームを変えないこと", async () => {
+      const form = { ...getDefaultForm("2026-05-01"), name: "サウナ北欧", comment: "前回" };
+      const setForm = vi.fn();
+      const options = {
+        ...defaultOptions,
+        editingId: "v1",
+        editingVisit: visit,
+        historyEntries: history,
+        formRef: { current: form },
+        setForm,
+        removeHistoryEntry: vi.fn().mockResolvedValue({ success: false }),
+      };
+      const { result } = renderHook(() => useVisitCrud(options));
+      await act(() => result.current.handleDeleteHistoryEntry(2));
+
+      expect(setForm).not.toHaveBeenCalled();
+    });
   });
 });

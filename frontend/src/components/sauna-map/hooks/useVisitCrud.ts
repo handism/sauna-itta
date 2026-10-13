@@ -105,17 +105,23 @@ export function useVisitCrud({
       const { success } = await removeHistoryEntry(editingVisit, index);
       if (!success) return;
 
-      const newLatest = historyEntries.filter((_, i) => i !== index).at(-1);
+      // フォームが写しているのは「前回の記録を修正」中の最新の履歴だけ。最新以外を消したときや
+      // 「新しい訪問を追加」の入力中に書き換えると、未保存の入力が前回の訪問の内容で上書きされる
+      if (index !== historyEntries.length - 1) return;
+      const newLatest = historyEntries.at(-2);
+      if (!newLatest) return;
 
-      if (newLatest) {
-        setForm((prev) => ({
-          ...prev,
-          date: newLatest.date,
-          comment: newLatest.comment,
-          rating: newLatest.rating ?? 0,
-          image: newLatest.image ?? "",
-        }));
-      }
+      setForm((prev) =>
+        prev.appendHistory
+          ? prev
+          : {
+              ...prev,
+              date: newLatest.date,
+              comment: newLatest.comment,
+              rating: newLatest.rating ?? 0,
+              image: newLatest.image ?? "",
+            },
+      );
     },
     [editingVisit, removeHistoryEntry, historyEntries, setForm],
   );

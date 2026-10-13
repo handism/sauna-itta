@@ -21,7 +21,7 @@
 - **保存中の状態は件数で持つこと**: `useSaunaVisits` の `saving` は実行中の更新系操作の数（`pendingMutations > 0`）から求めます。真偽値 1 つに戻すと、並行した操作の片方が終わった時点で、もう片方の実行中に `saving` が `false` へ戻ります。
 - **保存失敗のトーストを二重に出さないこと**: CRUD の失敗通知は `useSaunaVisits` の `runMutation` がRepository のエラー文言（409 競合・通信障害・localStorage の容量超過）で出す唯一の担当です。`useVisitCrud` 側で `if (!success) showToast(...)` を足すと、`useToast` は単一 state のため後勝ちで上書きされ、競合や通信障害まで別の原因にすり替わって表示されます（`useVisitCrud.test.ts` の「トーストを重ねないこと」が検査しています）。成功時の通知だけ呼び出し側で行うこと。
 - **フォームは開くたびに先頭から表示すること**: 一覧とフォームは同じスクロール領域を共有するため、`VisitFormView` はマウント時と `editingId` の変化時に親要素（スクロール領域）の `scrollTop` を 0 に戻します。新規登録では見出し直下の `.location-status` が場所の選択状態を示します。デスクトップでは地図側に案内バーを出さないこと（同じ指示が画面の 2 か所に並びます）。`MobilePinHint` はモバイルの場所選択中だけに使います。
-- **訪問履歴の削除は確認後だけ実行すること**: `VisitHistorySection` は削除候補の index をローカル state に保持し、`ConfirmModal` で対象日を確認してから `onDeleteEntry` を呼びます。削除ボタンから `removeHistoryEntry()` を直接呼ぶ実装へ戻すと、スクロール中の誤タップで履歴が即時消去されます。
+- **訪問履歴の削除は確認後だけ実行すること**: `VisitHistorySection` は削除候補の index をローカル state に保持し、`ConfirmModal` で対象日を確認してから `onDeleteEntry` を呼びます。削除ボタンから `removeHistoryEntry()` を直接呼ぶ実装へ戻すと、スクロール中の誤タップで履歴が即時消去されます。削除後にフォームの日付・感想・評価・写真を残った最新の履歴へ揃えるのは、「前回の記録を修正」中に最新の履歴を消したときだけです（`useVisitCrud` の `handleDeleteHistoryEntry`）。最新以外を消したときや「新しい訪問を追加」の入力中にも揃えると、未保存の入力が前回の訪問の内容で上書きされ、そのまま保存すると前回と同じ履歴が追加されます。
 
 ## 2. ディレクトリ ＆ コンポーネント構造
 - **コンテナは props の上書き機構を持たないこと**: `VisitList` / `VisitForm` / `DesktopSidebar` / `ShareModal` は Context から値を集めて `*View` へ渡すだけのコンテナです。`Partial<...ViewProps>` を受け取って `props.x ?? ctx.x` と書く方式は復活させないでください（誰も props を渡しておらず、型エラーも握り潰します）。テストは props を直接渡せる `VisitListView` などの `*View` を描画すること。
