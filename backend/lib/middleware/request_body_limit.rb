@@ -5,7 +5,7 @@
 #
 # 上限は Cloud Run のリクエスト上限（32MiB）より小さくしておく。超えると Cloud Run が
 # JSON ではない応答で拒否し、フロントが理由を表示できない。フロントのインポートは
-# この値より十分小さい大きさでチャンクを分ける（useVisitImportExport.ts の MAX_CHUNK_BYTES）。
+# この値より十分小さい大きさでチャンクを分ける（frontend の utils/visitImport.ts の IMPORT_MAX_BATCH_BYTES）。
 #
 # chunked 転送のリクエストも Puma が本文を読み終えてから Content-Length を設定するため、
 # ヘッダの値だけを見れば足りる。

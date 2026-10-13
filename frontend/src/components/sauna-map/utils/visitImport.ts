@@ -80,12 +80,43 @@ export function parseImportText(text: string): SaunaVisit[] {
   return validationResult.data;
 }
 
+/**
+ * 取り込む記録を選ぶ。画面に出ている記録と同じ ID と、ファイルの中で先に出てきた記録と同じ ID は
+ * 除外する（apiモードのサーバーも同じ ID の 2 件目以降をスキップするため、localモードもそれに揃える。
+ * 除外しないと localモードでは同じ ID の記録が 2 件保存される）。
+ *
+ * 取り込む記録の中で履歴 ID が重複していれば ImportFileError を投げる。apiモードのサーバーは
+ * 記録内で一意の履歴 ID（public_id）の重複をチャンクごと 422 で拒否し、どの記録か伝わらない一方、
+ * localモードはそのまま保存してしまうため、送る前にファイルの問題として伝える。
+ * 除外する記録は取り込まないため検査しない（過去に取り込んだ記録が重複を含んでいても、
+ * そのバックアップを取り込み直せるようにする）。
+ */
 export function filterNewVisits(validVisits: SaunaVisit[], existingVisits: SaunaVisit[]): { normalizedImported: SaunaVisit[]; alreadyKnown: number } {
-  const existingIds = new Set(existingVisits.map((v) => v.id));
-  const normalizedImported = normalizeVisits(validVisits.filter((v) => !existingIds.has(v.id)));
-  // 画面に出ている記録と重複した分。サーバー側で弾かれた分は importBatch の skipped に乗る
+  const seenIds = new Set(existingVisits.map((v) => v.id));
+  const newVisits: SaunaVisit[] = [];
+  for (const [index, visit] of validVisits.entries()) {
+    if (seenIds.has(visit.id)) continue;
+    seenIds.add(visit.id);
+    assertUniqueHistoryIds(visit, index);
+    newVisits.push(visit);
+  }
+  const normalizedImported = normalizeVisits(newVisits);
+  // 画面に出ている記録・ファイル内の先の記録と重複した分。サーバー側で弾かれた分は importBatch の skipped に乗る
   const alreadyKnown = validVisits.length - normalizedImported.length;
   return { normalizedImported, alreadyKnown };
+}
+
+function assertUniqueHistoryIds(visit: SaunaVisit, index: number): void {
+  const seen = new Set<string>();
+  for (const entry of visit.history ?? []) {
+    if (entry.id === undefined || entry.id === "") continue;
+    if (seen.has(entry.id)) {
+      throw new ImportFileError(
+        `${FILE_FORMAT_ERROR_PREFIX}${index + 1}件目の記録の「history」に同じID（${entry.id}）の履歴が複数あります。`,
+      );
+    }
+    seen.add(entry.id);
+  }
 }
 
 /**

@@ -114,6 +114,7 @@ module Api
           raise ActionController::BadRequest, "1件の記録に含められる履歴は#{MAX_HISTORY_PER_VISIT}件までです。"
         end
         histories = [ attributes.slice(:date, :comment, :rating, :image) ] if histories.empty?
+        reject_duplicate_history_ids!(histories)
 
         # attributes は permit 後に deep_symbolize_keys 済みのため、履歴もシンボルキーで読める
         histories.each do |history|
@@ -122,6 +123,16 @@ module Api
           import_history_image(entry, history, attributes[:external_id])
         end
         visit.save!
+      end
+
+      # 履歴IDは記録内で一意（VisitHistoryEntry の public_id）。重複はモデルの検証でも弾けるが、
+      # 「入力内容を確認してください。」だけではファイルのどこが悪いか伝わらないため、先に理由を付けて拒否する。
+      def reject_duplicate_history_ids!(histories)
+        ids = histories.filter_map { |history| history[:id].presence&.to_s }
+        duplicate = ids.tally.find { |_id, count| count > 1 }&.first
+        return unless duplicate
+
+        raise ActionController::BadRequest, "同じ記録の中に同じID（#{duplicate}）の履歴が複数あります。"
       end
 
       # 履歴は先に画像なしで build し、画像だけを後から試す。画像込みで build してから

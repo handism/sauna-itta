@@ -238,6 +238,24 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_content
     assert_equal "validation_error", response.parsed_body.dig("error", "code")
+    assert_includes response.parsed_body.dig("error", "message"), "same-history-id"
+    assert_equal 0, owner.sauna_visits.count
+  end
+
+  test "履歴IDの重複はチャンク内の他の記録も取り込まない" do
+    csrf = sign_in
+    payload = [
+      valid_attributes.merge(id: "legacy-ok"),
+      valid_attributes.merge(
+        id: "legacy-dup-in-chunk",
+        history: [ { id: "dup", date: "2026-07-01" }, { id: "dup", date: "2026-08-01" } ]
+      )
+    ]
+
+    post "/api/v1/sauna_visits/imports", params: { saunaVisits: payload },
+      headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
     assert_equal 0, owner.sauna_visits.count
   end
 
@@ -348,9 +366,17 @@ class ApiV1ImportsTest < ActionDispatch::IntegrationTest
       ]
     )
 
-    simulate_import_race do
-      post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
-        headers: csrf_header(csrf), as: :json
+    # 履歴IDの重複は reject_duplicate_history_ids! が先に422で弾くため、それも外して一意制約まで届かせる
+    controller = Api::V1::ImportsController
+    original_reject = controller.instance_method(:reject_duplicate_history_ids!)
+    controller.define_method(:reject_duplicate_history_ids!) { |_histories| nil }
+    begin
+      simulate_import_race do
+        post "/api/v1/sauna_visits/imports", params: { saunaVisits: [ imported ] },
+          headers: csrf_header(csrf), as: :json
+      end
+    ensure
+      controller.define_method(:reject_duplicate_history_ids!, original_reject)
     end
 
     assert_response :conflict

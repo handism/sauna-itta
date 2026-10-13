@@ -120,6 +120,27 @@ describe("VisitFormView", () => {
     expect(updater({ ...defaultForm, appendHistory: true }).appendHistory).toBe(false);
   });
 
+  it("「新しい訪問を追加」へ切り替えると前回の写真を外し、「前回の記録を修正」へ戻すと写真を戻す", () => {
+    const previousImage = "/api/v1/images/abc";
+    const setFormMock = vi.fn();
+    render(
+      <VisitFormView
+        {...defaultProps}
+        form={{ ...defaultForm, appendHistory: false, image: previousImage }}
+        setForm={setFormMock}
+        historyEntries={[{ date: "2026-07-01", comment: "前回", rating: 4, image: previousImage }]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "新しい訪問を追加" }));
+    const appended = setFormMock.mock.calls[0][0]({ ...defaultForm, appendHistory: false, image: previousImage });
+    expect(appended).toMatchObject({ appendHistory: true, image: "" });
+
+    fireEvent.click(screen.getByRole("button", { name: "前回の記録を修正" }));
+    const restored = setFormMock.mock.calls[1][0](appended);
+    expect(restored).toMatchObject({ appendHistory: false, image: previousImage });
+  });
+
   it("項目を「場所」「記録の内容」「タグ」「これまでの訪問」の区切りで見せる", () => {
     render(<VisitFormView {...defaultProps} />);
 

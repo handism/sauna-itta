@@ -82,8 +82,13 @@ export class LocalVisitRepository implements VisitRepository {
 
   async importBatch(visits: SaunaVisit[]): Promise<ImportResult> {
     const current = this.load();
+    // 同じ ID が 2 件来たら先の 1 件だけを取り込む（apiモードの ImportsController と同じ扱い）
     const ids = new Set(current.map((visit) => visit.id));
-    const additions = visits.filter((visit) => !ids.has(visit.id));
+    const additions = visits.filter((visit) => {
+      if (ids.has(visit.id)) return false;
+      ids.add(visit.id);
+      return true;
+    });
     if (additions.length > 0) this.persist([...additions, ...current]);
     return { added: additions.length, skipped: visits.length - additions.length };
   }

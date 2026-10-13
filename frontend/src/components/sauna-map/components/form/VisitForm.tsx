@@ -25,7 +25,12 @@ import {
 } from "../../context";
 import { getTagSuggestions, PRESET_TAGS } from "../../utils/visitStats";
 import { GeocodingResult } from "../../utils/geocoding";
-import { fillFormFromPlace, getSubmitBlockedReason, getSubmitFixTarget } from "../../utils/form";
+import {
+  fillFormFromPlace,
+  getSubmitBlockedReason,
+  getSubmitFixTarget,
+  withAppendHistory,
+} from "../../utils/form";
 import { getVisitStatus } from "../../utils/visitStatus";
 import { useAreaFromLocation } from "../../hooks/useAreaFromLocation";
 
@@ -157,7 +162,7 @@ export function VisitFormView({
           <HistoryAppendField
             appendHistory={form.appendHistory}
             onChange={(appendHistory) =>
-              setForm((prev) => ({ ...prev, appendHistory }))
+              setForm((prev) => withAppendHistory(prev, appendHistory, historyEntries.at(-1)?.image))
             }
           />
         )}

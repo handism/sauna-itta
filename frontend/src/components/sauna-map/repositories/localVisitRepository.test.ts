@@ -137,6 +137,15 @@ describe("LocalVisitRepository", () => {
     expect(storedVisits().map((visit) => visit.id)).toEqual(["new-1", "existing-1"]);
   });
 
+  it("同じIDの記録が2件来たら先の1件だけを取り込む（apiモードと同じ）", async () => {
+    seed([existing]);
+    const first = { ...existing, id: "dup-1", name: "1件目" };
+    const second = { ...existing, id: "dup-1", name: "2件目" };
+
+    await expect(repository.importBatch([first, second])).resolves.toEqual({ added: 1, skipped: 1 });
+    expect(storedVisits().filter((visit) => visit.id === "dup-1").map((visit) => visit.name)).toEqual(["1件目"]);
+  });
+
   it("追加分が無いインポートは保存を行わない", async () => {
     seed([existing]);
 

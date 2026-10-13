@@ -93,6 +93,65 @@ describe("取り込みデータの検証", () => {
     expect(() => parseImportText('[{"id":"1"}]')).toThrow("1件目の記録の「name」");
   });
 
+  test("ファイル内で同じIDの記録は先の1件だけを取り込み、残りはスキップとして数える（apiモードと同じ）", () => {
+    const first: SaunaVisit = { id: "dup", name: "1件目", lat: 35, lng: 139, comment: "", date: "2026-08-01" };
+    const second: SaunaVisit = { ...first, name: "2件目" };
+
+    const result = filterNewVisits([first, second], []);
+
+    expect(result.normalizedImported.map((visit) => visit.name)).toEqual(["1件目"]);
+    expect(result.alreadyKnown).toBe(1);
+  });
+
+  test("取り込む記録の中で履歴IDが重複していれば、何件目の記録かを示すファイルの問題として伝える", () => {
+    const ok: SaunaVisit = { id: "ok", name: "正常", lat: 35, lng: 139, comment: "", date: "2026-08-01" };
+    const broken: SaunaVisit = {
+      ...ok,
+      id: "broken",
+      history: [
+        { id: "h1", date: "2026-07-01", comment: "" },
+        { id: "h1", date: "2026-08-01", comment: "" },
+      ],
+    };
+
+    expect(() => filterNewVisits([ok, broken], [])).toThrow(ImportFileError);
+    expect(() => filterNewVisits([ok, broken], [])).toThrow("2件目の記録の「history」に同じID（h1）の履歴が複数あります");
+  });
+
+  test("取り込まない記録（登録済み）の履歴IDの重複は問題にしない", () => {
+    const broken: SaunaVisit = {
+      id: "known",
+      name: "登録済み",
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-01",
+      history: [
+        { id: "h1", date: "2026-07-01", comment: "" },
+        { id: "h1", date: "2026-08-01", comment: "" },
+      ],
+    };
+
+    expect(filterNewVisits([broken], [broken])).toMatchObject({ normalizedImported: [], alreadyKnown: 1 });
+  });
+
+  test("IDの無い履歴は重複として扱わない", () => {
+    const legacy: SaunaVisit = {
+      id: "legacy",
+      name: "旧形式",
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-01",
+      history: [
+        { date: "2026-07-01", comment: "" },
+        { date: "2026-08-01", comment: "" },
+      ],
+    };
+
+    expect(filterNewVisits([legacy], []).normalizedImported).toHaveLength(1);
+  });
+
   test("既存IDを除外し、元データを変更せず旧形式の履歴を正規化する", () => {
     const known: SaunaVisit = { id: "known", name: "登録済み", lat: 35, lng: 139, comment: "", date: "2026-08-02" };
     const added: SaunaVisit = { ...known, id: "new", name: "新規" };

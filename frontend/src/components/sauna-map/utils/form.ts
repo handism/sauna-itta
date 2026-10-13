@@ -54,6 +54,29 @@ export function toRevisitFormState(visit: SaunaVisit): VisitFormState {
 }
 
 /**
+ * 「新しい訪問を追加／前回の記録を修正」を切り替えたフォームの値。
+ *
+ * 編集を開いたフォームの写真は最新の履歴の写真（apiモードでは `/api/v1/images/...` の URL）。
+ * そのまま追加すると、apiモードのサーバーはこの URL を「既存の写真を据え置く」指示として扱い
+ * 新しい履歴には付けない一方、localモードは同じ写真を新しい履歴へ複製し、結果がモードで食い違う。
+ * 追加へ切り替えたときは前回の写真を外し、修正へ戻したときに空なら前回の写真へ戻す
+ * （戻さないと、修正の保存で既存の写真が消える）。利用者が選び直した写真はどちらでも残す。
+ *
+ * @param latestImage 編集中の記録の最新の履歴の写真
+ */
+export function withAppendHistory(
+  form: VisitFormState,
+  appendHistory: boolean,
+  latestImage: string | undefined,
+): VisitFormState {
+  const previous = latestImage ?? "";
+  if (appendHistory) {
+    return { ...form, appendHistory, image: form.image === previous ? "" : form.image };
+  }
+  return { ...form, appendHistory, image: form.image === "" ? previous : form.image };
+}
+
+/**
  * タグの区切り。半角カンマに加えて、日本語入力で打ちやすい全角カンマ「，」と読点「、」も区切りとして扱う
  * （半角だけだと「外気浴、水風呂」が 1 つのタグとして保存される）。
  */

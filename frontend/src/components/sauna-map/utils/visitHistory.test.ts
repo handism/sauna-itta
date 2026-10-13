@@ -352,12 +352,38 @@ describe("syncLatestFromHistory", () => {
   it("末尾の履歴を記録本体の date / comment / rating / image へ写すこと", () => {
     const result = syncLatestFromHistory(history);
 
-    expect(result.history).toBe(history);
+    expect(result.history).toEqual(history);
     expect(result.date).toBe("2026-02-01");
     expect(result.comment).toBe("2回目");
     expect(result.rating).toBe(5);
     // 末尾に写真が無ければ本体からも消す（1件前の写真を残さない）
     expect(result.image).toBeUndefined();
+  });
+
+  it("履歴を日付順に並べ、最も新しい日付の履歴を本体へ写すこと（apiモードと同じ並び）", () => {
+    const result = syncLatestFromHistory([history[1], history[0]]);
+
+    expect(result.history?.map((entry) => entry.date)).toEqual(["2026-01-01", "2026-02-01"]);
+    expect(result.date).toBe("2026-02-01");
+    expect(result.comment).toBe("2回目");
+  });
+
+  it("同じ日付の履歴は渡された順（追加した順）を保つこと", () => {
+    const sameDay = [
+      { date: "2026-03-01", comment: "朝", rating: 3 },
+      { date: "2026-03-01", comment: "夜", rating: 4 },
+    ];
+
+    const result = syncLatestFromHistory(sameDay);
+
+    expect(result.history?.map((entry) => entry.comment)).toEqual(["朝", "夜"]);
+    expect(result.comment).toBe("夜");
+  });
+
+  it("渡された配列を並べ替えで書き換えないこと", () => {
+    const input = [history[1], history[0]];
+    syncLatestFromHistory(input);
+    expect(input[0]).toBe(history[1]);
   });
 
   it("visitCount を渡すと履歴件数との大きい方を採ること", () => {

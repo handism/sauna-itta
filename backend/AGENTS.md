@@ -17,6 +17,7 @@
 - 履歴IDは記録内で一意です（`public_id` は `scope: :sauna_visit_id`）。グローバル一意へ戻すと、他ユーザーがエクスポートしたJSONを取り込んだときに履歴IDが衝突して取り込めなくなります。
 - インポートの履歴は画像なしで build してから画像だけを添付します（`ImportsController#import_history_image`）。画像の保存以外の理由で添付に失敗したときは警告ログを残して画像なしで取り込み、`DataUrlImage::InvalidImage`だけはチャンクごとロールバックさせます。画像込みで build し、失敗時に build し直す実装へ戻さないでください（失敗した側のエントリが関連に残り、履歴が二重に保存されます）。
 - インポートは記録ごとにセーブポイント（`transaction(requires_new: true)`）を張り、同時に別リクエストが同じ`external_id`を先にコミットしたことによる`ActiveRecord::RecordNotUnique`は、その記録だけを取り消して`skipped`に数えます（`ImportsController#import_visit_unless_concurrently_added`）。既存IDの事前確認やモデルの`uniqueness`検証は相手の未コミット分を見ないため、これを外すと同時インポートで500になります。同じ`external_id`が保存済みでない一意制約違反は握らずに上げ、`BaseController`が409 `duplicate`で返します（楽観ロックの競合`conflict`とはcodeを分けること。フロントは`conflict`だけを再読み込みの案内へ置き換えるため、同じcodeにすると重複の文言が画面に出ません）。
+- 同じ記録の中で履歴IDが重複する取り込みは、モデルの`uniqueness`検証に任せず`ImportsController#reject_duplicate_history_ids!`が重複したIDを文言に含めて422 `validation_error`で拒否します（モデルの検証だけでは「入力内容を確認してください。」としか伝わりません）。
 - 1記録あたりの履歴は`MAX_HISTORY_PER_VISIT`（1000件）までで、超えるとチャンクごと422にします。記録数の上限（`MAX_BATCH_SIZE`）だけでは履歴の配列が無制限になります。ボディ全体の大きさは`lib/middleware/request_body_limit.rb`がパラメータ解析より前に413で弾きます。
 - インポートAPIのペイロード検証は`ActionController::BadRequest`へ集約し、配列でない`saunaVisits`・記録以外の要素・IDが無い記録をすべて422で返します。`attributes.fetch(:id)`の`KeyError`を直接rescueしないでください（`ActionController::ParameterMissing`は`KeyError`のサブクラスのため、キー欠落が「IDがない記録」として誤って報告されます）。
 

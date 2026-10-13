@@ -8,6 +8,7 @@ import {
   toRevisitFormState,
   validateVisitForm,
   toNormalizedTags,
+  withAppendHistory,
 } from "./form";
 import { getTodayDate } from "./date";
 import { buildHistoryUpdate } from "./visitHistory";
@@ -47,6 +48,47 @@ describe("getDefaultForm", () => {
 });
 
 describe("buildHistoryUpdate", () => {
+  const twoVisits = {
+    id: "1",
+    name: "Test Sauna",
+    lat: 0,
+    lng: 0,
+    date: "2023-03-01",
+    comment: "3月",
+    rating: 4,
+    history: [
+      { date: "2023-01-01", comment: "1月", rating: 3 },
+      { date: "2023-03-01", comment: "3月", rating: 4 },
+    ],
+  } as SaunaVisit;
+
+  it("過去の日付の訪問を追加しても、最新の訪問は日付の最も新しい履歴のままにする（apiモードと同じ）", () => {
+    const result = buildHistoryUpdate(twoVisits, {
+      date: "2023-02-01",
+      comment: "2月",
+      rating: 5,
+      appendHistory: true,
+    });
+
+    expect(result.history!.map((entry) => entry.date)).toEqual(["2023-01-01", "2023-02-01", "2023-03-01"]);
+    expect(result.date).toBe("2023-03-01");
+    expect(result.comment).toBe("3月");
+    expect(result.visitCount).toBe(3);
+  });
+
+  it("修正で最新の訪問の日付を前へずらすと、履歴の並びも日付順に入れ替える", () => {
+    const result = buildHistoryUpdate(twoVisits, {
+      date: "2022-12-01",
+      comment: "3月→12月",
+      rating: 4,
+      appendHistory: false,
+    });
+
+    expect(result.history!.map((entry) => entry.date)).toEqual(["2022-12-01", "2023-01-01"]);
+    expect(result.date).toBe("2023-01-01");
+    expect(result.comment).toBe("1月");
+  });
+
   it("should append a new history entry when appendHistory is true", () => {
     const visit = {
       id: "1",
@@ -524,5 +566,52 @@ describe("getSubmitFixTarget", () => {
     expect(getSubmitFixTarget(null, "かるまる")).toBe("location");
     expect(getSubmitFixTarget({ lat: 1, lng: 2 }, "   ")).toBe("name");
     expect(getSubmitFixTarget({ lat: 1, lng: 2 }, "かるまる")).toBeNull();
+  });
+});
+
+describe("withAppendHistory", () => {
+  const previousImage = "/api/v1/images/abc";
+  const editingForm: VisitFormState = {
+    ...getDefaultForm("2026-10-01"),
+    name: "テストサウナ",
+    image: previousImage,
+    appendHistory: false,
+  };
+
+  it("追加へ切り替えると前回の写真を外す（新しい訪問へ前回の写真を引き継がない）", () => {
+    const result = withAppendHistory(editingForm, true, previousImage);
+
+    expect(result.appendHistory).toBe(true);
+    expect(result.image).toBe("");
+  });
+
+  it("追加へ切り替えても、選び直した写真は残す", () => {
+    const result = withAppendHistory({ ...editingForm, image: "data:image/png;base64,AAA" }, true, previousImage);
+
+    expect(result.image).toBe("data:image/png;base64,AAA");
+  });
+
+  it("修正へ戻すと、空の写真を前回の写真へ戻す（修正の保存で既存の写真を消さない）", () => {
+    const appended = withAppendHistory(editingForm, true, previousImage);
+
+    const result = withAppendHistory(appended, false, previousImage);
+
+    expect(result.appendHistory).toBe(false);
+    expect(result.image).toBe(previousImage);
+  });
+
+  it("修正へ戻しても、選び直した写真は残す", () => {
+    const result = withAppendHistory(
+      { ...editingForm, image: "data:image/png;base64,BBB", appendHistory: true },
+      false,
+      previousImage,
+    );
+
+    expect(result.image).toBe("data:image/png;base64,BBB");
+  });
+
+  it("前回の写真が無い記録では写真を空のままにする", () => {
+    expect(withAppendHistory({ ...editingForm, image: "" }, true, undefined).image).toBe("");
+    expect(withAppendHistory({ ...editingForm, image: "" }, false, undefined).image).toBe("");
   });
 });
