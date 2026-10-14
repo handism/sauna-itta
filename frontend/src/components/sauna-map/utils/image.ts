@@ -105,6 +105,16 @@ export function describeDataUrlImage(url: string | undefined): { mimeType: strin
 }
 
 /**
+ * サーバーの `DataUrlImage::PATTERN` と同じ形の data URL。あちらは大文字小文字を区別し、
+ * Base64 の文字と改行以外を含む値も拒否するため、ここでも同じ条件で判定する
+ * （緩く判定すると `data:IMAGE/JPEG;base64,...` を変換せずに送り、チャンクごと 422 になる）。
+ */
+const escapeRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const SERVER_ACCEPTED_DATA_URL = new RegExp(
+  `^data:(?:${ALLOWED_IMAGE_MIME_TYPES.map(escapeRegExp).join("|")});base64,[A-Za-z0-9+/=\\r\\n]+$`,
+);
+
+/**
  * apiモードのサーバー（`DataUrlImage`）が受け付けない data URL の写真か。
  *
  * 過去の版はアップロードの形式を絞っておらず、圧縮ライブラリは BMP を BMP のまま書き出すため、
@@ -115,9 +125,9 @@ export function describeDataUrlImage(url: string | undefined): { mimeType: strin
  */
 export function needsImageConversion(url: string | undefined): boolean {
   if (!url || !/^data:/i.test(url)) return false;
+  if (!SERVER_ACCEPTED_DATA_URL.test(url)) return true;
   const described = describeDataUrlImage(url);
-  if (!described) return true;
-  return !ALLOWED_IMAGE_MIME_TYPES.includes(described.mimeType) || described.bytes > MAX_IMAGE_BYTES;
+  return !described || described.bytes > MAX_IMAGE_BYTES;
 }
 
 /** 変換後の形式。写真が主のため、透過を保てなくても大きさを抑えられる JPEG にする */
@@ -132,7 +142,8 @@ export async function convertDataUrlImage(url: string): Promise<string> {
   if (!match) throw new Error("Base64 の data URL ではありません");
   const binary = atob(match[2].replace(/[\r\n]/g, ""));
   const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  const file = new File([bytes], "imported-image", { type: match[1] });
+  // `data:IMAGE/PNG` のような大文字の MIME もブラウザが画像として読めるよう小文字にそろえる
+  const file = new File([bytes], "imported-image", { type: match[1].toLowerCase() });
   const converted = await compressAndGetBase64(file, CONVERTED_IMAGE_TYPE);
   if (needsImageConversion(converted)) throw new Error("写真をサーバーの受け付ける形式へ変換できませんでした");
   return converted;

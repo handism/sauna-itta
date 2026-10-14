@@ -138,6 +138,15 @@ describe("needsImageConversion", () => {
     expect(needsImageConversion("data:image/png,raw")).toBe(true);
   });
 
+  it("サーバーの DataUrlImage と同じく、大文字の表記や Base64 以外の文字を含む値は変換の対象にする", () => {
+    expect(needsImageConversion("data:IMAGE/JPEG;base64,AAAA")).toBe(true);
+    expect(needsImageConversion("DATA:image/png;base64,AAAA")).toBe(true);
+    expect(needsImageConversion("data:image/png;base64,AA AA")).toBe(true);
+    expect(needsImageConversion("data:image/png;charset=utf-8;base64,AAAA")).toBe(true);
+    // 改行はサーバーも取り除いて受け付ける
+    expect(needsImageConversion("data:image/png;base64,AA\r\nAA")).toBe(false);
+  });
+
   it("上限を超える大きさの写真は許可した形式でも変換の対象にする", () => {
     const oversized = `data:image/jpeg;base64,${"A".repeat(Math.ceil((1024 * 1024 * 4) / 3) + 4)}`;
     expect(needsImageConversion(oversized)).toBe(true);
@@ -168,6 +177,15 @@ describe("convertDataUrlImage", () => {
     expect(file.type).toBe("image/bmp");
     expect(new Uint8Array(await file.arrayBuffer())).toEqual(new Uint8Array([0x42, 0x4d]));
     expect(options).toEqual({ maxSizeMB: 1, maxWidthOrHeight: 1024, fileType: "image/jpeg" });
+    restore();
+  });
+
+  it("大文字の MIME は小文字にそろえてから圧縮する", async () => {
+    vi.mocked(imageCompression).mockResolvedValue(new File(["jpeg"], "imported-image", { type: "image/jpeg" }));
+    const restore = stubFileReader("data:image/jpeg;base64,/9j/");
+
+    await expect(convertDataUrlImage("data:IMAGE/PNG;base64,iVBO")).resolves.toBe("data:image/jpeg;base64,/9j/");
+    expect(vi.mocked(imageCompression).mock.calls[0][0].type).toBe("image/png");
     restore();
   });
 
