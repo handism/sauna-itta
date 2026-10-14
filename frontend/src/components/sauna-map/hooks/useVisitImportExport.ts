@@ -46,17 +46,6 @@ export function useVisitImportExport(
       try {
         const { added, skipped, reloaded, droppedImages, unconvertibleImages } = await importVisitsFromFile(file);
         const reloadNote = reloaded ? "" : RELOAD_FAILED_NOTE;
-        if (added === 0) {
-          showToast?.(
-            (skipped > 0
-              ? `${skipped}件はすでに登録済みのため、新しく追加されたデータはありません。`
-              : "新しく追加されるデータはありませんでした。") + reloadNote,
-            "info",
-          );
-          return;
-        }
-
-        const skippedNote = skipped > 0 ? `（${skipped}件はすでに登録済みのためスキップしました）` : "";
         const droppedNote =
           droppedImages > 0
             ? `（写真${droppedImages}枚は画像URLとして書き出されていたため取り込めませんでした。最新の版でエクスポートし直してください）`
@@ -65,10 +54,22 @@ export function useVisitImportExport(
           unconvertibleImages > 0
             ? `（写真${unconvertibleImages}枚は対応していない形式か大きすぎ、変換もできなかったため外して取り込みました）`
             : "";
-        showToast?.(
-          `データを${added}件取り込みました。${skippedNote}${droppedNote}${unconvertibleNote}${reloadNote}`,
-          "success",
-        );
+        // 写真の注記は 0 件のときも付ける（写真を外した記録がサーバーで重複として弾かれた場合でも、外したこと自体は伝える）
+        const imageNotes = `${droppedNote}${unconvertibleNote}`;
+        if (added === 0) {
+          showToast?.(
+            (skipped > 0
+              ? `${skipped}件はすでに登録済みのため、新しく追加されたデータはありません。`
+              : "新しく追加されるデータはありませんでした。") +
+              imageNotes +
+              reloadNote,
+            "info",
+          );
+          return;
+        }
+
+        const skippedNote = skipped > 0 ? `（${skipped}件はすでに登録済みのためスキップしました）` : "";
+        showToast?.(`データを${added}件取り込みました。${skippedNote}${imageNotes}${reloadNote}`, "success");
       } catch (error) {
         if (error instanceof ImportProgressError) {
           const progress = error.added > 0 ? `${error.added}件は取り込み済みです。` : "";

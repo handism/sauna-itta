@@ -131,6 +131,14 @@ describe("describeDataUrlImage", () => {
   });
 });
 
+/** 各形式の先頭のバイト列を持つ、サーバーの DataUrlImage が受け付ける data URL */
+const VALID_DATA_URLS: Record<string, string> = {
+  "image/jpeg": `data:image/jpeg;base64,${btoa("\xff\xd8\xff\xe0\x00\x10JFIF")}`,
+  "image/png": `data:image/png;base64,${btoa("\x89PNG\r\n\x1a\n\x00\x00\x00\x0dIHDR")}`,
+  "image/gif": `data:image/gif;base64,${btoa("GIF89a\x01\x00\x01\x00")}`,
+  "image/webp": `data:image/webp;base64,${btoa("RIFF\x24\x00\x00\x00WEBPVP8 ")}`,
+};
+
 describe("needsImageConversion", () => {
   it("サーバーが受け付けない形式の data URL は変換の対象にする", () => {
     expect(needsImageConversion("data:image/bmp;base64,Qk0=")).toBe(true);
@@ -139,22 +147,45 @@ describe("needsImageConversion", () => {
   });
 
   it("サーバーの DataUrlImage と同じく、大文字の表記や Base64 以外の文字を含む値は変換の対象にする", () => {
-    expect(needsImageConversion("data:IMAGE/JPEG;base64,AAAA")).toBe(true);
-    expect(needsImageConversion("DATA:image/png;base64,AAAA")).toBe(true);
-    expect(needsImageConversion("data:image/png;base64,AA AA")).toBe(true);
-    expect(needsImageConversion("data:image/png;charset=utf-8;base64,AAAA")).toBe(true);
+    const png = VALID_DATA_URLS["image/png"];
+    const encoded = png.slice(png.indexOf(",") + 1);
+    expect(needsImageConversion(`data:IMAGE/PNG;base64,${encoded}`)).toBe(true);
+    expect(needsImageConversion(`DATA:image/png;base64,${encoded}`)).toBe(true);
+    expect(needsImageConversion(`data:image/png;base64,${encoded.slice(0, 4)} ${encoded.slice(4)}`)).toBe(true);
+    expect(needsImageConversion(`data:image/png;charset=utf-8;base64,${encoded}`)).toBe(true);
     // 改行はサーバーも取り除いて受け付ける
-    expect(needsImageConversion("data:image/png;base64,AA\r\nAA")).toBe(false);
+    expect(needsImageConversion(`data:image/png;base64,${encoded.slice(0, 8)}\r\n${encoded.slice(8)}`)).toBe(false);
+  });
+
+  it("サーバーの strict_decode64 が拒否する Base64 は変換の対象にする", () => {
+    const jpeg = VALID_DATA_URLS["image/jpeg"];
+    // 長さが 4 の倍数でない
+    expect(needsImageConversion(`${jpeg}A`)).toBe(true);
+    // 途中に = がある
+    expect(needsImageConversion(`data:image/jpeg;base64,/9j/4A==AAAA`)).toBe(true);
+    // パディングの前で使われないビットが 0 でない（"/9j/4B==" は 0xE0 に 1 ビット余る）
+    expect(needsImageConversion("data:image/jpeg;base64,/9j/4B==")).toBe(true);
+    expect(needsImageConversion("data:image/jpeg;base64,/9j/4A==")).toBe(false);
+  });
+
+  it("宣言した形式と中身の先頭のバイト列が違う写真は変換の対象にする", () => {
+    const jpegBody = VALID_DATA_URLS["image/jpeg"].split(",")[1];
+    expect(needsImageConversion(`data:image/png;base64,${jpegBody}`)).toBe(true);
+    // 中身が先頭のバイト列より短い
+    expect(needsImageConversion("data:image/png;base64,iVBO")).toBe(true);
+    expect(needsImageConversion("data:image/jpeg;base64,AAAA")).toBe(true);
   });
 
   it("上限を超える大きさの写真は許可した形式でも変換の対象にする", () => {
-    const oversized = `data:image/jpeg;base64,${"A".repeat(Math.ceil((1024 * 1024 * 4) / 3) + 4)}`;
+    const oversized = `${VALID_DATA_URLS["image/jpeg"]}${"A".repeat(Math.ceil((1024 * 1024 * 4) / 3) + 4)}`;
     expect(needsImageConversion(oversized)).toBe(true);
   });
 
-  it("許可した形式で上限内の写真と、data URL でない値は対象にしない", () => {
+  it("許可した形式で中身が一致する上限内の写真と、data URL でない値は対象にしない", () => {
     for (const type of ALLOWED_IMAGE_MIME_TYPES) {
-      expect(needsImageConversion(`data:${type};base64,AAAA`)).toBe(false);
+      // 許可形式を apiLimits.json へ足したら、上の VALID_DATA_URLS と image.ts の IMAGE_SIGNATURES にも足す
+      expect(VALID_DATA_URLS[type], type).toBeDefined();
+      expect(needsImageConversion(VALID_DATA_URLS[type]), type).toBe(false);
     }
     expect(needsImageConversion(undefined)).toBe(false);
     expect(needsImageConversion("")).toBe(false);

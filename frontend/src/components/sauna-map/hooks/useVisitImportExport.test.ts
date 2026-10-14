@@ -551,6 +551,37 @@ describe("useVisitImportExport", () => {
     expect(sent.history?.[0].image).toBeUndefined();
     expect(showToast).toHaveBeenCalledWith(expect.stringContaining("写真1枚は画像URLとして書き出されていた"), "success");
   });
+  test("写真を外した記録がサーバーで重複として弾かれ 0 件になっても、写真を外したことを伝える", async () => {
+    const importBatch = vi.fn().mockResolvedValue({ added: 0, skipped: 1 });
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(() => mockVisits, importBatch, passThroughExport, reloadMock, showToast),
+    );
+    const imported = {
+      id: "duplicate-on-server",
+      name: "Sauna E",
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+      image: "/api/v1/images/signed-2",
+      history: [{ date: "2026-08-02", comment: "", image: "/api/v1/images/signed-2" }],
+    };
+    const file = new File([JSON.stringify([imported])], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    expect(showToast).toHaveBeenLastCalledWith(
+      "1件はすでに登録済みのため、新しく追加されたデータはありません。" +
+        "（写真1枚は画像URLとして書き出されていたため取り込めませんでした。最新の版でエクスポートし直してください）",
+      "info",
+    );
+  });
+
   test("サーバーが受け付けない形式の写真は変換して取り込み、変換できなければ外して枚数を伝える", async () => {
     const showToast = vi.fn();
     const { result } = renderHook(() =>

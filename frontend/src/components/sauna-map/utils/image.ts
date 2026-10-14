@@ -114,12 +114,56 @@ const SERVER_ACCEPTED_DATA_URL = new RegExp(
   `^data:(?:${ALLOWED_IMAGE_MIME_TYPES.map(escapeRegExp).join("|")});base64,[A-Za-z0-9+/=\\r\\n]+$`,
 );
 
+const BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+const PADDED_BASE64 = /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+
+/**
+ * サーバーの `Base64.strict_decode64` が復号できる Base64 か（改行は除いてから渡す）。
+ * あちらは長さが 4 の倍数でない値・途中の `=`・末尾で使われないビットが 0 でない値も拒否する。
+ */
+function isStrictBase64(encoded: string): boolean {
+  if (!PADDED_BASE64.test(encoded)) return false;
+  if (encoded.endsWith("==")) return (BASE64_ALPHABET.indexOf(encoded[encoded.length - 3]) & 0x0f) === 0;
+  if (encoded.endsWith("=")) return (BASE64_ALPHABET.indexOf(encoded[encoded.length - 2]) & 0x03) === 0;
+  return true;
+}
+
+/**
+ * 形式ごとの先頭のバイト列。サーバーは中身から判定した形式（Marcel）と宣言した MIME の
+ * 一致を求めるため、ここでも先頭を見て食い違いを見つける。null の位置は任意のバイト。
+ * ALLOWED_IMAGE_MIME_TYPES に形式を足したらここにも足すこと（無い形式は常に変換の対象になる）。
+ */
+const IMAGE_SIGNATURES: Readonly<Record<string, readonly (readonly (number | null)[])[]>> = {
+  "image/jpeg": [[0xff, 0xd8, 0xff]],
+  "image/png": [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+  "image/gif": [
+    [0x47, 0x49, 0x46, 0x38, 0x37, 0x61],
+    [0x47, 0x49, 0x46, 0x38, 0x39, 0x61],
+  ],
+  // "RIFF" + 4 バイトの長さ + "WEBP"
+  "image/webp": [[0x52, 0x49, 0x46, 0x46, null, null, null, null, 0x57, 0x45, 0x42, 0x50]],
+};
+
+/** 宣言した MIME タイプと先頭のバイト列が一致するか。encoded は isStrictBase64 を通った値 */
+function matchesImageSignature(mimeType: string, encoded: string): boolean {
+  const signatures = IMAGE_SIGNATURES[mimeType];
+  if (!signatures) return false;
+  // 先頭の 16 文字（12 バイト）だけ復号すれば足りる。全体を atob すると 1MB 級の文字列を毎回走査する
+  const head = atob(encoded.slice(0, 16));
+  return signatures.some(
+    (signature) =>
+      head.length >= signature.length &&
+      signature.every((byte, i) => byte === null || head.charCodeAt(i) === byte),
+  );
+}
+
 /**
  * apiモードのサーバー（`DataUrlImage`）が受け付けない data URL の写真か。
  *
  * 過去の版はアップロードの形式を絞っておらず、圧縮ライブラリは BMP を BMP のまま書き出すため、
  * localモードの保存やそのエクスポートに `data:image/bmp` などが残っていることがある
  * （表示は sanitizeImageUrl が続けて許す）。圧縮が上限に届かず 1MB を超えた写真も同様。
+ * 手で編集した JSON などで、Base64 が厳密でない値や、宣言した形式と中身が違う値も拒否される。
  * そのまま取り込むとサーバーはチャンクごと 422 で拒否するため、取り込み前に変換する。
  * data URL でない値（画像 URL など）は対象外。
  */
@@ -127,7 +171,9 @@ export function needsImageConversion(url: string | undefined): boolean {
   if (!url || !/^data:/i.test(url)) return false;
   if (!SERVER_ACCEPTED_DATA_URL.test(url)) return true;
   const described = describeDataUrlImage(url);
-  return !described || described.bytes > MAX_IMAGE_BYTES;
+  if (!described || described.bytes > MAX_IMAGE_BYTES) return true;
+  const encoded = url.slice(url.indexOf(",") + 1).replace(/[\r\n]/g, "");
+  return !isStrictBase64(encoded) || !matchesImageSignature(described.mimeType, encoded);
 }
 
 /** 変換後の形式。写真が主のため、透過を保てなくても大きさを抑えられる JPEG にする */

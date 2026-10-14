@@ -52,7 +52,7 @@ describe("convertUnsupportedImages", () => {
       image: bmp,
       visitCount: 3,
       history: [
-        { date: "2026-08-01", comment: "first", image: "data:image/png;base64,AAAA" },
+        { date: "2026-08-01", comment: "first", image: "data:image/png;base64,iVBORw0KGgoAAAAN" },
         { date: "2026-08-02", comment: "latest", image: bmp },
       ],
     };
@@ -62,7 +62,7 @@ describe("convertUnsupportedImages", () => {
 
     expect(convert).toHaveBeenCalledExactlyOnceWith(bmp);
     expect(unconvertibleImages).toBe(0);
-    expect(visits[0].history?.map((entry) => entry.image)).toEqual(["data:image/png;base64,AAAA", jpeg]);
+    expect(visits[0].history?.map((entry) => entry.image)).toEqual(["data:image/png;base64,iVBORw0KGgoAAAAN", jpeg]);
     expect(visits[0].image).toBe(jpeg);
     expect(visits[0].visitCount).toBe(3);
   });
@@ -86,7 +86,7 @@ describe("convertUnsupportedImages", () => {
       ...base,
       id: "1",
       history: [
-        { date: "2026-08-01", comment: "", image: "data:image/webp;base64,UklG" },
+        { date: "2026-08-01", comment: "", image: "data:image/webp;base64,UklGRiQAAABXRUJQ" },
         { date: "2026-08-02", comment: "" },
       ],
     };
