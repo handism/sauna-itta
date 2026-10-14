@@ -2,7 +2,7 @@ import { z } from "zod";
 import { SaunaVisitSchema, type SaunaVisit } from "../types";
 import type { ImportResult } from "../repositories/types";
 import { IMPORT_MAX_BATCH_SIZE } from "./apiLimits";
-import { isApiImageUrl } from "./image";
+import { convertDataUrlImage, isApiImageUrl, needsImageConversion } from "./image";
 import { normalizeVisits, syncLatestFromHistory } from "./visitHistory";
 
 /**
@@ -21,6 +21,8 @@ export interface BatchImportResult extends ImportResult {
   reloaded: boolean;
   /** 画像エンドポイントの URL だったため取り込めなかった写真の枚数（dropApiImageUrls 参照） */
   droppedImages: number;
+  /** 対応していない形式・大きさで、変換もできなかったため外した写真の枚数（convertUnsupportedImages 参照） */
+  unconvertibleImages: number;
 }
 
 export class ImportProgressError extends Error {
@@ -141,6 +143,50 @@ export function dropApiImageUrls(visits: SaunaVisit[]): { visits: SaunaVisit[]; 
     return { ...visit, ...syncLatestFromHistory(nextHistory, visit.visitCount) };
   });
   return { visits: cleaned, droppedImages };
+}
+
+/**
+ * apiモードのサーバーが受け付けない形式・大きさの写真（needsImageConversion）を、
+ * 受け付ける形式へ変換する。変換できない写真は外し、枚数を返す。
+ *
+ * サーバーは不正な写真を含む記録をチャンクごと 422 で拒否し、どの記録が原因かも伝わらないため、
+ * 送る前に直す。localモードでも同じく変換する（取り込んだ記録をモード間で同じ内容にするため。
+ * 変換後の JPEG はどちらのモードでも表示できる）。
+ *
+ * @param visits normalizeVisits 済みの記録（history を必ず持つ）
+ * @param convert 写真 1 枚の変換。テストで差し替えるための引数
+ */
+export async function convertUnsupportedImages(
+  visits: SaunaVisit[],
+  convert: (dataUrl: string) => Promise<string> = convertDataUrlImage,
+): Promise<{ visits: SaunaVisit[]; unconvertibleImages: number }> {
+  let unconvertibleImages = 0;
+  // 写真は 1 枚ずつ変換する（並べると、大きな写真を何枚も同時にデコードしてメモリを圧迫する）
+  const cleaned: SaunaVisit[] = [];
+  for (const visit of visits) {
+    const history = visit.history ?? [];
+    if (!history.some((entry) => needsImageConversion(entry.image))) {
+      cleaned.push(visit);
+      continue;
+    }
+
+    const nextHistory = [];
+    for (const entry of history) {
+      if (!entry.image || !needsImageConversion(entry.image)) {
+        nextHistory.push(entry);
+        continue;
+      }
+      try {
+        nextHistory.push({ ...entry, image: await convert(entry.image) });
+      } catch (error) {
+        console.error(`取り込む写真を変換できませんでした (記録ID: ${visit.id}):`, error);
+        unconvertibleImages += 1;
+        nextHistory.push({ ...entry, image: undefined });
+      }
+    }
+    cleaned.push({ ...visit, ...syncLatestFromHistory(nextHistory, visit.visitCount) });
+  }
+  return { visits: cleaned, unconvertibleImages };
 }
 
 /**

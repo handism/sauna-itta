@@ -108,4 +108,106 @@ describe("useVisitFormState", () => {
 
     spy.mockRestore();
   });
+  describe("圧縮中にフォームが差し替わったとき", () => {
+    function deferredCompression() {
+      let resolve!: (value: string) => void;
+      const spy = vi.spyOn(utils, "compressAndGetBase64").mockImplementation(
+        () => new Promise<string>((r) => { resolve = r; }),
+      );
+      return { spy, resolve: (value: string) => resolve(value) };
+    }
+    const otherVisit: SaunaVisit = { ...mockVisit, id: "v2", name: "別のサウナ", image: undefined };
+    const imageFile = () => new File(["x"], "photo.png", { type: "image/png" });
+
+    it("別の記録の編集へ切り替えたら、終わった圧縮の写真を新しいフォームへ入れないこと", async () => {
+      const { spy, resolve } = deferredCompression();
+      const { result } = renderHook(() => useVisitFormState(defaultOptions));
+      act(() => result.current.startEditing(mockVisit));
+
+      let pending!: Promise<void>;
+      act(() => {
+        pending = result.current.handleImageFile(imageFile());
+      });
+      expect(result.current.imageUploading).toBe(true);
+
+      act(() => result.current.startEditing(otherVisit));
+      expect(result.current.imageUploading).toBe(false);
+
+      await act(async () => {
+        resolve("data:image/png;base64,old");
+        await pending;
+      });
+      expect(result.current.form.name).toBe("別のサウナ");
+      expect(result.current.form.image).toBe("");
+      expect(result.current.imageUploading).toBe(false);
+      spy.mockRestore();
+    });
+
+    it("編集を閉じた後に圧縮が終わっても、空のフォームへ写真を入れないこと", async () => {
+      const { spy, resolve } = deferredCompression();
+      const { result } = renderHook(() => useVisitFormState(defaultOptions));
+      act(() => result.current.startNewVisit());
+
+      let pending!: Promise<void>;
+      act(() => {
+        pending = result.current.handleImageFile(imageFile());
+      });
+      act(() => result.current.cancelEditing());
+
+      await act(async () => {
+        resolve("data:image/png;base64,old");
+        await pending;
+      });
+      expect(result.current.form.image).toBe("");
+      spy.mockRestore();
+    });
+
+    it("圧縮中に写真を外したら、終わった圧縮の写真で戻さないこと", async () => {
+      const { spy, resolve } = deferredCompression();
+      const { result } = renderHook(() => useVisitFormState(defaultOptions));
+
+      let pending!: Promise<void>;
+      act(() => {
+        pending = result.current.handleImageFile(imageFile());
+      });
+      act(() => result.current.handleRemoveImage());
+      expect(result.current.imageUploading).toBe(false);
+
+      await act(async () => {
+        resolve("data:image/png;base64,old");
+        await pending;
+      });
+      expect(result.current.form.image).toBe("");
+      spy.mockRestore();
+    });
+
+    it("写真を選び直したら、後から選んだ写真だけを反映すること", async () => {
+      const resolvers: Array<(value: string) => void> = [];
+      const spy = vi.spyOn(utils, "compressAndGetBase64").mockImplementation(
+        () => new Promise<string>((r) => { resolvers.push(r); }),
+      );
+      const { result } = renderHook(() => useVisitFormState(defaultOptions));
+
+      let first!: Promise<void>;
+      let second!: Promise<void>;
+      act(() => {
+        first = result.current.handleImageFile(imageFile());
+      });
+      act(() => {
+        second = result.current.handleImageFile(imageFile());
+      });
+
+      await act(async () => {
+        resolvers[1]("data:image/png;base64,new");
+        await second;
+      });
+      expect(result.current.imageUploading).toBe(false);
+      await act(async () => {
+        resolvers[0]("data:image/png;base64,old");
+        await first;
+      });
+      expect(result.current.form.image).toBe("data:image/png;base64,new");
+      spy.mockRestore();
+    });
+  });
 });

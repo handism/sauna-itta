@@ -11,6 +11,7 @@
 - 記録本体の許可キーは`VisitWritable::VISIT_PERMITTED_KEYS`を`SaunaVisitsController`と`ImportsController`で共有します。片方へキーを書き写すと、エクスポートしたJSONの取り込みと通常の作成・更新で受け付ける項目がずれます。取り込みだけが受け付けるキー（`id`、旧形式の訪問回数`visitCount`、`history`）は`ImportsController::IMPORT_PERMITTED_KEYS`で足します。`visitCount`を共有キーへ戻すと、作成・更新で履歴と無関係に`legacy_visit_count`を書き換えられ、訪問回数が履歴の件数と食い違います。
 - 書き込み系レスポンスの再読み込み（`VisitWritable#serialized`）は一覧（`index`）と同じ`SaunaVisit.with_history_images`スコープで写真の添付とblobまで先読みします（条件を各所へ書き写さないこと）。`visit.reload`だけに戻すと、`SaunaVisitSerializer`が履歴ごとに添付を引いて履歴件数に比例したクエリが出ます（`api_v1_sauna_visits_test.rb`のクエリ数比較が検査しています）。
 - 回数の上限は`Api::V1::BaseController.limit_requests`で宣言します（Rails 8の`rate_limit`を、専用のメモリストア`RATE_LIMIT_STORE`・ユーザーID単位・429 `rate_limited`の応答で包んだもの）。`rate_limit`を直接書いて`store:`を省くと、`Rails.cache`の設定次第で数えられなかったり、`by:`の既定（IP）でまとめて数えられたりします。`require_login`より後に宣言されるため未ログインは数えません。ストアはCloud Runのインスタンスごとのため、実際に通る回数は上限の最大2倍（`max_instance_count`）です。テストは`ApiAuthHelper`のsetupでストアを空にしています。
+- リクエストボディの入れ物（`saunaVisit`、`clientError`）は`params.expect`で受け取ります。`params.require(...).permit(...)`へ戻すと、値がオブジェクトでなく文字列や配列のときに`permit`が`NoMethodError`になり500を返します（`expect`は`ParameterMissing`を投げ、`BaseController`が422 `validation_error`で返します）。
 - ブラウザのエラー報告（`ClientErrorsController`）は利用者の入力として扱い、各項目を`FIELD_LIMITS`で切り詰めて1行のJSONでログへ出します（改行を含む値でログ行を偽装させないため、文字列を連結して出力しないこと）。
 
 ## インポート

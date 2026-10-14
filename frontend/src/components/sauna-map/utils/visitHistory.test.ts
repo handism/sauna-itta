@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   buildHistoryEntry,
+  buildHistoryUpdate,
+  findHistoryEntryIndex,
   getVisitCount,
   getVisitHistoryEntries,
   flattenVisitHistory,
@@ -414,5 +416,54 @@ describe("buildHistoryEntry", () => {
       rating: 0,
       image: undefined,
     });
+  });
+});
+
+describe("buildHistoryUpdate", () => {
+  const visit: SaunaVisit = {
+    id: "v1", name: "A", lat: 35, lng: 139, comment: "", date: "2026-02-01",
+    history: [
+      { id: "h1", date: "2026-01-01", comment: "1回目" },
+      { id: "h2", date: "2026-02-01", comment: "2回目" },
+    ],
+  };
+
+  it("前回の記録を修正するときは書き換える履歴の ID を引き継ぐ（apiモードの public_id と同じ）", () => {
+    const { history } = buildHistoryUpdate(visit, { date: "2026-02-02", comment: "直した", appendHistory: false });
+    expect(history).toEqual([
+      { id: "h1", date: "2026-01-01", comment: "1回目" },
+      { id: "h2", date: "2026-02-02", comment: "直した", rating: 0, image: undefined },
+    ]);
+  });
+
+  it("ID の無い履歴を修正しても ID を作らない", () => {
+    const legacy: SaunaVisit = { ...visit, history: [{ date: "2026-02-01", comment: "旧" }] };
+    const { history } = buildHistoryUpdate(legacy, { date: "2026-02-01", comment: "直した" });
+    expect(history?.[0]).not.toHaveProperty("id");
+  });
+
+  it("新しい訪問を追加するときは ID を付けない", () => {
+    const { history } = buildHistoryUpdate(visit, { date: "2026-03-01", comment: "3回目", appendHistory: true });
+    expect(history?.map((entry) => entry.id)).toEqual(["h1", "h2", undefined]);
+  });
+});
+
+describe("findHistoryEntryIndex", () => {
+  it("ID があれば ID で探す", () => {
+    const history = [
+      { id: "a", date: "2026-01-01", comment: "" },
+      { id: "b", date: "2026-01-01", comment: "" },
+    ];
+    expect(findHistoryEntryIndex(history, { id: "b", date: "2026-01-01", comment: "" })).toBe(1);
+    expect(findHistoryEntryIndex(history, { id: "z", date: "2026-01-01", comment: "" })).toBe(-1);
+  });
+
+  it("ID が無ければ日付・感想・評価・写真の一致で探す（未評価と 0、写真なしと空文字は同じとみなす）", () => {
+    const history = [
+      { date: "2026-01-01", comment: "1回目", rating: 4 },
+      { date: "2026-02-01", comment: "2回目", rating: 0, image: "" },
+    ];
+    expect(findHistoryEntryIndex(history, { date: "2026-02-01", comment: "2回目" })).toBe(1);
+    expect(findHistoryEntryIndex(history, { date: "2026-01-01", comment: "1回目", rating: 3 })).toBe(-1);
   });
 });

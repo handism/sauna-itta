@@ -6,6 +6,8 @@ import {
   createNewVisit,
   getUpdatedVisits,
   getVisitsWithRemovedHistory,
+  getVisitHistoryEntries,
+  findHistoryEntryIndex,
 } from "../utils";
 import type { ImportResult, SessionState, VisitRepository } from "./types";
 import { RepositoryError } from "./types";
@@ -73,8 +75,30 @@ export class LocalVisitRepository implements VisitRepository {
     this.persist(this.load().filter((visit) => visit.id !== id));
   }
 
+  /**
+   * index は画面に表示中の記録（visit）の履歴の番号。保存値は別タブで変わっている場合があるため、
+   * 番号のまま当てず、その履歴を保存値の中で探し直してから消す（apiモードは履歴IDで指定する）。
+   */
   async deleteHistoryEntry(visit: SaunaVisit, index: number): Promise<SaunaVisit> {
-    const next = getVisitsWithRemovedHistory(this.load(), visit.id, index);
+    const target = getVisitHistoryEntries(visit)[index];
+    if (!target) throw new RepositoryError("削除対象の履歴が見つかりません。", "not_found");
+
+    const current = this.load();
+    const stored = findUpdated(current, visit.id);
+    const storedHistory = getVisitHistoryEntries(stored);
+    const storedIndex = findHistoryEntryIndex(storedHistory, target);
+    if (storedIndex < 0) {
+      throw new RepositoryError(
+        "削除しようとした履歴は別の画面で変更されています。再読み込みしてからもう一度お試しください。",
+        "not_found",
+      );
+    }
+    // apiモード（HistoryEntriesController の last_history）と同じく、最後の 1 件は消さずに失敗させる
+    if (storedHistory.length <= 1) {
+      throw new RepositoryError("最後の履歴は削除できません。", "last_history");
+    }
+
+    const next = getVisitsWithRemovedHistory(current, visit.id, storedIndex);
     const updated = findUpdated(next, visit.id);
     this.persist(next);
     return updated;

@@ -1,6 +1,6 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import type { SaunaVisit } from "../types";
-import { IMPORT_MAX_BATCH_BYTES, dropApiImageUrls, chunkVisitsForImport, parseImportText, filterNewVisits, ImportFileError } from "./visitImport";
+import { IMPORT_MAX_BATCH_BYTES, convertUnsupportedImages, dropApiImageUrls, chunkVisitsForImport, parseImportText, filterNewVisits, ImportFileError } from "./visitImport";
 
 describe("dropApiImageUrls", () => {
   test("画像エンドポイントの URL だけを外し、記録本体の写しも最新履歴へ揃える", () => {
@@ -36,6 +36,66 @@ describe("dropApiImageUrls", () => {
     };
     const { visits, droppedImages } = dropApiImageUrls([visit]);
     expect(droppedImages).toBe(0);
+    expect(visits[0]).toBe(visit);
+  });
+});
+
+describe("convertUnsupportedImages", () => {
+  const base = { name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2026-08-02" };
+  const bmp = "data:image/bmp;base64,Qk0=";
+  const jpeg = "data:image/jpeg;base64,/9j/";
+
+  test("受け付けない形式の写真だけを変換し、記録本体の写しも最新履歴へ揃える", async () => {
+    const visit: SaunaVisit = {
+      ...base,
+      id: "1",
+      image: bmp,
+      visitCount: 3,
+      history: [
+        { date: "2026-08-01", comment: "first", image: "data:image/png;base64,AAAA" },
+        { date: "2026-08-02", comment: "latest", image: bmp },
+      ],
+    };
+    const convert = vi.fn(async () => jpeg);
+
+    const { visits, unconvertibleImages } = await convertUnsupportedImages([visit], convert);
+
+    expect(convert).toHaveBeenCalledExactlyOnceWith(bmp);
+    expect(unconvertibleImages).toBe(0);
+    expect(visits[0].history?.map((entry) => entry.image)).toEqual(["data:image/png;base64,AAAA", jpeg]);
+    expect(visits[0].image).toBe(jpeg);
+    expect(visits[0].visitCount).toBe(3);
+  });
+
+  test("変換できない写真は外して枚数を数える", async () => {
+    const visit: SaunaVisit = { ...base, id: "1", image: bmp, history: [{ date: "2026-08-02", comment: "", image: bmp }] };
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { visits, unconvertibleImages } = await convertUnsupportedImages([visit], async () => {
+      throw new Error("decode failed");
+    });
+
+    expect(unconvertibleImages).toBe(1);
+    expect(visits[0].history?.[0].image).toBeUndefined();
+    expect(visits[0].image).toBeUndefined();
+    consoleError.mockRestore();
+  });
+
+  test("変換が要らない記録は同じ参照のまま返し、変換を呼ばない", async () => {
+    const visit: SaunaVisit = {
+      ...base,
+      id: "1",
+      history: [
+        { date: "2026-08-01", comment: "", image: "data:image/webp;base64,UklG" },
+        { date: "2026-08-02", comment: "" },
+      ],
+    };
+    const convert = vi.fn(async () => jpeg);
+
+    const { visits, unconvertibleImages } = await convertUnsupportedImages([visit], convert);
+
+    expect(convert).not.toHaveBeenCalled();
+    expect(unconvertibleImages).toBe(0);
     expect(visits[0]).toBe(visit);
   });
 });

@@ -124,8 +124,9 @@ module Api
         current_user.sauna_visits.find_by!(external_id: params[:id])
       end
 
+      # saunaVisit がオブジェクトでないとき500にせず422で返すため、require + permit ではなく expect を使う
       def visit_params
-        params.require(:saunaVisit).permit(*VISIT_PERMITTED_KEYS)
+        params.expect(saunaVisit: VISIT_PERMITTED_KEYS)
       end
     end
   end

@@ -44,7 +44,7 @@ export function useVisitImportExport(
 
       setImporting(true);
       try {
-        const { added, skipped, reloaded, droppedImages } = await importVisitsFromFile(file);
+        const { added, skipped, reloaded, droppedImages, unconvertibleImages } = await importVisitsFromFile(file);
         const reloadNote = reloaded ? "" : RELOAD_FAILED_NOTE;
         if (added === 0) {
           showToast?.(
@@ -61,7 +61,14 @@ export function useVisitImportExport(
           droppedImages > 0
             ? `（写真${droppedImages}枚は画像URLとして書き出されていたため取り込めませんでした。最新の版でエクスポートし直してください）`
             : "";
-        showToast?.(`データを${added}件取り込みました。${skippedNote}${droppedNote}${reloadNote}`, "success");
+        const unconvertibleNote =
+          unconvertibleImages > 0
+            ? `（写真${unconvertibleImages}枚は対応していない形式か大きすぎ、変換もできなかったため外して取り込みました）`
+            : "";
+        showToast?.(
+          `データを${added}件取り込みました。${skippedNote}${droppedNote}${unconvertibleNote}${reloadNote}`,
+          "success",
+        );
       } catch (error) {
         if (error instanceof ImportProgressError) {
           const progress = error.added > 0 ? `${error.added}件は取り込み済みです。` : "";

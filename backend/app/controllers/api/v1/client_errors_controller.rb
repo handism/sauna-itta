@@ -18,7 +18,9 @@ module Api
       }.freeze
 
       def create
-        payload = params.require(:clientError).permit(*FIELD_LIMITS.keys)
+        # require + permit だと、clientError が文字列のときに permit が NoMethodError になり500を返す。
+        # expect は形が合わなければ ParameterMissing（BaseController が422で返す）にする
+        payload = params.expect(clientError: FIELD_LIMITS.keys)
         report = FIELD_LIMITS.to_h { |key, limit| [ key, payload[key].to_s.truncate(limit) ] }
         raise ActionController::BadRequest, "messageを指定してください。" if report[:message].blank?
 

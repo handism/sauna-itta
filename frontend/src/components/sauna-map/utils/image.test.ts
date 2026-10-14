@@ -4,7 +4,10 @@ import {
   ALLOWED_IMAGE_MIME_TYPES,
   IMAGE_INPUT_ACCEPT,
   compressAndGetBase64,
+  convertDataUrlImage,
+  describeDataUrlImage,
   isAllowedImageFile,
+  needsImageConversion,
   sanitizeImageUrl,
 } from "./image";
 
@@ -95,6 +98,90 @@ describe("compressAndGetBase64", () => {
     await expect(compressAndGetBase64(mockFile)).rejects.toThrow("Failed to read file");
 
     global.FileReader = originalFileReader;
+  });
+});
+
+/** readAsDataURL で決まった data URL を返す FileReader に差し替え、元へ戻す関数を返す */
+function stubFileReader(result: string) {
+  class MockFileReader {
+    result = result;
+    onloadend: (() => void) | null = null;
+    readAsDataURL() {
+      setTimeout(() => this.onloadend?.(), 0);
+    }
+  }
+  const original = global.FileReader;
+  global.FileReader = MockFileReader as unknown as typeof FileReader;
+  return () => {
+    global.FileReader = original;
+  };
+}
+
+describe("describeDataUrlImage", () => {
+  it("Base64 の data URL の MIME と復号後のバイト数を返す", () => {
+    expect(describeDataUrlImage("data:image/PNG;base64,AAAA")).toEqual({ mimeType: "image/png", bytes: 3 });
+    expect(describeDataUrlImage("data:image/png;base64,AAA=")).toEqual({ mimeType: "image/png", bytes: 2 });
+    expect(describeDataUrlImage("data:image/png;base64,AA==")).toEqual({ mimeType: "image/png", bytes: 1 });
+  });
+
+  it("Base64 の data URL でなければ null を返す", () => {
+    expect(describeDataUrlImage(undefined)).toBeNull();
+    expect(describeDataUrlImage("/api/v1/images/abc")).toBeNull();
+    expect(describeDataUrlImage("data:image/png,raw")).toBeNull();
+  });
+});
+
+describe("needsImageConversion", () => {
+  it("サーバーが受け付けない形式の data URL は変換の対象にする", () => {
+    expect(needsImageConversion("data:image/bmp;base64,Qk0=")).toBe(true);
+    expect(needsImageConversion("data:image/jpg;base64,/9j/")).toBe(true);
+    expect(needsImageConversion("data:image/png,raw")).toBe(true);
+  });
+
+  it("上限を超える大きさの写真は許可した形式でも変換の対象にする", () => {
+    const oversized = `data:image/jpeg;base64,${"A".repeat(Math.ceil((1024 * 1024 * 4) / 3) + 4)}`;
+    expect(needsImageConversion(oversized)).toBe(true);
+  });
+
+  it("許可した形式で上限内の写真と、data URL でない値は対象にしない", () => {
+    for (const type of ALLOWED_IMAGE_MIME_TYPES) {
+      expect(needsImageConversion(`data:${type};base64,AAAA`)).toBe(false);
+    }
+    expect(needsImageConversion(undefined)).toBe(false);
+    expect(needsImageConversion("")).toBe(false);
+    expect(needsImageConversion("/api/v1/images/abc")).toBe(false);
+  });
+});
+
+describe("convertDataUrlImage", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("復号した写真を JPEG へ圧縮し直した data URL を返す", async () => {
+    vi.mocked(imageCompression).mockResolvedValue(new File(["jpeg"], "imported-image", { type: "image/jpeg" }));
+    const restore = stubFileReader("data:image/jpeg;base64,/9j/");
+
+    await expect(convertDataUrlImage("data:image/bmp;base64,Qk0=")).resolves.toBe("data:image/jpeg;base64,/9j/");
+
+    const [file, options] = vi.mocked(imageCompression).mock.calls[0];
+    expect(file.type).toBe("image/bmp");
+    expect(new Uint8Array(await file.arrayBuffer())).toEqual(new Uint8Array([0x42, 0x4d]));
+    expect(options).toEqual({ maxSizeMB: 1, maxWidthOrHeight: 1024, fileType: "image/jpeg" });
+    restore();
+  });
+
+  it("変換後もサーバーが受け付けない写真なら reject する", async () => {
+    vi.mocked(imageCompression).mockResolvedValue(new File(["bmp"], "imported-image", { type: "image/bmp" }));
+    const restore = stubFileReader("data:image/bmp;base64,Qk0=");
+
+    await expect(convertDataUrlImage("data:image/bmp;base64,Qk0=")).rejects.toThrow();
+    restore();
+  });
+
+  it("Base64 でない data URL は圧縮せずに reject する", async () => {
+    await expect(convertDataUrlImage("data:image/bmp,raw")).rejects.toThrow();
+    expect(imageCompression).not.toHaveBeenCalled();
   });
 });
 

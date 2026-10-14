@@ -39,25 +39,40 @@ export function useVisitFormState({
     formRef.current = form;
   }, [form]);
 
+  /**
+   * 写真の圧縮の世代。圧縮は数秒かかることがあり、その間に別の記録の編集へ切り替える・
+   * 編集を閉じる・写真を選び直すと、終わった圧縮の結果がそのとき開いているフォームへ入り、
+   * 別の記録の写真として保存されてしまう。フォームを差し替える操作と新しい圧縮の開始で進め、
+   * 開始時と同じ世代のときだけ結果を反映する。
+   */
+  const imageRequest = useRef(0);
+
+  /** フォームを別の内容へ差し替える。実行中の圧縮の結果は捨てる */
+  const replaceForm = useCallback((next: VisitFormState) => {
+    imageRequest.current += 1;
+    setImageUploading(false);
+    setForm(next);
+  }, []);
+
   const cancelEditing = useCallback(
     (completed = false) => {
       cancelEdit(completed);
-      setForm(getDefaultForm());
+      replaceForm(getDefaultForm());
     },
-    [cancelEdit],
+    [cancelEdit, replaceForm],
   );
 
   const startNewVisit = useCallback(() => {
     startCreate();
-    setForm(getDefaultForm(getTodayDate()));
-  }, [startCreate]);
+    replaceForm(getDefaultForm(getTodayDate()));
+  }, [startCreate, replaceForm]);
 
   const startEditing = useCallback(
     (visit: SaunaVisit, options: StartEditingOptions = {}) => {
       startEdit(visit);
-      setForm(options.revisit ? toRevisitFormState(visit) : toFormState(visit));
+      replaceForm(options.revisit ? toRevisitFormState(visit) : toFormState(visit));
     },
-    [startEdit],
+    [startEdit, replaceForm],
   );
 
   const handleImageFile = useCallback(
@@ -69,21 +84,26 @@ export function useVisitFormState({
         return;
       }
 
+      const request = ++imageRequest.current;
+      const isCurrent = () => request === imageRequest.current;
       setImageUploading(true);
       try {
         const base64 = await compressAndGetBase64(file);
-        setForm((prev) => ({ ...prev, image: base64 }));
+        if (isCurrent()) setForm((prev) => ({ ...prev, image: base64 }));
       } catch (error) {
         console.error(error);
-        showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
+        if (isCurrent()) showToast("画像の圧縮に失敗しました。別の画像で試してください。", "error");
       } finally {
-        setImageUploading(false);
+        if (isCurrent()) setImageUploading(false);
       }
     },
     [showToast],
   );
 
   const handleRemoveImage = useCallback(() => {
+    // 圧縮中に外したとき、終わった圧縮の結果で写真が戻らないようにする
+    imageRequest.current += 1;
+    setImageUploading(false);
     setForm((prev) => ({ ...prev, image: "" }));
   }, []);
 

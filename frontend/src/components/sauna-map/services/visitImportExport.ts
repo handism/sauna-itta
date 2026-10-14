@@ -7,6 +7,7 @@ import {
   parseImportText,
   filterNewVisits,
   dropApiImageUrls,
+  convertUnsupportedImages,
   chunkVisitsForImport,
   type BatchImportResult,
 } from "../utils/visitImport";
@@ -46,7 +47,7 @@ export async function performBatchImport(
   importBatch: (visits: SaunaVisit[]) => Promise<ImportResult>,
   reload: () => Promise<boolean>,
   onProgress?: (added: number, total: number) => void,
-): Promise<Omit<BatchImportResult, "droppedImages">> {
+): Promise<Omit<BatchImportResult, "droppedImages" | "unconvertibleImages">> {
   let added = 0;
   let skipped = alreadyKnown;
   try {
@@ -101,9 +102,10 @@ export async function importVisitsFromFile(
   const validVisits = await parseImportFile(file);
   const { normalizedImported, alreadyKnown } = filterNewVisits(validVisits, getVisits());
   if (normalizedImported.length === 0) {
-    return { added: 0, skipped: alreadyKnown, reloaded: true, droppedImages: 0 };
+    return { added: 0, skipped: alreadyKnown, reloaded: true, droppedImages: 0, unconvertibleImages: 0 };
   }
-  const { visits: importable, droppedImages } = dropApiImageUrls(normalizedImported);
+  const { visits: withoutApiUrls, droppedImages } = dropApiImageUrls(normalizedImported);
+  const { visits: importable, unconvertibleImages } = await convertUnsupportedImages(withoutApiUrls);
   const result = await performBatchImport(importable, alreadyKnown, importBatch, reload, onProgress);
-  return { ...result, droppedImages };
+  return { ...result, droppedImages, unconvertibleImages };
 }

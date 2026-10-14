@@ -279,6 +279,21 @@ class ApiV1SaunaVisitsTest < ActionDispatch::IntegrationTest
     assert_equal "conflict", response.parsed_body.dig("error", "code")
   end
 
+  test "saunaVisitがオブジェクトでない作成・更新は500ではなく422で返す" do
+    csrf = sign_in
+    post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },
+      headers: csrf_header(csrf), as: :json
+    id = response.parsed_body.dig("saunaVisit", "id")
+
+    post "/api/v1/sauna_visits", params: { saunaVisit: "name" }, headers: csrf_header(csrf), as: :json
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+
+    patch "/api/v1/sauna_visits/#{id}", params: { saunaVisit: [ "name" ] }, headers: csrf_header(csrf), as: :json
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+  end
+
   test "lockVersionのない更新は楽観ロックを経ずに通さない" do
     csrf = sign_in
     post "/api/v1/sauna_visits", params: { saunaVisit: valid_attributes },

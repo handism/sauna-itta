@@ -6,6 +6,13 @@ import { ImportFileError } from "../utils/visitImport";
 import { SaunaVisit } from "../types";
 import { RepositoryError, type ImportResult } from "../repositories";
 
+// jsdom は画像をデコードできない（読み込みの完了も失敗も通知されない）ため、写真の変換は失敗させる
+vi.mock("browser-image-compression", () => ({
+  default: vi.fn(async () => {
+    throw new Error("decode failed");
+  }),
+}));
+
 /** jsdom は URL.createObjectURL を実装しないため、エクスポートの検証用に差し替える */
 function stubObjectUrl() {
   const createObjectURL = vi.fn<(blob: Blob) => string>(() => "blob:sauna-itta/export");
@@ -80,7 +87,7 @@ describe("useVisitImportExport", () => {
     const newVisit = { id: "2", name: "Sauna B", lat: 35.1, lng: 139.1, comment: "nice", date: "2023-01-02" };
     const file = new File([JSON.stringify([newVisit])], "test.json", { type: "application/json" });
     const res = await result.current.importVisitsFromFile(file);
-    expect(res).toEqual({ added: 1, skipped: 0, reloaded: true, droppedImages: 0 });
+    expect(res).toEqual({ added: 1, skipped: 0, reloaded: true, droppedImages: 0, unconvertibleImages: 0 });
     expect(importBatchMock).toHaveBeenCalledWith([expect.objectContaining({ id: "2" })]);
     expect(reloadMock).toHaveBeenCalledOnce();
   });
@@ -90,7 +97,7 @@ describe("useVisitImportExport", () => {
     const duplicateVisit = { id: "1", name: "Sauna A", lat: 35, lng: 139, comment: "", date: "2023-01-01" };
     const file = new File([JSON.stringify([duplicateVisit])], "test.json", { type: "application/json" });
     const res = await result.current.importVisitsFromFile(file);
-    expect(res).toEqual({ added: 0, skipped: 1, reloaded: true, droppedImages: 0 });
+    expect(res).toEqual({ added: 0, skipped: 1, reloaded: true, droppedImages: 0, unconvertibleImages: 0 });
     expect(importBatchMock).not.toHaveBeenCalled();
   });
 
@@ -154,6 +161,7 @@ describe("useVisitImportExport", () => {
       skipped: 0,
       reloaded: true,
       droppedImages: 0,
+      unconvertibleImages: 0,
     });
     expect(importBatch.mock.calls.map(([items]) => items.length)).toEqual([10, 10, 5]);
     expect(reload).toHaveBeenCalledOnce();
@@ -542,5 +550,39 @@ describe("useVisitImportExport", () => {
     expect(sent.image).toBeUndefined();
     expect(sent.history?.[0].image).toBeUndefined();
     expect(showToast).toHaveBeenCalledWith(expect.stringContaining("写真1枚は画像URLとして書き出されていた"), "success");
+  });
+  test("サーバーが受け付けない形式の写真は変換して取り込み、変換できなければ外して枚数を伝える", async () => {
+    const showToast = vi.fn();
+    const { result } = renderHook(() =>
+      useVisitImportExport(() => mockVisits, importBatchMock, passThroughExport, reloadMock, showToast),
+    );
+    // 写真の変換はファイル先頭のモックで失敗させている
+    const imported = {
+      id: "with-bmp",
+      name: "Sauna D",
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-08-02",
+      image: "data:image/bmp;base64,Qk0=",
+      history: [{ date: "2026-08-02", comment: "", image: "data:image/bmp;base64,Qk0=" }],
+    };
+    const file = new File([JSON.stringify([imported])], "test.json", { type: "application/json" });
+    const input = document.createElement("input");
+    Object.defineProperty(input, "files", { value: [file] });
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await act(async () => {
+      await result.current.handleImportData({ target: input } as ChangeEvent<HTMLInputElement>);
+    });
+
+    const [sent] = importBatchMock.mock.calls[0][0];
+    expect(sent.image).toBeUndefined();
+    expect(sent.history?.[0].image).toBeUndefined();
+    expect(showToast).toHaveBeenCalledWith(
+      expect.stringContaining("写真1枚は対応していない形式か大きすぎ、変換もできなかったため外して取り込みました"),
+      "success",
+    );
+    consoleError.mockRestore();
   });
 });

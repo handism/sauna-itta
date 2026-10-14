@@ -31,6 +31,15 @@ class ApiV1ClientErrorsTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_content
   end
 
+  test "clientErrorがオブジェクトでない報告は500ではなく422で返す" do
+    csrf = sign_in
+
+    post "/api/v1/client_errors", params: { clientError: "boom" }, headers: csrf_header(csrf), as: :json
+
+    assert_response :unprocessable_content
+    assert_equal "validation_error", response.parsed_body.dig("error", "code")
+  end
+
   test "未ログインでは受け付けない" do
     get "/api/v1/session"
     csrf = response.parsed_body.fetch("csrfToken")

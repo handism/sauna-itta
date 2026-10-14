@@ -79,11 +79,61 @@ export function blobToDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-export async function compressAndGetBase64(file: File): Promise<string> {
+/**
+ * @param fileType 書き出す形式。省略すると元の形式のまま圧縮する（ライブラリの既定）
+ */
+export async function compressAndGetBase64(file: File, fileType?: string): Promise<string> {
   const compressedFile = await imageCompression(file, {
     maxSizeMB: MAX_IMAGE_BYTES / (1024 * 1024),
     maxWidthOrHeight: 1024,
+    ...(fileType && { fileType }),
   });
 
   return blobToDataUrl(compressedFile);
+}
+
+const BASE64_DATA_URL = /^data:([^;,]+);base64,([\s\S]*)$/i;
+
+/** Base64 の data URL の MIME タイプと復号後のバイト数。それ以外の値は null */
+export function describeDataUrlImage(url: string | undefined): { mimeType: string; bytes: number } | null {
+  if (!url) return null;
+  const match = BASE64_DATA_URL.exec(url);
+  if (!match) return null;
+  const encoded = match[2].replace(/[\r\n]/g, "");
+  const padding = encoded.endsWith("==") ? 2 : encoded.endsWith("=") ? 1 : 0;
+  return { mimeType: match[1].toLowerCase(), bytes: Math.floor((encoded.length * 3) / 4) - padding };
+}
+
+/**
+ * apiモードのサーバー（`DataUrlImage`）が受け付けない data URL の写真か。
+ *
+ * 過去の版はアップロードの形式を絞っておらず、圧縮ライブラリは BMP を BMP のまま書き出すため、
+ * localモードの保存やそのエクスポートに `data:image/bmp` などが残っていることがある
+ * （表示は sanitizeImageUrl が続けて許す）。圧縮が上限に届かず 1MB を超えた写真も同様。
+ * そのまま取り込むとサーバーはチャンクごと 422 で拒否するため、取り込み前に変換する。
+ * data URL でない値（画像 URL など）は対象外。
+ */
+export function needsImageConversion(url: string | undefined): boolean {
+  if (!url || !/^data:/i.test(url)) return false;
+  const described = describeDataUrlImage(url);
+  if (!described) return true;
+  return !ALLOWED_IMAGE_MIME_TYPES.includes(described.mimeType) || described.bytes > MAX_IMAGE_BYTES;
+}
+
+/** 変換後の形式。写真が主のため、透過を保てなくても大きさを抑えられる JPEG にする */
+const CONVERTED_IMAGE_TYPE = "image/jpeg";
+
+/**
+ * {@link needsImageConversion} が真の写真を、サーバーが受け付ける形式と大きさへ作り直す。
+ * 変換できない（復号できない・ブラウザが描画できない・上限に収まらない）ときは reject する。
+ */
+export async function convertDataUrlImage(url: string): Promise<string> {
+  const match = BASE64_DATA_URL.exec(url);
+  if (!match) throw new Error("Base64 の data URL ではありません");
+  const binary = atob(match[2].replace(/[\r\n]/g, ""));
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  const file = new File([bytes], "imported-image", { type: match[1] });
+  const converted = await compressAndGetBase64(file, CONVERTED_IMAGE_TYPE);
+  if (needsImageConversion(converted)) throw new Error("写真をサーバーの受け付ける形式へ変換できませんでした");
+  return converted;
 }

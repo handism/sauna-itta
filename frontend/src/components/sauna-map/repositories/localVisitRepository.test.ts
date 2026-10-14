@@ -126,6 +126,47 @@ describe("LocalVisitRepository", () => {
     expect(storedVisits()[0].history).toHaveLength(1);
   });
 
+  it("別タブで履歴が足されていても、画面で選んだ履歴を消す", async () => {
+    // 画面は existing を表示したまま、別タブが古い日付の訪問を先頭に足した
+    seed([{ ...existing, history: [{ date: "2026-05-01", comment: "別タブ", rating: 3 }, ...existing.history!] }]);
+
+    const updated = await repository.deleteHistoryEntry(existing, 0);
+
+    expect(updated.history?.map((entry) => entry.comment)).toEqual(["別タブ", "2回目"]);
+    expect(storedVisits()[0].history?.map((entry) => entry.comment)).toEqual(["別タブ", "2回目"]);
+  });
+
+  it("画面で選んだ履歴が別タブで変わっていたら、保存せずにエラーにする", async () => {
+    seed([{ ...existing, history: [{ ...existing.history![0], comment: "別タブで直した" }, existing.history![1]] }]);
+
+    await expect(repository.deleteHistoryEntry(existing, 0)).rejects.toMatchObject({ name: "RepositoryError", code: "not_found" });
+    expect(storedVisits()[0].history).toHaveLength(2);
+  });
+
+  it("保存値の履歴が 1 件だけなら、apiモードと同じく last_history で失敗させる", async () => {
+    seed([{ ...existing, history: [existing.history![1]] }]);
+
+    await expect(repository.deleteHistoryEntry(existing, 1)).rejects.toMatchObject({
+      code: "last_history",
+      message: "最後の履歴は削除できません。",
+    });
+  });
+
+  it("ID を持つ履歴は ID で探して消す", async () => {
+    const withIds: SaunaVisit = {
+      ...existing,
+      history: [
+        { id: "h1", date: "2026-06-01", comment: "1回目" },
+        { id: "h2", date: "2026-07-01", comment: "2回目" },
+      ],
+    };
+    seed([{ ...withIds, history: [withIds.history![0], { ...withIds.history![1], comment: "別タブで直した" }] }]);
+
+    const updated = await repository.deleteHistoryEntry(withIds, 1);
+
+    expect(updated.history?.map((entry) => entry.id)).toEqual(["h1"]);
+  });
+
   it("インポートは既存IDをスキップして追加件数を返す", async () => {
     seed([existing]);
     const imported: SaunaVisit[] = [

@@ -126,11 +126,33 @@ export function buildHistoryUpdate(
 ): Pick<SaunaVisit, "history" | "comment" | "image" | "date" | "rating" | "visitCount"> {
   const nextEntry = buildHistoryEntry(form);
   const baseHistory = getVisitHistoryEntries(v);
+  // 書き換える履歴の ID は引き継ぐ（apiモードは同じ履歴の public_id を保つため、捨てるとモードで食い違う）
+  const replacedId = baseHistory[baseHistory.length - 1]?.id;
   const history = form.appendHistory
     ? [...baseHistory, nextEntry]
-    : [...baseHistory.slice(0, -1), nextEntry];
+    : [...baseHistory.slice(0, -1), replacedId ? { id: replacedId, ...nextEntry } : nextEntry];
 
   return syncLatestFromHistory(history, v.visitCount);
+}
+
+/**
+ * 画面で選んだ履歴が、最新の保存値の履歴の何番目にあるかを返す（無ければ -1）。
+ * ID があれば ID で、無ければ（localモードで作った履歴）日付・感想・評価・写真の一致で探す。
+ *
+ * localモードの履歴削除は、画面の記録を読み込んだ後に別タブが履歴を足し引きしていると、
+ * 画面上の番号のまま消すと別の履歴が消える。内容が同じ履歴が複数あるときは先の 1 件を返す
+ * （どれを消しても結果は同じ）。
+ */
+export function findHistoryEntryIndex(history: VisitHistoryEntry[], target: VisitHistoryEntry): number {
+  if (target.id) return history.findIndex((entry) => entry.id === target.id);
+  return history.findIndex(
+    (entry) =>
+      !entry.id &&
+      entry.date === target.date &&
+      entry.comment === target.comment &&
+      (entry.rating ?? 0) === (target.rating ?? 0) &&
+      (entry.image || undefined) === (target.image || undefined),
+  );
 }
 
 export function normalizeVisits(visits: SaunaVisit[]): SaunaVisit[] {
