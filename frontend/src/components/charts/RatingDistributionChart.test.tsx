@@ -87,6 +87,28 @@ describe("RatingDistributionChart", () => {
     expect(table).toHaveTextContent("0件");
   });
 
+  it("rounds fractional ratings into the nearest star so the legend adds up to the total", () => {
+    const mockEntries = [
+      { visitId: "1", status: "visited", rating: 3.5 },
+      { visitId: "2", status: "visited", rating: 4.4 },
+      { visitId: "3", status: "visited", rating: 0.3 },
+    ] as FlatVisitHistoryEntry[];
+
+    render(<RatingDistributionChart entries={mockEntries} avgRating={2.7} theme="light" />);
+
+    const pieData = JSON.parse(screen.getByTestId("pie").getAttribute("data-pie-data") || "[]") as Array<{
+      rating: number;
+      value: number;
+    }>;
+    expect(pieData.map(({ rating, value }) => [rating, value])).toEqual([
+      [4, 2],
+      [1, 1],
+    ]);
+    expect(screen.getByText(/平均 \(3件\)/)).toBeInTheDocument();
+    expect(screen.getByTestId("rating-legend-4")).toHaveTextContent("2件67%");
+    expect(screen.getByTestId("rating-legend-1")).toHaveTextContent("1件33%");
+  });
+
   it("renders correctly in dark theme", () => {
     const mockEntries = [
       { visitId: "1", status: "visited", rating: 3 },

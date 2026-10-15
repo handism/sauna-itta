@@ -350,6 +350,23 @@ describe("validateVisitForm", () => {
     expect(result.success).toBe(true);
   });
 
+  it("returns error when the date does not exist", () => {
+    const invalidForm: VisitFormState = {
+      name: "サウナしきじ",
+      comment: "",
+      image: "",
+      date: "2026-02-30",
+      rating: 4,
+      tagsText: "",
+      status: "visited",
+      area: "",
+      appendHistory: false,
+    };
+
+    const result = validateVisitForm(invalidForm);
+    expect(result).toEqual({ success: false, errors: ["日付の形式が正しくありません。"] });
+  });
+
   it("returns error when sauna name is empty", () => {
     const invalidForm: VisitFormState = {
       name: "   ",

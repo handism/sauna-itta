@@ -92,12 +92,12 @@
 - **統計画面の空状態は `StatsEmptyState` を使うこと**: 記録が 0 件のときは `variant="none"`、行きたいだけ（`stats.visitedCount === 0`）のときは `variant="wishlistOnly"` を出します。グラフ・ランキング・カレンダーは行った記録だけから集計するため、行きたいだけのときは空のカードを並べず、空状態＋サマリー＋タグクラウドだけにします。構成は地図側の `VisitListEmpty` と同じ「アイコン＋見出し＋説明＋操作」に揃えます。
 - **タグクラウドは先頭だけを出すこと**: `TagCloudCard` は件数の多い順に `TAG_CLOUD_INITIAL_COUNT` 件だけを表示し、残りは「すべて表示」（`aria-expanded` / `aria-controls`）で開きます。全種類を並べると 100 件を超える同じ大きさのチップの壁になり、よく使うタグが埋もれます。1 回しか付いていないタグは `.tagPillRare` で控えめにします。
 - **満足度の配色は順序のある段階色にすること**: ★1〜★5 の色は `chartTheme.ts` の `getChartColors(theme).rating` から取り、色相を変えずアプリのアンバーの明るさ・彩度の段階で並べます（ダークは高い評価ほど明るく、ライトは高い評価ほど濃く。`chartTheme.test.ts` が輝度の順を検査します）。緑・青・赤のように色相で分けると、どれが高い評価なのかを凡例を見ないと読めません。チャート側に色を直書きしないこと。
-- **満足度分布は凡例を出すこと**: `RatingDistributionChart` はドーナツの横に ★5〜★1 の件数と割合の凡例を並べます（0 件の評価も薄く表示）。色だけでは何点の割合か読み取れません。凡例は見た目用（`aria-hidden`）で、読み上げは兄弟の `.sr-only` テーブルが担います。
+- **満足度分布は凡例を出すこと**: `RatingDistributionChart` はドーナツの横に ★5〜★1 の件数と割合の凡例を並べます（0 件の評価も薄く表示）。色だけでは何点の割合か読み取れません。インポートした記録は 3.5 のような小数の評価を持てるため、四捨五入して ★1〜★5 のどれかに数えます（そのままのキーで数えると分母にだけ入り、凡例の割合の合計が 100% になりません）。凡例は見た目用（`aria-hidden`）で、読み上げは兄弟の `.sr-only` テーブルが担います。
 - **記録期間は長さを主の値にすること**: サマリーの「記録期間」は他のカードと同じ「大きな数値＋単位」の形で `SummaryGrid` の `formatPeriodLength()`（始まりと終わりの月を含めた「N ヶ月」「N 年 M ヶ月」）を出し、範囲は下の `.statNote` に `YYYY.MM 〜 YYYY.MM`、日単位の期間は `title` と `<time dateTime>` に残します。範囲そのものを主の値にすると、このカードだけ小さな文字で 2 行に折り返し、サマリーの文字の大きさと高さが揃いません。サマリーの見出しも 1 行に収まる短さにします。延べ訪問回数のカードには `calculateStats()` の `repeatVisitedCount`（`REPEAT_VISIT_MIN_COUNT` 回以上行った施設の数）を「うち再訪 N 施設」として `.statNote` に添えます（0 件なら「どの施設も 1 回ずつ」）。どの施設も 1 回ずつだと延べ回数と「行った施設」が同じ数字で並ぶだけになるためです。施設のカードは見出しを「行った施設」、値を行った施設の数にし、行きたいの件数は `.statNote` の「ほかに行きたい N 件」に回します（「施設数 97 行った / 2 行きたい」の形に戻すと、97 が何の数かを読み取りにくくなります）。`.statCard` は値を見出しの直後に置く（`justify-content: flex-start`）こと。`space-between` に戻すと、補足の無いカードだけ値が下端へ寄り、同じ行で数字の高さが揃いません。
 - **同じ数字を 2 か所で計算しないこと**: 平均満足度は `calculateStats()` の `stats.avgRating` が唯一の出所で、`RatingDistributionChart` は `avgRating` を props で受け取って表示します（グラフ側で再計算すると、サマリーと中央表示の数字がいずれ食い違います）。
 
 ## 3. パフォーマンス
-- 訪問リスト（`VisitList.tsx`）は全件を一度に描画せず、`INITIAL_RENDER_COUNT` 件から `IntersectionObserver` で `CHUNK_SIZE` ずつ描画を伸ばす増分レンダリング方式です。描画件数は state ではなくレンダー中に導出しているため、`useEffect` 内で `setState` を呼ぶ実装（React Compiler / `react-hooks/set-state-in-effect` に抵触）へ戻さないでください。
+- 訪問リスト（`VisitList.tsx`）は全件を一度に描画せず、`INITIAL_RENDER_COUNT` 件から `IntersectionObserver` で `CHUNK_SIZE` ずつ描画を伸ばす増分レンダリング方式です。描画件数は state ではなくレンダー中に導出しているため、`useEffect` 内で `setState` を呼ぶ実装（React Compiler / `react-hooks/set-state-in-effect` に抵触）へ戻さないでください。選択中の記録へのスクロール（`useIncrementalList`）は `selectedId` の変化だけで行い、依存配列に描画件数（`visibleCount`）を戻さないこと（一覧を読み進めて追加読み込みが走るたびに、選択中の行へ引き戻されます）。
 
 ## 一覧・登録の情報整理
 

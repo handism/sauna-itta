@@ -1,4 +1,5 @@
 import { SaunaVisit, VisitStats } from "../types";
+import { isValidDateString } from "./date";
 import { comparePrefectures, extractPrefecture } from "./geo";
 import {
   FlatVisitHistoryEntry,
@@ -61,11 +62,15 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
 
       const history = getVisitHistoryEntries(visit);
       for (const entry of history) {
-        if (firstDate === null || entry.date < firstDate) {
-          firstDate = entry.date;
-        }
-        if (lastDate === null || entry.date > lastDate) {
-          lastDate = entry.date;
+        // 日付の無い（インポートした以前の版の保存値の）履歴は文字列比較で最小になり、
+        // firstDate が空文字になって記録期間ごと表示されなくなるため期間の算出から外す
+        if (isValidDateString(entry.date)) {
+          if (firstDate === null || entry.date < firstDate) {
+            firstDate = entry.date;
+          }
+          if (lastDate === null || entry.date > lastDate) {
+            lastDate = entry.date;
+          }
         }
 
         const rating = entry.rating ?? 0;

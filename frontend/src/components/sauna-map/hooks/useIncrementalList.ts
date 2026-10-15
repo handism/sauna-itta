@@ -22,13 +22,16 @@ export function useIncrementalList(
   const renderedVisits = filteredVisits.slice(0, visibleCount);
   const hasMore = filteredVisits.length > renderedVisits.length;
 
+  // 選んだ記録へは選んだときだけ寄せる。描画件数（visibleCount）の増加では寄せない
+  // （一覧を下へ読み進めて追加読み込みが走るたびに、選択中の行へ引き戻されるため）。
+  // 選んだ記録の行は visibleCount が selectedIndex + 1 以上を保証するため、同じ描画で DOM にある
   useEffect(() => {
     if (!selectedId || !containerRef.current) return;
     const targetEl = containerRef.current.querySelector<HTMLElement>(
       `[data-visit-id="${selectedId}"]`
     );
     targetEl?.scrollIntoView?.({ behavior: getScrollBehavior(), block: "center" });
-  }, [selectedId, visibleCount]);
+  }, [selectedId]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;

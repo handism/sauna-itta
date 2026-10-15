@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidDateString } from "../utils/date";
 
 // --- 地理座標型 ---
 export interface LatLng {
@@ -44,7 +45,8 @@ export const VisitFormInputSchema = z.object({
   name: z.string().trim().min(1, "サウナ名を入力してください。"),
   comment: z.string(),
   image: z.string().optional(),
-  date: z.string().refine((val) => val === "" || /^\d{4}-\d{2}-\d{2}$/.test(val), "日付の形式が正しくありません。"),
+  // インポート（ImportVisitSchema）と同じく実在しない日付（2026-02-30）も弾く
+  date: z.string().refine((val) => val === "" || isValidDateString(val), "日付の形式が正しくありません。"),
   rating: z.number().min(0, "満足度は0以上で指定してください。").max(5, "満足度は5以下で指定してください。"),
   tagsText: z.string(),
   status: z.enum(["visited", "wishlist"] as const),

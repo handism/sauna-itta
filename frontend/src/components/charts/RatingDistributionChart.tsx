@@ -38,7 +38,10 @@ export default function RatingDistributionChart({
 
     entries.forEach((entry) => {
       if (entry.rating && entry.rating > 0) {
-        const rating = entry.rating;
+        // インポートした記録は 3.5 のような小数の評価を持てる（apiモードの DB も decimal(2,1)）。
+        // そのままのキーで数えると分母の totalRated にだけ入り、ドーナツと凡例から漏れるため、
+        // 四捨五入して ★1〜★5 のどれかに寄せる
+        const rating = Math.min(5, Math.max(1, Math.round(entry.rating)));
         ratingCounts[rating] = (ratingCounts[rating] || 0) + 1;
         totalCount += 1;
       }

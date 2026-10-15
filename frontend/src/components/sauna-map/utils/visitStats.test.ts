@@ -58,6 +58,31 @@ describe("calculateStats", () => {
     expect(stats.prefectureCount).toBe(1);
   });
 
+  it("ignores history entries without a valid date when computing the record period", () => {
+    const visits: SaunaVisit[] = [
+      {
+        id: "1",
+        name: "Test Sauna",
+        lat: 0,
+        lng: 0,
+        comment: "",
+        date: "2023-05-01",
+        status: "visited",
+        history: [
+          { date: "", comment: "", rating: 0 },
+          { date: "2023-02-30", comment: "", rating: 0 },
+          { date: "2023-03-01", comment: "", rating: 0 },
+          { date: "2023-05-01", comment: "", rating: 0 },
+        ],
+      },
+    ];
+    const stats = calculateStats(visits);
+    // 空文字が最小として firstDate に入ると、記録期間ごと「-」になる
+    expect(stats.firstDate).toBe("2023-03-01");
+    expect(stats.lastDate).toBe("2023-05-01");
+    expect(stats.totalVisits).toBe(4);
+  });
+
   it("should calculate correctly with mixed visited and wishlist statuses", () => {
     const visits: SaunaVisit[] = [
       {
@@ -197,7 +222,8 @@ describe("calculateStats", () => {
     const stats = calculateStats(visits);
     expect(stats.total).toBe(2);
     expect(stats.visitedCount).toBe(2);
-    expect(stats.firstDate).toBe(""); // lexicographical comparison sets empty string as first
+    // 日付の無い記録は記録期間の算出から外す（空文字が firstDate に入ると期間ごと表示されない）
+    expect(stats.firstDate).toBe("2023-01-01");
     expect(stats.lastDate).toBe("2023-01-01");
     expect(stats.uniqueAreas).toBe(0);
   });

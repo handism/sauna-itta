@@ -70,4 +70,37 @@ describe("useIncrementalList", () => {
 
     expect(result.current.renderedVisits.length).toBe(26);
   });
+
+  it("does not scroll back to the selected item when more items are loaded", () => {
+    const visits = Array.from({ length: 50 }, (_, i) => makeVisit(i));
+    const container = document.createElement("div");
+    const target = document.createElement("div");
+    target.dataset.visitId = "visit-3";
+    const scrollIntoView = vi.fn();
+    target.scrollIntoView = scrollIntoView;
+    container.appendChild(target);
+
+    const { result, rerender } = renderHook(
+      ({ selectedId }: { selectedId: string | null }) => {
+        const list = useIncrementalList(visits, selectedId, 10, 10);
+        list.containerRef.current = container;
+        return list;
+      },
+      { initialProps: { selectedId: "visit-3" as string | null } }
+    );
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    // 一覧を下へ読み進めて描画件数が増えても、選択中の行へ引き戻さない
+    act(() => {
+      result.current.loadMore();
+    });
+    expect(result.current.renderedVisits.length).toBe(20);
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    // 別の記録を選び直したときは寄せる
+    target.dataset.visitId = "visit-4";
+    rerender({ selectedId: "visit-4" });
+    expect(scrollIntoView).toHaveBeenCalledTimes(2);
+  });
 });
