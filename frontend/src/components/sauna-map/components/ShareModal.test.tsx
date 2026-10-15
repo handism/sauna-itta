@@ -68,8 +68,10 @@ describe("ShareModalView", () => {
     renderShare();
 
     const summary = screen.getByText(/記録期間/);
-    expect(within(summary).getByText("2026-01-05")).toBeInTheDocument();
-    expect(within(summary).getByText("2026-08-02")).toBeInTheDocument();
+    // 保存値の YYYY-MM-DD は出さず、カード・ポップアップと同じ表示形式にする
+    expect(within(summary).getByText("2026年1月5日（月）")).toBeInTheDocument();
+    expect(within(summary).getByText("2026年8月2日（日）")).toBeInTheDocument();
+    expect(summary).not.toHaveTextContent("2026-01-05");
     expect(screen.getByText(/平均満足度/)).toHaveTextContent("4.5");
   });
 

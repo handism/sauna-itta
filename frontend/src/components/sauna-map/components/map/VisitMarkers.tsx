@@ -150,20 +150,20 @@ function VisitMarkersComponent({
   );
 }
 
-const areVisitsEqual = (
-  a: import("../../types").SaunaVisit[],
-  b: import("../../types").SaunaVisit[],
-) => {
+/**
+ * 記録は不変更新されるため、要素の参照で比べる。id と座標だけで比べると、
+ * 場所を変えずにステータス・評価・コメント等を編集したときにピンとポップアップが古いまま残る。
+ */
+const areVisitsEqual = (a: SaunaVisit[], b: SaunaVisit[]) => {
   if (a === b) return true;
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
-    if (a[i].id !== b[i].id) return false;
-    if (a[i].lat !== b[i].lat || a[i].lng !== b[i].lng) return false;
+    if (a[i] !== b[i]) return false;
   }
   return true;
 };
 
-const propsAreEqual = (prev: VisitMarkersProps, next: VisitMarkersProps) => {
+export const areVisitMarkersPropsEqual = (prev: VisitMarkersProps, next: VisitMarkersProps) => {
   if (prev.editingId !== next.editingId) return false;
   if (prev.selectedId !== next.selectedId) return false;
   if (prev.hoveredId !== next.hoveredId) return false;
@@ -175,4 +175,4 @@ const propsAreEqual = (prev: VisitMarkersProps, next: VisitMarkersProps) => {
   return true;
 };
 
-export const VisitMarkers = memo(VisitMarkersComponent, propsAreEqual);
+export const VisitMarkers = memo(VisitMarkersComponent, areVisitMarkersPropsEqual);

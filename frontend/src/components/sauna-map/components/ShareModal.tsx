@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { SaunaVisit, VisitStats } from "../types";
 import { RatingStars } from "./common/RatingStars";
 import { WishlistChip } from "./common/WishlistChip";
-import { formatShortDate, getDisplayRating, isWishlist } from "../utils";
+import { formatDisplayDate, formatShortDate, getDisplayRating, isWishlist } from "../utils";
 import { useModalBehavior } from "../hooks/useModalBehavior";
 import { useSaunaUI, useVisitFiltersContext } from "../context";
 
@@ -49,7 +49,8 @@ export function ShareModalView({
         <div className="share-summary">
           {stats.firstDate && stats.lastDate && (
             <div>
-              記録期間: <strong>{stats.firstDate}</strong> 〜 <strong>{stats.lastDate}</strong>
+              記録期間: <strong>{formatDisplayDate(stats.firstDate)}</strong> 〜{" "}
+              <strong>{formatDisplayDate(stats.lastDate)}</strong>
             </div>
           )}
           {stats.avgRating > 0 && (

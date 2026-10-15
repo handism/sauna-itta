@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import L from "leaflet";
-import { createCustomClusterIcon } from "./VisitMarkers";
+import { areVisitMarkersPropsEqual, createCustomClusterIcon } from "./VisitMarkers";
+import { SaunaVisit } from "../../types";
 import { getSaunaIcon } from "../common/markerIcon";
 
 const markerWith = (icon: L.DivIcon) => ({ options: { icon } }) as L.Marker;
@@ -44,5 +45,29 @@ describe("createCustomClusterIcon", () => {
       getAllChildMarkers: () => [visited, visited],
     });
     expect(visitedOnly.options.html).not.toContain("sauna-cluster-wishlist");
+  });
+});
+
+describe("areVisitMarkersPropsEqual", () => {
+  const visit: SaunaVisit = {
+    id: "1",
+    name: "サウナA",
+    lat: 35,
+    lng: 139,
+    date: "2026-07-24",
+    comment: "",
+    status: "wishlist",
+  };
+  const props = (visits: SaunaVisit[]) => ({ visits, editingId: null, onEdit: () => {} });
+
+  it("同じ記録の配列が作り直されただけなら再描画しない", () => {
+    const base = props([visit]);
+    expect(areVisitMarkersPropsEqual(base, { ...base, visits: [visit] })).toBe(true);
+  });
+
+  it("場所を変えずに内容だけ編集した記録はピンとポップアップを描き直す", () => {
+    const base = props([visit]);
+    const edited = { ...visit, status: "visited" as const, rating: 4, comment: "最高" };
+    expect(areVisitMarkersPropsEqual(base, { ...base, visits: [edited] })).toBe(false);
   });
 });

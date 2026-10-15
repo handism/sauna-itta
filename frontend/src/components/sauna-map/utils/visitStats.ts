@@ -41,13 +41,14 @@ export function calculateStats(visits: SaunaVisit[]): VisitStats {
   let ratingCount = 0;
 
   for (const visit of visits) {
-    const area = (visit.area ?? "").trim();
-    if (area.length > 0) {
-      areasSet.add(area);
-    }
-
     if (isVisited(visit)) {
       visitedCount++;
+
+      // 画面の見出しは「訪問エリア数」なので、行きたい記録のエリアは数えない
+      const area = (visit.area ?? "").trim();
+      if (area.length > 0) {
+        areasSet.add(area);
+      }
       // 一覧・ランキングの「N回」と同じ数え方にする（旧形式の visitCount も含める）
       const visitCount = getVisitCount(visit);
       totalVisits += visitCount;

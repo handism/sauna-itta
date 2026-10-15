@@ -102,7 +102,8 @@ describe("calculateStats", () => {
     expect(stats.firstDate).toBe("2023-01-01");
     expect(stats.lastDate).toBe("2023-01-03");
     expect(stats.avgRating).toBe(3.5); // (4+3)/2
-    expect(stats.uniqueAreas).toBe(3);
+    // 見出しは「訪問エリア数」なので、行きたい記録のエリアは数えない
+    expect(stats.uniqueAreas).toBe(2);
     expect(stats.prefectures).toEqual(["東京都"]); // Wishlist area should not be counted for prefectures
     expect(stats.prefectureCount).toBe(1);
   });

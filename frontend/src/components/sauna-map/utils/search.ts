@@ -12,12 +12,13 @@ export function createSearchRegex(keyword: string): RegExp | null {
 
 /**
  * 訪問記録 (SaunaVisit) が検索キーワードの正規表現にマッチするかを判定する。
- * サウナ名・コメント・地域・タグを横断して検索する。
+ * サウナ名・コメント（過去の訪問履歴のコメントを含む）・地域・タグを横断して検索する。
  */
 export function matchesSearchKeyword(visit: SaunaVisit, regex: RegExp | null): boolean {
   if (!regex) return true;
   if (regex.test(visit.name)) return true;
   if (visit.comment && regex.test(visit.comment)) return true;
+  if (visit.history?.some((entry) => entry.comment && regex.test(entry.comment))) return true;
   if (visit.area && regex.test(visit.area)) return true;
   if (visit.tags && visit.tags.some((tag) => regex.test(tag))) return true;
   return false;

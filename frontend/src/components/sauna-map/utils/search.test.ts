@@ -39,6 +39,19 @@ describe("matchesSearchKeyword", () => {
     expect(matchesSearchKeyword(visit, createSearchRegex("水風呂"))).toBe(true);
   });
 
+  it("過去の訪問履歴のコメントにも一致する", () => {
+    const revisited: SaunaVisit = {
+      ...visit,
+      comment: "今回は混んでいた",
+      history: [
+        { date: "2026-05-01", comment: "外気浴が気持ちいい", rating: 5 },
+        { date: "2026-07-24", comment: "今回は混んでいた", rating: 3 },
+      ],
+    };
+    expect(matchesSearchKeyword(revisited, createSearchRegex("外気浴"))).toBe(true);
+    expect(matchesSearchKeyword(revisited, createSearchRegex("ロウリュ"))).toBe(false);
+  });
+
   it("matches by area", () => {
     expect(matchesSearchKeyword(visit, createSearchRegex("静岡"))).toBe(true);
   });
