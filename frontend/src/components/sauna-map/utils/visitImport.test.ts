@@ -153,6 +153,38 @@ describe("取り込みデータの検証", () => {
     expect(() => parseImportText('[{"id":"1"}]')).toThrow("1件目の記録の「name」");
   });
 
+  test.each([
+    ["緯度が範囲外", { lat: 91 }, "1件目の記録の「lat」"],
+    ["経度が範囲外", { lng: -181 }, "1件目の記録の「lng」"],
+    ["評価が5を超える", { rating: 6 }, "1件目の記録の「rating」"],
+    ["訪問回数が整数でない", { visitCount: 2.5 }, "1件目の記録の「visitCount」"],
+    ["訪問回数が負", { visitCount: -1 }, "1件目の記録の「visitCount」"],
+    ["実在しない日付", { date: "2026-02-30" }, "1件目の記録の「date」"],
+    ["日付の形式が違う", { date: "2026/08/01" }, "1件目の記録の「date」"],
+    ["サウナ名が空白だけ", { name: "  " }, "1件目の記録の「name」"],
+    ["IDが空", { id: "" }, "1件目の記録の「id」"],
+    ["履歴の評価が負", { history: [{ date: "2026-08-01", comment: "", rating: -1 }] }, "1件目の記録の「history.0.rating」"],
+    ["履歴の日付が不正", { history: [{ date: "昨日", comment: "" }] }, "1件目の記録の「history.0.date」"],
+  ])("サーバーが拒否する値（%s）は送る前にファイルの問題として場所を伝える", (_label, override, message) => {
+    const base = { id: "1", name: "サウナ", lat: 35, lng: 139, comment: "", date: "2026-08-01" };
+    const text = JSON.stringify([{ ...base, ...override }]);
+
+    expect(() => parseImportText(text)).toThrow(ImportFileError);
+    expect(() => parseImportText(text)).toThrow(message);
+  });
+
+  test("空の日付は受け付ける（サーバーは今日の日付として扱う）", () => {
+    const text = JSON.stringify([{ id: "1", name: "サウナ", lat: 35, lng: 139, comment: "", date: "" }]);
+
+    expect(parseImportText(text)).toHaveLength(1);
+  });
+
+  test("同梱のデモ記録をそのまま取り込めること", async () => {
+    const { default: bundled } = await import("@/data/sauna-visits.json");
+
+    expect(parseImportText(JSON.stringify(bundled))).toHaveLength(bundled.length);
+  });
+
   test("ファイル内で同じIDの記録は先の1件だけを取り込み、残りはスキップとして数える（apiモードと同じ）", () => {
     const first: SaunaVisit = { id: "dup", name: "1件目", lat: 35, lng: 139, comment: "", date: "2026-08-01" };
     const second: SaunaVisit = { ...first, name: "2件目" };

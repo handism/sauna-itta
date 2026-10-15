@@ -284,6 +284,77 @@ describe("useVisitSession", () => {
     expect(result.current.loadError).toBe(LOAD_ERROR_FALLBACK);
   });
 
+  it("別タブで別の利用者がログインし直していたら、前の利用者の記録を消して新しい利用者の記録を読み込むこと", async () => {
+    const otherVisits: SaunaVisit[] = [{ ...loadedVisits[0], id: "other", name: "別の利用者の記録" }];
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "old-token" })
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "other@example.com" }, csrfToken: "new-token" });
+    const list = vi.fn().mockResolvedValueOnce(loadedVisits).mockResolvedValueOnce(otherVisits);
+    const source = repository({ getSession, list });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    onVisitsLoaded.mockClear();
+
+    await act(async () => {
+      await result.current.revalidateSessionOnError(new RepositoryError("CSRFトークンが不正です。", "invalid_csrf", 422));
+    });
+
+    expect(onVisitsLoaded.mock.calls).toEqual([[[]], [otherVisits]]);
+    expect(result.current.user).toEqual({ email: "other@example.com" });
+    expect(result.current.csrfToken).toBe("new-token");
+    expect(result.current.loading).toBe(false);
+    expect(result.current.loadError).toBeNull();
+  });
+
+  it("reload が401で、取り直した時点で別の利用者なら、その利用者の記録を出して読み込みエラーにしないこと", async () => {
+    const otherVisits: SaunaVisit[] = [{ ...loadedVisits[0], id: "other", name: "別の利用者の記録" }];
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "old-token" })
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "other@example.com" }, csrfToken: "new-token" });
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce(loadedVisits)
+      .mockRejectedValueOnce(new RepositoryError("ログインが必要です。", "unauthenticated", 401))
+      .mockResolvedValueOnce(otherVisits);
+    const source = repository({ getSession, list });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.reload();
+    });
+
+    expect(onVisitsLoaded).toHaveBeenLastCalledWith(otherVisits);
+    expect(result.current.loadError).toBeNull();
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("別の利用者の記録の読み込みに失敗したら、前の利用者の記録を残さず読み込みエラーにすること", async () => {
+    const getSession = vi
+      .fn()
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "owner@example.com" }, csrfToken: "old-token" })
+      .mockResolvedValueOnce({ authenticated: true, user: { email: "other@example.com" }, csrfToken: "new-token" });
+    const list = vi
+      .fn()
+      .mockResolvedValueOnce(loadedVisits)
+      .mockRejectedValueOnce(new RepositoryError("サーバーへ接続できません。", "network_error"));
+    const source = repository({ getSession, list });
+    const onVisitsLoaded = vi.fn();
+    const { result } = renderHook(() => useVisitSession(source, { onVisitsLoaded }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.revalidateSessionOnError(new RepositoryError("ログインが必要です。", "unauthenticated", 401));
+    });
+
+    expect(onVisitsLoaded).toHaveBeenLastCalledWith([]);
+    expect(result.current.loadError).toBe("サーバーへ接続できません。");
+  });
+
   it("revalidateSessionOnError はセッションの喪失のときだけセッションを取り直すこと", async () => {
     const getSession = vi
       .fn()

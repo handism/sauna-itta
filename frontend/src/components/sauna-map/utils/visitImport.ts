@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { SaunaVisitSchema, type SaunaVisit } from "../types";
+import { SaunaVisitSchema, VisitHistoryEntrySchema, type SaunaVisit } from "../types";
 import type { ImportResult } from "../repositories/types";
 import { IMPORT_MAX_BATCH_SIZE } from "./apiLimits";
+import { isValidDateString } from "./date";
 import { convertDataUrlImage, isApiImageUrl, needsImageConversion } from "./image";
 import { normalizeVisits, syncLatestFromHistory } from "./visitHistory";
 
@@ -48,6 +49,34 @@ export class ImportFileError extends Error {
   }
 }
 
+/*
+ * 取り込むファイルの検証。保存値の検証（SaunaVisitSchema）より厳しく、apiモードのサーバー
+ * （SaunaVisit / VisitHistoryEntry の検証と DB の制約）が拒否する値をここで弾く。
+ * サーバーは不正な記録を含むチャンクごと 422 で拒否し、どの記録のどの項目かが伝わらないうえ、
+ * localモードは不正な値をそのまま保存してしまうため。
+ * SaunaVisitSchema 自体を厳しくしないこと（保存済みの記録が「読めない記録」として表示から外れる）。
+ */
+const notBlank = (value: string) => value.trim() !== "";
+// 空文字はサーバーが今日の日付として扱うため受け付ける（以前の版の保存値との互換）
+const importDate = z.string().refine((value) => value === "" || isValidDateString(value));
+const importRating = z.number().min(0).max(5);
+
+const ImportHistoryEntrySchema = VisitHistoryEntrySchema.extend({
+  date: importDate,
+  rating: importRating.optional(),
+});
+
+const ImportVisitSchema = SaunaVisitSchema.extend({
+  id: z.string().refine(notBlank),
+  name: z.string().refine(notBlank),
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  date: importDate,
+  rating: importRating.optional(),
+  visitCount: z.number().int().nonnegative().optional(),
+  history: z.array(ImportHistoryEntrySchema).optional(),
+});
+
 /** zod の最初の問題箇所を「3件目の記録の「lat」」のような利用者向けの文言にする */
 function describeSchemaError(error: z.ZodError): string {
   const [issue] = error.issues;
@@ -72,7 +101,7 @@ export function parseImportText(text: string): SaunaVisit[] {
     );
   }
 
-  const validationResult = z.array(SaunaVisitSchema).safeParse(parsed);
+  const validationResult = z.array(ImportVisitSchema).safeParse(parsed);
   if (!validationResult.success) {
     throw new ImportFileError(`${FILE_FORMAT_ERROR_PREFIX}${describeSchemaError(validationResult.error)}`, {
       cause: validationResult.error,

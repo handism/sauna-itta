@@ -54,6 +54,36 @@ describe("useVisitFilters", () => {
     ]);
   });
 
+  it("行きたい記録は保存値の評価が残っていても、満足度の絞り込み・並び替えで評価0として扱うこと", () => {
+    // 行った→行きたいへ切り替えた記録は評価を持ったままだが、画面には星を出さない（getDisplayRating）
+    const wishlist: SaunaVisit = {
+      id: "w",
+      name: "行きたいサウナ",
+      lat: 35,
+      lng: 139,
+      comment: "",
+      date: "2026-03-01",
+      rating: 5,
+      status: "wishlist",
+    };
+    const { result } = renderHook(() => useVisitFilters([...mockVisits, wishlist]));
+
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, minRating: 4 }));
+    });
+    expect(result.current.filteredVisits.map((v) => v.id)).not.toContain("w");
+
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, minRating: 0, sort: "ratingDesc" }));
+    });
+    expect(result.current.filteredVisits.at(-1)?.id).toBe("w");
+
+    act(() => {
+      result.current.setFilters((prev) => ({ ...prev, sort: "ratingAsc" }));
+    });
+    expect(result.current.filteredVisits[0]?.id).toBe("w");
+  });
+
   it("should sort by nameAsc correctly", () => {
     const { result } = renderHook(() => useVisitFilters(mockVisits));
 

@@ -4,6 +4,15 @@ import { isSessionLostError, toUserMessage, type SessionUser, type VisitReposito
 
 export const LOAD_ERROR_FALLBACK = "記録の読み込みに失敗しました。";
 
+/**
+ * セッションを取り直した結果。
+ * - authenticated: 同じ利用者のままログイン中
+ * - switched: 別の利用者でログインし直されていたため、その利用者の記録を読み込み直した
+ * - unauthenticated: 未ログインに戻っていた（記録は空にした）
+ * - failed: 取り直し（または読み込み直し）に失敗した、または新しい操作に置き換えられた
+ */
+type SessionRefreshResult = "authenticated" | "switched" | "unauthenticated" | "failed";
+
 interface VisitSessionOptions {
   /** 読み込んだ記録の受け取り先。参照が変わると初回読み込みをやり直すため、安定した関数を渡すこと */
   onVisitsLoaded: (visits: SaunaVisit[]) => void;
@@ -28,6 +37,9 @@ export function useVisitSession(
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // 表示中の記録の持ち主。セッションを取り直したときに別の利用者へ替わったかを判定する
+  // （コールバックの依存に user の state を入れると、取り直すたびに操作関数の参照が変わる）
+  const userEmail = useRef<string | null>(null);
 
   // 初回取得・再読み込み・セッション再取得で共有し、最新の操作だけを反映する。
   const generation = useRef(0);
@@ -45,6 +57,7 @@ export function useVisitSession(
         setAuthenticated(session.authenticated);
         setCsrfToken(session.csrfToken);
         setUser(session.user);
+        userEmail.current = session.user?.email ?? null;
         if (session.authenticated && !skipInitialList) {
           const loaded = await repository.list();
           if (isCurrent()) onVisitsLoaded(loaded);
@@ -61,27 +74,40 @@ export function useVisitSession(
   }, [repository, skipInitialList, onVisitsLoaded]);
 
   /**
-   * セッションを取り直して状態へ反映し、ログイン中かを返す。未ログインになっていれば
-   * 記録も空にする（ログイン画面の裏に前の利用者の記録を残さない）。
-   * 取り直しにも失敗したときは false を返し、内容は loadError へ入れる。
+   * セッションを取り直して状態へ反映する。未ログインになっていれば記録も空にする
+   * （ログイン画面の裏に前の利用者の記録を残さない）。別タブで別の利用者がログインし直して
+   * いれば、前の利用者の記録を消してから新しい利用者の記録を読み込む（残すと、操作のたびに
+   * 404 になり続けるうえ、前の利用者の記録が見えたままになる）。
+   * 取り直しにも失敗したときは "failed" を返し、内容は loadError へ入れる。
    */
-  const refreshSession = useCallback(async (requestGeneration = ++generation.current): Promise<boolean> => {
+  const refreshSession = useCallback(async (requestGeneration = ++generation.current): Promise<SessionRefreshResult> => {
     const isCurrent = () => requestGeneration === generation.current;
-    if (!isCurrent()) return false;
+    if (!isCurrent()) return "failed";
     setLoading(true);
     setLoadError(null);
     try {
       const session = await repository.getSession();
-      if (!isCurrent()) return false;
+      if (!isCurrent()) return "failed";
+      const nextEmail = session.user?.email ?? null;
+      const switched = session.authenticated && nextEmail !== userEmail.current;
       setAuthenticated(session.authenticated);
       setUser(session.user);
       setCsrfToken(session.csrfToken);
-      if (!session.authenticated) onVisitsLoaded([]);
-      return session.authenticated;
+      userEmail.current = nextEmail;
+      if (!session.authenticated) {
+        onVisitsLoaded([]);
+        return "unauthenticated";
+      }
+      if (!switched) return "authenticated";
+      onVisitsLoaded([]);
+      const loaded = await repository.list();
+      if (!isCurrent()) return "failed";
+      onVisitsLoaded(loaded);
+      return "switched";
     } catch (error) {
-      if (!isCurrent()) return false;
+      if (!isCurrent()) return "failed";
       setLoadError(toUserMessage(error, LOAD_ERROR_FALLBACK));
-      return false;
+      return "failed";
     } finally {
       if (isCurrent()) setLoading(false);
     }
@@ -122,8 +148,9 @@ export function useVisitSession(
       if (isSessionLostError(error)) {
         // 未ログインに戻っていたらログイン画面を出す。読み込みエラーにすると
         // ApiAccessGate はエラーを優先して「再読み込み」だけを出し、ログインへ進めない。
-        // 取り直した時点でログイン済み（別タブで再ログインした）なら、再試行を促す
-        if (await refreshSession(requestGeneration)) {
+        // 取り直した時点で同じ利用者のままログイン済み（別タブで再ログインした）なら、再試行を促す。
+        // 別の利用者へ替わっていた場合は refreshSession がその利用者の記録を読み込み済み
+        if ((await refreshSession(requestGeneration)) === "authenticated") {
           if (isCurrent()) setLoadError(LOAD_ERROR_FALLBACK);
         }
         return false;
@@ -145,6 +172,7 @@ export function useVisitSession(
     setAuthenticated(false);
     setUser(null);
     setCsrfToken(null);
+    userEmail.current = null;
     onVisitsLoaded([]);
     await refreshSession();
   }, [refreshSession, onVisitsLoaded]);

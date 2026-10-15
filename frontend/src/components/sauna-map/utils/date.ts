@@ -73,6 +73,11 @@ function parseDisplayDate(date: string): Date | null {
   return formatLocalDate(parsed) === date ? parsed : null;
 }
 
+/** YYYY-MM-DD の形式で、実在する日付か（2026-02-30 は false） */
+export function isValidDateString(date: string): boolean {
+  return parseDisplayDate(date) !== null;
+}
+
 /**
  * 画面に出す日付（例: 2026年10月4日（日））。保存値の YYYY-MM-DD を
  * そのまま出すと内部の形式が見えるため、カード・ポップアップ・シェア画面はここを通す。

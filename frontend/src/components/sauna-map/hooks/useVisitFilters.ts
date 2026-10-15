@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import {
   calculateStats,
+  getDisplayRating,
   getVisitCount,
   getVisitStatus,
   isInBounds,
@@ -44,7 +45,8 @@ export function useVisitFilters(visits: SaunaVisit[]) {
         return false;
       }
 
-      if ((v.rating ?? 0) < filters.minRating) {
+      // 表示と同じ評価で判定する（行きたい記録が保存値の評価で「★4以上」に残らないように）
+      if (getDisplayRating(v) < filters.minRating) {
         return false;
       }
 
@@ -72,9 +74,9 @@ export function useVisitFilters(visits: SaunaVisit[]) {
         case "oldest":
           return a.date.localeCompare(b.date);
         case "ratingDesc":
-          return (b.rating ?? 0) - (a.rating ?? 0) || b.date.localeCompare(a.date);
+          return getDisplayRating(b) - getDisplayRating(a) || b.date.localeCompare(a.date);
         case "ratingAsc":
-          return (a.rating ?? 0) - (b.rating ?? 0) || b.date.localeCompare(a.date);
+          return getDisplayRating(a) - getDisplayRating(b) || b.date.localeCompare(a.date);
         case "visitCountDesc":
           // history.length と visitCount の両方を考慮する必要があるため getVisitCount() を使う
           return getVisitCount(b) - getVisitCount(a) || b.date.localeCompare(a.date);
